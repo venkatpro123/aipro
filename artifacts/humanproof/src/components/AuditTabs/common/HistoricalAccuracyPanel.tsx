@@ -85,7 +85,7 @@ const AccuracyBar: React.FC<{
       {/* Sample size */}
       <div style={{ width: '64px', flexShrink: 0, textAlign: 'right' }}>
         {hasData ? (
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>
             n={record.sampleSize.toLocaleString()}
           </span>
         ) : (
@@ -151,14 +151,14 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
               <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: tierColor(calibration.overallAccuracy) }}>
                 {overallPct}%
               </span>
-              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>overall</span>
+              <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>overall</span>
             </div>
             <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <Users className="w-3.5 h-3.5 mb-1" style={{ color: 'rgba(255,255,255,0.4)' }} />
               <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: 'rgba(255,255,255,0.7)' }}>
                 {calibration.totalOutcomesTracked.toLocaleString()}
               </span>
-              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>outcomes</span>
+              <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>outcomes</span>
             </div>
           </div>
         </motion.div>
@@ -183,10 +183,10 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
           className="rounded-lg px-4 py-3"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Validation note
           </div>
-          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.55 }}>
+          <p style={{ fontSize: '11px', color: 'var(--alpha-text-55)', lineHeight: 1.55 }}>
             {calibration.trustNarrative}
           </p>
           <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '6px' }}>

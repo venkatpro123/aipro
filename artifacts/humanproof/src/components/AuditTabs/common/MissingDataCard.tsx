@@ -179,7 +179,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
       >
         <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: `${headerColor}70` }} />
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-35)' }}>
             CONFIDENCE: {result?.confidencePercent ?? '?'}% —{' '}
             <span style={{ color: headerColor }}>
               {items.length} data gap{items.length !== 1 ? 's' : ''} affecting this score
@@ -191,8 +191,8 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
             <AlertCircle className="w-3 h-3" style={{ color: '#f97316' }} />
           )}
           {open
-            ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.25)' }} />
-            : <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.25)' }} />
+            ? <ChevronUp className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
+            : <ChevronDown className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
           }
         </div>
       </button>
@@ -212,7 +212,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
               className="px-3.5 pb-3 pt-0"
               style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
             >
-              <p className="text-[10px] py-2 mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <p className="text-[10px] py-2 mb-2" style={{ color: 'var(--alpha-text-25)' }}>
                 What we don't know yet — and how it affects your score:
               </p>
               <div className="space-y-2">
@@ -226,7 +226,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                          <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>
                             {item.label}
                           </span>
                           <span

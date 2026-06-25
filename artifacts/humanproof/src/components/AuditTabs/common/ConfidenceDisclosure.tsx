@@ -92,7 +92,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
   } else if (freshnessTier === 'stale') {
     caveats.push({
       icon: Clock,
-      color: 'rgba(255,255,255,0.55)',
+      color: 'var(--alpha-text-50)',
       text: 'Some signals are cached — the read uses live data supplemented by recent baselines.',
     });
   }
@@ -142,7 +142,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
       badgeColor={confidenceColor}
     >
       {/* Plain-language provenance — leads the expanded content on a calm note. */}
-      <p className="text-[11.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.62)' }}>
+      <p className="text-[11.5px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
         {provenanceLine(calibrationMode)}
       </p>
 
@@ -155,7 +155,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
               style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${c.color}22` }}
             >
               <c.icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: c.color }} />
-              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+              <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
                 {c.text}
               </p>
             </div>
@@ -164,7 +164,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
       )}
 
       {caveats.length === 0 && (
-        <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
           No data-quality flags this run — live signals resolved cleanly and nothing conflicted.
         </p>
       )}

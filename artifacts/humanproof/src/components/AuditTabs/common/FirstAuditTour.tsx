@@ -197,13 +197,13 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-25)' }}>
                   {step + 1} of {STEPS.length}
                 </span>
                 <button
                   onClick={close}
                   className="p-1 rounded-lg transition-opacity hover:opacity-70"
-                  style={{ color: 'rgba(255,255,255,0.35)' }}
+                  style={{ color: 'var(--alpha-text-35)' }}
                   aria-label="Skip tour"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -227,7 +227,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
                 >
                   {current.headline(result)}
                 </p>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                   {current.body(result)}
                 </p>
               </motion.div>
@@ -241,7 +241,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
               <button
                 onClick={close}
                 className="text-[10px] font-semibold transition-opacity hover:opacity-70"
-                style={{ color: 'rgba(255,255,255,0.28)' }}
+                style={{ color: 'var(--alpha-text-25)' }}
               >
                 Skip tour
               </button>
@@ -264,7 +264,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
           {step === 0 && (
             <p
               className="text-center text-[10px] mt-1.5"
-              style={{ color: 'rgba(255,255,255,0.18)' }}
+              style={{ color: 'var(--alpha-text-25)' }}
             >
               Tap Next to walk through the dashboard
             </p>

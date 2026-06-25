@@ -38,7 +38,7 @@ function DeltaRow({ d }: { d: ScoreDelta }) {
     <div className="flex items-center justify-between py-1.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
       <div className="flex items-center gap-2 min-w-0">
         <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />
-        <span className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        <span className="text-[10px] truncate" style={{ color: 'var(--alpha-text-55)' }}>
           {d.label}
         </span>
       </div>
@@ -102,7 +102,7 @@ export const WhatChangedCard: React.FC<Props> = ({
           {/* Header */}
           <div className="flex items-center gap-2 mb-2 pr-5">
             <div className="flex items-baseline gap-2">
-              <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>
                 {headline}
               </span>
             </div>
@@ -110,10 +110,10 @@ export const WhatChangedCard: React.FC<Props> = ({
 
           {/* Score delta visual */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[13px] font-black" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <span className="text-[13px] font-black" style={{ color: 'var(--alpha-text-35)' }}>
               {previousScore}
             </span>
-            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→</span>
+            <span className="text-[11px]" style={{ color: 'var(--alpha-text-25)' }}>→</span>
             <span className="text-[16px] font-black" style={{ color: headerColor }}>
               {currentScore}
             </span>
@@ -122,14 +122,14 @@ export const WhatChangedCard: React.FC<Props> = ({
             }}>
               {isUnchanged ? 'unchanged' : `${netDelta > 0 ? '+' : ''}${netDelta} pts`}
             </span>
-            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
               · {daysSinceLastAudit}d ago
             </span>
           </div>
 
           {/* User action contribution */}
           {userContribution < 0 && (
-            <p className="text-[10px] italic mb-2" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <p className="text-[10px] italic mb-2" style={{ color: 'var(--alpha-text-45)' }}>
               Your actions contributed: <span style={{ color: '#10b981', fontWeight: 700 }}>
                 {userContribution} pts
               </span> of the total improvement.
@@ -142,7 +142,7 @@ export const WhatChangedCard: React.FC<Props> = ({
               <button
                 onClick={() => setExpanded(e => !e)}
                 className="flex items-center gap-1 text-[9px] font-semibold mb-1"
-                style={{ color: 'rgba(255,255,255,0.35)' }}
+                style={{ color: 'var(--alpha-text-35)' }}
               >
                 {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 {expanded ? 'Hide' : 'Show'} what changed ({deltas.length} signals)

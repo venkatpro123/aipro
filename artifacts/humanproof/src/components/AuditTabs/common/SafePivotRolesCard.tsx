@@ -93,7 +93,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
           <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
             Safe Pivot Roles
           </p>
-          <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.40)', marginTop: 1 }}>
+          <p style={{ fontSize: '0.68rem', color: 'var(--alpha-text-45)', marginTop: 1 }}>
             Roles where you can significantly lower your risk
           </p>
         </div>
@@ -123,7 +123,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                     {i === 0 && (
                       <span title="Best ROI pivot" style={{ display: 'inline-flex', flexShrink: 0 }}><Star size={10} style={{ color: '#fbbf24' }} /></span>
                     )}
-                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1.3 }}>
+                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--alpha-text-85)', lineHeight: 1.3 }}>
                       {role.targetRoleLabel}
                     </span>
                   </div>
@@ -135,10 +135,10 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                 {/* Score delta chip */}
                 <div style={{ flexShrink: 0, textAlign: 'right' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)' }}>
                       {currentScore}
                     </span>
-                    <ArrowRight size={10} style={{ color: 'rgba(255,255,255,0.30)' }} />
+                    <ArrowRight size={10} style={{ color: 'var(--alpha-text-30)' }} />
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
                       {targetScore}
                     </span>
@@ -152,12 +152,12 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
               {/* Metadata row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Clock size={10} style={{ color: 'rgba(255,255,255,0.35)' }} />
-                  <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.50)' }}>
+                  <Clock size={10} style={{ color: 'var(--alpha-text-35)' }} />
+                  <span style={{ fontSize: '0.68rem', color: 'var(--alpha-text-50)' }}>
                     {fmtWeeks(role.timeToQualifiedWeeks)} to pivot
                   </span>
                 </div>
-                <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.35)' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--alpha-text-35)' }}>
                   {role.riskReductionPerWeek.toFixed(1)} pts/week ROI
                 </span>
               </div>
@@ -174,7 +174,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                         padding: '2px 6px',
                         borderRadius: 4,
                         background: 'rgba(255,255,255,0.05)',
-                        color: 'rgba(255,255,255,0.50)',
+                        color: 'var(--alpha-text-50)',
                         border: '1px solid rgba(255,255,255,0.08)',
                       }}
                     >
@@ -190,7 +190,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
 
       {/* Recommended path narrative */}
       {roleAdjacency.recommendedFocusPath && (
-        <p style={{ marginTop: 10, fontSize: '0.72rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.5, fontStyle: 'italic' }}>
+        <p style={{ marginTop: 10, fontSize: '0.72rem', color: 'var(--alpha-text-45)', lineHeight: 1.5, fontStyle: 'italic' }}>
           {roleAdjacency.recommendedFocusPath}
         </p>
       )}

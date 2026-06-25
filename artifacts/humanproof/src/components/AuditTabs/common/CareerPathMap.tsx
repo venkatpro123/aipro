@@ -68,11 +68,11 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
       <div className="flex items-center justify-between mb-2.5">
         <p
           className="text-[9px] font-black tracking-[0.14em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+          style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
         >
           CAREER PATH MAP
         </p>
-        <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        <p className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
           {paths.length} path{paths.length !== 1 ? 's' : ''} available
         </p>
       </div>
@@ -94,7 +94,7 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
               minWidth: 140,
             }}
           >
-            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'var(--alpha-text-35)' }}>
               YOU ARE HERE
             </p>
             <p className="text-[12px] font-bold" style={{ color: NODE_COLORS.current.text }}>
@@ -145,7 +145,7 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
                         {node.label}
                       </p>
                       {node.adjacencyStrength && (
-                        <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        <p className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>
                           {STRENGTH_LABEL[node.adjacencyStrength] ?? node.adjacencyStrength}
                         </p>
                       )}
@@ -176,7 +176,7 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
                     animate={{ opacity: 1, height: 'auto' }}
                     className="px-3.5 py-2 ml-5"
                   >
-                    <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                    <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                       {node.description}
                     </p>
                   </motion.div>

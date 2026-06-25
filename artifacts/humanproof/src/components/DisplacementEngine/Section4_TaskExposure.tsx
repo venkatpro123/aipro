@@ -26,7 +26,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
   if (!tasks || tasks.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 16px', opacity: 0.5 }}>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+        <p style={{ fontSize: 12, color: 'var(--alpha-text-45)' }}>
           Task exposure data is not available for this role type.
         </p>
       </div>
@@ -41,14 +41,14 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
         padding: '8px 14px', borderRadius: 10,
         background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
       }}>
-        <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
           Estimated Task Exposure — AI Automatable Share
         </span>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {[['Human', '#10b981'], ['AI Automatable', '#ef4444']].map(([l, c]) => (
             <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 8, height: 8, borderRadius: 1, background: c }} />
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)' }}>{l}</span>
+              <span style={{ fontSize: 9, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)' }}>{l}</span>
             </div>
           ))}
         </div>
@@ -71,7 +71,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
             >
               {/* Row 1: task name + badges */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1.2 }}>{task.task}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--alpha-text-85)', lineHeight: 1.2 }}>{task.task}</span>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   {task.aiTool && (
                     <span style={{ fontSize: 9, color: 'rgba(0,212,224,0.75)', padding: '1px 6px', borderRadius: 4, background: 'rgba(0,212,224,0.08)', border: '1px solid rgba(0,212,224,0.18)', fontFamily: 'var(--font-mono)' }}>
@@ -92,7 +92,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
                 </div>
                 <div style={{ width: 40, textAlign: 'right', flexShrink: 0 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)' }}>{task.humanPct}%</span>
-                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)' }}> H</span>
+                  <span style={{ fontSize: 8, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}> H</span>
                 </div>
               </div>
 
@@ -103,12 +103,12 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
                 </div>
                 <div style={{ width: 40, textAlign: 'right', flexShrink: 0 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: style.color, fontFamily: 'var(--font-mono)' }}>{task.aiPct}%</span>
-                  <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)' }}> AI</span>
+                  <span style={{ fontSize: 8, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}> AI</span>
                 </div>
               </div>
 
               {/* Trajectory */}
-              <div style={{ marginTop: 6, fontSize: 9, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+              <div style={{ marginTop: 6, fontSize: 9, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
                 {TRAJECTORY_LABEL[task.trajectory] ?? task.trajectory}
               </div>
             </motion.div>
@@ -116,7 +116,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
         })}
       </div>
 
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, fontStyle: 'italic' }}>
+      <div style={{ fontSize: 10, color: 'var(--alpha-text-25)', lineHeight: 1.6, fontStyle: 'italic' }}>
         Task exposure percentages are estimates derived from AI capability research and skill-tier analysis for this role type. Individual task profiles will vary with seniority, specialisation, and organisation.
       </div>
     </div>

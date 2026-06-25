@@ -113,7 +113,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
           <p className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: 'var(--cyan)' }}>
             Welcome Back
           </p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
             {greeting}{companyName ? ` · ${companyName}` : ''}
           </p>
         </div>
@@ -133,7 +133,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
                 className="flex items-center gap-2 py-1"
               >
                 <Icon className="w-3 h-3 flex-shrink-0" style={{ color: item.color }} />
-                <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                <span className="text-[11px]" style={{ color: 'var(--alpha-text-55)' }}>
                   {item.text}
                 </span>
               </motion.div>
@@ -143,7 +143,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       ) : (
         <div className="px-4 pb-4 flex items-center gap-3">
           <MilestoneIllustration size={48} className="flex-shrink-0 opacity-70" />
-          <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
             Nothing's changed since your last check — your plan is still on track. Check back after your next action.
           </p>
         </div>
@@ -156,14 +156,14 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
           style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
         >
           <div className="text-center">
-            <p className="text-[9px] font-semibold uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>Before</p>
+            <p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--alpha-text-25)' }}>Before</p>
             <p className="text-[16px] font-black" style={{ color: riskColor(scoreBefore), fontFamily: 'var(--font-mono)' }}>
               {scoreBefore}
             </p>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.18)', fontSize: 18 }}>→</div>
+          <div style={{ color: 'var(--alpha-text-25)', fontSize: 18 }}>→</div>
           <div className="text-center">
-            <p className="text-[9px] font-semibold uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>Now</p>
+            <p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--alpha-text-25)' }}>Now</p>
             <p className="text-[16px] font-black" style={{ color: riskColor(scoreNow), fontFamily: 'var(--font-mono)' }}>
               {scoreNow}
             </p>
@@ -183,7 +183,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       {/* Market changes (if any) */}
       {marketChanges.length > 0 && (
         <div className="px-4 pb-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p className="text-[9px] font-bold uppercase tracking-wider mt-2 mb-1.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <p className="text-[9px] font-bold uppercase tracking-wider mt-2 mb-1.5" style={{ color: 'var(--alpha-text-25)' }}>
             Market Changes
           </p>
           {marketChanges.slice(0, 3).map((change, i) => (
@@ -192,8 +192,8 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
                 {change.direction === 'up' ? '↑' : change.direction === 'down' ? '↓' : '→'}
               </span>
               <div>
-                <p className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>{change.label}</p>
-                <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{change.detail}</p>
+                <p className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>{change.label}</p>
+                <p className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>{change.detail}</p>
               </div>
             </div>
           ))}

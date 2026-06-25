@@ -146,10 +146,10 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
         <div className="rounded-xl px-4 py-8 text-center flex flex-col items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <SkillEvolutionIllustration size={80} />
           <div>
-            <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <p className="text-sm font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
               We don't know your skills yet
             </p>
-            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            <p className="text-xs mt-1" style={{ color: 'var(--alpha-text-30)' }}>
               Add your role details to see which skills to protect and which to evolve.
             </p>
           </div>

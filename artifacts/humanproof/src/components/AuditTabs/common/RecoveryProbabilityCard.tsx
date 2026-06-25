@@ -86,7 +86,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
       <div className="flex items-center gap-2 px-4 pt-3 pb-2"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
-        <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'var(--alpha-text-35)' }}>
           YOUR ODDS — NEXT 12 MONTHS
         </p>
         <span
@@ -110,14 +110,14 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           <p className="text-[26px] font-black leading-none mb-0.5" style={{ color }}>
             {fmtPct(withoutAction)}
           </p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
             forced exit risk
           </p>
           {/* Compute the 1-in-X from the DISPLAYED probability (inactionProbability12m)
               not from the pre-computed framedAs1InX (which is based on probability12m,
               a different field). This prevents showing "1 in 5" next to a 13% figure. */}
           {withoutAction > 0.01 && (
-            <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-25)' }}>
               {`Approximately 1 in ${Math.round(1 / withoutAction)}`}
             </p>
           )}
@@ -134,7 +134,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           <p className="text-[26px] font-black leading-none mb-0.5" style={{ color: '#10b981' }}>
             {fmtPct(withPhase1)}
           </p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
             forced exit risk
           </p>
           {/* Reduction badge */}
@@ -154,14 +154,14 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
       >
         <TrendingDown className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#10b981' }} />
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          <p className="text-[10px] font-semibold leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             Taking the {criticalActionCount > 0 ? `${criticalActionCount} critical action${criticalActionCount !== 1 ? 's' : ''}` : 'Phase 1 actions'} below cuts your risk by {reductionPct}%
           </p>
-          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
             {fmtPct(withoutAction)} if risk keeps drifting up → {fmtPct(withPhase1)} with Phase 1 mitigation
           </p>
           {dominantFactor && (
-            <p className="text-[10px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.42)' }}>
+            <p className="text-[10px] mt-1 leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
               Your biggest driver right now: <span style={{ color: 'rgba(16,185,129,0.85)', fontWeight: 600 }}>{dominantFactor}</span>. The Phase 1 actions are sequenced to address it first.
             </p>
           )}
@@ -171,8 +171,8 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
       {/* Workforce percentile — personalised standing */}
       {percentile != null && percentile > 0 && (
         <div className="flex items-center gap-1.5 px-4 pb-2">
-          <Target className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }} />
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <Target className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }} />
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>
             More at-risk than {percentile}% of the workforce — but acting early is the lever that moves you down the curve.
           </p>
         </div>
@@ -181,8 +181,8 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
       {/* Peer comparison footer */}
       {survival.peerLayoffRate && (
         <div className="flex items-center gap-1.5 px-4 pb-3">
-          <Users className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }} />
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <Users className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }} />
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
             {survival.peerLayoffRate}
           </p>
         </div>

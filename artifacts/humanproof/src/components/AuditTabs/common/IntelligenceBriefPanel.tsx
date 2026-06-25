@@ -108,16 +108,16 @@ const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => 
         <Database className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />
       </div>
       <div className="flex-1">
-        <p className="text-[12px] font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+        <p className="text-[12px] font-semibold mb-1.5" style={{ color: 'var(--alpha-text-70)' }}>
           Not enough live data to generate a reliable brief
           {companyName ? ` for ${companyName}` : ''}.
         </p>
-        <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-45)' }}>
           A company-specific intelligence brief requires at least one live data source — stock
           signals, news coverage, job postings, or a WARN filing — so the analysis is grounded
           in what is actually happening at this company right now, not in sector averages.
         </p>
-        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-30)' }}>
           A brief will be generated automatically once live signals resolve. You can also
           find sector-level context in the Intelligence tab → Market Environment section.
         </p>
@@ -159,7 +159,7 @@ const LowConfidenceBrief: React.FC<{
         style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.28)' }}
       >
         <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
-        <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
+        <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
           <span className="font-semibold text-amber-400">Low data confidence ({confidencePct}%). </span>
           This brief was generated from partial signals. Statements below are directionally
           correct but may not reflect conditions specific to this company. Add profile data
@@ -175,7 +175,7 @@ const LowConfidenceBrief: React.FC<{
           <p
             key={i}
             className="text-[11px] leading-relaxed mb-3"
-            style={{ color: 'rgba(255,255,255,0.65)', paddingLeft: '4px', borderLeft: `2px solid ${urgency.color}30` }}
+            style={{ color: 'var(--alpha-text-55)', paddingLeft: '4px', borderLeft: `2px solid ${urgency.color}30` }}
           >
             {para}
           </p>
@@ -248,7 +248,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
         </span>
 
         {/* Freshness / cache indicator */}
-        <div className="ml-auto flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <div className="ml-auto flex items-center gap-1" style={{ color: 'var(--alpha-text-35)' }}>
           <Clock className="w-3 h-3" />
           <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)' }}>
             {intelligenceBrief.fromCache ? 'CACHED · ' : ''}{generatedDate}
@@ -286,12 +286,12 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
                 transition={{ delay: i * 0.1 }}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.45)' }} />
-                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.45)' }}>
+                  <Icon className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-45)' }} />
+                  <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--alpha-text-45)' }}>
                     {label}
                   </span>
                 </div>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.78)', lineHeight: 1.65, paddingLeft: '20px' }}>
+                <p style={{ fontSize: '12px', color: 'var(--alpha-text-70)', lineHeight: 1.65, paddingLeft: '20px' }}>
                   {para}
                 </p>
               </motion.div>

@@ -165,7 +165,7 @@ const StickyCompanyHeader: React.FC<{ companyName: string; score: number; visibl
             borderBottom: '1px solid rgba(255,255,255,0.07)',
           }}
         >
-          <p className="text-[13px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.85)' }} title={companyName}>
+          <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--alpha-text-85)' }} title={companyName}>
             {companyName}
           </p>
           <div
@@ -540,7 +540,7 @@ export const LayoffAuditDashboardV4: React.FC<Props> = (props) => {
             <div className="rounded-xl flex items-start gap-3 px-3 py-2.5" style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.18)' }}>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>{reEngagementTrigger.headline}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.50)' }}>{reEngagementTrigger.subtext}</p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>{reEngagementTrigger.subtext}</p>
               </div>
               {props.onRecalculate && (
                 <button
@@ -554,7 +554,7 @@ export const LayoffAuditDashboardV4: React.FC<Props> = (props) => {
               <button
                 onClick={() => setReEngagementDismissed(true)}
                 className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity text-[10px] px-1"
-                style={{ color: 'rgba(255,255,255,0.70)' }}
+                style={{ color: 'var(--alpha-text-70)' }}
                 aria-label="Dismiss"
               >
                 ✕

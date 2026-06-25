@@ -56,7 +56,7 @@ const TierRow: React.FC<{ record: TierAccuracyRecord; index: number }> = ({ reco
       <span className="text-xs w-8 text-right font-semibold flex-shrink-0" style={{ color: barColor }}>
         {accPct}%
       </span>
-      <span className="text-[10px] w-6 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }}>
+      <span className="text-[10px] w-6 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }}>
         {record.confidenceLevel[0]}
       </span>
     </motion.div>
@@ -94,7 +94,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
           style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.30)' }}
         >
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             {liveCalibrationStatus.ciDriftWarning}
           </p>
         </div>
@@ -111,7 +111,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
           <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>
             ACCURACY BY RISK TIER
           </p>
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
             H=High/M=Medium/L=Low confidence
           </span>
         </div>
@@ -125,7 +125,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       {/* Sample size note */}
       <div className="flex items-center gap-2 mb-3">
         <Activity className="w-3 h-3 opacity-40" />
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
           {calibration.totalOutcomesTracked > 0
             ? `${calibration.totalOutcomesTracked} confirmed outcomes tracked · Source: ${calibration.dataSource}`
             : 'No outcome data yet · Using research priors (Cascio 2002, Datta 2010, Zatzick 2009)'
@@ -139,7 +139,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
         onClick={() => setShowSignals(s => !s)}
       >
-        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>Signal contributions to accuracy</span>
+        <span className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>Signal contributions to accuracy</span>
         <Info className="w-3.5 h-3.5 opacity-40" />
       </button>
       {showSignals && (
@@ -170,7 +170,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
         onClick={() => setShowCaveats(s => !s)}
       >
-        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>Accuracy limitations & caveats</span>
+        <span className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>Accuracy limitations & caveats</span>
         <AlertCircle className="w-3.5 h-3.5 opacity-40" />
       </button>
       {showCaveats && (

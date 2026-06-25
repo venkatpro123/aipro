@@ -159,7 +159,7 @@ export const FirstAuditWelcomeModal: React.FC<Props> = ({
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'rgba(255,255,255,0.40)',
+                  color: 'var(--alpha-text-45)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -172,7 +172,7 @@ export const FirstAuditWelcomeModal: React.FC<Props> = ({
               <p style={{ fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.18em', color: 'rgba(0,212,224,0.85)', marginBottom: 6, fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
                 FIRST AUDIT · WHAT TO LOOK AT
               </p>
-              <p style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.35, color: 'rgba(255,255,255,0.92)', marginBottom: 14 }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: 700, lineHeight: 1.35, color: 'var(--alpha-text-92)', marginBottom: 14 }}>
                 Here's how to read this dashboard.
               </p>
 
@@ -197,10 +197,10 @@ export const FirstAuditWelcomeModal: React.FC<Props> = ({
                       </span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.35, color: 'rgba(255,255,255,0.88)', marginBottom: 2 }}>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.35, color: 'var(--alpha-text-85)', marginBottom: 2 }}>
                         {label}
                       </p>
-                      <p style={{ fontSize: '0.7rem', lineHeight: 1.45, color: 'rgba(255,255,255,0.42)' }}>
+                      <p style={{ fontSize: '0.7rem', lineHeight: 1.45, color: 'var(--alpha-text-45)' }}>
                         {sub}
                       </p>
                     </div>

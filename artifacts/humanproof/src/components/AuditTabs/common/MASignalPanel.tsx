@@ -89,11 +89,11 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <ShieldAlert className="w-3 h-3 flex-shrink-0" style={{ color: colors.text }} />
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-70)' }}>
             Expected Impact
           </span>
         </div>
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <p className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>
           {maRisk.headcountReductionEstimate}
         </p>
       </div>

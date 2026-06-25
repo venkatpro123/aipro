@@ -204,7 +204,7 @@ export const AICommentary: React.FC<Props> = ({ activeTab, result }) => {
             </div>
 
             {/* Comment text */}
-            <p className="flex-1 text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+            <p className="flex-1 text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
               {comment}
             </p>
 
@@ -220,7 +220,7 @@ export const AICommentary: React.FC<Props> = ({ activeTab, result }) => {
               <button
                 onClick={dismissAll}
                 className="text-[10px] font-semibold"
-                style={{ color: 'rgba(255,255,255,0.28)' }}
+                style={{ color: 'var(--alpha-text-25)' }}
                 aria-label="Turn off AI commentary"
               >
                 Turn off
@@ -229,7 +229,7 @@ export const AICommentary: React.FC<Props> = ({ activeTab, result }) => {
           </div>
 
           {/* Tap-to-dismiss hint */}
-          <p className="text-center text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.20)' }}>
+          <p className="text-center text-[10px] mt-1.5" style={{ color: 'var(--alpha-text-25)' }}>
             Tap anywhere to dismiss
           </p>
         </motion.div>

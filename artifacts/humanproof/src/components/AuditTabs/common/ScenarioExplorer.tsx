@@ -161,8 +161,8 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
             </span>
           )}
           {scenario.dominantUncertainty && (
-            <p className="text-[10px] flex-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              <span style={{ color: 'rgba(255,255,255,0.30)' }}>Key variable: </span>
+            <p className="text-[10px] flex-1" style={{ color: 'var(--alpha-text-45)' }}>
+              <span style={{ color: 'var(--alpha-text-30)' }}>Key variable: </span>
               {scenario.dominantUncertainty}
             </p>
           )}
@@ -223,7 +223,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                   </span>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                     Score in {scenario.planningHorizonMonths ?? 6} months
                   </p>
                   <p className="text-[18px] font-black" style={{ color: scoreColor(activeScenario.scoreIn6Months) }}>
@@ -234,7 +234,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
 
               {/* Score trajectory with delta label */}
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.40)' }}>{currentScore}</span>
+                <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-45)' }}>{currentScore}</span>
                 <div className="flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
                   <div
                     className="h-full rounded-full transition-all"
@@ -248,7 +248,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                   {activeScenario.scoreIn6Months}
                 </span>
               </div>
-              <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[10px] mb-2" style={{ color: 'var(--alpha-text-35)' }}>
                 {scoreDeltaLabel(currentScore, activeScenario.scoreIn6Months)}
               </p>
 
@@ -258,14 +258,14 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                   className="rounded-lg px-2.5 py-2 mb-2"
                   style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>KEY ASSUMPTION</p>
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.60)' }}>{activeScenario.keyAssumption}</p>
+                  <p className="text-[10px] font-bold mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>KEY ASSUMPTION</p>
+                  <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{activeScenario.keyAssumption}</p>
                 </div>
               )}
 
               {/* Narrative */}
               {activeScenario.narrative && (
-                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                   {activeScenario.narrative}
                 </p>
               )}
@@ -274,7 +274,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
             {/* Actions for this scenario */}
             {(activeScenario.actions?.length ?? 0) > 0 && (
               <div>
-                <p className="text-[10px] font-bold tracking-widest mb-2 px-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                <p className="text-[10px] font-bold tracking-widest mb-2 px-1" style={{ color: 'var(--alpha-text-25)' }}>
                   RECOMMENDED ACTIONS — {activeCfg.tag}
                 </p>
                 <div className="space-y-1.5">
@@ -314,8 +314,8 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                 className="flex items-center gap-2 rounded-lg px-3 py-2"
                 style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
               >
-                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
-                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
+                <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                   Scenario-specific actions unavailable — see the action plan for recommended next steps.
                 </p>
               </div>

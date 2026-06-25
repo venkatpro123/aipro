@@ -42,10 +42,10 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
 
       {/* Skill info */}
       <div className="flex-1 min-w-0">
-        <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--alpha-text-85)' }}>
           {item.skill}
         </span>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.45 }}>
+        <p style={{ fontSize: '10px', color: 'var(--alpha-text-50)', lineHeight: 1.45 }}>
           {item.rationale}
         </p>
       </div>
@@ -72,7 +72,7 @@ const EmptyPrompt: React.FC = () => (
     <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
       Add your skills to see what to improve
     </h3>
-    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.55, maxWidth: '320px', marginBottom: '16px' }}>
+    <p style={{ fontSize: '11px', color: 'var(--alpha-text-35)', lineHeight: 1.55, maxWidth: '320px', marginBottom: '16px' }}>
       Add your current skills and the skills you want to your profile. We'll show you which ones are
       in demand and which ones to learn next.
     </p>
@@ -135,7 +135,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: readinessColor }}>
               {marketReadinessPct}%
             </div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Readiness Score
             </div>
           </div>
@@ -145,7 +145,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: criticalGaps.length > 0 ? '#ef4444' : '#10b981' }}>
               {criticalGaps.length}
             </div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Urgent Skills
             </div>
           </div>
@@ -157,7 +157,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             className="rounded-lg px-4 py-3 mb-4"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.68)', lineHeight: 1.55 }}>
+            <p style={{ fontSize: '11px', color: 'var(--alpha-text-55)', lineHeight: 1.55 }}>
               {narrativeSummary}
             </p>
           </div>

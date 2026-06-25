@@ -91,7 +91,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
             </span>
           </div>
           {!open && dim.dataPoint && (
-            <p className="text-[10px] truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
               {dim.dataPoint}
             </p>
           )}
@@ -101,13 +101,13 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
         <div className="flex items-center gap-2 flex-shrink-0">
           <div className="text-right">
             <span className="text-[14px] font-black" style={{ color }}>{dim.score}</span>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
               {Math.round(dim.weight * 100)}% wt
             </p>
           </div>
           {open
-            ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
-            : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
+            ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
+            : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
           }
         </div>
       </button>
@@ -126,7 +126,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
               </span>
             </div>
           )}
-          <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: 'rgba(255,255,255,0.62)' }}>
+          <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: 'var(--alpha-text-55)' }}>
             {dim.reasoning}
           </p>
           <div className="flex items-start gap-1.5">
@@ -157,14 +157,14 @@ export const AIReasoningPanel: React.FC<Props> = ({
       {/* Header */}
       <div className="flex items-center gap-2">
         <Brain className="w-4 h-4" style={{ color: 'rgba(34,211,238,0.60)' }} />
-        <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
           HOW WE REACHED YOUR SCORE
         </p>
       </div>
 
       {/* Top insight */}
       {topInsight && (
-        <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.52)' }}>
+        <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--alpha-text-50)' }}>
           "{topInsight}"
         </p>
       )}
@@ -182,11 +182,11 @@ export const AIReasoningPanel: React.FC<Props> = ({
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
       >
         <div>
-          <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>
             COMBINED RISK
           </p>
           {primaryDataSources.length > 0 && (
-            <p className="text-[10px] flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--alpha-text-25)' }}>
               <Info className="w-2.5 h-2.5" />
               {primaryDataSources.join(' + ')}
             </p>
@@ -194,7 +194,7 @@ export const AIReasoningPanel: React.FC<Props> = ({
         </div>
         <div className="text-right">
           <p className="text-[22px] font-black" style={{ color: scoreColor(finalScore) }}>{finalScore}</p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>
             {confidencePercent}% confidence
           </p>
         </div>

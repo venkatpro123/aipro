@@ -48,7 +48,7 @@ export const AnalysisCompanyTab: React.FC<Props> = ({ result, companyData, onSwi
             <div className="flex items-center gap-2 px-4 py-3"
               style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
-              <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
                 Industry & Market
               </span>
             </div>

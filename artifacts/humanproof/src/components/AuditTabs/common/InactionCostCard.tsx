@@ -53,7 +53,7 @@ export const InactionCostCard: React.FC<InactionCostCardProps> = ({ consequence 
         style={{
           fontSize: '0.825rem',
           lineHeight: 1.55,
-          color: 'rgba(255,255,255,0.75)',
+          color: 'var(--alpha-text-70)',
           margin: 0,
         }}
       >

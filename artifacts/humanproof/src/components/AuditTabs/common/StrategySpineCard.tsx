@@ -104,10 +104,10 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
               {URGENCY_COPY[strategy.urgencyLevel]}
             </span>
           </div>
-          <p className="text-[15px] font-black leading-snug mt-1" style={{ color: 'rgba(255,255,255,0.93)' }}>
+          <p className="text-[15px] font-black leading-snug mt-1" style={{ color: 'var(--alpha-text-92)' }}>
             {posture.label}
           </p>
-          <p className="text-[12px] leading-relaxed mt-1" style={{ color: 'rgba(255,255,255,0.62)' }}>
+          <p className="text-[12px] leading-relaxed mt-1" style={{ color: 'var(--alpha-text-55)' }}>
             {strategy.strategyRationale}
           </p>
         </div>
@@ -122,11 +122,11 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
               Start here · {priority.timeHorizon}
             </p>
           </div>
-          <p className="text-[13px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.92)' }}>
+          <p className="text-[13px] font-bold leading-snug" style={{ color: 'var(--alpha-text-92)' }}>
             {priority.title}
           </p>
           {priority.rationale && (
-            <p className="text-[11px] leading-snug mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <p className="text-[11px] leading-snug mt-1" style={{ color: 'var(--alpha-text-50)' }}>
               {priority.rationale}
             </p>
           )}
@@ -167,7 +167,7 @@ const Row: React.FC<{ icon: React.ElementType; color: string; label: string; tex
     >
       <Icon className="w-3 h-3" style={{ color }} />
     </div>
-    <p className="text-[11.5px] leading-snug flex-1 min-w-0" style={{ color: 'rgba(255,255,255,0.68)' }}>
+    <p className="text-[11.5px] leading-snug flex-1 min-w-0" style={{ color: 'var(--alpha-text-55)' }}>
       <span className="font-black tracking-wide uppercase text-[10px] mr-1.5" style={{ color }}>
         {label}
       </span>

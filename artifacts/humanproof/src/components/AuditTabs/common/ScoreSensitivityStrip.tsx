@@ -80,7 +80,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
                     {lever.dimensionLabel}
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>{current}</span>
+                    <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-50)' }}>{current}</span>
                     <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
                     <span className="text-[11px] font-black" style={{ color: '#22d3ee' }}>{projected}</span>
                     <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.60)' }}>
@@ -89,7 +89,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
                   </div>
                 </div>
                 {/* Action + timeframe */}
-                <p className="text-[10px] leading-snug mb-0.5" style={{ color: 'rgba(255,255,255,0.48)' }}>
+                <p className="text-[10px] leading-snug mb-0.5" style={{ color: 'var(--alpha-text-45)' }}>
                   {lever.fastestAction.length > 90 ? lever.fastestAction.slice(0, 90) + '…' : lever.fastestAction}
                 </p>
                 <span className="text-[10px] font-semibold" style={{ color: fColor }}>
@@ -106,11 +106,11 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
         className="flex items-center justify-between rounded-xl px-3 py-2 mb-3"
         style={{ background: 'rgba(34,211,238,0.08)', border: '1px solid rgba(34,211,238,0.18)' }}
       >
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <span className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>
           {topLevers.length >= 2 ? 'Best case (top 2 levers)' : 'Best case (top lever)'}:
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.50)' }}>{current}</span>
+          <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-50)' }}>{current}</span>
           <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
           <span className="text-base font-black" style={{ color: '#22d3ee' }}>
             {topLevers.length >= 2 ? projectedTwo : projectedSingle}
@@ -120,7 +120,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
 
       {/* Key insight (keySensitivityInsight) */}
       {keySensitivityInsight && (
-        <p className="text-[10px] leading-snug mb-3 italic" style={{ color: 'rgba(255,255,255,0.42)' }}>
+        <p className="text-[10px] leading-snug mb-3 italic" style={{ color: 'var(--alpha-text-45)' }}>
           {keySensitivityInsight}
         </p>
       )}

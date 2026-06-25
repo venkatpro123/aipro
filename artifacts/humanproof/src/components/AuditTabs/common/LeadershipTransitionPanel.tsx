@@ -57,12 +57,12 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
         {/* CEO tenure */}
         <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.60)' }}>CEO TENURE RISK</span>
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>CEO TENURE RISK</span>
             <span className="text-[10px] font-bold" style={{ color: SCORE_COLOR(leadershipRisk.ceoTenureRiskScore) }}>
               {leadershipRisk.ceoTenureRisk}
             </span>
           </div>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {leadershipRisk.ceoTenureNote}
           </p>
         </div>
@@ -71,12 +71,12 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
         {leadershipRisk.cfoSignal !== 'UNKNOWN' && (
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.60)' }}>CFO SIGNAL</span>
+              <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>CFO SIGNAL</span>
               <span className="text-[10px] font-bold" style={{ color: leadershipRisk.cfoSignal === 'DEPARTED' ? '#ef4444' : 'rgba(255,255,255,0.70)' }}>
                 {leadershipRisk.cfoSignal.replace('_', ' ')}
               </span>
             </div>
-            <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
               {leadershipRisk.cfoSignalNote}
             </p>
           </div>
@@ -92,7 +92,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
                 VP DEPARTURE CLUSTER — {leadershipRisk.vpClusteringAlert}
               </span>
             </div>
-            <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
               {leadershipRisk.vpClusteringNote}
             </p>
           </div>
@@ -113,12 +113,12 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
       {/* Stability factors */}
       {leadershipRisk.leadershipStabilityFactors.length > 0 && score < 40 && (
         <div className="mt-2.5">
-          <div className="text-[10px] font-medium mb-1" style={{ color: 'rgba(255,255,255,0.35)' }}>STABILITY FACTORS</div>
+          <div className="text-[10px] font-medium mb-1" style={{ color: 'var(--alpha-text-35)' }}>STABILITY FACTORS</div>
           <div className="space-y-0.5">
             {leadershipRisk.leadershipStabilityFactors.map((f, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: '#10b981' }} />
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.50)' }}>{f}</span>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>{f}</span>
               </div>
             ))}
           </div>

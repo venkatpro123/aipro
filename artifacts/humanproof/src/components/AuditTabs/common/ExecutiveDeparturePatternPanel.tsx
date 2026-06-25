@@ -52,7 +52,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
       <p className="text-sm font-bold mb-1" style={{ color }}>
         {executiveDeparturePattern.dominantPattern}
       </p>
-      <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.60)' }}>
+      <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
         {executiveDeparturePattern.patternDescription}
       </p>
 

@@ -124,10 +124,10 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
   return (
     <div className={className}>
       <div className="flex items-center gap-2 mb-3">
-        <Compass size={14} style={{ color: 'rgba(255,255,255,0.35)' }} />
+        <Compass size={14} style={{ color: 'var(--alpha-text-35)' }} />
         <span
           className="text-[10px] font-black tracking-[0.14em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+          style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
         >
           CAREER EVOLUTION MAP
         </span>
@@ -135,10 +135,10 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
 
       <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="px-4 py-3">
-          <p className="text-[12px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--alpha-text-70)' }}>
             Your Projected Career Trajectory
           </p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
             Based on adjacent roles, skill bridges, and AI disruption forecast
           </p>
         </div>
@@ -182,7 +182,7 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
                     >
                       {node.label}
                     </span>
-                    <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
                       {node.timeframe}
                     </span>
                   </div>

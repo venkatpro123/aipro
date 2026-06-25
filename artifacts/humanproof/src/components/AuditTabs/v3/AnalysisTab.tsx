@@ -96,12 +96,12 @@ const IntelligenceBriefBlock: React.FC<{
             INTELLIGENCE BRIEF
           </span>
         </div>
-        <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <p className="text-[11px] leading-relaxed mb-1" style={{ color: 'var(--alpha-text-50)' }}>
           No live signals were retrieved{companyName ? ` for ${companyName}` : ''}. A brief
           grounded in sector averages would look specific but wouldn't be — so we're not
           generating one. Live data is resolving in the background.
         </p>
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
           Sector context is still available in Market Environment below.
         </p>
       </div>
@@ -114,7 +114,7 @@ const IntelligenceBriefBlock: React.FC<{
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Brain className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.6)' }} />
-            <span className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
               INTELLIGENCE BRIEF
             </span>
           </div>
@@ -133,7 +133,7 @@ const IntelligenceBriefBlock: React.FC<{
             </p>
             <div className="flex items-center gap-2 mt-2">
               <div className="w-3 h-3 rounded-full border-2 border-[rgba(0,212,224,0.15)] border-t-[#22d3ee] animate-spin" />
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                 Refining into a full AI brief from live data…
               </p>
             </div>
@@ -145,7 +145,7 @@ const IntelligenceBriefBlock: React.FC<{
                 <div key={i} className="h-3 rounded-full animate-pulse" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.06)' }} />
               ))}
             </div>
-            <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[10px] mt-2" style={{ color: 'var(--alpha-text-25)' }}>
               AI analysis generating…
             </p>
           </>
@@ -190,7 +190,7 @@ const IntelligenceBriefBlock: React.FC<{
           style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.28)' }}
         >
           <span className="text-amber-400 text-[11px] font-semibold flex-shrink-0">⚠</span>
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
             <span className="font-semibold text-amber-400">Low confidence ({confidencePct}%). </span>
             This analysis is directional — not enough live signals resolved to write a
             company-specific brief. Statements below reflect sector patterns more than
@@ -206,7 +206,7 @@ const IntelligenceBriefBlock: React.FC<{
       {expanded && rest.length > 0 && (
         <div className="space-y-2 mt-2">
           {rest.map((p, i) => (
-            <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
               {p}
             </p>
           ))}
@@ -267,11 +267,11 @@ const MiniGauge: React.FC<{
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xl font-black" style={{ color }}>{score}</span>
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</span>
+          <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>/100</span>
         </div>
       </div>
       <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
-      <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
+      <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>{sublabel}</p>
     </div>
   );
 };
@@ -317,8 +317,8 @@ const MiniGaugeRange: React.FC<{
       </div>
       {/* Show bounds, not a point */}
       <div className="flex items-center gap-0.5">
-        <span className="text-[11px] font-black" style={{ color: 'rgba(255,255,255,0.55)' }}>{ciLow}</span>
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>–</span>
+        <span className="text-[11px] font-black" style={{ color: 'var(--alpha-text-50)' }}>{ciLow}</span>
+        <span className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>–</span>
         <span className="text-[11px] font-black" style={{ color: worstColor }}>{ciHigh}</span>
       </div>
       <div
@@ -329,7 +329,7 @@ const MiniGaugeRange: React.FC<{
         <span className="text-[10px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
       </div>
       <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>{label}</p>
-      <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>{sublabel}</p>
+      <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>{sublabel}</p>
     </div>
   );
 };
@@ -378,7 +378,7 @@ const DualGaugePanel: React.FC<{
       className="rounded-2xl p-4"
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
-      <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.40)' }}>
+      <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'var(--alpha-text-45)' }}>
         RISK vs. READINESS
       </p>
       <div className="flex items-end justify-center gap-8 mb-3">
@@ -398,10 +398,10 @@ const DualGaugePanel: React.FC<{
           : (
             <div className="flex flex-col items-center gap-1" style={{ width: 80 }}>
               <div className="w-20 h-20 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
-                <span className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>not<br/>assessed</span>
+                <span className="text-[10px] text-center" style={{ color: 'var(--alpha-text-35)' }}>not<br/>assessed</span>
               </div>
               <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>Preparedness</p>
-              <p className="text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.40)' }}>complete profile</p>
+              <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>complete profile</p>
             </div>
           )
         }
@@ -413,7 +413,7 @@ const DualGaugePanel: React.FC<{
         <div className="w-1.5 h-6 rounded-full flex-shrink-0" style={{ background: combo.color }} />
         <div>
           <p className="text-[11px] font-bold" style={{ color: combo.color }}>{combo.label}</p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>
             {scoreSufficient ? combo.desc : `Score range ${ciLow}–${ciHigh}: precise tier cannot be determined. ${combo.desc}`}
           </p>
         </div>
@@ -430,7 +430,7 @@ const HorizonBar: React.FC<{
   const color = scoreColor(score);
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[10px] font-bold w-10 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.50)' }}>
+      <span className="text-[10px] font-bold w-10 flex-shrink-0" style={{ color: 'var(--alpha-text-50)' }}>
         {label}
       </span>
       <div className="flex-1 relative">
@@ -446,7 +446,7 @@ const HorizonBar: React.FC<{
           </motion.div>
         </div>
       </div>
-      <span className="text-[10px] w-12 text-right flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }}>
+      <span className="text-[10px] w-12 text-right flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }}>
         {Math.round(confidence * 100)}% CI
       </span>
     </div>
@@ -460,7 +460,7 @@ const HorizonContent: React.FC<{ horizon: PredictionHorizonResult }> = ({ horizo
       <HorizonBar label="90d" score={horizon.horizon90d.score} confidence={horizon.horizon90d.confidence} />
       <HorizonBar label="180d" score={horizon.horizon180d.score} confidence={horizon.horizon180d.confidence} />
     </div>
-    <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+    <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
       {horizon.trajectoryNarrative}
     </p>
   </div>
@@ -499,7 +499,7 @@ const QuorumProgressBar: React.FC<{ stageLabel?: string }> = ({ stageLabel }) =>
           transition={{ duration: 0.25, ease: 'linear' }}
         />
       </div>
-      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+      <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
         {pct}% · Intelligence pipeline running
       </p>
     </div>
@@ -635,7 +635,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
             >
               Verified Pattern
             </span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
               Signal-matched against documented precedents — not AI-generated
             </span>
           </div>

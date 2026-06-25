@@ -49,7 +49,7 @@ const VisaUrgencyChip: React.FC<{
         <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: '#f97316' }}>
           Your {statusLabel} status increases effective urgency by {pct}%.
         </p>
-        <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+        <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
           {gracePeriodDays != null && gracePeriodDays > 0
             ? `Timeline reflects your ${gracePeriodDays}-day grace period constraint. Action deadlines are compressed proportionally.`
             : 'Status ends immediately on termination — no grace period. Action deadlines are compressed proportionally.'}
@@ -62,7 +62,7 @@ const VisaUrgencyChip: React.FC<{
         <span className="text-[13px] font-black" style={{ color: '#f97316' }}>
           +{pct}%
         </span>
-        <p className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-[10px] font-mono" style={{ color: 'var(--alpha-text-30)' }}>
           urgency
         </p>
       </div>
@@ -103,11 +103,11 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
           <div className="px-3 pb-3 space-y-2">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />
-              <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+              <span className="text-[12px]" style={{ color: 'var(--alpha-text-70)' }}>
                 No personal adjustment applied (|delta| &lt; 0.5 pt)
               </span>
             </div>
-            <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
               We considered: {consideredComponents.length > 0 ? consideredComponents.join(', ') : 'visa, manager risk, skill fit, network, career velocity'}.
               Your profile signals were close enough to the cohort baseline that they did not measurably shift the score.
             </p>
@@ -161,7 +161,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
                 {dirLabel}
               </span>
             </div>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
               applied after company + role baseline
             </span>
           </div>
@@ -179,7 +179,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
                     className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0"
                     style={{ background: accentColor }}
                   />
-                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                     {line}
                   </p>
                 </div>
@@ -187,7 +187,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
             </div>
           )}
 
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
             Calibration: developer estimate — pending regression on outcome data
           </p>
         </div>

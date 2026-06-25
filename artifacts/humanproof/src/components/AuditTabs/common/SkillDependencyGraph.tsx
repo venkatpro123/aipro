@@ -76,7 +76,7 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
     >
       <p
         className="text-[9px] font-black tracking-[0.14em] uppercase mb-2.5"
-        style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
       >
         {title}
       </p>
@@ -93,7 +93,7 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
         <div className="flex gap-4 mb-3" style={{ minWidth: COL_W * 3 }}>
           {TIER_LABELS.map((label, i) => (
             <div key={label} className="flex-1 text-center">
-              <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.20)' }}>
+              <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: 'var(--alpha-text-25)' }}>
                 {label}
               </span>
             </div>
@@ -161,7 +161,7 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
               <ChevronRight
                 key={i}
                 className="w-3 h-3"
-                style={{ color: 'rgba(255,255,255,0.12)' }}
+                style={{ color: 'var(--alpha-text-25)' }}
               />
             ))}
           </div>
@@ -172,7 +172,7 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
           {[{ label: 'Safe', color: '#10b981' }, { label: 'At Risk', color: '#f59e0b' }, { label: 'Evolving', color: '#7c3aed' }].map(l => (
             <div key={l.label} className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color, opacity: 0.6 }} />
-              <span className="text-[8px]" style={{ color: 'rgba(255,255,255,0.30)' }}>{l.label}</span>
+              <span className="text-[8px]" style={{ color: 'var(--alpha-text-30)' }}>{l.label}</span>
             </div>
           ))}
         </div>

@@ -113,7 +113,7 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
             {' '}due to conflicting signals. The adjusted tier is used in your risk score.
           </p>
           {regionThresholdLabel && (
-            <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)', marginTop: 4 }}>
+            <p style={{ fontSize: '0.68rem', color: 'var(--alpha-text-35)', marginTop: 4 }}>
               Region baseline: {regionThresholdLabel}
             </p>
           )}
@@ -145,11 +145,11 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '0.72rem', fontWeight: 600, color: 'rgba(255,255,255,0.75)', lineHeight: 1.3, marginBottom: 2 }}>
+                <p style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--alpha-text-70)', lineHeight: 1.3, marginBottom: 2 }}>
                   {sig.signal}
                 </p>
                 {sig.description && (
-                  <p style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.42)', lineHeight: 1.45 }}>
+                  <p style={{ fontSize: '0.67rem', color: 'var(--alpha-text-45)', lineHeight: 1.45 }}>
                     {sig.description}
                   </p>
                 )}

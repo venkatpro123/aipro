@@ -93,12 +93,12 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
             to={score}
             duration={1000}
             className="font-black"
-            style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'rgba(255,255,255,0.95)', lineHeight: 1 }}
+            style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'var(--alpha-text-92)', lineHeight: 1 }}
           />
         ) : (
           <span style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'rgba(255,255,255,0.0)', fontWeight: 900 }}>—</span>
         )}
-        <p className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.40)', marginTop: 2 }}>
+        <p className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-45)', marginTop: 2 }}>
           RISK SCORE
         </p>
       </div>
@@ -152,7 +152,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
       <button
         onClick={complete}
         className="absolute top-5 right-5 text-[10px] font-semibold px-3 py-1.5 rounded-full"
-        style={{ color: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}
+        style={{ color: 'var(--alpha-text-25)', border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}
       >
         Skip
       </button>
@@ -170,10 +170,10 @@ export const AuditRevealScreen: React.FC<Props> = ({
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center gap-4"
             >
-              <p className="text-[11px] font-semibold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[11px] font-semibold tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
                 ANALYSIS COMPLETE
               </p>
-              <p className="text-lg font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <p className="text-lg font-bold" style={{ color: 'var(--alpha-text-85)' }}>
                 {companyName}
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
@@ -187,8 +187,8 @@ export const AuditRevealScreen: React.FC<Props> = ({
                       style={{ background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.22)' }}>
                       <Icon className="w-4 h-4" style={{ color: '#22d3ee' }} />
                     </div>
-                    <span className="text-[15px] font-black" style={{ color: 'rgba(255,255,255,0.88)' }}>{label}</span>
-                    <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{sub}</span>
+                    <span className="text-[15px] font-black" style={{ color: 'var(--alpha-text-85)' }}>{label}</span>
+                    <span className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>{sub}</span>
                   </div>
                 ))}
               </div>
@@ -205,7 +205,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
               transition={{ duration: 0.35 }}
               className="flex flex-col items-center gap-4"
             >
-              <p className="text-[11px] font-semibold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[11px] font-semibold tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
                 YOUR RISK SCORE
               </p>
               <ScoreRingReveal score={score} color={tierColor} visible={ringVisible} />
@@ -244,11 +244,11 @@ export const AuditRevealScreen: React.FC<Props> = ({
                   <p className="text-[9px] font-bold tracking-widest mb-1" style={{ color: 'rgba(34,211,238,0.60)' }}>
                     YOUR FIRST STEP
                   </p>
-                  <p className="text-[12px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  <p className="text-[12px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
                     {firstActionTitle}
                   </p>
                   {firstActionEffort && (
-                    <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
                       Est. {firstActionEffort}
                     </p>
                   )}

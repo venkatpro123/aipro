@@ -90,7 +90,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({ score, color, size = 100 }) => {
         >
           {score}
         </motion.span>
-        <span className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.40)' }}>
+        <span className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
           /100
         </span>
       </div>
@@ -125,7 +125,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[12px] font-semibold inline-flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <span className="text-[12px] font-semibold inline-flex items-center gap-1.5" style={{ color: 'var(--alpha-text-85)' }}>
                 {pillar.label}
                 {/* Per-pillar provenance: each pillar score is MODELED (formula output) */}
                 {PILLAR_PROVENANCE_FIELD[pillar.key] && (
@@ -152,8 +152,8 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                   {pillar.score}
                 </span>
                 {isExpanded
-                  ? <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.35)' }} />
-                  : <ChevronRight className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.35)' }} />
+                  ? <ChevronDown className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />
+                  : <ChevronRight className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />
                 }
               </div>
             </div>
@@ -203,11 +203,11 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
               {/* Signals */}
               {pillar.signals.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'var(--alpha-text-35)' }}>
                     SIGNALS
                   </p>
                   {pillar.signals.map((s, i) => (
-                    <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                    <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
                       · {s}
                     </p>
                   ))}
@@ -223,7 +223,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                   {pillar.quickWins.map((w, i) => (
                     <div key={i} className="flex items-start gap-1.5">
                       <TrendingUp className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: statusColor }} />
-                      <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+                      <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                         {w}
                       </p>
                     </div>
@@ -238,21 +238,21 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                   className="rounded-lg px-2.5 py-2"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                 >
-                  <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'var(--alpha-text-30)' }}>
                     BENCHMARK
                   </p>
-                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                     <span style={{ color: statusColor, fontWeight: 800 }}>You: {pillar.score}%</span>
                     {'  ·  '}
                     <span>
                       Median among {pillar.benchmark.populationLabel}:{' '}
-                      <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>
+                      <span style={{ color: 'var(--alpha-text-70)', fontWeight: 700 }}>
                         {pillar.benchmark.medianScore}%
                       </span>
                     </span>
                   </p>
                   {pillar.benchmark.formulaNote && (
-                    <p className="text-[10px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    <p className="text-[10px] mt-1 leading-snug" style={{ color: 'var(--alpha-text-25)' }}>
                       Formula: {pillar.benchmark.formulaNote}
                     </p>
                   )}
@@ -307,13 +307,13 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
               </span>
             </div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>
+              <h3 className="text-sm font-bold" style={{ color: 'var(--alpha-text-92)' }}>
                 Career Preparedness
               </h3>
               {/* The overall score is always MODELED — composite of 5 pillar formulas */}
               <ProvenanceLabel field="preparedness_overall" size="xs" />
             </div>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.58)' }}>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
               {preparedness.estimatedLandingWeeks}w estimated to a comparable offer if laid off today
             </p>
           </div>
@@ -324,7 +324,7 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
           className="mt-3 p-3 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
             {preparedness.preparednessNarrative}
           </p>
         </div>
@@ -332,7 +332,7 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
 
       {/* Pillar breakdown */}
       <div>
-        <p className="text-[10px] font-bold tracking-widest mb-2.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] font-bold tracking-widest mb-2.5" style={{ color: 'var(--alpha-text-35)' }}>
           5-PILLAR BREAKDOWN
         </p>
         <div className="space-y-2">
@@ -360,7 +360,7 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
             </p>
           </div>
           {preparedness.topGaps.map((gap, i) => (
-            <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            <p key={i} className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
               {i + 1}. {gap}
             </p>
           ))}
@@ -382,7 +382,7 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
           {preparedness.quickWins.map((win, i) => (
             <div key={i} className="flex items-start gap-2 mb-1.5">
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5" style={{ background: '#00d4e0' }} />
-              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                 {win}
               </p>
             </div>
@@ -391,7 +391,7 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
       )}
 
       {/* Footnote */}
-      <p className="text-[10px] text-center px-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+      <p className="text-[10px] text-center px-2" style={{ color: 'var(--alpha-text-25)' }}>
         Preparedness score is independent of layoff probability — read alongside your risk score for a complete picture.
       </p>
     </div>

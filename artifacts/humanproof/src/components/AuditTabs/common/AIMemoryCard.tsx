@@ -46,7 +46,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
       {/* Header */}
       <p
         className="text-[9px] font-black tracking-[0.14em] uppercase mb-2"
-        style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
       >
         SINCE YOUR LAST CHECK
       </p>
@@ -62,7 +62,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
           >
             <ScoreDriftIcon className="w-3 h-3 flex-shrink-0" style={{ color: driftColor }} />
             <span className="text-[11px] font-bold" style={{ color: driftColor }}>{driftLabel}</span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>risk score</span>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>risk score</span>
           </div>
         )}
 
@@ -74,7 +74,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
           >
             <CheckSquare className="w-3 h-3 flex-shrink-0" style={{ color: '#10b981' }} />
             <span className="text-[11px] font-bold" style={{ color: '#10b981' }}>{completedActionCount}</span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
               action{completedActionCount !== 1 ? 's' : ''} done
             </span>
           </div>
@@ -93,7 +93,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
             <span className="text-[11px] font-bold" style={{ color: streakInfo!.isAtRisk ? '#f59e0b' : '#fb923c' }}>
               {streakInfo!.currentStreak}wk
             </span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>streak</span>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>streak</span>
             {streakInfo!.isAtRisk && (
               <span className="text-[9px] font-bold" style={{ color: '#f59e0b' }}>at risk</span>
             )}
@@ -106,11 +106,11 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
-            <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.35)' }} />
-            <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--alpha-text-35)' }} />
+            <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-50)' }}>
               {daysSinceLastAudit}d
             </span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>since last check</span>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>since last check</span>
           </div>
         )}
 

@@ -105,7 +105,7 @@ export const FirstAuditWelcome: React.FC<Props> = ({
             className="absolute top-2 right-2 p-1 rounded-md hover:bg-white/5 transition-colors"
             aria-label="Dismiss welcome"
           >
-            <X className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.40)' }} />
+            <X className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-45)' }} />
           </button>
 
           <p
@@ -114,7 +114,7 @@ export const FirstAuditWelcome: React.FC<Props> = ({
           >
             FIRST AUDIT · WHAT TO LOOK AT
           </p>
-          <p className="text-[13px] font-bold leading-tight mb-3" style={{ color: 'rgba(255,255,255,0.92)' }}>
+          <p className="text-[13px] font-bold leading-tight mb-3" style={{ color: 'var(--alpha-text-92)' }}>
             Here's how to read this dashboard.
           </p>
 
@@ -131,10 +131,10 @@ export const FirstAuditWelcome: React.FC<Props> = ({
                     {String(i + 1).padStart(2, '0')}
                   </span>
                 </div>
-                <p className="text-[11px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                <p className="text-[11px] font-bold leading-tight" style={{ color: 'var(--alpha-text-85)' }}>
                   {label}
                 </p>
-                <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] leading-snug mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>
                   {sub}
                 </p>
               </div>

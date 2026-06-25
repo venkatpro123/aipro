@@ -147,10 +147,10 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>
+          <p className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>
             CAREER HEALTH
           </p>
-          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          <p className="text-[11px] mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>
             {strongCount} factor{strongCount !== 1 ? 's' : ''} strong · {gapCount} gap{gapCount !== 1 ? 's' : ''} identified
           </p>
         </div>

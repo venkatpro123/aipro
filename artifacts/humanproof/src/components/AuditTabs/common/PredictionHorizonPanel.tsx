@@ -104,7 +104,7 @@ const HorizonColumn: React.FC<{
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>
             {meta.sublabel}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 900, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.06em' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 900, color: 'var(--alpha-text-85)', letterSpacing: '0.06em' }}>
             {meta.label}
           </div>
         </div>
@@ -122,7 +122,7 @@ const HorizonColumn: React.FC<{
           <span style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1, color: sc }}>
             {horizon.score}
           </span>
-          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}>/100</span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>/100</span>
         </div>
 
         {isWarnOverride && (
@@ -142,7 +142,7 @@ const HorizonColumn: React.FC<{
 
       {/* Dominant signal */}
       <div className="pl-2">
-        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
+        <div style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
           Dominant signal
         </div>
         <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.4 }}>
@@ -183,7 +183,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
         <div className="flex items-center gap-2 mb-4 overflow-x-auto">
           {/* Current */}
           <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>Now</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>Now</span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: scoreColor(currentScore) }}>{currentScore}</span>
           </div>
           {[
@@ -199,7 +199,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
               <React.Fragment key={key}>
                 <span style={{ color: arrowColor, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{arrow}</span>
                 <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{key}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{key}</span>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: scoreColor(h.score) }}>{h.score}</span>
                 </div>
               </React.Fragment>
@@ -232,7 +232,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           className="rounded-lg px-4 py-3"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Trajectory Narrative
           </div>
           <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.55 }}>

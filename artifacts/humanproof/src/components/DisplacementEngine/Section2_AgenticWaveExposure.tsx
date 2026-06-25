@@ -37,7 +37,7 @@ function ScoreRing({ score, color, label, size = 90 }: { score: number; color: s
           <span style={{ fontSize: size > 80 ? 22 : 16, fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{score}</span>
         </div>
       </div>
-      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}>{label}</span>
+      <span style={{ fontSize: 10, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'center' }}>{label}</span>
     </div>
   );
 }
@@ -74,7 +74,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Current Risk</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Current Risk</div>
           <ScoreRing score={waveScore.currentScore} color={currentColor} label="Today" size={100} />
         </div>
 
@@ -84,7 +84,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
             <TrendingUp size={18} />
             <span style={{ fontSize: 20, fontWeight: 900, fontFamily: 'var(--font-mono)', color: waveScore.scoreColor }}>+{gap}</span>
           </div>
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Exposure Gap</span>
+          <span style={{ fontSize: 9, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Exposure Gap</span>
         </div>
 
         <div style={{ textAlign: 'center' }}>
@@ -103,8 +103,8 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
       }}>
         <Zap size={13} style={{ color: 'var(--cyan,#22d3ee)', flexShrink: 0 }} />
         <div>
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Industry Adoption Speed · </span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.70)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Industry Adoption Speed · </span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--alpha-text-70)', fontFamily: 'var(--font-mono)' }}>
             {ADOPTION_LABELS[waveScore.industryAdoptionSpeed] ?? waveScore.industryAdoptionSpeed.toUpperCase()}
           </span>
         </div>
@@ -112,12 +112,12 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
 
       {/* Key drivers */}
       <div style={{ padding: '16px 18px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
           Why the Gap Exists
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {waveScore.keyDrivers.map((d, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.65 }}>
+            <div key={i} style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--alpha-text-55)', lineHeight: 1.65 }}>
               <span style={{ color: waveScore.scoreColor, flexShrink: 0, marginTop: 2 }}>→</span>
               <span>{d}</span>
             </div>
@@ -126,7 +126,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
       </div>
 
       {/* Projection window note */}
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.30)', lineHeight: 1.6, fontStyle: 'italic', padding: '0 4px' }}>
+      <div style={{ fontSize: 11, color: 'var(--alpha-text-30)', lineHeight: 1.6, fontStyle: 'italic', padding: '0 4px' }}>
         {waveScore.projectionWindow}. This score assumes widespread deployment of autonomous AI agents across enterprise workflows. Actual timing will vary by organisation, regulation, and economic conditions.
       </div>
     </div>

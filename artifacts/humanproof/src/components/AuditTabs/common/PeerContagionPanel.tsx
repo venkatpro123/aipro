@@ -40,7 +40,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
             {contagion.waveIntensity}
           </span>
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.45)' }}>
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-45)' }}>
             {contagion.totalPeersMonitored} peers
           </span>
         </div>
@@ -124,7 +124,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
               Estimated propagation: ~{contagion.estimatedPropagationDays} days
             </span>
           </div>
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-xs mt-1" style={{ color: 'var(--alpha-text-50)' }}>
             Based on documented sector wave timing patterns (2022–2026)
           </p>
         </div>
@@ -143,7 +143,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       {contagion.waveIntensity !== 'NONE' && (
         <div className="mt-2 flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" style={{ color: colors.text, opacity: 0.6 }} />
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
             Amplifier ×{contagion.scoreAmplifier.toFixed(2)} applied to company risk score
           </span>
         </div>
@@ -165,7 +165,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
         border: '1px solid rgba(255,255,255,0.07)',
       }}>
         <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(148,163,184,0.45)' }} />
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>
           {contagion.multipliersCalibrationStatus === 'developer_estimate'
             ? 'Sector-peer weighting is estimated — real-world data accumulation is in progress. Treat contagion scores as directional, not precise.'
             : `Sector-peer weighting is empirically calibrated from ${contagion.decayEvidenceCount > 0 ? `${contagion.decayEvidenceCount} documented events` : 'layoff pattern data'}. Full details in Methodology.`}

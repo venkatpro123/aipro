@@ -86,16 +86,16 @@ const ActionRow: React.FC<{
           {action.title}
         </p>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>{action.timeEstimate}</span>
+          <span className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>{action.timeEstimate}</span>
           {open
-            ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />
-            : <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />
+            ? <ChevronUp className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
+            : <ChevronDown className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
           }
         </div>
       </button>
       {open && (
         <div className="px-3 pb-2.5 pt-0">
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.48)' }}>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
             {action.rationale}
           </p>
         </div>
@@ -142,7 +142,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-[10px] font-black tracking-wide" style={{ color: 'rgba(255,255,255,0.85)' }}>
+            <p className="text-[10px] font-black tracking-wide" style={{ color: 'var(--alpha-text-85)' }}>
               FREELANCER INTELLIGENCE
             </p>
             <span
@@ -156,13 +156,13 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
               {typeLabel}
             </span>
           </div>
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.48)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
             {intelligence.headline}
           </p>
         </div>
         {open
-          ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.28)' }} />
-          : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.28)' }} />
+          ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }} />
+          : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }} />
         }
       </button>
 
@@ -192,7 +192,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
               >
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: concentColor }} />
-                  <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
                     {intelligence.riskSummary}
                   </p>
                 </div>
@@ -214,10 +214,10 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                   <p className="text-[18px] font-black capitalize" style={{ color: concentColor }}>
                     {cc.tier}
                   </p>
-                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-35)' }}>
                     Concentration score: {cc.score}/100
                   </p>
-                  <p className="text-[10px] mt-1.5 italic leading-snug" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  <p className="text-[10px] mt-1.5 italic leading-snug" style={{ color: 'var(--alpha-text-25)' }}>
                     {cc.lossImpact}
                   </p>
                 </div>
@@ -229,17 +229,17 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <DollarSign className="w-3 h-3" style={{ color: '#22d3ee' }} />
-                    <p className="text-[10px] font-black tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <p className="text-[10px] font-black tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
                       FINANCES
                     </p>
                   </div>
                   <p className="text-[16px] font-black" style={{ color: '#22d3ee' }}>
                     {fp.recommendedRunwayMonths}mo
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
                     recommended runway
                   </p>
-                  <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-35)' }}>
                     Tax reserve: <span className="font-bold text-[#f59e0b]">{fp.taxReservePct}%</span> of each invoice
                   </p>
                   {fp.runwayGapMonths != null && fp.runwayGapMonths > 0 && (
@@ -255,7 +255,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
                     <TrendingUp className="w-3 h-3" style={{ color: '#818cf8' }} />
-                    <p className="text-[10px] font-black tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <p className="text-[10px] font-black tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
                       PIPELINE CHANNELS TO ACTIVATE
                     </p>
                   </div>
@@ -263,7 +263,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                     {pd.channels.map((channel, i) => (
                       <div key={i} className="flex items-start gap-2">
                         <Zap className="w-2.5 h-2.5 flex-shrink-0 mt-0.5" style={{ color: 'rgba(129,140,248,0.55)' }} />
-                        <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.48)' }}>
+                        <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
                           {channel}
                         </p>
                       </div>
@@ -277,10 +277,10 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                 className="rounded-xl px-3.5 py-2.5"
                 style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
               >
-                <p className="text-[10px] font-black tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                <p className="text-[10px] font-black tracking-widest mb-1" style={{ color: 'var(--alpha-text-25)' }}>
                   RATE BENCHMARK
                 </p>
-                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
                   {fp.rateBenchmark}
                 </p>
               </div>
@@ -288,7 +288,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
               {/* Priority actions */}
               {intelligence.priorityActions.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-black tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  <p className="text-[10px] font-black tracking-widest mb-2" style={{ color: 'var(--alpha-text-25)' }}>
                     YOUR FREELANCER PRIORITY ACTIONS
                   </p>
                   <div className="space-y-1.5">
@@ -300,12 +300,12 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
               )}
 
               {/* Client recommendation */}
-              <p className="text-[10px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              <p className="text-[10px] leading-relaxed italic" style={{ color: 'var(--alpha-text-25)' }}>
                 {cc.recommendation}
               </p>
 
               {/* Disclaimer */}
-              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.18)' }}>
+              <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-25)' }}>
                 Freelancer intelligence is derived from your self-reported job title. Client concentration
                 and financial estimates are modeled from typical patterns — add more profile data for
                 sharper personalization. This is not financial or legal advice.

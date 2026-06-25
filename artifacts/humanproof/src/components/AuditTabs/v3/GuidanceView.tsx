@@ -199,7 +199,7 @@ const SectionLabel: React.FC<{ text: string }> = ({ text }) => (
     fontWeight: 700,
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.35)',
+    color: 'var(--alpha-text-35)',
     margin: '0 0 10px',
   }}>
     {text}
@@ -296,14 +296,14 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               {topDrivers.map((driver, i) => (
                 <div key={i}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{driver.label}</p>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-92)', margin: 0 }}>{driver.label}</p>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#dc2626' }}>{driver.score}/100</span>
                   </div>
                   <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${driver.score}%`, background: riskColor(driver.score), borderRadius: '2px', transition: 'width 0.8s ease' }} />
                   </div>
                   {driver.evidence && (
-                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: '4px 0 0', lineHeight: 1.5 }}>{driver.evidence}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--alpha-text-45)', margin: '4px 0 0', lineHeight: 1.5 }}>{driver.evidence}</p>
                   )}
                 </div>
               ))}
@@ -335,11 +335,11 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#dc2626', margin: 0 }}>
                 YOUR MOVE{topAction.timeHorizon ? ` — ${topAction.timeHorizon}` : ''}
               </p>
-              <p style={{ fontSize: '16px', fontWeight: 800, color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: 1.3 }}>
+              <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--alpha-text-92)', margin: 0, lineHeight: 1.3 }}>
                 {topAction.title}
               </p>
               {topAction.rationale && (
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)', margin: 0, lineHeight: 1.5 }}>{topAction.rationale}</p>
+                <p style={{ fontSize: '12px', color: 'var(--alpha-text-55)', margin: 0, lineHeight: 1.5 }}>{topAction.rationale}</p>
               )}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '10px', fontWeight: 700, color: '#dc262699', padding: '2px 8px', background: 'rgba(220,38,38,0.12)', borderRadius: '20px' }}>
@@ -368,7 +368,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           onClick={onSwitchToBeast}
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'center', width: '100%', display: 'block' }}
         >
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>Open full emergency plan </span>
+          <span style={{ fontSize: '12px', color: 'var(--alpha-text-35)' }}>Open full emergency plan </span>
           <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>→</span>
         </button>
 
@@ -424,7 +424,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
             {topDrivers.map((driver, i) => (
               <div key={i}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', margin: 0 }}>{driver.label}</p>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-92)', margin: 0 }}>{driver.label}</p>
                   <span style={{
                     fontSize: '11px',
                     fontWeight: 700,
@@ -444,7 +444,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                   />
                 </div>
                 {driver.evidence && (
-                  <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.55 }}>{driver.evidence}</p>
+                  <p style={{ fontSize: '11px', color: 'var(--alpha-text-45)', margin: 0, lineHeight: 1.55 }}>{driver.evidence}</p>
                 )}
               </div>
             ))}
@@ -474,11 +474,11 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
             <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: accentColor, margin: 0 }}>
               YOUR MOVE{topAction.timeHorizon ? ` — ${topAction.timeHorizon}` : ''}
             </p>
-            <p style={{ fontSize: '15px', fontWeight: 700, color: 'rgba(255,255,255,0.95)', margin: 0, lineHeight: 1.4 }}>
+            <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--alpha-text-92)', margin: 0, lineHeight: 1.4 }}>
               {topAction.title}
             </p>
             {topAction.rationale && (
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.5 }}>{topAction.rationale}</p>
+              <p style={{ fontSize: '12px', color: 'var(--alpha-text-50)', margin: 0, lineHeight: 1.5 }}>{topAction.rationale}</p>
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
               <span style={{
@@ -521,11 +521,11 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                     paddingBottom: '4px',
                   }}
                 >
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.90)', margin: '0 0 4px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-92)', margin: '0 0 4px' }}>
                     {action.title}
                   </p>
                   {action.description && (
-                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.50)', margin: '0 0 6px', lineHeight: 1.5 }}>
+                    <p style={{ fontSize: '12px', color: 'var(--alpha-text-50)', margin: '0 0 6px', lineHeight: 1.5 }}>
                       {action.description}
                     </p>
                   )}
@@ -547,7 +547,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                       <span style={{
                         fontSize: '10px',
                         fontWeight: 600,
-                        color: 'rgba(255,255,255,0.45)',
+                        color: 'var(--alpha-text-45)',
                         padding: '1px 6px',
                         background: 'rgba(255,255,255,0.06)',
                         borderRadius: '10px',

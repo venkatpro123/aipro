@@ -66,7 +66,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
           style={blsMacroSignal.quitsFallSignal
             ? { background: 'rgba(239,68,68,0.14)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.30)' }
-            : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.08)' }
+            : { background: 'rgba(255,255,255,0.04)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.08)' }
           }
         >
           <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.quitsFallSignal ? '#ef4444' : 'rgba(255,255,255,0.20)', color: 'transparent' }} />
@@ -76,7 +76,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
           style={blsMacroSignal.yieldCurveWarning
             ? { background: 'rgba(245,158,11,0.14)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.30)' }
-            : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.08)' }
+            : { background: 'rgba(255,255,255,0.04)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.08)' }
           }
         >
           <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.yieldCurveWarning ? '#f59e0b' : 'rgba(255,255,255,0.20)', color: 'transparent' }} />
@@ -86,7 +86,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
           style={blsMacroSignal.sectorLayoffAcceleration
             ? { background: 'rgba(239,68,68,0.14)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.30)' }
-            : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.08)' }
+            : { background: 'rgba(255,255,255,0.04)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.08)' }
           }
         >
           <TrendingDown className="w-3 h-3" />
@@ -97,14 +97,14 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
       {/* Key insights */}
       {blsMacroSignal.keyInsights.length > 0 && (
         <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-[10px] font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <div className="text-[10px] font-semibold mb-1.5" style={{ color: 'var(--alpha-text-45)' }}>
             KEY MACRO INSIGHTS
           </div>
           <div className="space-y-1.5">
             {blsMacroSignal.keyInsights.slice(0, 3).map((insight, i) => (
               <div key={i} className="flex items-start gap-1.5">
                 <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color }} />
-                <span className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <span className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                   {insight}
                 </span>
               </div>
@@ -129,7 +129,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
       )}
 
       {/* Calibration note */}
-      <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.30)' }}>
+      <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-30)' }}>
         {blsMacroSignal.calibrationNote}
       </p>
     </motion.div>

@@ -185,7 +185,7 @@ const QuorumCard: React.FC<CardProps> = ({ title, icon, status, accentColor, chi
 
 const SignalRow: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color = '#e2e8f0' }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.40)', letterSpacing: '0.04em' }}>{label}</span>
+    <span style={{ fontSize: '10px', color: 'var(--alpha-text-45)', letterSpacing: '0.04em' }}>{label}</span>
     <span style={{ fontSize: '11px', fontWeight: 600, color, fontFamily: 'monospace' }}>{value}</span>
   </div>
 );
@@ -266,7 +266,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
             </>
           )}
           {financial === 'unavailable' && (
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.6' }}>
+            <div style={{ fontSize: '10px', color: 'var(--alpha-text-35)', lineHeight: '1.6' }}>
               No public financial disclosures available.
               {cd && !cd.isPublic && (
                 <span style={{ display: 'block', marginTop: '4px', color: '#94a3b8' }}>
@@ -295,7 +295,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
                 />
               )}
               {cd?.revenueGrowthYoY == null && cd?.stock90DayChange == null && (
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)', marginTop: '4px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--alpha-text-30)', marginTop: '4px' }}>
                   Financial data not found — L1 uses sector baseline.
                 </div>
               )}
@@ -318,7 +318,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
             </>
           )}
           {layoff === 'unavailable' && (
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.6' }}>
+            <div style={{ fontSize: '10px', color: 'var(--alpha-text-35)', lineHeight: '1.6' }}>
               No layoff history data available for this company.
               <span style={{ display: 'block', marginTop: '4px', color: '#94a3b8' }}>
                 L2 scored at neutral baseline.
@@ -366,7 +366,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
           visible={true} // always visible — shows pending state
         >
           {hiring === 'pending' && (
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.7' }}>
+            <div style={{ fontSize: '10px', color: 'var(--alpha-text-35)', lineHeight: '1.7' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <span style={{
                   display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
@@ -393,7 +393,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
                 />
               )}
               {!hiringTrend && (
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.30)', marginTop: '4px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--alpha-text-30)', marginTop: '4px' }}>
                   No public hiring data — L3 uses sector baseline.
                 </div>
               )}
@@ -409,7 +409,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
           background: 'rgba(0,245,255,0.04)',
           border: '1px solid rgba(0,245,255,0.10)',
           borderRadius: '8px', fontSize: '10px',
-          color: 'rgba(255,255,255,0.35)', lineHeight: '1.5',
+          color: 'var(--alpha-text-35)', lineHeight: '1.5',
         }}>
           <span style={{ color: 'rgba(0,245,255,0.50)', fontWeight: 700 }}>◈ </span>
           Company and role signals resolved. Incorporating job market data and 30-agent swarm…

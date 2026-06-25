@@ -104,7 +104,7 @@ const WARNAlertBanner: React.FC<Props> = ({ warnSignal, companyName }) => {
             )}
           </div>
 
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
             <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{companyName}</strong> has filed a
             WARN Act notice with state regulatory authorities.{' '}
             {affected > 0

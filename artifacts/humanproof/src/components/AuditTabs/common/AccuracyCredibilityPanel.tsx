@@ -162,7 +162,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
       >
         <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
             HOW ACCURATE ARE WE?
           </p>
         </div>
@@ -180,11 +180,11 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
 
       {/* Calibration mode */}
       <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           {modeCopy.body}
         </p>
         {outcomeCount > 0 && (
-          <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-25)' }}>
             {outcomeCount} tracked outcomes in the validation dataset
           </p>
         )}
@@ -194,8 +194,8 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
       {tierAccuracy && tierAccuracy.length > 0 && (
         <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-1.5 mb-2">
-            <BarChart className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
-            <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.28)' }}>
+            <BarChart className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
+            <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-25)' }}>
               DIRECTIONAL ACCURACY BY SCORE RANGE
             </p>
           </div>
@@ -237,7 +237,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
               );
             })}
           </div>
-          <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.18)' }}>
+          <p className="text-[10px] mt-2" style={{ color: 'var(--alpha-text-25)' }}>
             Directional accuracy = correct risk tier prediction (not point-estimate precision)
           </p>
         </div>
@@ -247,7 +247,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
       <div className="px-4 py-3">
         <div className="flex items-center gap-1.5 mb-2">
           <CheckCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(16,185,129,0.50)' }} />
-          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-25)' }}>
             NOTABLE PREDICTIONS (ILLUSTRATIVE)
           </p>
         </div>
@@ -274,7 +274,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
                   }
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  <p className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-70)' }}>
                     {p.company}
                     <span
                       className="ml-1.5 text-[10px] px-1 py-0.5 rounded"
@@ -283,13 +283,13 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
                       {p.scoreRange}
                     </span>
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
                     {p.prediction}
                   </p>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>
                     → {p.outcome}
                   </p>
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
                     {p.lag}
                   </p>
                 </div>
@@ -297,7 +297,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
             );
           })}
         </div>
-        <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.18)' }}>
+        <p className="text-[10px] mt-2 leading-relaxed" style={{ color: 'var(--alpha-text-25)' }}>
           These examples are from publicly-reported events where our model had a score on file.
           They are illustrative — not a complete accuracy sample. Full calibration data is above.
         </p>

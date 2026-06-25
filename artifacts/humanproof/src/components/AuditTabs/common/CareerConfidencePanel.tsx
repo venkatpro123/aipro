@@ -46,7 +46,7 @@ const PillarRow: React.FC<{ pillar: ReadinessPillar; index: number }> = ({ pilla
       </span>
     </div>
     <p className="text-[10px] ml-28 leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity"
-      style={{ color: 'rgba(255,255,255,0.45)' }}>
+      style={{ color: 'var(--alpha-text-45)' }}>
       {pillar.topAction.slice(0, 80)}…
     </p>
   </motion.div>
@@ -93,7 +93,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
           <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.8)' }}>
             {confidence.criticalGap.name}
           </p>
-          <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {confidence.criticalGap.topAction}
           </p>
           <p className="text-[10px] mt-1.5 opacity-50">Fix time: {confidence.criticalGap.timeToFix}</p>
@@ -116,12 +116,12 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
         <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
           RISK × READINESS
         </p>
-        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           {confidence.riskConfidenceInterpretation}
         </p>
       </div>
 
-      <p className="text-[10px] mt-2 text-right" style={{ color: 'rgba(255,255,255,0.25)' }}>
+      <p className="text-[10px] mt-2 text-right" style={{ color: 'var(--alpha-text-25)' }}>
         Ready in ~{confidence.estimatedReadyInDays} days with focused action
       </p>
     </div>

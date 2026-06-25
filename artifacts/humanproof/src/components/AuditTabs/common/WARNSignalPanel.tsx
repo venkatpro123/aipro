@@ -87,7 +87,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       {/* WARN risk score bar */}
       <div className="mb-3">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>WARN RISK SCORE</span>
+          <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>WARN RISK SCORE</span>
           <span className="text-[10px] font-bold" style={{ color: urgency.color }}>{warnSignal.warnRiskScore}/100</span>
         </div>
         <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -102,15 +102,15 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       {displayedLocations.length > 0 && (
         <div className="mb-2.5">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <MapPin className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.40)' }} />
-            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>AFFECTED LOCATIONS</span>
+            <MapPin className="w-3 h-3" style={{ color: 'var(--alpha-text-45)' }} />
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>AFFECTED LOCATIONS</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {displayedLocations.map((loc, i) => (
               <span
                 key={i}
                 className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)' }}
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-55)' }}
               >
                 {loc}
               </span>
@@ -118,7 +118,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
             {extraLocations > 0 && (
               <span
                 className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)' }}
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-45)' }}
               >
                 +{extraLocations} more
               </span>
@@ -130,9 +130,9 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       {/* Filing states */}
       {filingStates.length > 0 && (
         <div className="mb-2.5">
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
             States covered:{' '}
-            <span style={{ color: 'rgba(255,255,255,0.65)' }}>{filingStates.join(', ')}</span>
+            <span style={{ color: 'var(--alpha-text-55)' }}>{filingStates.join(', ')}</span>
           </span>
         </div>
       )}
@@ -143,7 +143,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <Shield className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#10b981' }} />
-        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           This is a legally-required 60-day advance notice filing — not a prediction.
         </p>
       </div>

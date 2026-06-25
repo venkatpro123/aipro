@@ -80,7 +80,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
         {/* Progress */}
         <div className="mt-3">
           <div className="flex justify-between mb-1">
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <span className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>
               {completedCount}/{emergency.totalActions} actions
             </span>
             <span className="text-xs font-semibold" style={{ color: tierColor }}>{progressPct}%</span>
@@ -108,7 +108,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                 onClick={() => toggleBox(box)}>
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: boxColor }} />
                 <span className="text-xs font-semibold flex-1" style={{ color: boxColor }}>{TIMEBOX_LABELS[box]}</span>
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                   {boxCompleted}/{boxActions.length}
                 </span>
                 {expanded ? <ChevronDown className="w-3 h-3 opacity-40" /> : <ChevronRight className="w-3 h-3 opacity-40" />}
@@ -138,7 +138,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                             </p>
                             {action.specificScript && (
                               <div className="mt-1.5 p-2 rounded-lg text-[10px] leading-relaxed"
-                                style={{ background: `${boxColor}10`, color: 'rgba(255,255,255,0.55)', border: `1px solid ${boxColor}15` }}>
+                                style={{ background: `${boxColor}10`, color: 'var(--alpha-text-50)', border: `1px solid ${boxColor}15` }}>
                                 {action.specificScript}
                               </div>
                             )}
@@ -182,7 +182,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                   {emergency.severanceStrategy.typicalSeveranceWeeks} weeks
                 </p>
                 <div>
-                  <p className="font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.75)' }}>First move:</p>
+                  <p className="font-semibold mb-1" style={{ color: 'var(--alpha-text-70)' }}>First move:</p>
                   <p className="leading-relaxed p-2 rounded-lg" style={{ background: 'rgba(0,212,224,0.08)', border: '1px solid rgba(0,212,224,0.15)', color: 'rgba(255,255,255,0.7)' }}>
                     {emergency.severanceStrategy.firstNegotiationMove}
                   </p>

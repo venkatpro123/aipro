@@ -60,7 +60,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: 32, fontWeight: 900, color: scoreColor, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{result.total}</span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>/100</span>
+            <span style={{ fontSize: 10, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>/100</span>
           </div>
         </div>
 
@@ -69,14 +69,14 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
           <div style={{ fontSize: 22, fontWeight: 800, color: scoreColor, marginBottom: 4, lineHeight: 1.1 }}>
             {getVerdict(result.total)}
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginBottom: 12, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: 'var(--alpha-text-50)', marginBottom: 12, lineHeight: 1.5 }}>
             {getUrgency(result.total)}
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, background: `${scoreColor}18`, color: scoreColor, border: `1px solid ${scoreColor}30`, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
               CONFIDENCE: {result.confidence ?? 'MODERATE'}
             </span>
-            <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'var(--font-mono)' }}>
               {getTimeline(result.total)}
             </span>
           </div>
@@ -100,7 +100,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
               <TrendingUp size={13} style={{ color: '#ef4444', flexShrink: 0 }} />
               <span style={{ fontSize: 9, fontWeight: 700, color: '#ef4444', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Risk Signal</span>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.88)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? '#ef4444', borderRadius: 2, transition: 'width 0.8s ease' }} />
@@ -125,7 +125,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
               <Shield size={13} style={{ color: '#10b981', flexShrink: 0 }} />
               <span style={{ fontSize: 9, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Protection Signal</span>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.88)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? '#10b981', borderRadius: 2, transition: 'width 0.8s ease' }} />
@@ -138,13 +138,13 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
 
       {/* All 6 dimensions compact */}
       <div style={{ padding: '16px 18px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
           6-Dimension Breakdown
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {result.dimensions.map(dim => (
             <div key={dim.key} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 36px', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.60)', lineHeight: 1.2 }}>{DIM_LABELS[dim.key] ?? dim.key}</span>
+              <span style={{ fontSize: 11, color: 'var(--alpha-text-55)', lineHeight: 1.2 }}>{DIM_LABELS[dim.key] ?? dim.key}</span>
               <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? 'var(--cyan,#22d3ee)', borderRadius: 2, transition: 'width 0.8s ease' }} />
               </div>

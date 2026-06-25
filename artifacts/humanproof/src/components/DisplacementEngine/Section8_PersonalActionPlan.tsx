@@ -35,8 +35,8 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
           <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Estimated Risk Reduction — Full Plan
           </div>
-          <div style={{ fontSize: 18, fontWeight: 900, color: 'rgba(255,255,255,0.88)', fontFamily: 'var(--font-mono)' }}>
-            −{Math.min(totalReduction, 60)}% <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>if all actions completed</span>
+          <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--alpha-text-85)', fontFamily: 'var(--font-mono)' }}>
+            −{Math.min(totalReduction, 60)}% <span style={{ fontSize: 11, color: 'var(--alpha-text-35)', fontWeight: 400 }}>if all actions completed</span>
           </div>
         </div>
       </div>
@@ -57,14 +57,14 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
                   <span style={{ fontSize: 16, color: style.color }}>{style.icon}</span>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 800, color: style.color, lineHeight: 1.1 }}>{horizon.label}</div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.40)', marginTop: 2 }}>{horizon.sublabel}</div>
+                    <div style={{ fontSize: 10, color: 'var(--alpha-text-45)', marginTop: 2 }}>{horizon.sublabel}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.22)' }}>
                     −{horizon.totalRiskReduction}%
                   </span>
-                  {isOpen ? <ChevronUp size={14} style={{ color: 'rgba(255,255,255,0.35)' }} /> : <ChevronDown size={14} style={{ color: 'rgba(255,255,255,0.35)' }} />}
+                  {isOpen ? <ChevronUp size={14} style={{ color: 'var(--alpha-text-35)' }} /> : <ChevronDown size={14} style={{ color: 'var(--alpha-text-35)' }} />}
                 </div>
               </div>
             </button>
@@ -97,10 +97,10 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
                             {i + 1}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1.3, marginBottom: 4 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', lineHeight: 1.3, marginBottom: 4 }}>
                               {action.action}
                             </div>
-                            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.50)', lineHeight: 1.6, marginBottom: 4 }}>
+                            <div style={{ fontSize: 11, color: 'var(--alpha-text-50)', lineHeight: 1.6, marginBottom: 4 }}>
                               {action.why}
                             </div>
                             {action.outcome && (
@@ -123,7 +123,7 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
         );
       })}
 
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, fontStyle: 'italic' }}>
+      <div style={{ fontSize: 10, color: 'var(--alpha-text-25)', lineHeight: 1.6, fontStyle: 'italic' }}>
         Risk reduction estimates are indicative and represent the expected impact of these actions on overall displacement exposure. Actual results depend on execution quality, timing, and market conditions.
       </div>
     </div>

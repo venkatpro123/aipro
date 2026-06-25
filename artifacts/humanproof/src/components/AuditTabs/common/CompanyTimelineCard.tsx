@@ -185,7 +185,7 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         <Building2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
-        <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
           Company Story
         </span>
         <span
@@ -194,7 +194,7 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
         >
           {events.length} events
         </span>
-        <p className="ml-auto text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>{companyName}</p>
+        <p className="ml-auto text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>{companyName}</p>
       </div>
 
       {/* Timeline */}
@@ -234,12 +234,12 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
                   <p className="text-[11px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
                     {ev.label}
                   </p>
-                  <span className="text-[10px] flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)' }}>
+                  <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}>
                     {ev.dateMs ? formatEventDate(ev.dateMs) : ev.date}
                   </span>
                 </div>
                 {ev.detail && (
-                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-35)' }}>
                     {ev.detail}
                   </p>
                 )}

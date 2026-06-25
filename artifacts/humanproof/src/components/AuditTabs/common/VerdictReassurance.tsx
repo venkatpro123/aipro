@@ -45,7 +45,7 @@ export const VerdictReassurance: React.FC<VerdictReassuranceProps> = ({ score, u
         marginTop: 6,
         fontSize: '0.72rem',
         lineHeight: 1.5,
-        color: 'rgba(255,255,255,0.50)',
+        color: 'var(--alpha-text-50)',
         fontStyle: 'italic',
         maxWidth: 260,
         textAlign: 'center',

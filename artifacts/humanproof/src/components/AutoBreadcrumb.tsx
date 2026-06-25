@@ -57,7 +57,7 @@ export const AutoBreadcrumb: React.FC<{ className?: string }> = ({ className }) 
             <Link
               to="/"
               className="flex items-center gap-1 text-[11px]"
-              style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}
+              style={{ color: 'var(--alpha-text-35)', textDecoration: 'none' }}
             >
               <Home className="w-3 h-3" />
             </Link>
@@ -70,13 +70,13 @@ export const AutoBreadcrumb: React.FC<{ className?: string }> = ({ className }) 
             <React.Fragment key={crumb.to}>
               <BreadcrumbSeparator
                 className="[&>svg]:w-3 [&>svg]:h-3"
-                style={{ color: 'rgba(255,255,255,0.18)' }}
+                style={{ color: 'var(--alpha-text-25)' }}
               />
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage
                     className="text-[11px] font-semibold truncate max-w-[180px]"
-                    style={{ color: 'rgba(255,255,255,0.55)' }}
+                    style={{ color: 'var(--alpha-text-50)' }}
                   >
                     {crumb.label}
                   </BreadcrumbPage>
@@ -85,7 +85,7 @@ export const AutoBreadcrumb: React.FC<{ className?: string }> = ({ className }) 
                     <Link
                       to={crumb.to}
                       className="text-[11px] truncate max-w-[140px]"
-                      style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none' }}
+                      style={{ color: 'var(--alpha-text-35)', textDecoration: 'none' }}
                     >
                       {crumb.label}
                     </Link>

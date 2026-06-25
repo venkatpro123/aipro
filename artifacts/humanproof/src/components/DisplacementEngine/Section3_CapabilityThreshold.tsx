@@ -33,7 +33,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
 
       {/* No-linear disclaimer */}
       <div style={{
-        fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)',
+        fontSize: 10, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)',
         letterSpacing: '0.06em', padding: '7px 12px', borderRadius: 8,
         background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
       }}>
@@ -70,7 +70,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
                     ? <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 2, repeat: Infinity }}>
                         <AlertCircle size={18} style={{ color }} />
                       </motion.div>
-                    : <Circle size={18} style={{ color: 'rgba(255,255,255,0.18)' }} />
+                    : <Circle size={18} style={{ color: 'var(--alpha-text-25)' }} />
                   }
                   <span style={{ fontSize: 10, fontWeight: isActive ? 800 : 600, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textAlign: 'center', lineHeight: 1.3 }}>
                     {stage.shortLabel}
@@ -82,7 +82,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
                   )}
                 </motion.div>
                 {i < STAGES.length - 1 && (
-                  <ChevronRight size={14} style={{ color: 'rgba(255,255,255,0.18)', flexShrink: 0 }} />
+                  <ChevronRight size={14} style={{ color: 'var(--alpha-text-25)', flexShrink: 0 }} />
                 )}
               </React.Fragment>
             );
@@ -104,10 +104,10 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
         <div style={{ fontSize: 11, fontWeight: 800, color: STAGES[activeIdx].color, fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>
           {threshold.stageLabel}
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, margin: '0 0 14px' }}>
+        <p style={{ fontSize: 13, color: 'var(--alpha-text-70)', lineHeight: 1.7, margin: '0 0 14px' }}>
           {threshold.stageDescription}
         </p>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+        <div style={{ fontSize: 11, color: 'var(--alpha-text-45)', marginBottom: 6, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
           {threshold.timingRange}
         </div>
       </motion.div>
@@ -122,7 +122,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
             flex: 1, minWidth: 140, padding: '10px 14px', borderRadius: 10,
             background: `${c.color}08`, border: `1px solid ${c.color}20`,
           }}>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>{c.label}</div>
+            <div style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 5 }}>{c.label}</div>
             <div style={{ fontSize: 14, fontWeight: 800, color: c.color, fontFamily: 'var(--font-mono)' }}>{c.value}</div>
           </div>
         ))}
@@ -131,12 +131,12 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
       {/* Trigger conditions */}
       {threshold.triggerConditions.length > 0 && (
         <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
             What Would Trigger the Next Stage
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {threshold.triggerConditions.map((t, i) => (
-              <div key={i} style={{ display: 'flex', gap: 10, fontSize: 12, color: 'rgba(255,255,255,0.60)', lineHeight: 1.6 }}>
+              <div key={i} style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--alpha-text-55)', lineHeight: 1.6 }}>
                 <span style={{ color: STAGES[activeIdx].color, flexShrink: 0 }}>{i + 1}.</span>
                 <span>{t}</span>
               </div>

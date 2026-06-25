@@ -98,7 +98,7 @@ export const SharpenScorePrompt: React.FC = () => {
             <p className="text-[13px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
               Right now this is company &amp; market risk — not yet you
             </p>
-            <p className="text-[11px] leading-snug mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <p className="text-[11px] leading-snug mt-1" style={{ color: 'var(--alpha-text-50)' }}>
               Three questions — visa, runway, family — can move your score by{' '}
               <span style={{ color: ACCENT, fontWeight: 600 }}>±8–25 pts</span>. Takes 20 seconds, and
               the number updates live.

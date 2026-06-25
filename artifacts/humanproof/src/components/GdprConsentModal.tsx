@@ -118,7 +118,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
             <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
               All data deleted
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 1.6 }}>
+            <p style={{ color: 'var(--alpha-text-50)', fontSize: 13, lineHeight: 1.6 }}>
               Your personal data has been permanently erased from our systems.
               Your account has been closed. Thank you for using HumanProof.
             </p>
@@ -145,7 +145,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
             <h2 id="gdpr-modal-title" style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
               Your data. Your control.
             </h2>
-            <p style={{ color: 'rgba(255,255,255,0.50)', fontSize: 12, lineHeight: 1.5, margin: 0 }}>
+            <p style={{ color: 'var(--alpha-text-50)', fontSize: 12, lineHeight: 1.5, margin: 0 }}>
               We operate under EU GDPR. Before you start, choose how your data is handled.
             </p>
           </div>
@@ -160,12 +160,12 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
                 Core service data
                 <span style={{
                   marginLeft: 8, fontSize: 10, fontWeight: 500,
-                  color: 'rgba(255,255,255,0.40)', letterSpacing: '0.05em',
+                  color: 'var(--alpha-text-45)', letterSpacing: '0.05em',
                 }}>
                   REQUIRED
                 </span>
               </p>
-              <p style={{ color: 'rgba(255,255,255,0.50)', fontSize: 11, lineHeight: 1.55, margin: 0 }}>
+              <p style={{ color: 'var(--alpha-text-50)', fontSize: 11, lineHeight: 1.55, margin: 0 }}>
                 Risk assessment results, career profile, and audit history. Required for the
                 service to function. Legal basis: contract (GDPR Art. 6(1)(b)).
               </p>
@@ -191,7 +191,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
                   OPTIONAL
                 </span>
               </p>
-              <p style={{ color: 'rgba(255,255,255,0.50)', fontSize: 11, lineHeight: 1.55, margin: 0 }}>
+              <p style={{ color: 'var(--alpha-text-50)', fontSize: 11, lineHeight: 1.55, margin: 0 }}>
                 Share your anonymized score tier, industry, and role to improve peer benchmarks.
                 Never your name, employer, or salary. You can withdraw at any time.
                 Legal basis: explicit consent (GDPR Art. 6(1)(a)).
@@ -218,7 +218,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
                   OPTIONAL
                 </span>
               </p>
-              <p style={{ color: 'rgba(255,255,255,0.50)', fontSize: 11, lineHeight: 1.55, margin: 0 }}>
+              <p style={{ color: 'var(--alpha-text-50)', fontSize: 11, lineHeight: 1.55, margin: 0 }}>
                 Monthly expenses and savings runway stored in our EU-region database for
                 cross-device access. If declined, this data stays on this device only.
                 Legal basis: explicit consent (GDPR Art. 6(1)(a)).
@@ -244,19 +244,19 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
         {showDetails && (
           <div style={{
             ...CARD_STYLE, marginBottom: 16, fontSize: 11,
-            color: 'rgba(255,255,255,0.45)', lineHeight: 1.65,
+            color: 'var(--alpha-text-45)', lineHeight: 1.65,
           }}>
-            <p style={{ margin: '0 0 8px', color: 'rgba(255,255,255,0.70)', fontWeight: 600 }}>
+            <p style={{ margin: '0 0 8px', color: 'var(--alpha-text-70)', fontWeight: 600 }}>
               You have the right to:
             </p>
             <ul style={{ margin: 0, paddingLeft: 16 }}>
-              <li><strong style={{ color: 'rgba(255,255,255,0.65)' }}>Access</strong> — download all data we hold about you (GDPR Art. 15)</li>
-              <li><strong style={{ color: 'rgba(255,255,255,0.65)' }}>Portability</strong> — receive your data in machine-readable JSON (Art. 20)</li>
-              <li><strong style={{ color: 'rgba(255,255,255,0.65)' }}>Erasure</strong> — permanently delete your account and all data (Art. 17)</li>
-              <li><strong style={{ color: 'rgba(255,255,255,0.65)' }}>Withdraw consent</strong> — at any time from Profile → Data & Privacy</li>
-              <li><strong style={{ color: 'rgba(255,255,255,0.65)' }}>Lodge a complaint</strong> — with your national DPA</li>
+              <li><strong style={{ color: 'var(--alpha-text-55)' }}>Access</strong> — download all data we hold about you (GDPR Art. 15)</li>
+              <li><strong style={{ color: 'var(--alpha-text-55)' }}>Portability</strong> — receive your data in machine-readable JSON (Art. 20)</li>
+              <li><strong style={{ color: 'var(--alpha-text-55)' }}>Erasure</strong> — permanently delete your account and all data (Art. 17)</li>
+              <li><strong style={{ color: 'var(--alpha-text-55)' }}>Withdraw consent</strong> — at any time from Profile → Data & Privacy</li>
+              <li><strong style={{ color: 'var(--alpha-text-55)' }}>Lodge a complaint</strong> — with your national DPA</li>
             </ul>
-            <p style={{ margin: '8px 0 0', color: 'rgba(255,255,255,0.35)' }}>
+            <p style={{ margin: '8px 0 0', color: 'var(--alpha-text-35)' }}>
               Contact: privacy@humanproof.ai
             </p>
 
@@ -315,7 +315,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
 
         <p style={{
           textAlign: 'center', marginTop: 10, fontSize: 10,
-          color: 'rgba(255,255,255,0.25)', lineHeight: 1.5,
+          color: 'var(--alpha-text-25)', lineHeight: 1.5,
         }}>
           You can change these settings at any time in Profile → Data &amp; Privacy.
         </p>

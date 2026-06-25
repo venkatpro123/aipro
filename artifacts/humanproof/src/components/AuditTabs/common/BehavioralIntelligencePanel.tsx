@@ -39,7 +39,7 @@ const SECTION_LABEL: React.CSSProperties = {
   fontSize: 9,
   fontWeight: 800,
   letterSpacing: '0.16em',
-  color: 'rgba(255,255,255,0.30)',
+  color: 'var(--alpha-text-30)',
   marginBottom: 4,
 };
 
@@ -71,21 +71,21 @@ const TrajectorySection: React.FC<{ data: BehavioralPersonalizationResult['caree
               style={{ background: `${cfg.color}18`, color: cfg.color, border: `1px solid ${cfg.color}30` }}>
               {cfg.badge}
             </span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
               {data.promotionVelocity}
             </span>
           </div>
         </div>
       </div>
 
-      <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.72)' }}>
+      <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--alpha-text-70)' }}>
         {data.insight}
       </p>
 
       <div className="rounded-lg px-3 py-2 mb-2"
         style={{ background: `${cfg.color}08`, border: `1px solid ${cfg.color}20` }}>
         <p className="text-[10px] font-bold mb-0.5" style={{ color: `${cfg.color}80` }}>URGENT ACTION</p>
-        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.75)' }}>{data.urgentAction}</p>
+        <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>{data.urgentAction}</p>
       </div>
 
       {/* positioningAdvice — previously hidden */}
@@ -114,7 +114,7 @@ const TrajectorySection: React.FC<{ data: BehavioralPersonalizationResult['caree
                   <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(167,139,250,0.60)' }}>
                     HOW TO FRAME THIS IN INTERVIEWS
                   </p>
-                  <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.68)' }}>
+                  <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--alpha-text-55)' }}>
                     {data.positioningAdvice}
                   </p>
                 </div>
@@ -157,7 +157,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
         </div>
       </div>
 
-      <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.68)' }}>
+      <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--alpha-text-55)' }}>
         {data.narrativeFrame}
       </p>
 
@@ -166,7 +166,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
           type="button"
           onClick={() => setShowScript(s => !s)}
           className="flex items-center gap-1 text-[10px] font-semibold"
-          style={{ color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ color: 'var(--alpha-text-35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           {showScript ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           {showScript ? 'Hide' : 'Show'} your interview script
@@ -176,7 +176,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
             type="button"
             onClick={() => setShowRecovery(s => !s)}
             className="flex items-center gap-1 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ color: 'var(--alpha-text-35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             {showRecovery ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {showRecovery ? 'Hide' : `Show ${data.recoveryActions.length} recovery actions`}
@@ -195,7 +195,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
               <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(34,211,238,0.60)' }}>
                 <Mic2 className="w-3 h-3 inline mr-1" />YOUR 30-SECOND RESPONSE
               </p>
-              <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.72)' }}>
+              <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--alpha-text-70)' }}>
                 "{data.interviewScript}"
               </p>
             </div>
@@ -218,7 +218,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
               {data.recoveryActions.map((action, i) => (
                 <div key={i} className="flex items-start gap-1.5 mb-1">
                   <span className="text-[10px] flex-shrink-0 mt-0.5" style={{ color: '#f97316' }}>▸</span>
-                  <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>{action}</p>
+                  <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{action}</p>
                 </div>
               ))}
             </div>
@@ -226,7 +226,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
         )}
       </AnimatePresence>
 
-      <p className="text-[10px] italic" style={{ color: 'rgba(255,255,255,0.30)' }}>
+      <p className="text-[10px] italic" style={{ color: 'var(--alpha-text-30)' }}>
         {data.timeToNeutralise}
       </p>
     </div>
@@ -261,7 +261,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
         </div>
         <div className="text-right">
           <p className="text-[22px] font-black" style={{ color }}>{score}</p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>/100</p>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>/100</p>
         </div>
       </div>
 
@@ -269,19 +269,19 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
         <div className="h-full rounded-full" style={{ width: `${score}%`, background: color, transition: 'width 0.6s ease' }} />
       </div>
 
-      <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>
+      <p className="text-[10px] mb-2" style={{ color: 'var(--alpha-text-50)' }}>
         {data.estimatedPrepTime} to reach 75/100 readiness.
       </p>
 
       {data.quickWins.length > 0 && (
         <div className="mb-2">
-          <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'var(--alpha-text-25)' }}>
             QUICK WINS (&lt;1 HR EACH)
           </p>
           {data.quickWins.map((w, i) => (
             <div key={i} className="flex items-start gap-1.5 mb-0.5">
               <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#10b981', opacity: 0.6 }} />
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.60)' }}>{w}</p>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{w}</p>
             </div>
           ))}
         </div>
@@ -293,7 +293,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
             type="button"
             onClick={() => setExpanded(e => !e)}
             className="flex items-center gap-1 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ color: 'var(--alpha-text-30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {expanded ? 'Hide' : 'Show'} gap areas ({data.gapAreas.length})
@@ -315,11 +315,11 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
                         }`}>
                           {gap.severity}
                         </span>
-                        <span className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        <span className="text-[10px] truncate" style={{ color: 'var(--alpha-text-50)' }}>
                           {gap.specificAction}
                         </span>
                       </div>
-                      <span className="text-[10px] flex-shrink-0 ml-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      <span className="text-[10px] flex-shrink-0 ml-2" style={{ color: 'var(--alpha-text-25)' }}>
                         {gap.timeEstimate}
                       </span>
                     </div>
@@ -359,13 +359,13 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
         </div>
       </div>
 
-      <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.68)' }}>
+      <p className="text-[11px] leading-relaxed mb-2" style={{ color: 'var(--alpha-text-55)' }}>
         {data.searchImplication}
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
         <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="text-[10px] mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>MARKET MIDPOINT</p>
+          <p className="text-[10px] mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>MARKET MIDPOINT</p>
           <p className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>{data.marketMidpoint}</p>
         </div>
         <div className="rounded-lg p-2" style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
@@ -375,7 +375,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
       </div>
 
       {data.salaryJumpPotential && (
-        <p className="text-[10px] mb-2 italic" style={{ color: 'rgba(255,255,255,0.40)' }}>
+        <p className="text-[10px] mb-2 italic" style={{ color: 'var(--alpha-text-45)' }}>
           {data.salaryJumpPotential}
         </p>
       )}
@@ -403,7 +403,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
                   <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(16,185,129,0.65)' }}>
                     NEGOTIATION LEVERAGE
                   </p>
-                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                     {data.negotiationImplication}
                   </p>
                 </div>
@@ -454,14 +454,14 @@ const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['comp
           <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(167,139,250,0.60)' }}>
             <Star className="w-3 h-3 inline mr-1" />YOUR DIFFERENTIATOR
           </p>
-          <p className="text-[11px] italic leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          <p className="text-[11px] italic leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             "{data.differentiatorStatement}"
           </p>
         </div>
       )}
 
       {data.winRateEstimate && (
-        <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>
+        <p className="text-[10px] mb-2" style={{ color: 'var(--alpha-text-50)' }}>
           {data.winRateEstimate}
         </p>
       )}
@@ -471,7 +471,7 @@ const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['comp
         type="button"
         onClick={() => setExpanded(e => !e)}
         className="flex items-center gap-1 text-[10px] font-semibold"
-        style={{ color: 'rgba(255,255,255,0.30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        style={{ color: 'var(--alpha-text-30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
       >
         {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         {expanded ? 'Hide' : 'Show'} peer analysis
@@ -488,7 +488,7 @@ const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['comp
                   style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
                   <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(16,185,129,0.65)' }}>YOU LEAD</p>
                   {data.strengthsVsPeers.map((s, i) => (
-                    <p key={i} className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>· {s}</p>
+                    <p key={i} className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>· {s}</p>
                   ))}
                 </div>
               )}
@@ -497,12 +497,12 @@ const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['comp
                   style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.18)' }}>
                   <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(249,115,22,0.65)' }}>YOU LAG</p>
                   {data.weaknessesVsPeers.map((w, i) => (
-                    <p key={i} className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>· {w}</p>
+                    <p key={i} className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>· {w}</p>
                   ))}
                 </div>
               )}
               {data.competitiveThreat && (
-                <p className="text-[10px] italic px-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <p className="text-[10px] italic px-1" style={{ color: 'var(--alpha-text-35)' }}>
                   Main competitor: {data.competitiveThreat}
                 </p>
               )}
@@ -538,14 +538,14 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
       <div className="rounded-lg px-3 py-2 mb-2"
         style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)' }}>
         <p className="text-[10px] font-bold mb-0.5" style={{ color: 'rgba(34,211,238,0.60)' }}>YOUR NARRATIVE</p>
-        <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.72)' }}>
+        <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--alpha-text-70)' }}>
           {data.narrativeRequired}
         </p>
       </div>
 
       {data.targetCompanyScreenFilter && (
-        <p className="text-[10px] mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          <span style={{ color: 'rgba(255,255,255,0.28)', fontWeight: 700 }}>Target: </span>
+        <p className="text-[10px] mb-2" style={{ color: 'var(--alpha-text-45)' }}>
+          <span style={{ color: 'var(--alpha-text-25)', fontWeight: 700 }}>Target: </span>
           {data.targetCompanyScreenFilter}
         </p>
       )}
@@ -554,7 +554,7 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
         <div className="rounded-lg px-2.5 py-2 mb-2 flex items-start gap-1.5"
           style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.22)' }}>
           <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
             {data.cultureRiskWarning}
           </p>
         </div>
@@ -566,7 +566,7 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
             type="button"
             onClick={() => setShowObjections(s => !s)}
             className="flex items-center gap-1 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ color: 'var(--alpha-text-30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             {showObjections ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {showObjections ? 'Hide' : `Show ${data.potentialObjections.length} objections + responses`}
@@ -581,11 +581,11 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
                   {data.potentialObjections.map((obj, i) => (
                     <div key={i} className="rounded-lg px-2.5 py-2"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                      <p className="text-[10px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      <p className="text-[10px] font-semibold mb-1" style={{ color: 'var(--alpha-text-50)' }}>
                         ❓ {obj}
                       </p>
                       {data.objectionResponses?.[i] && (
-                        <p className="text-[10px] leading-snug italic" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                        <p className="text-[10px] leading-snug italic" style={{ color: 'var(--alpha-text-70)' }}>
                           💬 {data.objectionResponses[i]}
                         </p>
                       )}
@@ -617,7 +617,7 @@ const RiskProfileBar: React.FC<{
       style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
       {/* Profile summary */}
       {profileSummary && (
-        <p className="text-[10px] mb-2 pb-2" style={{ color: 'rgba(255,255,255,0.38)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <p className="text-[10px] mb-2 pb-2" style={{ color: 'var(--alpha-text-35)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           {profileSummary}
         </p>
       )}
@@ -628,12 +628,12 @@ const RiskProfileBar: React.FC<{
         </div>
         <div className="flex items-center gap-1.5">
           <Zap className="w-3 h-3" style={{ color: weeksToReady === 0 ? '#10b981' : '#f59e0b' }} />
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
             {weeksToReady === 0 ? 'Search-ready now' : `~${weeksToReady}w prep needed`}
           </span>
         </div>
       </div>
-      <p className="text-[10px] mt-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-[10px] mt-1.5 leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
         {rationale}
       </p>
     </div>
@@ -670,7 +670,7 @@ export const BehavioralIntelligencePanel: React.FC<Props> = ({ data }) => {
 
       {/* Opening narrative */}
       {data.openingNarrative && (
-        <p className="text-[11px] leading-relaxed italic mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <p className="text-[11px] leading-relaxed italic mb-3" style={{ color: 'var(--alpha-text-45)' }}>
           {data.openingNarrative}
         </p>
       )}
@@ -693,7 +693,7 @@ export const BehavioralIntelligencePanel: React.FC<Props> = ({ data }) => {
           <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: '#a78bfa80' }}>
             <BookOpen className="w-3 h-3 inline mr-1" />YOUR TOP BLOCKER
           </p>
-          <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             {data.topBlocker}
           </p>
         </div>

@@ -58,20 +58,20 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       </div>
 
       {/* Headline */}
-      <p className="text-xs leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
+      <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
         {macro.macroHeadline}
       </p>
 
       {/* Key metrics row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <div className="text-xs font-bold" style={{ color: 'var(--alpha-text-85)' }}>
             {REGIME_LABEL[macro.regime] ?? macro.regime}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Regime</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <div className="text-xs font-bold" style={{ color: 'var(--alpha-text-85)' }}>
             {RATE_LABEL[macro.rateCyclePhase] ?? macro.rateCyclePhase}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Rate Cycle</div>
@@ -86,7 +86,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
 
       {/* Sector exposure */}
       <div className="p-2 rounded-lg mb-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
-        <span className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <span className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-35)' }}>
           SECTOR EXPOSURE
         </span>
         <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
@@ -124,7 +124,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       {macro.indiaSpecific && (
         <div className="mt-3 pt-3 space-y-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>INDIA MACRO</p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{macro.indiaSpecific.narrative}</p>
+          <p className="text-xs" style={{ color: 'var(--alpha-text-50)' }}>{macro.indiaSpecific.narrative}</p>
         </div>
       )}
 

@@ -528,16 +528,16 @@ const ScoreConfidenceInterval: React.FC<{
           <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             Epistemic uncertainty — not a statistical error bar
           </div>
-          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)' }}>
-            This range represents <strong style={{ color: 'rgba(255,255,255,0.92)' }}>genuine uncertainty</strong> in your score based on signal quality, data freshness, and source conflicts. It reflects what we do not know — not measurement noise around a known value.
+          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--alpha-text-78)' }}>
+            This range represents <strong style={{ color: 'var(--alpha-text-92)' }}>genuine uncertainty</strong> in your score based on signal quality, data freshness, and source conflicts. It reflects what we do not know — not measurement noise around a known value.
           </p>
-          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.75)' }}>
+          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--alpha-text-78)' }}>
             A ±{halfRange}pt interval means your true risk could be anywhere from{' '}
-            <strong style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)' }}>{low}</strong> to{' '}
-            <strong style={{ color: 'rgba(255,255,255,0.92)', fontFamily: 'var(--font-mono)' }}>{high}</strong>.
+            <strong style={{ color: 'var(--alpha-text-92)', fontFamily: 'var(--font-mono)' }}>{low}</strong> to{' '}
+            <strong style={{ color: 'var(--alpha-text-92)', fontFamily: 'var(--font-mono)' }}>{high}</strong>.
             The central mark (<span style={{ fontFamily: 'var(--font-mono)', color }}>{score}</span>) is the model's best estimate given available signals.
           </p>
-          <p style={{ margin: 0, fontSize: '0.71rem', lineHeight: 1.6, color: 'rgba(255,255,255,0.50)' }}>
+          <p style={{ margin: 0, fontSize: '0.71rem', lineHeight: 1.6, color: 'var(--alpha-text-50)' }}>
             With better data — more live sources, more recent signals, fewer source conflicts — this range would narrow. Three independent factors widen it: data staleness, cross-source conflict penalties, and missing critical signals (null-data guard). All three are broken down in the Transparency tab.
           </p>
         </div>

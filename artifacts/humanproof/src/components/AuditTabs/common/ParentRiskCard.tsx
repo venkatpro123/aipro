@@ -80,18 +80,18 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
                 {cfg.label}
               </span>
             </div>
-            <p style={{ fontSize: '0.825rem', fontWeight: 700, color: 'rgba(255,255,255,0.88)', marginBottom: 3 }}>
+            <p style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 3 }}>
               Your division is a subsidiary of <strong style={{ color: cfg.color }}>{p.parentName}</strong>
               {' '}({p.parentCountry})
             </p>
-            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.45 }}>
+            <p style={{ fontSize: '0.75rem', color: 'var(--alpha-text-50)', lineHeight: 1.45 }}>
               {p.propagationNarrative}
             </p>
           </div>
 
           <button
             onClick={() => setExpanded(v => !v)}
-            style={{ flexShrink: 0, padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.40)' }}
+            style={{ flexShrink: 0, padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--alpha-text-45)' }}
             aria-label="Toggle details"
           >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -101,15 +101,15 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
         {/* Key stats row */}
         <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Clock size={11} style={{ color: 'rgba(255,255,255,0.40)' }} />
-            <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)' }}>
+            <Clock size={11} style={{ color: 'var(--alpha-text-45)' }} />
+            <span style={{ fontSize: '0.7rem', color: 'var(--alpha-text-50)' }}>
               Lag: {p.lagMonths.min}–{p.lagMonths.max} months
             </span>
           </div>
-          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.40)' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--alpha-text-45)' }}>
             {factorPct}% propagation factor
           </span>
-          <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.40)' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--alpha-text-45)' }}>
             {p.officeFunctionLabel}
           </span>
         </div>
@@ -120,26 +120,26 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '12px 15px' }}>
           {p.vulnerabilityFactors?.length > 0 && (
             <div style={{ marginBottom: 10 }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
+              <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Vulnerability factors
               </p>
               {p.vulnerabilityFactors.slice(0, 3).map((f, i) => (
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
                   <AlertTriangle size={10} style={{ color: cfg.color, flexShrink: 0, marginTop: 2 }} />
-                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.62)', lineHeight: 1.4 }}>{f}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--alpha-text-55)', lineHeight: 1.4 }}>{f}</span>
                 </div>
               ))}
             </div>
           )}
           {p.protectionFactors?.length > 0 && (
             <div style={{ marginBottom: 10 }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
+              <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Protection factors
               </p>
               {p.protectionFactors.slice(0, 3).map((f, i) => (
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
                   <span style={{ fontSize: '0.7rem', color: '#10b981', flexShrink: 0 }}>+</span>
-                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.62)', lineHeight: 1.4 }}>{f}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--alpha-text-55)', lineHeight: 1.4 }}>{f}</span>
                 </div>
               ))}
             </div>
@@ -151,10 +151,10 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.07)',
             }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
+              <p style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Recommended action
               </p>
-              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.45 }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--alpha-text-70)', lineHeight: 1.45 }}>
                 {p.priorityActions[0]}
               </p>
             </div>

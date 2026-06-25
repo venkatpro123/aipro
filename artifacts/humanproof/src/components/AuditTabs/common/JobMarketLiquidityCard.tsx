@@ -241,7 +241,7 @@ const CityCard: React.FC<{
               YOU
             </span>
           )}
-          <span className="text-[9px] flex-shrink-0" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }}>
             T{opp.profile.tier}
           </span>
         </div>
@@ -253,11 +253,11 @@ const CityCard: React.FC<{
       {/* Key metrics row */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.50)' }}>
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-50)' }}>
           ~{opp.roleData.avgPlacementWeeks}w to offer
         </span>
         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.50)' }}>
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-50)' }}>
           {opp.roleData.employerCount.toLocaleString()} employers
         </span>
         {opp.roleData.salaryPremiumPct !== 0 && (
@@ -363,7 +363,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
           <Waves className="w-3.5 h-3.5" style={{ color: cfg.color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'var(--alpha-text-30)' }}>
             JOB MARKET LIQUIDITY
           </p>
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -371,7 +371,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
               {cfg.label}
             </span>
             {liquidityScore != null && (
-              <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <span className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
                 · {liquidityScore}/100
               </span>
             )}
@@ -396,10 +396,10 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
               <p className="text-[10px] font-bold mb-0.5" style={{ color: `${cfg.color}70` }}>
                 TIME TO COMPARABLE ROLE
               </p>
-              <p className="text-[16px] font-black" style={{ color: 'rgba(255,255,255,0.88)' }}>
+              <p className="text-[16px] font-black" style={{ color: 'var(--alpha-text-85)' }}>
                 {weeksDisplay}
               </p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                 est. if actively searching
                 {monthsToReemploy != null && ` · ${monthsToReemploy}mo median`}
               </p>
@@ -412,13 +412,13 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
       <div className="flex flex-wrap gap-1.5 px-4 pb-2">
         {activePostings != null && (
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)' }}>
             {activePostings.toLocaleString()} active postings
           </span>
         )}
         {demandRatio != null && (
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)' }}>
             {demandRatio.toFixed(1)}× demand ratio
           </span>
         )}
@@ -431,7 +431,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
       </div>
 
       {/* ── Narrative / market note ───────────────────────────────────────── */}
-      <p className="text-[10px] leading-relaxed px-4 pb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-[10px] leading-relaxed px-4 pb-2" style={{ color: 'var(--alpha-text-45)' }}>
         {marketNote ?? cfg.desc}
       </p>
 
@@ -463,7 +463,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 SUPPLY SURGE — {geoSupplySurge.metroName}
               </p>
             </div>
-            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
               {geoSupplySurge.surgeNarrative}
             </p>
           </div>
@@ -486,7 +486,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 ESTIMATED
               </span>
             </div>
-            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
               {remoteFirstAdvantage.narrative}
             </p>
             <div className="flex gap-2 mt-2">
@@ -515,7 +515,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 <TrendingDown style={{ width: 10, height: 10, color: '#f97316' }} />
                 <span className="text-[9px] font-black tracking-wide" style={{ color: '#f97316' }}>BARRIER</span>
               </div>
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>{b}</p>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>{b}</p>
             </div>
           ))}
           {(keyAccelerators ?? []).slice(0, 1).map((a, i) => (
@@ -525,7 +525,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 <TrendingUp style={{ width: 10, height: 10, color: '#10b981' }} />
                 <span className="text-[9px] font-black tracking-wide" style={{ color: '#10b981' }}>ACCELERATOR</span>
               </div>
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>{a}</p>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>{a}</p>
             </div>
           ))}
         </div>
@@ -538,7 +538,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             type="button"
             onClick={() => setShowFactors(f => !f)}
             className="flex items-center gap-1.5 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.35)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+            style={{ color: 'var(--alpha-text-35)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
           >
             {showFactors ? <ChevronUp style={{ width: 12, height: 12 }} /> : <ChevronDown style={{ width: 12, height: 12 }} />}
             {showFactors ? 'Hide factor breakdown' : `Show ${factors!.length} liquidity factors`}
@@ -559,7 +559,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                       <div key={f.name} className="rounded-lg px-2.5 py-2"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                          <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-70)' }}>
                             {f.name}
                           </span>
                           <span className="text-[10px] font-black" style={{ color: barColor }}>
@@ -575,7 +575,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                             style={{ background: barColor }}
                           />
                         </div>
-                        <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                        <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
                           {f.detail}
                         </p>
                       </div>
@@ -590,7 +590,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
 
       {/* ── Confidence note ───────────────────────────────────────────────── */}
       {confidenceNote && (
-        <p className="text-[10px] px-4 pb-3" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        <p className="text-[10px] px-4 pb-3" style={{ color: 'var(--alpha-text-25)' }}>
           ⚠ {confidenceNote}
         </p>
       )}
@@ -610,7 +610,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
           style={{ cursor: 'pointer', background: 'none', border: 'none' }}
         >
           <MapPin style={{ width: 12, height: 12, color: '#22d3ee', flexShrink: 0 }} />
-          <span className="text-[10px] font-bold tracking-[0.10em]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <span className="text-[10px] font-bold tracking-[0.10em]" style={{ color: 'var(--alpha-text-45)' }}>
             LOCATION-BASED SUGGESTIONS
           </span>
           {cityMarketIntelligence?.cityName && (
@@ -619,7 +619,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
               {cityMarketIntelligence.cityName}
             </span>
           )}
-          <span className="ml-auto" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <span className="ml-auto" style={{ color: 'var(--alpha-text-25)' }}>
             {showLocation
               ? <ChevronUp style={{ width: 13, height: 13 }} />
               : <ChevronDown style={{ width: 13, height: 13 }} />
@@ -659,12 +659,12 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                       ].map(({ label, value }) => (
                         <div key={label} className="rounded-lg py-1.5 text-center"
                           style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          <p className="text-[11px] font-black" style={{ color: 'rgba(255,255,255,0.85)' }}>{value}</p>
-                          <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.30)' }}>{label}</p>
+                          <p className="text-[11px] font-black" style={{ color: 'var(--alpha-text-85)' }}>{value}</p>
+                          <p className="text-[9px]" style={{ color: 'var(--alpha-text-30)' }}>{label}</p>
                         </div>
                       ))}
                     </div>
-                    <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                    <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
                       {cityMarketIntelligence.cityNarrative}
                     </p>
                     {cityMarketIntelligence.relocationPressure === 'high' && (
@@ -684,7 +684,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                       <p className="text-[11px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.80)' }}>
                         Get personalized city rankings
                       </p>
-                      <p className="text-[10px] leading-snug mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      <p className="text-[10px] leading-snug mb-2" style={{ color: 'var(--alpha-text-45)' }}>
                         Allow location access to see hiring demand, placement timelines, and salary premiums for cities near you.
                         Your location is not stored.
                       </p>
@@ -705,7 +705,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                     style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)' }}>
                     <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0"
                       style={{ borderColor: '#22d3ee', borderTopColor: 'transparent' }} />
-                    <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                    <p className="text-[11px]" style={{ color: 'var(--alpha-text-55)' }}>
                       Detecting your location…
                     </p>
                   </div>
@@ -731,7 +731,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 {geo.status === 'resolved' && (
                   <div className="flex items-center gap-2 mb-2.5">
                     <Navigation style={{ width: 10, height: 10, color: '#22d3ee' }} />
-                    <p className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
+                    <p className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
                       {geo.source === 'browser' ? `Detected: ${geo.city}` : `From profile: ${geo.city}`}
                       {!detectedCityProfile && ' · No US city profile available'}
                     </p>
@@ -752,7 +752,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 {locationOpps.length > 0 && (
                   <>
                     <p className="text-[10px] font-bold tracking-wider mb-2"
-                      style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      style={{ color: 'var(--alpha-text-25)' }}>
                       US CITIES RANKED BY OPPORTUNITY FOR YOUR ROLE
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -764,7 +764,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                         />
                       ))}
                     </div>
-                    <p className="text-[9px] mt-2" style={{ color: 'rgba(255,255,255,0.20)' }}>
+                    <p className="text-[9px] mt-2" style={{ color: 'var(--alpha-text-25)' }}>
                       Opportunity score = placement speed + employer depth + salary premium + volume.
                       ESTIMATED — LinkedIn Workforce Report 2024, Indeed US Hiring Lab 2025.
                     </p>
@@ -773,7 +773,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
 
                 {/* Fallback when no location + no city resolved */}
                 {locationOpps.length === 0 && geo.status !== 'requesting' && !cityMarketIntelligence && (
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                     Set your city in your profile or allow location access to see personalized city rankings.
                   </p>
                 )}

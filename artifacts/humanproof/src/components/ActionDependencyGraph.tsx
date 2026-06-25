@@ -178,7 +178,7 @@ const PhaseCard: React.FC<{
             {isLocked && config.lockMessage && (
               <span
                 className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase"
-                style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.45)' }}
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--alpha-text-45)' }}
               >
                 {config.lockMessage}
               </span>

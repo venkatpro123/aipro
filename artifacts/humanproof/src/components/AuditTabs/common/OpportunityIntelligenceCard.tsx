@@ -168,7 +168,7 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         <Star className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
-        <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'var(--alpha-text-35)' }}>
           GOOD NEWS
         </p>
         <span
@@ -201,10 +201,10 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold leading-snug mb-1" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                <p className="text-[11px] font-bold leading-snug mb-1" style={{ color: 'var(--alpha-text-85)' }}>
                   {opp.title}
                 </p>
-                <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] leading-relaxed mb-1.5" style={{ color: 'var(--alpha-text-45)' }}>
                   {opp.body}
                 </p>
                 {opp.cta && (

@@ -140,7 +140,7 @@ const CheckItem: React.FC<{
           {action.title}
         </p>
         {!isCompleted && action.description && (
-          <p className="text-[10px] mt-0.5 line-clamp-2" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] mt-0.5 line-clamp-2" style={{ color: 'var(--alpha-text-35)' }}>
             {action.description}
           </p>
         )}
@@ -228,7 +228,7 @@ const PhaseBlock: React.FC<{
             <span className="text-[10px] font-black" style={{ color: cfg.accent }}>
               PHASE {phase} UNLOCKED!
             </span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
               {cfg.desc} — {total} new action{total !== 1 ? 's' : ''} available
             </span>
           </motion.div>
@@ -249,7 +249,7 @@ const PhaseBlock: React.FC<{
           {unlocked ? (
             <Icon className="w-4 h-4" style={{ color: cfg.accent }} />
           ) : (
-            <Lock className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.25)' }} />
+            <Lock className="w-4 h-4" style={{ color: 'var(--alpha-text-25)' }} />
           )}
         </div>
 
@@ -267,7 +267,7 @@ const PhaseBlock: React.FC<{
               </span>
             )}
           </div>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
             {unlocked ? cfg.desc : `Complete Phase ${phase - 1} to unlock`}
           </p>
         </div>
@@ -280,8 +280,8 @@ const PhaseBlock: React.FC<{
             </span>
           )}
           {unlocked && (open
-            ? <ChevronUp className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.30)' }} />
-            : <ChevronDown className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.30)' }} />
+            ? <ChevronUp className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-30)' }} />
+            : <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-30)' }} />
           )}
         </div>
       </button>
@@ -448,11 +448,11 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
       {/* Overall progress header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
             ACTION PROGRESS
           </p>
           {companyName && (
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+            <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
               {companyName} · {totalCompleted} completed
             </p>
           )}

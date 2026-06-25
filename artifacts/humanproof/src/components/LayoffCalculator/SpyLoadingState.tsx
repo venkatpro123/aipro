@@ -52,7 +52,7 @@ const SimpleLoader: React.FC<{ companyName?: string; stage: number }> = ({ compa
       <p style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.04em' }}>
         {companyName ? `Analyzing ${companyName}` : 'Analyzing your risk…'}
       </p>
-      <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.40)' }}>
+      <p style={{ fontSize: '0.75rem', color: 'var(--alpha-text-45)' }}>
         {label}
       </p>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

@@ -104,14 +104,14 @@ const SubVerdictChip: React.FC<{
       <Icon className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: signal.tone }} />
       {/* No truncate — "Workforce Stability" / "Financial Health" don't fit a
           single line in a half-width mobile chip; wrapping beats clipping mid-word. */}
-      <span className="text-[10px] font-bold tracking-wider uppercase leading-tight" style={{ color: 'rgba(255,255,255,0.40)' }}>
+      <span className="text-[10px] font-bold tracking-wider uppercase leading-tight" style={{ color: 'var(--alpha-text-45)' }}>
         {signal.headline}
       </span>
     </div>
     <p className="text-[11px] font-black leading-tight" style={{ color: signal.tone }}>
       {VERDICT_LABEL[signal.verdict]}
     </p>
-    <p className="text-[10px] leading-snug truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+    <p className="text-[10px] leading-snug truncate mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>
       {signal.rationale}
     </p>
   </div>
@@ -273,7 +273,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
               data-tone={freshnessTier === 'heuristic' ? 'amber' : 'slate'}
             >
               <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color }} />
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                 {text}
               </p>
             </div>
@@ -289,7 +289,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <Building2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: tone }} />
-            <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
               Company Situation
             </span>
             <TierBadge tier={1} />
@@ -300,7 +300,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
               {verdict.toUpperCase()}
             </span>
           </div>
-          <p className="text-[11px] leading-snug truncate" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <p className="text-[11px] leading-snug truncate" style={{ color: 'var(--alpha-text-70)' }}>
             {summary}
           </p>
         </div>
@@ -309,7 +309,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
           transition={{ duration: 0.18 }}
           className="flex-shrink-0"
         >
-          <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
+          <ChevronDown className="w-4 h-4" style={{ color: 'var(--alpha-text-30)' }} />
         </motion.div>
       </button>
 
@@ -332,7 +332,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <Building2 className="w-3 h-3" style={{ color: '#00d4e0' }} />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
                   Company
                 </p>
                 <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'rgba(255,255,255,0.90)' }}
@@ -353,10 +353,10 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <Briefcase className="w-3 h-3" style={{ color: '#a78bfa' }} />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
                   Industry
                 </p>
-                <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'rgba(255,255,255,0.85)' }}
+                <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'var(--alpha-text-85)' }}
                    title={identity.industry}>
                   {identity.industry}
                 </p>
@@ -374,11 +374,11 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <Hash className="w-3 h-3" style={{ color: '#10b981' }} />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
                   Headcount
                 </p>
                 <div className="flex items-baseline gap-1.5">
-                  <p className="text-[12px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  <p className="text-[12px] font-bold leading-snug" style={{ color: 'var(--alpha-text-85)' }}>
                     {formatHeadcount(identity.headcount)}
                   </p>
                   {identity.headcountSource === 'live' && (
@@ -418,11 +418,11 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
               <div className="signal-card rounded-xl p-3" data-tone={hexToTone(workforce.tone)}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <Users className="w-3.5 h-3.5" style={{ color: workforce.tone }} />
-                  <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
                     Staffing details
                   </span>
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                   {workforce.rationale}
                 </p>
                 <ChipRow signal={workforce} />
@@ -431,11 +431,11 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
               <div className="signal-card rounded-xl p-3" data-tone={hexToTone(financial.tone)}>
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <LineChart className="w-3.5 h-3.5" style={{ color: financial.tone }} />
-                  <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
                     Money details
                   </span>
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                   {financial.rationale}
                 </p>
                 <ChipRow signal={financial} />

@@ -106,10 +106,10 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
                 PROGRESS DETECTED
               </p>
             </div>
-            <p className="text-[14px] font-black" style={{ color: 'rgba(255,255,255,0.92)' }}>
+            <p className="text-[14px] font-black" style={{ color: 'var(--alpha-text-92)' }}>
               Your risk dropped {drop} points.
             </p>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <p className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>
               That's real progress.
             </p>
           </div>
@@ -121,10 +121,10 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
           <div className="text-center">
-            <p className="text-[22px] font-black" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <p className="text-[22px] font-black" style={{ color: 'var(--alpha-text-45)' }}>
               {previousScore}
             </p>
-            <p className="text-[8px]" style={{ color: 'rgba(255,255,255,0.25)' }}>before</p>
+            <p className="text-[8px]" style={{ color: 'var(--alpha-text-25)' }}>before</p>
           </div>
           <ArrowRight className="w-4 h-4" style={{ color: '#10b981' }} />
           <div className="text-center">
@@ -138,12 +138,12 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
         {/* What changed */}
         {changedSignals.length > 0 && (
           <div className="space-y-1 mb-3">
-            <p className="text-[9px] font-semibold tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+            <p className="text-[9px] font-semibold tracking-widest mb-1" style={{ color: 'var(--alpha-text-25)' }}>
               WHAT DROVE THIS
             </p>
             {changedSignals.slice(0, 2).map((s, i) => (
               <div key={i} className="flex items-center justify-between">
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.60)' }}>{s.label}</span>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{s.label}</span>
                 <span
                   className="text-[10px] font-bold"
                   style={{ color: s.positive ? '#10b981' : '#f97316' }}
@@ -157,7 +157,7 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
 
         {/* Momentum framing */}
         {weeksAtThisPace && weeksAtThisPace < 52 && (
-          <p className="text-[10px] text-center italic mb-2" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] text-center italic mb-2" style={{ color: 'var(--alpha-text-35)' }}>
             At this pace — MODERATE risk in ~{weeksAtThisPace} weeks.
           </p>
         )}

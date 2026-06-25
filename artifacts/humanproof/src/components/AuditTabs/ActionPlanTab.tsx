@@ -1176,7 +1176,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                 const sel = track === selectedTrack;
                 return (
                   <React.Fragment key={track}>
-                    {i > 0 && <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>}
+                    {i > 0 && <span style={{ color: 'var(--alpha-text-25)' }}>·</span>}
                     <span style={{
                       color: sel ? '#f59e0b' : 'var(--text-3)',
                       fontWeight: sel ? 800 : 400,
@@ -1197,7 +1197,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
             <div className="flex items-center gap-1.5 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.60rem' }}>
               <DollarSign className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#10b981', opacity: 0.75 }} />
               <span style={{ color: '#10b981', fontWeight: 700 }}>{item.costDisplayLabel}</span>
-              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.52rem', letterSpacing: '0.05em' }}>MODELED · 2024-Q2</span>
+              <span style={{ color: 'var(--alpha-text-25)', fontSize: '0.52rem', letterSpacing: '0.05em' }}>MODELED · 2024-Q2</span>
             </div>
           )}
 
@@ -2169,8 +2169,8 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
         <div className="flex items-center gap-3 mb-3 mt-8">
           <NetworkIllustration size={48} className="flex-shrink-0 opacity-80" />
           <div>
-            <p className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}>PROFESSIONAL NETWORK</p>
-            <p className="text-[13px] font-bold" style={{ color: 'rgba(255,255,255,0.75)' }}>Career Twin Intelligence</p>
+            <p className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>PROFESSIONAL NETWORK</p>
+            <p className="text-[13px] font-bold" style={{ color: 'var(--alpha-text-78)' }}>Career Twin Intelligence</p>
           </div>
         </div>
         <CareerTwinCard

@@ -64,7 +64,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
       </div>
 
       {/* Role name */}
-      <p className="text-[11px] font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.65)' }}>
+      <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--alpha-text-55)' }}>
         {snapshot.roleName}
       </p>
 
@@ -86,7 +86,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
         <div className="text-lg font-black" style={{ color }}>
           ~{jobSearchRunwayWeeks} weeks
         </div>
-        <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <div className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>
           to job offer at this demand level
         </div>
       </div>
@@ -114,8 +114,8 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
           <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
             <div className="flex items-center gap-1.5">
-              <Clock className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.35)' }} />
-              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Median time-to-fill</span>
+              <Clock className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />
+              <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Median time-to-fill</span>
             </div>
             <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>
               {snapshot.timeToFillDays} days
@@ -125,7 +125,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
         {localMarketMultiplier !== 1.0 && (
           <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
             style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>Local market</span>
+            <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Local market</span>
             <span className="text-[11px] font-bold" style={{
               color: localMarketMultiplier > 1 ? '#10b981' : '#f97316'
             }}>
@@ -139,8 +139,8 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
       {topLocations.length > 0 && (
         <div className="mb-3">
           <div className="flex items-center gap-1.5 mb-1.5">
-            <MapPin className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.35)' }} />
-            <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <MapPin className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-45)' }}>
               TOP HIRING LOCATIONS
             </span>
           </div>
@@ -149,7 +149,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
               <span
                 key={i}
                 className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.60)' }}
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-55)' }}
               >
                 {loc}
               </span>
@@ -161,14 +161,14 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
       {/* Action recommendations */}
       {actionRecommendations.length > 0 && (
         <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-[10px] font-semibold mb-1.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          <div className="text-[10px] font-semibold mb-1.5" style={{ color: 'var(--alpha-text-45)' }}>
             RECOMMENDED ACTIONS
           </div>
           <div className="space-y-1">
             {actionRecommendations.slice(0, 2).map((rec, i) => (
               <div key={i} className="flex items-start gap-1.5">
                 <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: color }} />
-                <span className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <span className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                   {rec}
                 </span>
               </div>

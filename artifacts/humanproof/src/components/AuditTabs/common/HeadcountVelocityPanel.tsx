@@ -82,9 +82,9 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <Users className="w-3 h-3 flex-shrink-0" style={{ color: TREND_COLOR[headcount.headcountTrend] }} />
-          <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>Headcount Signal</span>
+          <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>Headcount Signal</span>
         </div>
-        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           {headcount.headcountNote}
         </p>
       </div>
@@ -92,7 +92,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       {/* Contractor note */}
       {headcount.contractorRatioRisk !== 'UNKNOWN' && (
         <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {headcount.contractorNote}
           </p>
         </div>
@@ -101,7 +101,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       {/* Early warning signals */}
       {headcount.earlyWarningSignals.length > 0 && (
         <div>
-          <div className="text-[10px] font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <div className="text-[10px] font-medium mb-1.5" style={{ color: 'var(--alpha-text-35)' }}>
             EARLY WARNING SIGNALS
             {headcount.estimatedLayoffLeadTimeDays && (
               <span style={{ color: '#f59e0b' }}> — ~{headcount.estimatedLayoffLeadTimeDays} days lead time</span>
@@ -111,7 +111,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
             {headcount.earlyWarningSignals.map((sig, i) => (
               <div key={i} className="flex items-start gap-1.5">
                 <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#f97316' }} />
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{sig}</span>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>{sig}</span>
               </div>
             ))}
           </div>
@@ -126,7 +126,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
             color: headcount.netHeadcountMomentum === 'NEGATIVE' ? '#ef4444' : '#10b981',
             transform: headcount.netHeadcountMomentum === 'POSITIVE' ? 'rotate(180deg)' : undefined,
           }} />
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>
             {headcount.netHeadcountNote}
           </p>
         </div>
@@ -144,7 +144,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           </span>
         </div>
       ) : headcount.inputsProvided && headcount.inputsProvided.length < 4 ? (
-        <p className="text-[10px] mt-2.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-[10px] mt-2.5" style={{ color: 'var(--alpha-text-30)' }}>
           Based on {headcount.inputsProvided.length} of 7 input fields ·
           missing fields default to neutral
         </p>

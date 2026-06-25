@@ -135,7 +135,7 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
     <div>
       <p
         className="text-[9px] font-black tracking-[0.14em] uppercase mb-2.5"
-        style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
       >
         PERSONAL IMPACT SIMULATOR
       </p>
@@ -165,7 +165,7 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
               </span>
               <div className="pb-0.5">
                 {sc.projectedScore !== currentScore && (
-                  <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <span className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-45)' }}>
                     {sc.projectedScore > currentScore ? `+${sc.projectedScore - currentScore}` : `−${currentScore - sc.projectedScore}`} pts
                   </span>
                 )}
@@ -186,13 +186,13 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
               <span className="text-[11px] font-black" style={{ color: sc.accentColor }}>
                 {sc.probability}%
               </span>
-              <span className="text-[10px] ml-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              <span className="text-[10px] ml-1" style={{ color: 'var(--alpha-text-45)' }}>
                 layoff risk
               </span>
             </div>
 
             {/* Description */}
-            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
               {sc.description}
             </p>
 

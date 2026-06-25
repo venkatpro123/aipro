@@ -98,7 +98,7 @@ export const BrandedLoader: React.FC<BrandedLoaderProps> = ({
         className="font-medium"
         style={{
           fontSize: s.text,
-          color: 'rgba(255,255,255,0.35)',
+          color: 'var(--alpha-text-35)',
           fontFamily: 'var(--font-mono)',
           letterSpacing: '0.06em',
         }}

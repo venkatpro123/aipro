@@ -112,10 +112,10 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
           <User className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <p className="text-[12px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>
             3 quick questions — personalize your action plan
           </p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
             Takes 20 seconds · Unlocks role-specific guidance
           </p>
         </div>
@@ -147,7 +147,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.18 }}
           >
-            <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'var(--alpha-text-70)' }}>
               Does your job depend on an employer-sponsored work visa?
             </p>
             <div className="flex flex-col gap-1.5">
@@ -163,14 +163,14 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                   }}
                 >
                   <div>
-                    <p className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                    <p className="text-[11px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
                       {opt.label}
                     </p>
-                    <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                    <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
                       {opt.description}
                     </p>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }} />
+                  <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }} />
                 </button>
               ))}
             </div>
@@ -186,7 +186,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.18 }}
           >
-            <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'var(--alpha-text-70)' }}>
               If laid off today, how many months of living expenses could you cover?
             </p>
             <div className="flex gap-2 flex-wrap">
@@ -201,10 +201,10 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                     border: '1px solid rgba(255,255,255,0.10)',
                   }}
                 >
-                  <p className="text-[13px] font-black" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  <p className="text-[13px] font-black" style={{ color: 'var(--alpha-text-85)' }}>
                     {m === 0 ? '<1' : m}
                   </p>
-                  <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <p className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>
                     {m === 12 ? '12+' : ''}{m === 0 ? 'mos' : ' mos'}
                   </p>
                 </button>
@@ -222,7 +222,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.18 }}
           >
-            <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            <p className="text-[11px] font-semibold mb-2.5" style={{ color: 'var(--alpha-text-70)' }}>
               Do you support dependents (children, parents, or others)?
             </p>
             <div className="flex gap-2">
@@ -235,7 +235,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                   style={{
                     background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.10)',
-                    color: 'rgba(255,255,255,0.75)',
+                    color: 'var(--alpha-text-70)',
                   }}
                 >
                   {val ? 'Yes' : 'No'}

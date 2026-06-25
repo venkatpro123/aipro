@@ -118,14 +118,14 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
         <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 mb-2.5"
           style={{ background: 'rgba(255,255,255,0.04)' }}>
           <Clock className="w-3 h-3 flex-shrink-0" style={{ color }} />
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+          <span className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
             Est. <span className="font-bold" style={{ color }}>{glassdoorVelocity.leadTimeEstimateDays} days</span> lead time
           </span>
         </div>
       )}
 
       {/* CEO approval note */}
-      <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.40)' }}>
+      <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
         {glassdoorVelocity.ceoApprovalNote}
       </p>
     </motion.div>

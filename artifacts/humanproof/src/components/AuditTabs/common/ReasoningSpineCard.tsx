@@ -77,7 +77,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
       {/* Spine — the one-line editorial summary */}
       <p
         className="text-[13px] sm:text-sm font-semibold leading-snug"
-        style={{ color: 'rgba(255,255,255,0.92)' }}
+        style={{ color: 'var(--alpha-text-92)' }}
       >
         {spine}
       </p>
@@ -156,7 +156,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
                   >
                     {step.label}
                   </p>
-                  <p className="text-[11.5px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  <p className="text-[11.5px] leading-snug mt-0.5" style={{ color: 'var(--alpha-text-70)' }}>
                     {trace[step.key]}
                   </p>
                 </div>

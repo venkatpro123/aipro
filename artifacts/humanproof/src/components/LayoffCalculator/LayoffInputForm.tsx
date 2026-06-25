@@ -83,7 +83,7 @@ const OptionCard: React.FC<{
         {label}
       </p>
       {desc && (
-        <p className="text-xs mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.38)' }}>
+        <p className="text-xs mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-35)' }}>
           {desc}
         </p>
       )}
@@ -141,7 +141,7 @@ const RoleIntelCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
           <span className="text-xs font-black px-1.5 py-0.5 rounded" style={{ background: `${color}20`, color }}>{entry.currentRiskScore}%</span>
         </div>
       </div>
-      <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
         {entry.summary.slice(0, 100)}{entry.summary.length > 100 ? '…' : ''}
       </p>
       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -180,7 +180,7 @@ const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
         Analyzing as: {intel?.displayRole ?? entry.displayTitle}
       </span>
       {intel && (
-        <span className="text-[10px] ml-auto" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <span className="text-[10px] ml-auto" style={{ color: 'var(--alpha-text-35)' }}>
           {(intel.skills.at_risk?.length ?? 0) + (intel.skills.safe?.length ?? 0)} skills mapped
         </span>
       )}
@@ -525,7 +525,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             />
           ))}
         </div>
-        <span className="text-[11px] font-mono" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <span className="text-[11px] font-mono" style={{ color: 'var(--alpha-text-30)' }}>
           {qStep + 1} / {TOTAL_STEPS}
         </span>
       </div>
@@ -543,7 +543,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           >
             {/* Question title */}
             <h2 className="text-xl font-bold mb-1 leading-snug" style={{ color: '#fff' }}>{q}</h2>
-            <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.42)' }}>{sub}</p>
+            <p className="text-sm mb-6" style={{ color: 'var(--alpha-text-45)' }}>{sub}</p>
 
             {/* ── Step 0: Company ───────────────────────────────────────── */}
             {qStep === 0 && (
@@ -556,7 +556,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 )}
                 <div style={{ position: 'relative' }}>
                   <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.30)' }} />
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--alpha-text-30)' }} />
                     <input
                       type="text"
                       placeholder="Type your company name..."
@@ -597,7 +597,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                           >
                             <div>
                               <p className="text-sm font-semibold" style={{ color: '#fff' }}>{res.name}</p>
-                              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                              <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>
                                 {res.industry}
                                 {(res as any).fromSupabase && <span style={{ color: '#22d3ee' }}> · DB</span>}
                                 {isPartial && <span style={{ color: '#f59e0b' }}> · partial</span>}
@@ -621,7 +621,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   {pendingMatchConfirmation && (
                     <div className="mt-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
                       <p className="text-xs font-bold mb-2" style={{ color: '#f59e0b' }}>Confirm company match</p>
-                      <p className="text-xs mb-3" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      <p className="text-xs mb-3" style={{ color: 'var(--alpha-text-50)' }}>
                         You typed <strong style={{ color: '#fff' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
                         {' '}Closest match: <strong style={{ color: '#fff' }}>{pendingMatchConfirmation.matchedName}</strong>.
                       </p>
@@ -633,7 +633,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                         </button>
                         <button type="button" onClick={() => { setPendingMatchConfirmation(null); setSearchResults([]); setSelectedCompany(null); }}
                           className="text-xs font-bold px-3 py-1.5 rounded-xl"
-                          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.60)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-55)', border: '1px solid rgba(255,255,255,0.12)' }}>
                           Search again
                         </button>
                       </div>
@@ -650,8 +650,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                           className="flex items-center gap-2 w-full py-1.5 text-left"
                           style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
                           <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
-                          <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.70)' }}>{c.name}</span>
-                          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>({c.industry})</span>
+                          <span className="text-xs font-medium" style={{ color: 'var(--alpha-text-70)' }}>{c.name}</span>
+                          <span className="text-xs" style={{ color: 'var(--alpha-text-35)' }}>({c.industry})</span>
                         </button>
                       ))}
                     </div>
@@ -668,7 +668,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} />
                     <div>
                       <p className="text-sm font-bold" style={{ color: '#6ee7b7' }}>{selectedCompany.name}</p>
-                      <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>{selectedCompany.industry} · Verified</p>
+                      <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>{selectedCompany.industry} · Verified</p>
                     </div>
                   </motion.div>
                 )}
@@ -679,7 +679,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             {qStep === 1 && (
               <div ref={roleInputRef}>
                 <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'rgba(255,255,255,0.30)' }} />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--alpha-text-30)' }} />
                   <input
                     ref={roleInputRef as any}
                     type="text"
@@ -714,7 +714,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                         >
                           <div>
                             <p className="text-sm font-semibold" style={{ color: '#fff' }}>{entry.displayTitle}</p>
-                            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>{entry.summary.slice(0, 48)}…</p>
+                            <p className="text-xs" style={{ color: 'var(--alpha-text-35)' }}>{entry.summary.slice(0, 48)}…</p>
                           </div>
                           <span className="text-xs font-black px-2 py-0.5 rounded-lg flex-shrink-0 ml-2" style={{ background: `${color}20`, color }}>
                             {entry.currentRiskScore}%
@@ -884,7 +884,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   desc="You own critical client or executive relationships"
                   accent="#22d3ee"
                 />
-                <p className="text-xs text-center mt-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                <p className="text-xs text-center mt-1" style={{ color: 'var(--alpha-text-25)' }}>
                   Select any that apply — or tap Continue to skip
                 </p>
               </div>
@@ -897,7 +897,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 <div className="rounded-2xl px-4 py-4 mb-5 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <p className="text-3xl font-black mb-1" style={{ color: runwayColor(financialRunwayMonths) }}>
                     {financialRunwayMonths === 0 ? '—' : `${financialRunwayMonths}`}
-                    <span className="text-base font-semibold ml-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                    <span className="text-base font-semibold ml-1" style={{ color: 'var(--alpha-text-45)' }}>
                       {financialRunwayMonths > 0 ? 'months' : ''}
                     </span>
                   </p>
@@ -918,7 +918,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 {/* Quick select pills */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {[
-                    { val: 0,  label: 'Not set',    color: 'rgba(255,255,255,0.35)' },
+                    { val: 0,  label: 'Not set',    color: 'var(--alpha-text-35)' },
                     { val: 3,  label: '3 mo',       color: '#ef4444' },
                     { val: 6,  label: '6 mo',       color: '#f97316' },
                     { val: 12, label: '12 mo',      color: '#f59e0b' },
@@ -940,7 +940,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   ))}
                 </div>
 
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.28)', lineHeight: 1.5 }}>
+                <p className="text-xs" style={{ color: 'var(--alpha-text-25)', lineHeight: 1.5 }}>
                   Months of living expenses saved. Helps personalize your job search strategy and urgency.
                 </p>
               </div>

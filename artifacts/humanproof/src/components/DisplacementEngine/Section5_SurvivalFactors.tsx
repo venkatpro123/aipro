@@ -46,7 +46,7 @@ export const Section5_SurvivalFactors: React.FC<Props> = ({ factors }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       {groups.map(group => (
         <div key={group.label}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
             {group.label}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -71,7 +71,7 @@ export const Section5_SurvivalFactors: React.FC<Props> = ({ factors }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Icon size={13} style={{ color: meta.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>{factor.skill}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)' }}>{factor.skill}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 9, fontWeight: 800, color: meta.color, padding: '1px 6px', borderRadius: 4, background: `${meta.color}18`, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
@@ -80,7 +80,7 @@ export const Section5_SurvivalFactors: React.FC<Props> = ({ factors }) => {
                         <span style={{ fontSize: 9, fontWeight: 700, color: SCARCITY_COLORS[factor.marketScarcity], padding: '1px 6px', borderRadius: 4, background: `${SCARCITY_COLORS[factor.marketScarcity]}15`, fontFamily: 'var(--font-mono)' }}>
                           {factor.marketScarcity}
                         </span>
-                        {isOpen ? <ChevronUp size={12} style={{ color: 'rgba(255,255,255,0.35)' }} /> : <ChevronDown size={12} style={{ color: 'rgba(255,255,255,0.35)' }} />}
+                        {isOpen ? <ChevronUp size={12} style={{ color: 'var(--alpha-text-35)' }} /> : <ChevronDown size={12} style={{ color: 'var(--alpha-text-35)' }} />}
                       </div>
                     </div>
 
@@ -88,14 +88,14 @@ export const Section5_SurvivalFactors: React.FC<Props> = ({ factors }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>PROTECTION</span>
+                          <span style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>PROTECTION</span>
                           <span style={{ fontSize: 10, fontWeight: 800, color: meta.color, fontFamily: 'var(--font-mono)' }}>{factor.protectionScore}</span>
                         </div>
                         <MeterBar value={factor.protectionScore} color={meta.color} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>FUTURE VALUE</span>
+                          <span style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>FUTURE VALUE</span>
                           <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--cyan,#22d3ee)', fontFamily: 'var(--font-mono)' }}>{factor.futureValue}</span>
                         </div>
                         <MeterBar value={factor.futureValue} color="var(--cyan,#22d3ee)" />
@@ -110,11 +110,11 @@ export const Section5_SurvivalFactors: React.FC<Props> = ({ factors }) => {
                       exit={{ opacity: 0, height: 0 }}
                       style={{ padding: '0 14px 12px', borderTop: `1px solid ${meta.border}` }}
                     >
-                      <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.60)', lineHeight: 1.65, margin: '10px 0 0' }}>
+                      <p style={{ fontSize: 12, color: 'var(--alpha-text-55)', lineHeight: 1.65, margin: '10px 0 0' }}>
                         {factor.scarcityReason}
                       </p>
                       {factor.horizon && (
-                        <div style={{ marginTop: 8, fontSize: 9, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+                        <div style={{ marginTop: 8, fontSize: 9, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
                           Horizon: {factor.horizon}
                         </div>
                       )}

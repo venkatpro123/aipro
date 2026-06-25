@@ -147,7 +147,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
             <p className="text-[13px] font-black tracking-tight" style={{ color: '#00d4e0' }}>
               Share your transition
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>
               Help others who are where you were · Your name is never stored
             </p>
           </div>
@@ -157,7 +157,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
             aria-label="Close transition form"
             title="Close"
             className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.50)' }}
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)' }}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -169,7 +169,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
             <p className="text-[14px] font-bold mb-1" style={{ color: '#10b981' }}>
               Thank you — transition added!
             </p>
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <p className="text-[11px]" style={{ color: 'var(--alpha-text-45)' }}>
               Your story will help others navigate a similar situation.
             </p>
           </div>
@@ -179,10 +179,10 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
             <div className="rounded-xl p-3.5"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
               <p className="text-[10px] font-black tracking-widest mb-2.5"
-                style={{ color: 'rgba(255,255,255,0.28)' }}>WHERE YOU CAME FROM</p>
+                style={{ color: 'var(--alpha-text-25)' }}>WHERE YOU CAME FROM</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     Previous role *
                   </label>
                   <input
@@ -193,7 +193,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     Industry
                   </label>
                   <input
@@ -206,7 +206,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     Years experience
                   </label>
                   <input
@@ -218,7 +218,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     Country
                   </label>
                   <select
@@ -243,7 +243,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                 style={{ color: 'rgba(16,185,129,0.50)' }}>WHERE YOU LANDED</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     New role *
                   </label>
                   <input
@@ -254,7 +254,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     New industry
                   </label>
                   <input
@@ -267,7 +267,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     Months to transition *
                   </label>
                   <input
@@ -279,7 +279,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                  <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
                     Income change (%)
                   </label>
                   <input
@@ -295,8 +295,8 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
 
             {/* What worked */}
             <div>
-              <label className="text-[10px] font-semibold block mb-1" style={{ color: 'rgba(255,255,255,0.40)' }}>
-                What specifically worked? * <span style={{ color: 'rgba(255,255,255,0.22)' }}>(min 20 chars)</span>
+              <label className="text-[10px] font-semibold block mb-1" style={{ color: 'var(--alpha-text-45)' }}>
+                What specifically worked? * <span style={{ color: 'var(--alpha-text-25)' }}>(min 20 chars)</span>
               </label>
               <textarea
                 className="input w-full text-[11px] resize-none"
@@ -330,7 +330,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
               {submitting ? 'Submitting…' : 'Share my transition'}
             </button>
 
-            <p className="text-center text-[10px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+            <p className="text-center text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
               No personal data stored · Transitions are anonymised
             </p>
           </div>
@@ -364,11 +364,11 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
     return (
       <>
         <div className="rounded-2xl border border-white/10 bg-white/3 p-5 flex flex-col items-center text-center gap-2">
-          <Users className="w-5 h-5" style={{ color: 'rgba(255,255,255,0.35)' }} />
-          <p className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <Users className="w-5 h-5" style={{ color: 'var(--alpha-text-35)' }} />
+          <p className="text-sm font-bold" style={{ color: 'var(--alpha-text-85)' }}>
             No matches for {displayRole} yet
           </p>
-          <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             Nobody in your role has shared their transition story yet. Be the first — your story helps the next person in your position.
           </p>
           <button

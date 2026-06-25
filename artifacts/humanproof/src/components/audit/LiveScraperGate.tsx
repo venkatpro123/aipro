@@ -191,7 +191,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           {company.toUpperCase()}
         </div>
         {roleTitle && (
-          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem', marginTop: '3px' }}>
+          <div style={{ color: 'var(--alpha-text-45)', fontSize: '0.72rem', marginTop: '3px' }}>
             ROLE: {roleTitle.toUpperCase()}
           </div>
         )}
@@ -266,7 +266,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           <div style={{
             marginTop: '12px', paddingTop: '10px',
             borderTop: '1px solid rgba(255,255,255,0.06)',
-            fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.05em',
+            fontSize: '0.6rem', color: 'var(--alpha-text-35)', letterSpacing: '0.05em',
           }}>
             {realDone}/{realTotal} live sources reconciled
           </div>
@@ -318,7 +318,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '6px',
-              color: 'rgba(255,255,255,0.55)',
+              color: 'var(--alpha-text-50)',
               fontSize: '0.65rem',
               padding: '5px 12px',
               cursor: 'pointer',

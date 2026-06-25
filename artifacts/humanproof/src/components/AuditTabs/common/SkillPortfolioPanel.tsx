@@ -65,7 +65,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       </div>
 
       {/* Portfolio insight */}
-      <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
+      <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
         {portfolio.portfolioInsight}
       </p>
 
@@ -80,7 +80,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
               <div key={s.skill} className="flex items-center justify-between rounded-lg px-2 py-1"
                 style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)' }}>
                 <span className="text-[10px] font-semibold" style={{ color: '#10b981' }}>{s.skill}</span>
-                <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.40)' }}>
+                <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-45)' }}>
                   {s.demandIn12Months != null && (
                     <span style={{ color: s.demandIn12Months > s.demandScore ? '#10b981' : 'rgba(255,255,255,0.30)' }}>
                       getting more valuable
@@ -111,7 +111,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                     {s.trend}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.40)' }}>
+                <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-45)' }}>
                   {s.demandIn12Months != null && (
                     <span style={{ color: '#ef4444' }}>losing value</span>
                   )}
@@ -125,7 +125,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       {/* Retool priority */}
       {portfolio.retoolPriority.length > 0 && (
         <div>
-          <div className="text-[10px] font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <div className="text-[10px] font-medium mb-1.5" style={{ color: 'var(--alpha-text-35)' }}>
             SKILLS TO UPDATE
           </div>
           <div className="space-y-1">
@@ -136,8 +136,8 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                 : skill.replace(/\b\w/g, (c: string) => c.toUpperCase());
               return (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold w-4" style={{ color: 'rgba(255,255,255,0.30)' }}>{i + 1}.</span>
-                  <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>{displaySkill}</span>
+                  <span className="text-[10px] font-bold w-4" style={{ color: 'var(--alpha-text-30)' }}>{i + 1}.</span>
+                  <span className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>{displaySkill}</span>
                 </div>
               );
             })}

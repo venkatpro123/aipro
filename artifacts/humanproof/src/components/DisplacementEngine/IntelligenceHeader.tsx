@@ -52,7 +52,7 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
           <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text,#e9f3ff)', lineHeight: 1 }}>
             {result.total < 30 ? 'RESILIENT' : result.total < 50 ? 'MODERATE' : result.total < 65 ? 'ELEVATED' : result.total < 80 ? 'HIGH' : 'CRITICAL'}
           </div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 9, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Current Risk
           </div>
         </div>
@@ -78,7 +78,7 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
 
       {/* Projected score */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-        <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 9, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           2030 Exposure
         </span>
         <span style={{ fontSize: 13, fontWeight: 800, color: waveScore.scoreColor, fontFamily: 'var(--font-mono)' }}>
@@ -92,12 +92,12 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
       <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.10)', flexShrink: 0 }} />
 
       {/* Confidence */}
-      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
-        Confidence: <span style={{ color: 'rgba(255,255,255,0.55)' }}>{result.confidence ?? 'MODERATE'}</span>
+      <div style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>
+        Confidence: <span style={{ color: 'var(--alpha-text-50)' }}>{result.confidence ?? 'MODERATE'}</span>
       </div>
 
       {/* Version tag — right-aligned */}
-      <div style={{ marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,0.22)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', flexShrink: 0 }}>
+      <div style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', flexShrink: 0 }}>
         DISPLACEMENT ENGINE v2
       </div>
     </div>

@@ -128,8 +128,8 @@ const PillarRow: React.FC<{
               </span>
               {hasDetail && (
                 open
-                  ? <ChevronUp className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />
-                  : <ChevronDown className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.28)' }} />
+                  ? <ChevronUp className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
+                  : <ChevronDown className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />
               )}
             </div>
           </div>
@@ -165,7 +165,7 @@ const PillarRow: React.FC<{
           >
             <div className="px-3 py-2.5 space-y-2">
               {(pillar.insight) && (
-                <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
                   {pillar.insight}
                 </p>
               )}
@@ -173,7 +173,7 @@ const PillarRow: React.FC<{
                 <div className="flex items-start gap-1.5 rounded-lg px-2 py-1.5"
                   style={{ background: `${cfg.color}09`, border: `1px solid ${cfg.color}20` }}>
                   <ArrowRight className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: cfg.color, opacity: 0.75 }} />
-                  <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.68)' }}>
+                  <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                     {(pillar as any).topAction ?? pillar.improvementAction}
                   </p>
                 </div>
@@ -228,7 +228,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
               className="w-4 h-4"
               style={{ color: isFullyInsured ? '#10b981' : 'rgba(255,255,255,0.45)' }}
             />
-            <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
               CAREER INSURANCE STATUS
             </p>
           </div>
@@ -246,12 +246,12 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
             <p className="text-2xl sm:text-[30px] font-black leading-none" style={{ color: grade.color }}>
               {compositeScore}
             </p>
-            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>/100</p>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>/100</p>
           </div>
           <div className="flex-1 mb-1">
             <div className="flex items-center justify-between mb-1">
               <p className="text-[11px] font-black" style={{ color: grade.color }}>{grade.label}</p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>
                 Target: {targetPct}%
               </p>
             </div>
@@ -269,7 +269,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
                 style={{ background: `linear-gradient(90deg, ${grade.color}88, ${grade.color})` }}
               />
             </div>
-            <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{grade.sub}</p>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-35)' }}>{grade.sub}</p>
           </div>
         </div>
 
@@ -302,7 +302,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           <button
             onClick={() => setExpanded(e => !e)}
             className="w-full flex items-center justify-center gap-1 py-2 text-[10px] font-semibold mt-1"
-            style={{ color: 'rgba(255,255,255,0.35)' }}
+            style={{ color: 'var(--alpha-text-35)' }}
           >
             {expanded ? (
               <><ChevronUp className="w-3 h-3" /> Show less</>
@@ -319,7 +319,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           className="mx-3 mb-2 rounded-xl px-3 py-2.5"
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'var(--alpha-text-25)' }}>
             WEAKEST PILLAR — CLOSE THIS FIRST
           </p>
           <div className="flex items-start gap-2">
@@ -331,7 +331,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
               {resilienceImprovementPlan?.[0] && (
                 <div className="flex items-start gap-1.5">
                   <ArrowRight className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(34,211,238,0.60)' }} />
-                  <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                     {resilienceImprovementPlan[0]}
                   </p>
                 </div>
@@ -350,7 +350,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'rgba(34,211,238,0.50)' }}>
             RISK + RESILIENCE READ
           </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
             {riskResilienceInterpretation}
           </p>
         </div>

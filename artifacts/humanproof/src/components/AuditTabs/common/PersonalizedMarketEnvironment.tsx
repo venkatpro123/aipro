@@ -235,11 +235,11 @@ const SectionHeader: React.FC<{
     <div className="flex items-start gap-2 min-w-0">
       <div style={{ color: CYAN, marginTop: 1, flexShrink: 0 }}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.75)' }}>
+        <p className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-70)' }}>
           {title}
         </p>
         {subtitle && (
-          <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-35)' }}>
             {subtitle}
           </p>
         )}
@@ -264,10 +264,10 @@ const StatRow: React.FC<{
 }> = ({ label, value, valueColor = 'rgba(255,255,255,0.85)', sub }) => (
   <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg"
     style={{ background: 'rgba(255,255,255,0.04)' }}>
-    <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.50)' }}>{label}</span>
+    <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>{label}</span>
     <div className="text-right">
       <span className="text-[11px] font-bold" style={{ color: valueColor }}>{value}</span>
-      {sub && <span className="text-[10px] ml-1.5" style={{ color: 'rgba(255,255,255,0.30)' }}>{sub}</span>}
+      {sub && <span className="text-[10px] ml-1.5" style={{ color: 'var(--alpha-text-30)' }}>{sub}</span>}
     </div>
   </div>
 );
@@ -294,7 +294,7 @@ const CollapsibleSection: React.FC<{
         animate={{ rotate: open ? 180 : 0 }}
         transition={{ duration: 0.18 }}
         className="flex-shrink-0 ml-2"
-        style={{ color: 'rgba(255,255,255,0.28)' }}
+        style={{ color: 'var(--alpha-text-25)' }}
       >
         <ChevronDown style={{ width: 14, height: 14 }} />
       </motion.div>
@@ -374,7 +374,7 @@ const LocationCard: React.FC<{ loc: LocationOpportunity; roleDisplay: string }> 
       </div>
 
       {/* Insight */}
-      <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
         {loc.insight}
       </p>
     </div>
@@ -490,7 +490,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           {/* Demand bar */}
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-45)' }}>
                 DEMAND INDEX — {roleDisplay.toUpperCase()}
               </span>
               <div className="flex items-center gap-1" style={{ color: dColor }}>
@@ -542,7 +542,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
 
           {/* Salary insight */}
           <div className="rounded-lg px-3 py-2 mb-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
               {salaryInsight}
             </p>
           </div>
@@ -551,7 +551,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           <div className="rounded-lg px-3 py-2 flex items-start gap-2"
             style={{ background: `${dColor}09`, border: `1px solid ${dColor}25` }}>
             <ArrowUpRight style={{ width: 12, height: 12, color: dColor, flexShrink: 0, marginTop: 2 }} />
-            <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
               {demandIndex > 74
                 ? `High demand for ${roleDisplay} — recruiters are actively sourcing. Update your LinkedIn/profile now to capture inbound interest.`
                 : demandIndex > 54
@@ -560,7 +560,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             </p>
           </div>
 
-          <p className="text-[10px] mt-2.5" style={{ color: 'rgba(255,255,255,0.20)' }}>
+          <p className="text-[10px] mt-2.5" style={{ color: 'var(--alpha-text-25)' }}>
             Data: {dataQuarter} · {snapshot?.calibrationNote ?? 'Market intelligence snapshot'}
           </p>
         </CollapsibleSection>
@@ -591,12 +591,12 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                 <p className="text-[11px] font-semibold" style={{ color: CYAN }}>
                   Your market: {userMetro}
                   {localMult !== 1.0 && (
-                    <span style={{ color: 'rgba(255,255,255,0.50)', fontWeight: 400 }}>
+                    <span style={{ color: 'var(--alpha-text-50)', fontWeight: 400 }}>
                       {' '}· {localMult.toFixed(2)}× national demand multiplier
                     </span>
                   )}
                 </p>
-                <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
                   {localMult >= 1.2
                     ? `${userMetro} is a top-tier ${roleDisplay} market — strong inbound recruiter activity expected.`
                     : localMult >= 1.05
@@ -621,7 +621,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             <div className="rounded-lg px-3 py-2 flex items-start gap-2"
               style={{ background: 'rgba(148,163,184,0.06)', border: '1px solid rgba(148,163,184,0.18)' }}>
               <Globe style={{ width: 11, height: 11, color: SLATE, flexShrink: 0, marginTop: 2 }} />
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.50)' }}>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
                 {locationOpps.filter(l => l.isRemoteFriendly && l.opportunityScore > demandIndex).length} cities
                 offer above-your-local demand with remote-friendly {roleDisplay} hiring — widening your
                 addressable market without relocation.
@@ -672,7 +672,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           <div className="rounded-lg px-3 py-2 flex items-start gap-2"
             style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.20)' }}>
             <Clock style={{ width: 11, height: 11, color: AMBER, flexShrink: 0, marginTop: 2 }} />
-            <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
               {snapshot.timeToFillDays < 35
                 ? `Fast-moving market — companies are making offers quickly. Prepare references, portfolio, and compensation ask before you apply, not after.`
                 : snapshot.timeToFillDays > 55
@@ -702,14 +702,14 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             />
           }
         >
-          <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.68)' }}>
+          <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
             {aiCopy.body}
           </p>
 
           {/* Substitution risk bar */}
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Task automation exposure</span>
+              <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>Task automation exposure</span>
               <span className="text-[10px] font-bold" style={{ color: aiCopy.urgency === 'high' ? RED : aiCopy.urgency === 'medium' ? AMBER : EMERALD }}>
                 {Math.round(aiRisk * 100)}%
               </span>
@@ -733,14 +733,14 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             <div className="rounded-lg px-3 py-2 flex items-start gap-2 mb-3"
               style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
               <Shield style={{ width: 11, height: 11, color: EMERALD, flexShrink: 0, marginTop: 2 }} />
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                 Your documented skills ({selfSkills.slice(0, 3).join(', ')}{selfSkills.length > 3 ? ` +${selfSkills.length - 3}` : ''}) provide partial protection.
                 AI augmentation of skills you already have is a different risk profile than replacement — focus on deepening them.
               </p>
             </div>
           )}
 
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
             Source: WEF Future of Jobs 2025 · McKinsey State of AI 2026 · role-specific task analysis
           </p>
         </CollapsibleSection>
@@ -776,7 +776,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           }
         >
           {/* Personalized body */}
-          <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.68)' }}>
+          <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
             {contagionBody}
           </p>
 
@@ -801,7 +801,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           {/* Affected peers — role-framed */}
           {peerContagionR.affectedPeers?.length > 0 && (
             <div className="mb-3">
-              <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'var(--alpha-text-25)' }}>
                 COMPANIES THAT CUT {roleDisplay.toUpperCase()}S
               </p>
               <div className="space-y-1.5">
@@ -814,11 +814,11 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                     className="flex items-center gap-2 rounded-lg px-2.5 py-2"
                     style={{ background: 'rgba(255,255,255,0.04)' }}
                   >
-                    <Users style={{ width: 11, height: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }} />
-                    <span className="flex-1 text-[11px] font-medium capitalize" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    <Users style={{ width: 11, height: 11, color: 'var(--alpha-text-35)', flexShrink: 0 }} />
+                    <span className="flex-1 text-[11px] font-medium capitalize" style={{ color: 'var(--alpha-text-70)' }}>
                       {peer.companyName}
                     </span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                    <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>
                       {peer.daysAgo}d ago
                     </span>
                     {peer.estimatedPercentCut > 0 && (
@@ -843,7 +843,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             </div>
           )}
 
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
             Static peer graph · Curated layoff cache · Treat as directional, not precise
           </p>
         </CollapsibleSection>
@@ -866,7 +866,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
         >
           {selfSkills.length > 0 ? (
             <>
-              <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <p className="text-[11px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
                 You've listed {selfSkills.length} skill{selfSkills.length !== 1 ? 's' : ''}: {selfSkills.slice(0, 4).join(', ')}{selfSkills.length > 4 ? ` and ${selfSkills.length - 4} more` : ''}.
                 {demandIndex > 65
                   ? ` Market demand for ${roleDisplay} is high — deepening any two of these skills increases your competitiveness significantly.`
@@ -886,7 +886,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           ) : (
             <div className="rounded-lg px-3 py-2.5 mb-3"
               style={{ background: 'rgba(0,212,224,0.05)', border: '1px solid rgba(0,212,224,0.15)' }}>
-              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                 Add your skills in your profile to see how they align with current {roleDisplay} market demand —
                 skill-level framing can unlock 20–35% better role-match accuracy and personalised upskill recommendations.
               </p>
@@ -907,7 +907,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             <div className="rounded-lg px-3 py-2 flex items-start gap-2"
               style={{ background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.18)' }}>
               <Zap style={{ width: 11, height: 11, color: CYAN, flexShrink: 0, marginTop: 2 }} />
-              <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.68)' }}>
+              <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                 AI-fluent {roleDisplay}s earn a <strong style={{ color: CYAN }}>20–35% salary premium</strong> and face 40% lower displacement risk compared to peers who haven't adopted AI tooling.
                 The fastest path: pick 2 AI tools used by {roleDisplay}s in {topLocations[0] ?? 'your market'} and build public proof-of-work in 4 weeks.
               </p>

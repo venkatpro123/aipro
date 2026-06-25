@@ -140,11 +140,11 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
       >
         <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
         <div>
-          <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
             If Disruption Hits Tomorrow
           </span>
           {currentRoleLabel && (
-            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-30)' }}>
               as a {currentRoleLabel}
             </p>
           )}
@@ -176,7 +176,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
               <p className="text-[14px] font-black leading-none" style={{ color: stat.color }}>
                 {stat.value}
               </p>
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
                 {stat.sub}
               </p>
             </motion.div>
@@ -190,7 +190,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
           className="px-4 py-2.5"
           style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
         >
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {urgency}
           </p>
         </div>

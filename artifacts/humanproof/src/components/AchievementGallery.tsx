@@ -63,7 +63,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
         <div className="flex-1 min-w-0">
           <p
             className="text-[9px] font-black tracking-[0.14em] uppercase mb-0.5"
-            style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)' }}
+            style={{ color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}
           >
             CAREER LEVEL
           </p>
@@ -79,7 +79,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
         </div>
       </div>
 
-      <p className="text-[10px] leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-[10px] leading-relaxed mb-3" style={{ color: 'var(--alpha-text-45)' }}>
         {current.description}
       </p>
 
@@ -87,7 +87,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
       {next ? (
         <>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <span className="text-[9px] font-bold" style={{ color: 'var(--alpha-text-35)' }}>
               Progress to {next.label}
             </span>
             <span className="text-[9px] font-bold" style={{ color: next.color }}>
@@ -107,12 +107,12 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
             />
           </div>
           {next.requiresGoldPlus && unlocked.every(a => a.tier !== 'gold' && a.tier !== 'platinum') && (
-            <p className="text-[9px] mt-1.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[9px] mt-1.5" style={{ color: 'var(--alpha-text-25)' }}>
               Requires a gold badge
             </p>
           )}
           {next.requiresPlatinum && unlocked.every(a => a.tier !== 'platinum') && (
-            <p className="text-[9px] mt-1.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <p className="text-[9px] mt-1.5" style={{ color: 'var(--alpha-text-25)' }}>
               Requires a platinum badge
             </p>
           )}
@@ -174,7 +174,7 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
       <div className="flex items-center justify-between mb-3">
         <p
           className="text-[10px] font-black tracking-[0.14em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+          style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
         >
           ACHIEVEMENTS
         </p>

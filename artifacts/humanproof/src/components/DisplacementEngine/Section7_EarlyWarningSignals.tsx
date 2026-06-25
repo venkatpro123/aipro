@@ -27,7 +27,7 @@ export const Section7_EarlyWarningSignals: React.FC<Props> = ({ waveStatusDetail
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Industry context */}
-      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
         AI Adoption Wave Status — {waveStatusDetail.industryContext}
       </div>
 
@@ -109,14 +109,14 @@ export const Section7_EarlyWarningSignals: React.FC<Props> = ({ waveStatusDetail
             {waveStatusDetail.label}
           </span>
         </div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.7, margin: '0 0 12px' }}>
+        <p style={{ fontSize: 13, color: 'var(--alpha-text-70)', lineHeight: 1.7, margin: '0 0 12px' }}>
           {waveStatusDetail.description}
         </p>
 
         {/* Supporting signals */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {waveStatusDetail.supportingSignals.map((sig, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, fontSize: 11, color: 'rgba(255,255,255,0.50)', lineHeight: 1.5 }}>
+            <div key={i} style={{ display: 'flex', gap: 8, fontSize: 11, color: 'var(--alpha-text-50)', lineHeight: 1.5 }}>
               <span style={{ color: WAVE_STAGES[activeIdx].color, flexShrink: 0 }}>◦</span>
               <span>{sig}</span>
             </div>

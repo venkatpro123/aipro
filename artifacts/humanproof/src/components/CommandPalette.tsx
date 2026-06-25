@@ -129,7 +129,7 @@ export const CommandPalette: React.FC = () => {
             >
               {/* Search input */}
               <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <Search className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.35)' }} />
+                <Search className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--alpha-text-35)' }} />
                 <input
                   ref={inputRef}
                   type="text"
@@ -138,11 +138,11 @@ export const CommandPalette: React.FC = () => {
                   onKeyDown={handleKeyDown}
                   placeholder="Search features, pages, actions..."
                   className="flex-1 bg-transparent border-none outline-none text-[13px]"
-                  style={{ color: 'rgba(255,255,255,0.85)', fontFamily: 'var(--font-body)' }}
+                  style={{ color: 'var(--alpha-text-85)', fontFamily: 'var(--font-body)' }}
                 />
                 <kbd
                   className="px-1.5 py-0.5 rounded text-[9px] font-mono"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.30)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-30)', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   ESC
                 </kbd>
@@ -151,7 +151,7 @@ export const CommandPalette: React.FC = () => {
               {/* Results */}
               <div className="max-h-[320px] overflow-y-auto py-1">
                 {filtered.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-[11px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                  <p className="px-4 py-6 text-center text-[11px]" style={{ color: 'var(--alpha-text-30)' }}>
                     No results found for "{query}"
                   </p>
                 ) : (
@@ -181,7 +181,7 @@ export const CommandPalette: React.FC = () => {
                           <p className="text-[12px] font-semibold truncate" style={{ color: isSelected ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.65)' }}>
                             {item.label}
                           </p>
-                          <p className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.30)' }}>
+                          <p className="text-[10px] truncate" style={{ color: 'var(--alpha-text-30)' }}>
                             {item.description}
                           </p>
                         </div>
@@ -200,10 +200,10 @@ export const CommandPalette: React.FC = () => {
                 style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+                  <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
                     <kbd className="px-1 py-0.5 rounded text-[8px] font-mono" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>↑↓</kbd> navigate
                   </span>
-                  <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
+                  <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
                     <kbd className="px-1 py-0.5 rounded text-[8px] font-mono" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>↵</kbd> open
                   </span>
                 </div>

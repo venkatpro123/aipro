@@ -124,14 +124,14 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
               </div>
             )}
             <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <p className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>
                 Viability score
               </p>
               <span className="text-[14px] font-black" style={{ color: '#14b8a6' }}>
                 {internalMobility.viabilityScore}/100
               </span>
             </div>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
               {internalMobility.viabilityRationale}
             </p>
             {(internalMobility.targetDepartments?.length ?? 0) > 0 && (

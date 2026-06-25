@@ -96,11 +96,11 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
             <Users className="w-3.5 h-3.5" style={{ color: cfg.color }} />
           </div>
           <div>
-            <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+            <p className="text-[10px] font-bold tracking-[0.15em]" style={{ color: 'var(--alpha-text-30)' }}>
               YOUR POSITION VS PEERS
             </p>
             {cohortLabel && (
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
                 {cohortLabel}{cohortSize ? ` · ${cohortSize.toLocaleString()} profiles` : ''}
               </p>
             )}
@@ -108,9 +108,9 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
         </div>
         <div className="text-right">
           <p className="text-[22px] font-black" style={{ color: cfg.color }}>
-            {overallPercentile}<span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.40)' }}>th</span>
+            {overallPercentile}<span className="text-[12px]" style={{ color: 'var(--alpha-text-45)' }}>th</span>
           </p>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>percentile</p>
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>percentile</p>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           style={{ left: '50%', background: 'rgba(255,255,255,0.20)' }}
         />
       </div>
-      <p className="text-[10px] mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
+      <p className="text-[10px] mb-3" style={{ color: 'var(--alpha-text-35)' }}>
         {percentileInterpretation(overallPercentile)}
       </p>
 
@@ -138,7 +138,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
               <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />
               <p className="text-[10px] font-bold" style={{ color: 'rgba(16,185,129,0.70)' }}>YOU LEAD</p>
             </div>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.68)' }}>{topEdge}</p>
+            <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{topEdge}</p>
           </div>
         )}
         {topGap && (
@@ -147,7 +147,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
               <TrendingDown className="w-3 h-3" style={{ color: '#f97316' }} />
               <p className="text-[10px] font-bold" style={{ color: 'rgba(249,115,22,0.70)' }}>YOU LAG</p>
             </div>
-            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.68)' }}>{topGap}</p>
+            <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{topGap}</p>
           </div>
         )}
       </div>
@@ -181,7 +181,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           <p className="text-[10px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(167,139,250,0.60)' }}>
             YOUR DIFFERENTIATOR
           </p>
-          <p className="text-[11px] italic leading-snug" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          <p className="text-[11px] italic leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             "{differentiatorStatement}"
           </p>
         </div>
@@ -193,10 +193,10 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           {winRateEstimate && (
             <div className="rounded-lg px-2.5 py-2"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>
                 WIN RATE
               </p>
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                 {winRateEstimate}
               </p>
             </div>
@@ -207,7 +207,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
               <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'rgba(249,115,22,0.55)' }}>
                 MAIN COMPETITOR
               </p>
-              <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.58)' }}>
+              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
                 {competitiveThreat}
               </p>
             </div>
@@ -221,7 +221,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           <button
             onClick={() => setExpanded(e => !e)}
             className="flex items-center gap-1 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.30)' }}
+            style={{ color: 'var(--alpha-text-30)' }}
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {expanded ? 'Hide' : 'Show'} close-gap roadmap ({closeGapRoadmap.length} actions)
@@ -231,7 +231,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
               {closeGapRoadmap.map((step, i) => (
                 <div key={i} className="flex items-center justify-between py-1.5 border-b"
                   style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                  <p className="text-[10px] flex-1 min-w-0 pr-2" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                  <p className="text-[10px] flex-1 min-w-0 pr-2" style={{ color: 'var(--alpha-text-55)' }}>
                     {step.action}
                   </p>
                   <div className="flex items-center gap-2 flex-shrink-0">

@@ -113,7 +113,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
         style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
         <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
-        <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>
+        <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
           Peer Risk Comparison
         </span>
         <span
@@ -156,7 +156,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {peer.signal && (
-                    <span className="text-[9px] hidden sm:block" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                    <span className="text-[9px] hidden sm:block" style={{ color: 'var(--alpha-text-25)' }}>
                       {peer.signal.length > 30 ? peer.signal.slice(0, 28) + '…' : peer.signal}
                     </span>
                   )}
@@ -199,7 +199,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
         className="px-4 py-2"
         style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
           Risk scores estimated from layoff signals, hiring trends, and financial indicators.
         </p>
       </div>

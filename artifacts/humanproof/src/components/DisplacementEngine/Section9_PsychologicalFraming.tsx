@@ -34,7 +34,7 @@ export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {
         <div style={{ fontSize: 9, fontWeight: 700, color: toneStyle.accent, fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
           Your Situation In Context
         </div>
-        <p style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.90)', lineHeight: 1.65, margin: 0 }}>
+        <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--alpha-text-92)', lineHeight: 1.65, margin: 0 }}>
           {frame.headline}
         </p>
       </motion.div>
@@ -49,8 +49,8 @@ export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {
           background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
         }}
       >
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>The Broader Picture</div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.68)', lineHeight: 1.75, margin: 0 }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>The Broader Picture</div>
+        <p style={{ fontSize: 13, color: 'var(--alpha-text-55)', lineHeight: 1.75, margin: 0 }}>
           {frame.context}
         </p>
       </motion.div>
@@ -66,7 +66,7 @@ export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {
         }}
       >
         <div style={{ fontSize: 9, fontWeight: 700, color: toneStyle.accent, fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>What You Control</div>
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, margin: 0 }}>
+        <p style={{ fontSize: 13, color: 'var(--alpha-text-70)', lineHeight: 1.75, margin: 0 }}>
           {frame.agency}
         </p>
       </motion.div>
@@ -81,8 +81,8 @@ export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {
           background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 6 }}>Uncertainty Acknowledgment</div>
-        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.40)', lineHeight: 1.7, margin: 0, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 6 }}>Uncertainty Acknowledgment</div>
+        <p style={{ fontSize: 11, color: 'var(--alpha-text-45)', lineHeight: 1.7, margin: 0, fontStyle: 'italic' }}>
           {frame.horizon}
         </p>
       </motion.div>

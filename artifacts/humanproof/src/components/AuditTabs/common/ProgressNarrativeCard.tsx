@@ -123,7 +123,7 @@ export const ProgressNarrativeCard: React.FC<Props> = ({ scoreDelta, streakInfo 
         <p className="text-[13px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
           {headline}
         </p>
-        <p className="text-[11px] leading-snug mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        <p className="text-[11px] leading-snug mt-1" style={{ color: 'var(--alpha-text-50)' }}>
           {body}
         </p>
       </div>

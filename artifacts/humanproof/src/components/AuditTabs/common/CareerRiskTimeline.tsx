@@ -139,7 +139,7 @@ export const CareerRiskTimeline: React.FC<CareerRiskTimelineProps> = ({
     <div>
       <p
         className="text-[9px] font-black tracking-[0.14em] uppercase mb-2.5"
-        style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
       >
         CAREER RISK TIMELINE
       </p>
@@ -215,7 +215,7 @@ export const CareerRiskTimeline: React.FC<CareerRiskTimelineProps> = ({
 
       {/* Urgency note */}
       {urgencyCategory && urgencyCategory !== 'COMFORTABLE' && (
-        <p className="mt-1.5 text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="mt-1.5 text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
           {urgencyCategory === 'IMMEDIATE' && '⚡ Act this week — runway is tight.'}
           {urgencyCategory === 'WEEKS' && '⚠ Act within the next few weeks.'}
           {urgencyCategory === 'MONTHS' && 'Build momentum over the next few months.'}

@@ -75,7 +75,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
     >
       <p
         className="text-[9px] font-black tracking-[0.14em] uppercase mb-2.5"
-        style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+        style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
       >
         {title}
       </p>

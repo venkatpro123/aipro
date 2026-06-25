@@ -86,7 +86,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
           {(subtitle || empty) && (
             <div
               className="text-[10px] leading-tight mt-0.5 flex items-center gap-1"
-              style={{ color: 'rgba(255,255,255,0.35)' }}
+              style={{ color: 'var(--alpha-text-35)' }}
             >
               {empty ? 'No data available' : subtitle}
             </div>
@@ -110,7 +110,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
             transition={{ duration: 0.18 }}
             className="flex-shrink-0"
           >
-            <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
+            <ChevronDown className="w-4 h-4" style={{ color: 'var(--alpha-text-30)' }} />
           </motion.div>
         )}
       </button>

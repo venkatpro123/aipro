@@ -74,9 +74,9 @@ const EmergencyModeHeader: React.FC<Props> = ({ score, onScrollToProtocol }) => 
           </div>
         </div>
 
-        <p className="text-xs leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.72)' }}>
+        <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--alpha-text-70)' }}>
           Your risk score has crossed the{' '}
-          <strong style={{ color: 'rgba(255,255,255,0.92)' }}>emergency threshold (80/100)</strong>.
+          <strong style={{ color: 'var(--alpha-text-92)' }}>emergency threshold (80/100)</strong>.
           {' '}At this level, the probability of layoff within 90 days is statistically elevated.
           {' '}Your emergency protocol is active below — treat this as an active career situation
           requiring immediate attention, not passive monitoring.

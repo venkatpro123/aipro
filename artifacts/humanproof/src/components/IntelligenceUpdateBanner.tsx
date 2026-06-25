@@ -86,7 +86,7 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-snug mb-0.5" style={{ color: 'rgba(255,255,255,0.88)' }}>
+              <p className="text-[11px] font-bold leading-snug mb-0.5" style={{ color: 'var(--alpha-text-85)' }}>
                 {update.signalCount > 0
                   ? `${update.signalCount} new signal${update.signalCount !== 1 ? 's' : ''} detected for ${companyName}`
                   : update.daysSince >= 90
@@ -97,7 +97,7 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
               </p>
               {/* Day-based re-engagement copy (Wave 4.3) */}
               {update.signalCount === 0 && !update.topHeadline && (
-                <p className="text-[10px] mb-1 leading-snug" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] mb-1 leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
                   {update.daysSince >= 90
                     ? 'Refreshing now would sharpen your confidence score by ~25% and catch any market shifts.'
                     : update.daysSince >= 30
@@ -107,11 +107,11 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
               )}
               {/* Headline snippet (breaking news) */}
               {update.topHeadline && (
-                <p className="text-[10px] mb-1 leading-snug line-clamp-1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-[10px] mb-1 leading-snug line-clamp-1" style={{ color: 'var(--alpha-text-45)' }}>
                   "{update.topHeadline}"
                 </p>
               )}
-              <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
                 Est. score impact: {update.estimatedDelta} · Re-analyze to stay current.
               </p>
 
@@ -140,7 +140,7 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
                 <button
                   onClick={handleDismiss}
                   className="text-[9px] font-semibold transition-opacity hover:opacity-70"
-                  style={{ color: 'rgba(255,255,255,0.28)' }}
+                  style={{ color: 'var(--alpha-text-25)' }}
                 >
                   Dismiss
                 </button>
@@ -151,7 +151,7 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
             <button
               onClick={handleDismiss}
               className="flex-shrink-0 p-1 rounded-lg transition-opacity hover:opacity-60 mt-0.5"
-              style={{ color: 'rgba(255,255,255,0.30)' }}
+              style={{ color: 'var(--alpha-text-30)' }}
               aria-label="Dismiss update banner"
             >
               <X className="w-3.5 h-3.5" />

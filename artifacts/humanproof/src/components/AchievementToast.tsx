@@ -80,10 +80,10 @@ export const AchievementToast: React.FC = () => {
                       Achievement Unlocked
                     </span>
                   </div>
-                  <p className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                  <p className="text-[12px] font-bold" style={{ color: 'var(--alpha-text-92)' }}>
                     {achievement.label}
                   </p>
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
                     {achievement.description}
                   </p>
                 </div>

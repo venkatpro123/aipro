@@ -15,7 +15,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
       <div style={{
-        fontSize: 10, color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-mono)',
+        fontSize: 10, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)',
         letterSpacing: '0.06em', padding: '7px 12px', borderRadius: 8,
         background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
       }}>
@@ -68,13 +68,13 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.40)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{step.timeframe}</span>
+                    <span style={{ fontSize: 10, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{step.timeframe}</span>
                     {!step.isCurrentRole && (
                       <span style={{ fontSize: 10, color: scoreColor, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>Risk: {step.riskLevel}/100</span>
                     )}
                   </div>
                   {step.transitionNote && (
-                    <div style={{ marginTop: 6, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+                    <div style={{ marginTop: 6, fontSize: 11, color: 'var(--alpha-text-45)', lineHeight: 1.5 }}>
                       {step.transitionNote}
                     </div>
                   )}
@@ -83,7 +83,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
 
               {!isLast && (
                 <div style={{ display: 'flex', justifyContent: 'flex-start', paddingLeft: 30, margin: '2px 0' }}>
-                  <ArrowDown size={14} style={{ color: 'rgba(255,255,255,0.20)' }} />
+                  <ArrowDown size={14} style={{ color: 'var(--alpha-text-25)' }} />
                 </div>
               )}
             </React.Fragment>
@@ -91,7 +91,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
         })}
       </div>
 
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.6, fontStyle: 'italic' }}>
+      <div style={{ fontSize: 10, color: 'var(--alpha-text-25)', lineHeight: 1.6, fontStyle: 'italic' }}>
         Role evolution paths are forward projections based on AI capability research and observed industry transitions. Individual trajectories depend on skill investment, timing, and organisational context.
       </div>
     </div>

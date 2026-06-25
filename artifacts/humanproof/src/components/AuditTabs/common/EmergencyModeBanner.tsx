@@ -107,7 +107,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
               {main}
             </p>
             {/* Statistical grounding — "you are ahead" */}
-            <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <p className="text-[10px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
               {sub}
             </p>
           </div>
@@ -140,7 +140,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
               {topAction ? topAction.title : "Activate your professional network"}
             </p>
             {topAction?.effort && (
-              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
                 Est. {topAction.effort}
               </p>
             )}
@@ -155,7 +155,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
         </div>
 
         {/* ── Escape hatch for overwhelm ─── */}
-        <p className="mt-2 text-center text-[10px] italic" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        <p className="mt-2 text-center text-[10px] italic" style={{ color: 'var(--alpha-text-25)' }}>
           "If this feels overwhelming, start only with the one action above."
         </p>
       </div>

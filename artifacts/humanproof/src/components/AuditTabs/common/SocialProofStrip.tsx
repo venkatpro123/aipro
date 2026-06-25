@@ -56,14 +56,14 @@ export const SocialProofStrip: React.FC<SocialProofStripProps> = ({
       style={{ marginTop: 6 }}
     >
       <div className="flex items-center gap-1">
-        <Users className="w-2.5 h-2.5" style={{ color: 'rgba(255,255,255,0.22)' }} />
-        <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        <Users className="w-2.5 h-2.5" style={{ color: 'var(--alpha-text-25)' }} />
+        <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
           {estimate.count}+ users completed this
         </span>
       </div>
       <div className="flex items-center gap-1">
-        <Zap className="w-2.5 h-2.5" style={{ color: 'rgba(255,255,255,0.22)' }} />
-        <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        <Zap className="w-2.5 h-2.5" style={{ color: 'var(--alpha-text-25)' }} />
+        <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
           Avg {estimate.avgDays}d to complete
         </span>
       </div>

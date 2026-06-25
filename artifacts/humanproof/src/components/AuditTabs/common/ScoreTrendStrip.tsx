@@ -49,7 +49,7 @@ const DIRECTION_CONFIG = {
   },
   stable: {
     Icon: Minus,
-    color: 'rgba(255,255,255,0.45)',
+    color: 'var(--alpha-text-45)',
     bgColor: 'rgba(255,255,255,0.03)',
     borderColor: 'rgba(255,255,255,0.08)',
     label: 'Stable',
@@ -153,7 +153,7 @@ export const ScoreTrendStrip: React.FC<ScoreTrendStripProps> = ({
               style={{
                 fontSize: '0.58rem',
                 fontFamily: 'var(--font-mono)',
-                color: 'rgba(255,255,255,0.28)',
+                color: 'var(--alpha-text-25)',
                 letterSpacing: '0.06em',
               }}
             >
@@ -161,7 +161,7 @@ export const ScoreTrendStrip: React.FC<ScoreTrendStripProps> = ({
             </span>
           )}
         </div>
-        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.72)', lineHeight: 1.4, margin: 0 }}>
+        <p style={{ fontSize: '0.78rem', color: 'var(--alpha-text-70)', lineHeight: 1.4, margin: 0 }}>
           {oneLiner}
         </p>
       </div>

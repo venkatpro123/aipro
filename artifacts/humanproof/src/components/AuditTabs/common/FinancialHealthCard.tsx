@@ -96,7 +96,7 @@ const MiniChip: React.FC<{ label: string; value: string; tone: string }> = ({ la
   <div className="flex flex-col items-start px-2.5 py-1.5 rounded-lg flex-shrink-0"
     style={{ background: tone + '15', border: `1px solid ${tone}30` }}>
     <span className="text-[10px] font-semibold tracking-wider uppercase" style={{ color: tone + 'cc' }}>{label}</span>
-    <span className="text-[11px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.85)' }}>{value}</span>
+    <span className="text-[11px] font-bold leading-tight" style={{ color: 'var(--alpha-text-85)' }}>{value}</span>
   </div>
 );
 
@@ -126,7 +126,7 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <LineChart className="w-3.5 h-3.5 flex-shrink-0" style={{ color: verdict.color }} />
-            <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
               Financial Health
             </span>
             <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto"
@@ -134,12 +134,12 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
               {verdict.label.toUpperCase()}
             </span>
           </div>
-          <p className="text-[11px] leading-snug truncate" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="text-[11px] leading-snug truncate" style={{ color: 'var(--alpha-text-55)' }}>
             {verdict.rationale}
           </p>
         </div>
         <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }} className="flex-shrink-0">
-          <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
+          <ChevronDown className="w-4 h-4" style={{ color: 'var(--alpha-text-30)' }} />
         </motion.div>
       </button>
 
@@ -174,7 +174,7 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
               <DrillCell title={isPublic ? 'Stock trend' : 'Funding stage'} tone="#06b6d4">
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
                   {isPublic
                     ? `${stock != null ? `${stock > 0 ? '+' : ''}${stock}% (90d)` : 'No live stock data'}`
                     + (marketCap ? ` · Market cap: ${formatLargeNum(marketCap)}` : '')
@@ -183,7 +183,7 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
                 </p>
               </DrillCell>
               <DrillCell title="Revenue trajectory" tone={typeof revYoy === 'number' && revYoy < 0 ? '#f97316' : '#10b981'}>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
                   {typeof revYoy === 'number'
                     ? `${revYoy > 0 ? '+' : ''}${revYoy}% YoY`
                     : 'No revenue YoY signal available'}

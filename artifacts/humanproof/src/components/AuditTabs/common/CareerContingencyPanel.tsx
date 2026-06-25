@@ -97,7 +97,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
     <div>
       <div className="flex justify-between items-center mb-1">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
             FEASIBILITY
           </span>
           {/* Global MEASURED/MODELED/ESTIMATED provenance label.
@@ -148,7 +148,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
       </div>
       {/* Source note for non-estimated paths */}
       {!isEstimated && feasibilitySourceNote && (
-        <p className="text-[10px] mt-1 leading-snug" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        <p className="text-[10px] mt-1 leading-snug" style={{ color: 'var(--alpha-text-25)' }}>
           {feasibilitySourceNote}
         </p>
       )}
@@ -195,7 +195,7 @@ const FinancialProjectionRow: React.FC<{
     <div className="flex flex-wrap gap-2 mt-2">
       {chips.map((chip, i) => (
         <div key={i} className="flex items-center gap-1">
-          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             {chip.label}
           </span>
           <span
@@ -225,7 +225,7 @@ interface ActionListProps {
 const ActionList: React.FC<ActionListProps> = ({ title, actions, accentColor, urgent }) => (
   <div className="mb-3">
     <div className="flex items-center gap-1.5 mb-2">
-      {urgent ? <Zap className="w-3 h-3" style={{ color: accentColor }} /> : <CheckCircle2 className="w-3 h-3" style={{ color: 'rgba(255,255,255,0.35)' }} />}
+      {urgent ? <Zap className="w-3 h-3" style={{ color: accentColor }} /> : <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />}
       <span className="text-[10px] font-semibold tracking-wider" style={{ color: urgent ? accentColor : 'rgba(255,255,255,0.45)' }}>
         {title}
       </span>
@@ -237,7 +237,7 @@ const ActionList: React.FC<ActionListProps> = ({ title, actions, accentColor, ur
             className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
             style={{ background: urgent ? accentColor : 'rgba(255,255,255,0.25)' }}
           />
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
             {action}
           </p>
         </div>
@@ -292,7 +292,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                <span className="text-sm font-bold" style={{ color: 'var(--alpha-text-92)' }}>
                   {path.label}
                 </span>
                 {isRecommended && (
@@ -309,7 +309,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                   </span>
                 )}
               </div>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                 {path.tagline}
               </p>
             </div>
@@ -326,8 +326,8 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
               {path.riskLevel}
             </span>
             {isExpanded
-              ? <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.35)' }} />
-              : <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.35)' }} />
+              ? <ChevronDown className="w-4 h-4" style={{ color: 'var(--alpha-text-35)' }} />
+              : <ChevronRight className="w-4 h-4" style={{ color: 'var(--alpha-text-35)' }} />
             }
           </div>
         </div>
@@ -361,7 +361,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                   NOT RECOMMENDED FOR YOUR FINANCIAL PROFILE
                 </span>
               </div>
-              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+              <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
                 {path.incomeGapWarning.warningText}
               </p>
             </div>
@@ -401,13 +401,13 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                 <div className="mb-3">
                   <div className="flex items-center gap-1.5 mb-2">
                     <CheckCircle2 className="w-3 h-3" style={{ color: '#10b981' }} />
-                    <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
                       SUCCESS LOOKS LIKE
                     </span>
                   </div>
                   <div className="space-y-1">
                     {path.successIndicators.map((s, i) => (
-                      <p key={i} className="text-[11px]" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                      <p key={i} className="text-[11px]" style={{ color: 'var(--alpha-text-55)' }}>
                         ✓ {s}
                       </p>
                     ))}
@@ -418,13 +418,13 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
                     <XCircle className="w-3 h-3" style={{ color: '#f97316' }} />
-                    <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                    <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
                       KEY RISKS
                     </span>
                   </div>
                   <div className="space-y-1">
                     {path.keyRisks.map((r, i) => (
-                      <p key={i} className="text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      <p key={i} className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>
                         ⚠ {r}
                       </p>
                     ))}
@@ -469,10 +469,10 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-sm font-bold mb-0.5" style={{ color: 'rgba(255,255,255,0.92)' }}>
+            <h3 className="text-sm font-bold mb-0.5" style={{ color: 'var(--alpha-text-92)' }}>
               Career Contingency Plan
             </h3>
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.50)' }}>
+            <p className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>
               3 executable paths — decide, prepare, or combine
             </p>
           </div>
@@ -491,7 +491,7 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
         </div>
 
         {/* Synthesis narrative */}
-        <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.68)' }}>
+        <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
           {contingencyPlan.synthesisNarrative}
         </p>
 
@@ -500,10 +500,10 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
           className="mt-3 p-3 rounded-xl"
           style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
-          <p className="text-[11px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="text-[11px] font-semibold mb-1" style={{ color: 'var(--alpha-text-55)' }}>
             Why {contingencyPlan.recommendedPath} is recommended ({Math.round(contingencyPlan.pathConfidence * 100)}% confidence)
           </p>
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {contingencyPlan.decisionFramework}
           </p>
         </div>
@@ -511,7 +511,7 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
         {/* Critical decision date */}
         <div className="flex items-center gap-2 mt-3">
           <Clock className="w-3 h-3" style={{ color: urgencyColor }} />
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.50)' }}>
+          <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>
             Critical decision date:{' '}
             <span className="font-semibold" style={{ color: urgencyColor }}>
               {new Date(contingencyPlan.criticalDecisionDate).toLocaleDateString('en-US', {
@@ -538,7 +538,7 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
       </div>
 
       {/* Disclaimer */}
-      <p className="text-[10px] text-center px-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+      <p className="text-[10px] text-center px-2" style={{ color: 'var(--alpha-text-25)' }}>
         Paths are not mutually exclusive — you can prepare for TRANSITION while pursuing STAY or NEGOTIATE.
       </p>
     </div>

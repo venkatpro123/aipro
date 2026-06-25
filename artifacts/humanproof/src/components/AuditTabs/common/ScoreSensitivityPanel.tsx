@@ -76,7 +76,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
             <span className="text-[10px] font-semibold" style={{ color: feasCfg.color }}>
               {feasCfg.label}
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.20)' }}>·</span>
+            <span style={{ color: 'var(--alpha-text-25)' }}>·</span>
             <span className="text-[10px]" style={{ color: confColor }}>
               {lever.confidenceInEstimate} confidence
             </span>
@@ -85,7 +85,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
 
         {/* Score delta */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className="text-[11px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>{fmt(currentScore)}</span>
+          <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-45)' }}>{fmt(currentScore)}</span>
           <ArrowRight className="w-3 h-3" style={{ color: '#22d3ee' }} />
           <span className="text-[13px] font-black" style={{ color: rank === 0 ? '#22d3ee' : 'rgba(255,255,255,0.70)' }}>
             {projected}
@@ -97,8 +97,8 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
 
         {/* Expand toggle */}
         {open
-          ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
-          : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.30)' }} />
+          ? <ChevronUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
+          : <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
         }
       </button>
 
@@ -108,13 +108,13 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
           className="px-4 pb-3 pt-1"
           style={{ background: rank === 0 ? 'rgba(34,211,238,0.03)' : 'rgba(255,255,255,0.01)' }}
         >
-          <p className="text-[10px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-[10px] font-semibold mb-1" style={{ color: 'var(--alpha-text-35)' }}>
             FASTEST ACTION
           </p>
-          <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
             {lever.fastestAction}
           </p>
-          <p className="text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px] mt-1.5" style={{ color: 'var(--alpha-text-35)' }}>
             Timeframe: <span style={{ color: feasCfg.color, fontWeight: 600 }}>{lever.actionTimeframe}</span>
           </p>
         </div>
@@ -141,7 +141,7 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
     <div className="space-y-3">
       {/* Key insight headline */}
       {keySensitivityInsight && (
-        <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.52)' }}>
+        <p className="text-[11px] leading-relaxed italic" style={{ color: 'var(--alpha-text-50)' }}>
           {keySensitivityInsight}
         </p>
       )}
@@ -162,11 +162,11 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
               className="rounded-xl p-2.5 text-center"
               style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.15)' }}
             >
-              <p className="text-[10px] font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.38)' }}>
+              <p className="text-[10px] font-semibold mb-1" style={{ color: 'var(--alpha-text-35)' }}>
                 {label.toUpperCase()}
               </p>
               <div className="flex items-center justify-center gap-1 mb-0.5">
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>{fmt(currentScore)}</span>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>{fmt(currentScore)}</span>
                 <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
                 <span className="text-base font-black" style={{ color: '#22d3ee' }}>{score}</span>
               </div>
@@ -196,7 +196,7 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
             {topSynergyCombos.map((combo, i) => (
               <div key={i}>
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                  <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-70)' }}>
                     {combo.levers[0]} + {combo.levers[1]}
                   </span>
                   <span className="text-[10px] font-black" style={{ color: '#8b5cf6' }}>
@@ -208,7 +208,7 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
                     )}
                   </span>
                 </div>
-                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                <p className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
                   {combo.rationale}
                 </p>
               </div>

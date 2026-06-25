@@ -194,7 +194,7 @@ function GapActionCard({ gap, index }: { gap: GapCloseAction; index: number }) {
           <span className="text-[10px] text-white/20">·</span>
           <span
             className="text-[10px] px-1.5 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.35)' }}
+            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-35)' }}
           >
             {gap.category}
           </span>

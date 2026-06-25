@@ -159,7 +159,7 @@ export default function ShareableScoreCard() {
           <div style={{ fontSize: '1.2rem', color: '#E8E8F0', fontWeight: 600, letterSpacing: '0.02em' }}>
             {name || 'Your Name'}
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--alpha-text-45)', marginTop: 4 }}>
             {title || 'Your Role'}
           </div>
         </div>
@@ -167,9 +167,9 @@ export default function ShareableScoreCard() {
         <div style={{ height: 1, background: 'rgba(0,245,255,0.15)', marginBottom: 20 }} />
 
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>{scoreType}</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-45)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>{scoreType}</div>
           <div className="score-num" style={{ fontSize: '4rem', fontWeight: 700, color: scoreColor, lineHeight: 1 }}>{displayScore}</div>
-          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>/ 100</div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--alpha-text-35)', marginTop: 4 }}>/ 100</div>
           <div className="safe-label" style={{ display: 'inline-block', marginTop: 8, fontSize: '0.7rem', padding: '3px 12px', borderRadius: 20, border: `1px solid ${scoreColor}60`, color: scoreColor }}>
             {displayScore >= 70 ? 'Human-Proof' : displayScore >= 50 ? 'Moderate Safety' : 'At Risk'}
           </div>
@@ -187,7 +187,7 @@ export default function ShareableScoreCard() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', fontStyle: 'italic', lineHeight: 1.5, marginBottom: 12 }}>
+        <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--alpha-text-50)', fontStyle: 'italic', lineHeight: 1.5, marginBottom: 12 }}>
           "{percentile}"
         </div>
 
@@ -196,8 +196,8 @@ export default function ShareableScoreCard() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid rgba(0,245,255,0.1)' }}>
-          <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.35)' }}>humanproof.app</div>
-          <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)' }}>{cardYear}</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-35)' }}>humanproof.app</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-25)' }}>{cardYear}</div>
         </div>
       </div>
 

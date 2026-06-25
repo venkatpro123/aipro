@@ -437,7 +437,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
             className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
             style={activeTab === tab.key
               ? { background: 'rgba(96,165,250,0.20)', color: '#60a5fa' }
-              : { color: 'rgba(255,255,255,0.40)' }}
+              : { color: 'var(--alpha-text-45)' }}
           >
             {tab.label}
           </button>

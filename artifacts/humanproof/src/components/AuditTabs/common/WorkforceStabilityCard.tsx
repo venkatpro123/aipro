@@ -81,7 +81,7 @@ const MiniChip: React.FC<{ label: string; value: string; tone: string }> = ({ la
     <span className="text-[10px] font-semibold tracking-wider uppercase"
       style={{ color: tone + 'cc' }}>{label}</span>
     <span className="text-[11px] font-bold leading-tight"
-      style={{ color: 'rgba(255,255,255,0.85)' }}>{value}</span>
+      style={{ color: 'var(--alpha-text-85)' }}>{value}</span>
   </div>
 );
 
@@ -142,7 +142,7 @@ export const WorkforceStabilityCard: React.FC<Props> = ({ result, defaultOpen = 
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: verdict.color }} />
             <span className="text-[10px] font-bold tracking-wider uppercase"
-              style={{ color: 'rgba(255,255,255,0.50)' }}>
+              style={{ color: 'var(--alpha-text-50)' }}>
               Workforce Stability
             </span>
             <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full ml-auto"
@@ -151,7 +151,7 @@ export const WorkforceStabilityCard: React.FC<Props> = ({ result, defaultOpen = 
             </span>
           </div>
           <p className="text-[11px] leading-snug truncate"
-            style={{ color: 'rgba(255,255,255,0.65)' }}>
+            style={{ color: 'var(--alpha-text-55)' }}>
             {verdict.rationale}
           </p>
         </div>
@@ -160,7 +160,7 @@ export const WorkforceStabilityCard: React.FC<Props> = ({ result, defaultOpen = 
           transition={{ duration: 0.18 }}
           className="flex-shrink-0"
         >
-          <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.30)' }} />
+          <ChevronDown className="w-4 h-4" style={{ color: 'var(--alpha-text-30)' }} />
         </motion.div>
       </button>
 
@@ -213,14 +213,14 @@ export const WorkforceStabilityCard: React.FC<Props> = ({ result, defaultOpen = 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
               {/* Hiring */}
               <DrillCell title="Hiring pulse" tone={hiringTrend === 'frozen' ? '#dc2626' : hiringTrend === 'growing' ? '#10b981' : '#94a3b8'}>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
                   Trend: <strong>{hiringTrend}</strong>
                   {openings != null && ` · ~${openings} openings`}
                 </p>
               </DrillCell>
               {/* Layoffs */}
               <DrillCell title="Layoff history" tone={layoffRounds > 0 ? '#f97316' : '#94a3b8'}>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
                   {layoffRounds > 0
                     ? `${layoffRounds} round${layoffRounds === 1 ? '' : 's'}`
                       + (layoffSeverity ? ` · last: ${layoffSeverity}%` : '')
@@ -229,14 +229,14 @@ export const WorkforceStabilityCard: React.FC<Props> = ({ result, defaultOpen = 
               </DrillCell>
               {/* Headcount */}
               <DrillCell title="Headcount" tone={headcountDelta && headcountDelta < -5 ? '#f97316' : '#10b981'}>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
                   {headcount ? `${headcount.toLocaleString()} employees` : 'Headcount unknown'}
                   {typeof headcountDelta === 'number' && ` · ${headcountDelta > 0 ? '+' : ''}${headcountDelta}% (90d)`}
                 </p>
               </DrillCell>
               {/* Glassdoor */}
               <DrillCell title="Employee sentiment" tone={glassTrend === 'falling-sharp' ? '#dc2626' : '#94a3b8'}>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
                   {glassRating ? `${glassRating}/5` : 'No Glassdoor data'}
                   {glassTrend && glassTrend !== 'stable' && ` · ${glassTrend}`}
                 </p>

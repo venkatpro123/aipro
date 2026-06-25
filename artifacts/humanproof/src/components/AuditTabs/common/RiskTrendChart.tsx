@@ -124,7 +124,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
       <div className="flex items-center justify-between mb-2.5">
         <p
           className="text-[9px] font-black tracking-[0.14em] uppercase"
-          style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}
+          style={{ color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}
         >
           RISK SCORE TREND
         </p>

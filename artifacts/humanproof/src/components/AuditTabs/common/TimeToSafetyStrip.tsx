@@ -159,15 +159,15 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <div className="flex items-center gap-2">
           <Calendar className="w-3.5 h-3.5" style={{ color: 'rgba(34,211,238,0.60)' }} />
-          <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
             PATH TO MODERATE RISK
           </p>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-black" style={{ color: currentColor }}>{currentScore}</span>
-          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>→</span>
+          <span className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>→</span>
           <span className="text-[10px] font-black" style={{ color: safeColor }}>{SAFE_THRESHOLD}</span>
-          <span className="text-[10px] ml-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          <span className="text-[10px] ml-1" style={{ color: 'var(--alpha-text-25)' }}>
             ~{totalWeeks}wk
           </span>
         </div>
@@ -203,7 +203,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 {/* Content */}
                 <div className="flex-1 pb-2 min-w-0">
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <span className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-35)' }}>
                       Wk {m.week}
                     </span>
                     <span className="text-[11px] font-black" style={{ color: m.isSafetyReached ? safeColor : scoreColor(m.scoreAfter) }}>
@@ -219,7 +219,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] leading-tight" style={{ color: 'rgba(255,255,255,0.42)' }}>
+                  <p className="text-[10px] leading-tight" style={{ color: 'var(--alpha-text-45)' }}>
                     {truncate(m.action, 52)}
                   </p>
                 </div>
@@ -236,14 +236,14 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 </div>
                 <div className="flex-1 pb-2 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>Wk {totalWeeks}*</span>
+                    <span className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-35)' }}>Wk {totalWeeks}*</span>
                     <span className="text-[11px] font-black" style={{ color: '#10b981' }}>{SAFE_THRESHOLD}</span>
                     <span className="text-[10px] font-black px-1.5 py-0.5 rounded"
                       style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
                       PROJECTED
                     </span>
                   </div>
-                  <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
                     *Extrapolated from action pace
                   </p>
                 </div>
@@ -260,7 +260,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
           style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)' }}
         >
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f97316' }} />
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
             <span className="font-semibold" style={{ color: '#f97316' }}>Runway alert: </span>
             Your {financialRunwayMonths}mo financial runway may expire before you reach safety (est. {totalWeeks} weeks). Escalate search intensity now.
           </p>
@@ -269,7 +269,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
 
       {/* Footer note */}
       <div className="px-4 pb-3">
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+        <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
           Based on your top score levers. Assumes one major action completed per 4-week cycle.
         </p>
       </div>
