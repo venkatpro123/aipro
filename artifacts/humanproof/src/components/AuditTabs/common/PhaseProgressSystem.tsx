@@ -361,6 +361,8 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
   const [phase2JustUnlocked, setPhase2JustUnlocked] = useState(false);
   const [phase3JustUnlocked, setPhase3JustUnlocked] = useState(false);
   const [missionComplete, setMissionComplete] = useState(false);
+  const [nextNudge, setNextNudge] = useState<{ next: string | null } | null>(null);
+  const nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!prevP2Unlocked.current && phase2Unlocked) {
@@ -411,6 +413,11 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
         // Track skill acquisition from the completed action
         const item = actions.find(a => a.id === id);
         if (item) recordSkillFromAction(item).catch(() => {});
+        // Phase 14: Netflix momentum nudge — show next uncompleted action
+        const nextItem = [...actions].find(a => !next.has(a.id));
+        if (nudgeTimer.current) clearTimeout(nudgeTimer.current);
+        setNextNudge({ next: nextItem?.title ?? null });
+        nudgeTimer.current = setTimeout(() => setNextNudge(null), 4000);
       }
       return next;
     });
@@ -441,6 +448,35 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
                 </p>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Phase 14: Next-priority momentum nudge — fires for 4s after each action completion */}
+      <AnimatePresence>
+        {nextNudge && !allComplete && (
+          <motion.div
+            key="next-nudge"
+            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-xl px-3 py-2.5 flex items-center gap-2"
+            style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.20)' }}
+          >
+            <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black tracking-wide" style={{ color: '#10b981' }}>Action completed</p>
+              {nextNudge.next && (
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-55)' }}>
+                  Next priority:{' '}
+                  <span className="font-semibold" style={{ color: 'var(--alpha-text-80)' }}>
+                    {nextNudge.next}
+                  </span>
+                </p>
+              )}
+            </div>
+            <Zap className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(16,185,129,0.40)' }} />
           </motion.div>
         )}
       </AnimatePresence>
