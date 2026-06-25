@@ -89,7 +89,9 @@ const CheckItem: React.FC<{
   return (
     <motion.div
       layout
-      className="flex items-start gap-3 py-2.5 border-b"
+      className="flex items-start gap-3 py-2.5 border-b rounded-lg px-1 -mx-1"
+      whileHover={phaseUnlocked && !isCompleted ? { background: 'var(--alpha-bg-04)' } : undefined}
+      transition={{ duration: 0.15 }}
       style={{
         borderColor: 'var(--alpha-bg-06)',
         opacity: phaseUnlocked ? 1 : 0.4,
