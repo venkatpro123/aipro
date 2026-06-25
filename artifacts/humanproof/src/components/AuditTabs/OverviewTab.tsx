@@ -17,6 +17,7 @@ import type { JobMarketLiquidityResult } from "@/services/jobMarketLiquidityServ
 import type { EscapePathReport } from "@/services/escapePathOptimizer";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { ScoreRing } from "@/components/ScoreRing";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { DataQualityBanner } from "../../../components/DataQualityBanner";
 import { ConflictDisclosurePanel } from "../../../components/ConflictDisclosurePanel";
 import { ScoreDeltaExplainer } from "../../components/ScoreDeltaExplainer";
@@ -2695,10 +2696,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         <SurvivalProbabilityPanel result={result} />
 
         {/* Precision Brief — analyst summary: #1 driver, #1 protection, volatile signal */}
-        <PrecisionBriefPanel result={result} />
+        <ScrollReveal><PrecisionBriefPanel result={result} /></ScrollReveal>
 
         {/* v11.0: Signal Contradictions — trust calibration when signals conflict */}
-        <SignalContradictionPanel result={result} />
+        <ScrollReveal><SignalContradictionPanel result={result} /></ScrollReveal>
 
         {/* v13.0: Emergency Protocol — 72-hour crisis plan (score ≥ 80 or collapse stage ≥ 2) */}
         {(result as any).emergencyResponse?.isActive && (
@@ -2735,22 +2736,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         )}
 
         {/* v12.0: What-If Simulator — replaces read-only ScoreSensitivityPanel */}
-        <WhatIfSimulatorPanel result={result} />
+        <ScrollReveal><WhatIfSimulatorPanel result={result} /></ScrollReveal>
 
         {/* Temporal Risk — calendar amplifier: earnings windows, seasonal patterns */}
-        <TemporalRiskPanel result={result} />
+        <ScrollReveal><TemporalRiskPanel result={result} /></ScrollReveal>
 
         {/* v11.0: Hiring Signal — velocity pattern analysis and predictive implications */}
-        <HiringSignalPanel result={result} />
+        <ScrollReveal><HiringSignalPanel result={result} /></ScrollReveal>
 
         {/* Job Market Liquidity — re-employment velocity if laid off today */}
-        <JobMarketLiquidityPanel result={result} />
+        <ScrollReveal><JobMarketLiquidityPanel result={result} /></ScrollReveal>
 
         {/* v10.0: Department Risk — department-level exposure vs company average */}
-        <DepartmentRiskPanel result={result} />
+        <ScrollReveal><DepartmentRiskPanel result={result} /></ScrollReveal>
 
         {/* v11.0: Career Resilience — 5-pillar composite resilience score */}
-        <CareerResiliencePanel result={result} />
+        <ScrollReveal><CareerResiliencePanel result={result} /></ScrollReveal>
 
         {/* ──────────────────────────────────────────────────────────────────── */}
 
@@ -2773,13 +2774,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         )}
 
         {/* Escape Path Optimizer — top-3 moves to maximally reduce risk score */}
-        <EscapePathsPanel result={result} />
+        <ScrollReveal><EscapePathsPanel result={result} /></ScrollReveal>
 
         {/* v10.0: Financial Runway Strategy — runway-constrained personalized guidance */}
-        <FinancialRunwayPanel result={result} />
+        <ScrollReveal><FinancialRunwayPanel result={result} /></ScrollReveal>
 
         {/* v11.0: Exit Timing Optimizer — optimal proactive departure calendar */}
-        <ExitTimingPanel result={result} />
+        <ScrollReveal><ExitTimingPanel result={result} /></ScrollReveal>
 
         {/* Live-data degradation banner — surfaces when fewer than 2 real API signals were used.
             Threshold: liveSignals < 2 means stock, revenue, and hiring are all heuristics.
