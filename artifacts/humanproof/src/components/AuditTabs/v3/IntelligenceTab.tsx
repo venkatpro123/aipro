@@ -31,6 +31,8 @@ import AdaptiveBlock from '../common/AdaptiveBlock';
 import { ParentRiskCard } from '../common/ParentRiskCard';
 import { CompanyTimelineCard } from '../common/CompanyTimelineCard';
 import { PeerComparisonCard } from '../common/PeerComparisonCard';
+import IntelligenceBriefPanel from '../common/IntelligenceBriefPanel';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
@@ -63,15 +65,27 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
+      {/* ── Intelligence Brief — Phase 7 Visual Storytelling: AI strategic narrative */}
+      {r.intelligenceBrief && (
+        <ScrollReveal>
+          <IntelligenceBriefPanel
+            intelligenceBrief={r.intelligenceBrief}
+            confidence={result.confidencePercent}
+            freshnessTier={(result as any).signalQuality?.freshnessTier}
+            companyName={result.companyName}
+          />
+        </ScrollReveal>
+      )}
+
       {/* ── Company Story — chronological event timeline */}
-      <CompanyTimelineCard result={result} companyData={companyData} />
+      <ScrollReveal><CompanyTimelineCard result={result} companyData={companyData} /></ScrollReveal>
 
       {/* ── Peer Risk Comparison — ranks company vs similar companies */}
-      <PeerComparisonCard result={result} companyData={companyData} />
+      <ScrollReveal><PeerComparisonCard result={result} companyData={companyData} /></ScrollReveal>
 
       {/* ── Event search — collapsed by default */}
       {isEventSearchAvailable() && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+        <ScrollReveal>
           <AdaptiveBlock
             title="Search company news"
             subtitle="Search news, filings, and other public sources about this company"
@@ -84,7 +98,7 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
               <EventSearchPanel />
             </div>
           </AdaptiveBlock>
-        </motion.div>
+        </ScrollReveal>
       )}
 
     </div>
