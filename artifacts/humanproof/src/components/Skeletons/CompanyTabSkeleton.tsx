@@ -5,7 +5,7 @@ import React from 'react';
 import { CardSkeleton, TextSkeleton } from './CardSkeleton';
 
 const BlockSkeleton: React.FC<{ open?: boolean }> = ({ open = false }) => (
-  <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+  <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
     <div className="flex items-center gap-3 p-4">
       <div className="w-8 h-8 rounded-full flex-shrink-0" style={{
         background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',

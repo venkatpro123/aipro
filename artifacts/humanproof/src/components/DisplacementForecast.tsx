@@ -97,7 +97,7 @@ export default function DisplacementForecast({ onNavigate }: { onNavigate?: (tab
       )}
 
       {/* Upskilling Interactive Slider */}
-      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+      <div style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: '1rem', color: 'var(--text)', margin: 0 }}>Interactive Trajectory Planner</h3>
           <div style={{ fontSize: '0.8rem', color: labelColor, fontFamily: 'var(--mono)' }}>
@@ -120,7 +120,7 @@ export default function DisplacementForecast({ onNavigate }: { onNavigate?: (tab
         </div>
       </div>
 
-      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 12 }}>
+      <div style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 12 }}>
         <ResponsiveContainer width="100%" height={340}>
           <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />

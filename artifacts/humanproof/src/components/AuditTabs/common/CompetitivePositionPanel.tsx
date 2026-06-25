@@ -149,7 +149,7 @@ function DimensionBar({ dim }: { dim: CompetitiveDimension }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="absolute left-0 top-6 z-10 rounded-lg p-2.5 shadow-xl max-w-xs w-72"
-            style={{ background: 'rgba(20,20,30,0.96)', border: '1px solid rgba(255,255,255,0.10)' }}
+            style={{ background: 'rgba(20,20,30,0.96)', border: '1px solid var(--alpha-bg-08)' }}
           >
             <p className="text-xs text-white/70 mb-1">{dim.evidence}</p>
             <p className="text-[11px] text-white/45">{dim.improvementAction}</p>
@@ -171,7 +171,7 @@ function GapActionCard({ gap, index }: { gap: GapCloseAction; index: number }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.06 }}
       className="flex items-start gap-3 py-3"
-      style={{ borderBottom: index < 4 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+      style={{ borderBottom: index < 4 ? '1px solid var(--alpha-bg-06)' : 'none' }}
     >
       {/* Priority number */}
       <div
@@ -194,7 +194,7 @@ function GapActionCard({ gap, index }: { gap: GapCloseAction; index: number }) {
           <span className="text-[10px] text-white/20">·</span>
           <span
             className="text-[10px] px-1.5 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-35)' }}
+            style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-35)' }}
           >
             {gap.category}
           </span>
@@ -285,7 +285,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
       {/* Dimension breakdown */}
       <div
         className="rounded-2xl p-4"
-        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
       >
         <div className="text-xs font-medium text-white/40 uppercase tracking-wide mb-3">
           6 Competitive Dimensions
@@ -301,7 +301,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
       {/* Benchmark reference */}
       <div
         className="rounded-xl p-3"
-        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
       >
         <div className="text-[10px] font-medium text-white/30 uppercase tracking-wide mb-1">Benchmark</div>
         <p className="text-xs text-white/50 leading-relaxed">{position.benchmarkSummary}</p>
@@ -309,7 +309,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
 
       {/* Tabs: Gap Roadmap / Competitive Edges */}
       <div>
-        <div className="flex items-center gap-1 mb-3 p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex items-center gap-1 mb-3 p-1 rounded-lg" style={{ background: 'var(--alpha-bg-04)' }}>
           {(['gaps', 'edges'] as const).map(tab => (
             <button
               key={tab}
@@ -335,7 +335,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
             >
               <div
                 className="rounded-2xl px-4 py-2"
-                style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}
+                style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
               >
                 <div className="text-[10px] text-white/30 mt-2 mb-1">Sorted by ROI (percentile gain ÷ effort)</div>
                 {displayGaps.map((gap, i) => (

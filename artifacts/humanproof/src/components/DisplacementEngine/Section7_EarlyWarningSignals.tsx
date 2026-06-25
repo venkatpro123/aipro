@@ -34,7 +34,7 @@ export const Section7_EarlyWarningSignals: React.FC<Props> = ({ waveStatusDetail
       {/* 5-stage spectrum */}
       <div style={{
         padding: '18px 16px', borderRadius: 16,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
       }}>
         <div style={{ display: 'flex', gap: 0, alignItems: 'stretch' }}>
           {WAVE_STAGES.map((stage, i) => {
@@ -77,7 +77,7 @@ export const Section7_EarlyWarningSignals: React.FC<Props> = ({ waveStatusDetail
         </div>
 
         {/* Progress bar under stages */}
-        <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ marginTop: 12, height: 4, borderRadius: 2, background: 'var(--alpha-bg-06)', overflow: 'hidden', position: 'relative' }}>
           <div style={{
             height: '100%',
             width: `${((activeIdx + 0.5) / WAVE_STAGES.length) * 100}%`,

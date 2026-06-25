@@ -124,7 +124,7 @@ export function DataFreshnessBadge({ roleKey, fallbackScore, expanded = false }:
             ±{band}%
           </span>
         </div>
-        <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 4 }}>
+        <div style={{ height: 4, background: 'var(--alpha-bg-08)', borderRadius: 4 }}>
           <div style={{ height: '100%', width: `${confidencePct}%`, background: color, borderRadius: 4,
             transition: 'width 0.5s ease' }} />
         </div>

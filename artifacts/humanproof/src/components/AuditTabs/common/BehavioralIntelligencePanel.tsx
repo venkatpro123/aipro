@@ -28,8 +28,8 @@ interface Props {
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
 const CARD_STYLE: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--alpha-bg-04)',
+  border: '1px solid var(--alpha-bg-08)',
   borderRadius: 16,
   padding: '14px 16px',
   marginBottom: 10,
@@ -265,7 +265,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
         </div>
       </div>
 
-      <div className="h-1.5 rounded-full mb-2" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="h-1.5 rounded-full mb-2" style={{ background: 'var(--alpha-bg-08)' }}>
         <div className="h-full rounded-full" style={{ width: `${score}%`, background: color, transition: 'width 0.6s ease' }} />
       </div>
 
@@ -364,7 +364,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-        <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <p className="text-[10px] mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>MARKET MIDPOINT</p>
           <p className="text-[12px] font-bold" style={{ color: 'rgba(255,255,255,0.80)' }}>{data.marketMidpoint}</p>
         </div>
@@ -442,7 +442,7 @@ const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['comp
       </div>
 
       {/* Percentile bar */}
-      <div className="relative h-1.5 rounded-full mb-2" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="relative h-1.5 rounded-full mb-2" style={{ background: 'var(--alpha-bg-08)' }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
         <div className="absolute top-0 h-full w-px" style={{ left: '50%', background: 'rgba(255,255,255,0.22)' }} />
       </div>
@@ -580,7 +580,7 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
                 <div className="mt-2 space-y-2">
                   {data.potentialObjections.map((obj, i) => (
                     <div key={i} className="rounded-lg px-2.5 py-2"
-                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
                       <p className="text-[10px] font-semibold mb-1" style={{ color: 'var(--alpha-text-50)' }}>
                         ❓ {obj}
                       </p>
@@ -614,10 +614,10 @@ const RiskProfileBar: React.FC<{
 
   return (
     <div className="rounded-xl px-3 py-2.5 mb-2"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}>
       {/* Profile summary */}
       {profileSummary && (
-        <p className="text-[10px] mb-2 pb-2" style={{ color: 'var(--alpha-text-35)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <p className="text-[10px] mb-2 pb-2" style={{ color: 'var(--alpha-text-35)', borderBottom: '1px solid var(--alpha-bg-06)' }}>
           {profileSummary}
         </p>
       )}

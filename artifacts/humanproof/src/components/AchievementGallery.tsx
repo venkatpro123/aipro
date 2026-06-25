@@ -96,7 +96,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
           </div>
           <div
             className="h-1 rounded-full overflow-hidden"
-            style={{ background: 'rgba(255,255,255,0.06)' }}
+            style={{ background: 'var(--alpha-bg-06)' }}
           >
             <motion.div
               className="h-full rounded-full"
@@ -124,7 +124,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
       )}
 
       {/* Title ladder — compact dots */}
-      <div className="flex items-center gap-1.5 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex items-center gap-1.5 mt-3 pt-3" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
         {CAREER_TITLE_DEFS.map((t, i) => {
           const isCurrent = t.id === current.id;
           const isPast = CAREER_TITLE_DEFS.indexOf(current) > i;
@@ -186,7 +186,7 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
       {/* Badge progress bar */}
       <div
         className="h-1.5 rounded-full mb-4 overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.06)' }}
+        style={{ background: 'var(--alpha-bg-06)' }}
       >
         <motion.div
           className="h-full rounded-full"

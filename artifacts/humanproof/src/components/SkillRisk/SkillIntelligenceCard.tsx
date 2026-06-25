@@ -142,7 +142,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
       <div
         style={{
           padding: "24px 32px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid var(--alpha-bg-06)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -223,7 +223,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
         <div
           style={{
             padding: 32,
-            borderRight: "1px solid rgba(255,255,255,0.06)",
+            borderRight: "1px solid var(--alpha-bg-06)",
           }}
         >
           <div style={{ marginBottom: 32 }}>
@@ -364,7 +364,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
                     padding: "10px 14px",
                     background: "rgba(255,255,255,0.03)",
                     borderRadius: 8,
-                    border: "1px solid rgba(255,255,255,0.05)",
+                    border: "1px solid var(--alpha-bg-06)",
                   }}
                 >
                   <span style={{ fontSize: "0.85rem", color: "var(--text)" }}>

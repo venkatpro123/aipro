@@ -48,7 +48,7 @@ function GapPathRow({ path, index }: { path: SkillGapPath; index: number }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.05 }}
       className="rounded-lg p-2.5"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className="flex items-center gap-1.5">
           <BookOpen className="w-3 h-3 text-blue-400/50" />
@@ -97,7 +97,7 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
       className={`rounded-xl overflow-hidden`}
       style={{
         background: isHighlighted ? `${premiumColor}09` : 'rgba(255,255,255,0.035)',
-        border: isHighlighted ? `1px solid ${premiumColor}30` : '1px solid rgba(255,255,255,0.07)',
+        border: isHighlighted ? `1px solid ${premiumColor}30` : '1px solid var(--alpha-bg-08)',
       }}
     >
       <div className="p-3.5">

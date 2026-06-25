@@ -227,7 +227,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
                   flexWrap: "wrap",
                   fontSize: "0.75rem",
                   paddingTop: "12px",
-                  borderTop: "1px solid rgba(255,255,255,0.05)",
+                  borderTop: "1px solid var(--alpha-bg-06)",
                 }}
               >
                 <div

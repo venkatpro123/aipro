@@ -112,7 +112,7 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
       </div>
 
       {/* Coverage bar */}
-      <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.06)', marginBottom: '16px', overflow: 'hidden' }}>
+      <div style={{ height: '6px', borderRadius: '3px', background: 'var(--alpha-bg-06)', marginBottom: '16px', overflow: 'hidden' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${displayPct}%` }}
@@ -167,7 +167,7 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
       {/* Footer */}
       <div style={{
         marginTop: '14px', padding: '10px 12px',
-        borderRadius: '8px', background: 'rgba(255,255,255,0.03)',
+        borderRadius: '8px', background: 'var(--alpha-bg-04)',
         border: '1px solid var(--border)',
       }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>

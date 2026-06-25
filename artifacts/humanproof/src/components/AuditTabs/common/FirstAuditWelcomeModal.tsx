@@ -183,7 +183,7 @@ export const FirstAuditWelcomeModal: React.FC<Props> = ({
                     style={{
                       borderRadius: 12,
                       padding: '10px 12px',
-                      background: 'rgba(255,255,255,0.04)',
+                      background: 'var(--alpha-bg-04)',
                       border: `1px solid ${color}28`,
                       display: 'flex',
                       alignItems: 'flex-start',

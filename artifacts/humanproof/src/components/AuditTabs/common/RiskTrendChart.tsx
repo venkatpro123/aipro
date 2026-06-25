@@ -141,8 +141,8 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
       <div
         className="rounded-xl overflow-hidden relative"
         style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--alpha-bg-04)',
+          border: '1px solid var(--alpha-bg-08)',
         }}
       >
         <svg

@@ -57,7 +57,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
       {/* CEO approval metrics row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         {glassdoorVelocity.ceoApprovalCurrent !== null && (
-          <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="text-sm font-black" style={{
               color: glassdoorVelocity.ceoApprovalCurrent < 40 ? '#ef4444'
                 : glassdoorVelocity.ceoApprovalCurrent < 55 ? '#f97316'
@@ -69,7 +69,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
           </div>
         )}
         {glassdoorVelocity.ceoApprovalVelocity !== null && (
-          <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="flex items-center justify-center gap-1">
               <TrendingDown
                 className="w-3.5 h-3.5"
@@ -116,7 +116,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
       {/* Lead time estimate */}
       {glassdoorVelocity.leadTimeEstimateDays !== null && (
         <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 mb-2.5"
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+          style={{ background: 'var(--alpha-bg-04)' }}>
           <Clock className="w-3 h-3 flex-shrink-0" style={{ color }} />
           <span className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
             Est. <span className="font-bold" style={{ color }}>{glassdoorVelocity.leadTimeEstimateDays} days</span> lead time

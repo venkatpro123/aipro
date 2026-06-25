@@ -1206,7 +1206,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
             <div style={{
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '3px 8px', borderRadius: '6px',
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
+              background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
               fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
               letterSpacing: '0.06em',
             }}>
@@ -1217,7 +1217,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '3px 8px', borderRadius: '6px',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
+                background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
                 fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
                 letterSpacing: '0.06em',
               }}>

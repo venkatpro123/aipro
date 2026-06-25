@@ -101,7 +101,7 @@ export default function ShareableScoreCard() {
         </p>
       </div>
 
-      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 24 }}>
+      <div style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <label style={{ display: 'block', fontFamily: 'var(--mono)', fontSize: '0.7rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Your Name</label>
@@ -111,7 +111,7 @@ export default function ShareableScoreCard() {
               onChange={e => setName(e.target.value)}
               onBlur={handleSaveName}
               placeholder="Your name"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem', outline: 'none' }}
+              style={{ width: '100%', background: 'var(--alpha-bg-06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem', outline: 'none' }}
             />
           </div>
           <div>
@@ -121,7 +121,7 @@ export default function ShareableScoreCard() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Your role"
-              style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem', outline: 'none' }}
+              style={{ width: '100%', background: 'var(--alpha-bg-06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem', outline: 'none' }}
             />
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function ShareableScoreCard() {
           </div>
         </div>
 
-        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '14px 16px', marginBottom: 16, fontSize: '0.8rem' }}>
+        <div style={{ background: 'var(--alpha-bg-04)', borderRadius: 10, padding: '14px 16px', marginBottom: 16, fontSize: '0.8rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: '#00FF9F' }}>
             <span>●</span> <span>Safe skills: {safeCount || '—'}</span>
           </div>
@@ -217,7 +217,7 @@ export default function ShareableScoreCard() {
         </button>
         <button
           onClick={shareToX}
-          style={{ flex: 1, minWidth: 140, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text)', borderRadius: 8, padding: '12px 20px', fontFamily: 'var(--mono)', fontSize: '0.8rem', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em' }}
+          style={{ flex: 1, minWidth: 140, background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)', color: 'var(--text)', borderRadius: 8, padding: '12px 20px', fontFamily: 'var(--mono)', fontSize: '0.8rem', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >
           Share on X
         </button>

@@ -251,7 +251,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
             {/* Progress bar */}
             <div style={{
               height: '3px', borderRadius: '2px',
-              background: 'rgba(255,255,255,0.08)',
+              background: 'var(--alpha-bg-08)',
               marginTop: '6px', overflow: 'hidden',
             }}>
               <motion.div

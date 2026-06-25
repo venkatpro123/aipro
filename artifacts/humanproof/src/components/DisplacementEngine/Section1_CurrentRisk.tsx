@@ -43,8 +43,8 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
         style={{
           display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap',
           padding: 24, borderRadius: 16,
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--alpha-bg-04)',
+          border: '1px solid var(--alpha-bg-08)',
         }}
       >
         {/* Ring */}
@@ -76,7 +76,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
             <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, background: `${scoreColor}18`, color: scoreColor, border: `1px solid ${scoreColor}30`, fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
               CONFIDENCE: {result.confidence ?? 'MODERATE'}
             </span>
-            <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)', border: '1px solid var(--alpha-bg-08)', fontFamily: 'var(--font-mono)' }}>
               {getTimeline(result.total)}
             </span>
           </div>
@@ -102,7 +102,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--alpha-bg-08)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? '#ef4444', borderRadius: 2, transition: 'width 0.8s ease' }} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 800, color: SIGNAL_COLORS[dim.key] ?? '#ef4444', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{dim.score}</span>
@@ -127,7 +127,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--alpha-bg-08)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? '#10b981', borderRadius: 2, transition: 'width 0.8s ease' }} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 800, color: SIGNAL_COLORS[dim.key] ?? '#10b981', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{dim.score}</span>
@@ -137,7 +137,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
       </div>
 
       {/* All 6 dimensions compact */}
-      <div style={{ padding: '16px 18px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
           6-Dimension Breakdown
         </div>
@@ -145,7 +145,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
           {result.dimensions.map(dim => (
             <div key={dim.key} style={{ display: 'grid', gridTemplateColumns: '100px 1fr 36px', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 11, color: 'var(--alpha-text-55)', lineHeight: 1.2 }}>{DIM_LABELS[dim.key] ?? dim.key}</span>
-              <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+              <div style={{ height: 4, borderRadius: 2, background: 'var(--alpha-bg-06)', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? 'var(--cyan,#22d3ee)', borderRadius: 2, transition: 'width 0.8s ease' }} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, color: SIGNAL_COLORS[dim.key] ?? 'var(--cyan,#22d3ee)', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>{dim.score}</span>

@@ -89,7 +89,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
 
       {/* Restructuring probability + lead time */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-        <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div
             className="text-sm font-black"
             style={{ color: restructuringPct >= 70 ? '#ef4444' : restructuringPct >= 50 ? '#f97316' : 'rgba(255,255,255,0.9)' }}
@@ -99,7 +99,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
           <div className="text-[10px] opacity-45 mt-0.5">Restructuring probability</div>
         </div>
         {executiveDeparturePattern.leadTimeEstimateDays !== null && (
-          <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="flex items-center justify-center gap-1">
               <Clock className="w-3 h-3" style={{ color }} />
               <span className="text-sm font-black" style={{ color }}>

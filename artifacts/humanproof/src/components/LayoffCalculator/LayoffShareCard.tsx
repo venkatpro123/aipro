@@ -62,7 +62,7 @@ export const LayoffShareCard: React.FC<Props> = ({ score, tier, companyName, rol
           padding: '40px', 
           background: '#0f0f11',
           fontFamily: 'system-ui, -apple-system, sans-serif',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          borderBottom: '1px solid var(--alpha-bg-06)',
           boxSizing: 'border-box'
         }}>
           <div style={{ color: '#9a9a9a', fontSize: '13px', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>

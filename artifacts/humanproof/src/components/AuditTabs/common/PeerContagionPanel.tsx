@@ -40,7 +40,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
             {contagion.waveIntensity}
           </span>
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-45)' }}>
+            style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)' }}>
             {contagion.totalPeersMonitored} peers
           </span>
         </div>
@@ -54,19 +54,19 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       {/* Metrics row */}
       {!noData && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-          <div className="text-center rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="text-center rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="text-sm font-black" style={{ color: contagion.directCompetitorCuts > 0 ? colors.text : 'rgba(255,255,255,0.7)' }}>
               {contagion.directCompetitorCuts}
             </div>
             <div className="text-[10px] opacity-40 mt-0.5">Direct cuts</div>
           </div>
-          <div className="text-center rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="text-center rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="text-sm font-black" style={{ color: 'var(--alpha-text-70)' }}>
               {contagion.adjacentPeerCuts}
             </div>
             <div className="text-[10px] opacity-40 mt-0.5">Adjacent cuts</div>
           </div>
-          <div className="text-center rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="text-center rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="text-sm font-black" style={{ color: contagion.contagionScore > 30 ? colors.text : 'rgba(255,255,255,0.7)' }}>
               {contagion.contagionScore}
             </div>
@@ -131,7 +131,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       )}
 
       {/* Action implication */}
-      <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="rounded-lg p-3" style={{ background: 'var(--alpha-bg-04)' }}>
         <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'var(--alpha-text-30)' }}>
           ACTION IMPLICATION
         </p>
@@ -161,8 +161,8 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       {/* Confidence disclosure — user-appropriate framing of model maturity.
           The full technical calibration detail lives in the Methodology tab. */}
       <div className="flex items-start gap-1.5 mt-1.5 px-2 py-1 rounded-md" style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--alpha-bg-04)',
+        border: '1px solid var(--alpha-bg-08)',
       }}>
         <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'rgba(148,163,184,0.45)' }} />
         <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>

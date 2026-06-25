@@ -162,7 +162,7 @@ const StickyCompanyHeader: React.FC<{ companyName: string; score: number; visibl
           style={{
             background: 'rgba(9,12,20,0.92)',
             backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            borderBottom: '1px solid var(--alpha-bg-08)',
           }}
         >
           <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--alpha-text-85)' }} title={companyName}>
@@ -191,7 +191,7 @@ const DesktopTabBar: React.FC<{ active: TabKeyV4; onChange: (v: TabKeyV4) => voi
     role="tablist"
     aria-label="Dashboard sections"
     className="hidden sm:flex items-center gap-1 px-2 py-2 overflow-x-auto"
-    style={{ background: 'rgba(9,12,20,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+    style={{ background: 'rgba(9,12,20,0.92)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--alpha-bg-08)' }}
   >
     {TAB_CONFIG.map(({ value, label, Icon, getBadge }) => {
       const isActive = value === active;
@@ -253,7 +253,7 @@ const MobileBottomNav: React.FC<{ active: TabKeyV4; onChange: (v: TabKeyV4) => v
       style={{
         background: 'rgba(7,10,18,0.97)',
         backdropFilter: 'blur(24px) saturate(180%)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
+        borderTop: '1px solid var(--alpha-bg-08)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         boxShadow: '0 -8px 32px rgba(0,0,0,0.5)',
         minHeight: 58,

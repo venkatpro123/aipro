@@ -22,7 +22,7 @@ const SCARCITY_COLORS: Record<string, string> = {
 
 function MeterBar({ value, color }: { value: number; color: string }) {
   return (
-    <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+    <div style={{ height: 4, borderRadius: 2, background: 'var(--alpha-bg-08)', overflow: 'hidden' }}>
       <div style={{ height: '100%', width: `${value}%`, background: color, borderRadius: 2, transition: 'width 0.8s ease' }} />
     </div>
   );

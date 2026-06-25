@@ -80,8 +80,8 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
       <div
         className="rounded-xl overflow-hidden px-4 py-4"
         style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--alpha-bg-04)',
+          border: '1px solid var(--alpha-bg-08)',
         }}
       >
         {/* Current role node (hub) */}
@@ -108,7 +108,7 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
 
         {/* Connector line */}
         <div className="flex justify-center mb-3">
-          <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.10)' }} />
+          <div style={{ width: 1, height: 20, background: 'var(--alpha-bg-08)' }} />
         </div>
 
         {/* Path nodes */}

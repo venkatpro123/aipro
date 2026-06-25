@@ -63,7 +63,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl p-4"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.10)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -75,7 +75,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         </div>
         <span
           className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-45)' }}
+          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)' }}
         >
           {financialSignals.dataSourceQuality.replace('_', ' ')}
         </span>
@@ -86,7 +86,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
 
         {/* Free Cash Flow Margin */}
         <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+          style={{ background: 'var(--alpha-bg-04)' }}>
           <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Free Cash Flow Margin</span>
           {financialSignals.freeCashFlowMargin !== null ? (
             <span className="text-[11px] font-bold" style={{ color: fcfColor(financialSignals.freeCashFlowMargin) }}>
@@ -100,7 +100,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         {/* Price Target Change */}
         {financialSignals.priceTargetChangePct !== null && (
           <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            style={{ background: 'var(--alpha-bg-04)' }}>
             <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Price Target Change (90d)</span>
             <div className="flex items-center gap-1">
               {financialSignals.priceTargetChangePct > 0
@@ -122,7 +122,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
         {/* Cash Flow Positive tag */}
         {financialSignals.isCashFlowPositive !== null && (
           <div className="flex justify-between items-center rounded-lg px-2.5 py-2"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            style={{ background: 'var(--alpha-bg-04)' }}>
             <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Cash Flow</span>
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -170,7 +170,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
 
       {/* Risk adjustment */}
       {riskAdjustment !== 0 && (
-        <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
               Score Adjustment

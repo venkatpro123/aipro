@@ -442,7 +442,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
           industry={state.industry ?? undefined}
         />
 
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
+        <div style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
           <div style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Human Signature Profile</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text2)', marginBottom: 16, display: 'flex', gap: 16 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: 'var(--emerald)' }} /> Your score</span>
@@ -471,7 +471,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
             .map(([dim, score]) => (
               <div key={dim} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 160, fontSize: '0.8rem', color: 'var(--text2)', flexShrink: 0 }}>{dimensionLabels[dim as Dimension]}</div>
-                <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, position: 'relative' }}>
+                <div style={{ flex: 1, height: 6, background: 'var(--alpha-bg-06)', borderRadius: 3, position: 'relative' }}>
                   <div style={{ height: '100%', width: `${score}%`, background: score >= 75 ? 'var(--emerald)' : score >= 50 ? 'var(--cyan)' : 'var(--orange)', borderRadius: 3 }} />
                 </div>
                 <div style={{ width: 36, textAlign: 'right', fontFamily: 'var(--mono)', fontSize: '0.8rem', color: 'var(--text)', flexShrink: 0 }}>{score}</div>
@@ -516,7 +516,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20 }}>
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '2rem', marginBottom: 16 }}>⚡</div>
             <h3 style={{ fontWeight: 700, marginBottom: 8 }}>Standard Mode</h3>
             <p style={{ color: 'var(--text2)', fontSize: '0.85rem', marginBottom: 24, flex: 1 }}>
@@ -590,7 +590,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
             {Math.round(progressVal)}%
           </span>
         </div>
-        <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
+        <div style={{ height: 3, background: 'var(--alpha-bg-08)', borderRadius: 2 }}>
           <div style={{ height: '100%', width: `${progressVal}%`, background: quizMode === 'adaptive' ? 'var(--cyan)' : 'var(--emerald)', borderRadius: 2, transition: 'width 0.3s' }} />
         </div>
       </div>
@@ -601,7 +601,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
         </span>
       </div>
 
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 12, padding: 28, marginBottom: 20 }}>
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 28, marginBottom: 20 }}>
         <p style={{ color: 'var(--text)', fontSize: '1.05rem', lineHeight: 1.7, fontWeight: 500, minHeight: '3em' }}>
           {displayedText}
           {typing && <span className="inline-block w-1 h-5 bg-cyan-500 ml-1 animate-pulse" />}
@@ -614,7 +614,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
           onChange={(e) => setAdaptiveText(e.target.value)}
           placeholder="Describe your reasoning and how you would handle this situation..."
           style={{
-            width: '100%', minHeight: 180, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, color: 'white', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none'
+            width: '100%', minHeight: 180, background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, color: 'white', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none'
           }}
         />
       ) : (

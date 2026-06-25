@@ -70,7 +70,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
 
       {/* Demand index progress bar */}
       <div className="mb-3">
-        <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <div className="h-2 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
           <div
             className="h-2 rounded-full transition-all"
             style={{ width: `${Math.min(adjustedDemandIndex, 100)}%`, background: color }}
@@ -112,7 +112,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
       <div className="space-y-2 mb-3">
         {snapshot.timeToFillDays !== null && (
           <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="flex items-center gap-1.5">
               <Clock className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />
               <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Median time-to-fill</span>
@@ -124,7 +124,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
         )}
         {localMarketMultiplier !== 1.0 && (
           <div className="flex justify-between items-center text-sm rounded-lg px-2.5 py-2"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
+            style={{ background: 'var(--alpha-bg-04)' }}>
             <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Local market</span>
             <span className="text-[11px] font-bold" style={{
               color: localMarketMultiplier > 1 ? '#10b981' : '#f97316'
@@ -149,7 +149,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
               <span
                 key={i}
                 className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-55)' }}
+                style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-55)' }}
               >
                 {loc}
               </span>
@@ -160,7 +160,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
 
       {/* Action recommendations */}
       {actionRecommendations.length > 0 && (
-        <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[10px] font-semibold mb-1.5" style={{ color: 'var(--alpha-text-45)' }}>
             RECOMMENDED ACTIONS
           </div>

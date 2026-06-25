@@ -171,7 +171,7 @@ const CompanyIdentityCard: React.FC<{
       style={{ borderRadius: '16px', overflow: 'hidden' }}
     >
       {/* Main identity header */}
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <div className="flex items-start gap-4">
           {/* Company avatar */}
           <div style={{
@@ -211,7 +211,7 @@ const CompanyIdentityCard: React.FC<{
                 : provenance.sourceLabel === "Canonical DB" ? '#06b6d4'
                 : '#f59e0b',
               background: 'rgba(0,0,0,0.3)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--alpha-bg-08)',
               borderRadius: '6px', padding: '3px 8px',
               letterSpacing: '0.10em', textTransform: 'uppercase',
             }}>
@@ -230,7 +230,7 @@ const CompanyIdentityCard: React.FC<{
       {/* Quick metrics strip */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid var(--alpha-bg-06)',
       }}>
         {[
           {
@@ -262,7 +262,7 @@ const CompanyIdentityCard: React.FC<{
             key={m.label}
             style={{
               padding: '12px 16px',
-              borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              borderRight: i < 3 ? '1px solid var(--alpha-bg-06)' : 'none',
             }}
           >
             <div className="data-label" style={{ marginBottom: '4px' }}>{m.label}</div>
@@ -286,13 +286,13 @@ const CompanyIdentityCard: React.FC<{
             title={f.hint}
             style={{
               padding: '12px 16px',
-              borderRight: (i % 3 !== 2) ? '1px solid rgba(255,255,255,0.05)' : 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              borderRight: (i % 3 !== 2) ? '1px solid var(--alpha-bg-06)' : 'none',
+              borderBottom: '1px solid var(--alpha-bg-06)',
             }}
           >
             <div style={{
               padding: '6px', borderRadius: '8px',
-              background: 'rgba(255,255,255,0.05)',
+              background: 'var(--alpha-bg-06)',
               flexShrink: 0,
             }}>{f.icon}</div>
             <div className="flex-1 min-w-0">
@@ -662,7 +662,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
               {/* Timeline connector line */}
               <div style={{
                 position: 'absolute', top: '22px', left: '0', right: '0',
-                height: '2px', background: 'rgba(255,255,255,0.07)',
+                height: '2px', background: 'var(--alpha-bg-06)',
                 zIndex: 0,
               }} />
               <div style={{
@@ -738,7 +738,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                   flexShrink: 0, display: 'flex', alignItems: 'center', paddingTop: '14px',
                 }}>
                   <div style={{
-                    width: '20px', height: '2px', background: 'rgba(255,255,255,0.15)',
+                    width: '20px', height: '2px', background: 'var(--alpha-bg-08)',
                   }} />
                   <div style={{
                     width: 0, height: 0,

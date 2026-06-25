@@ -173,7 +173,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
                 <div
                   key={i}
                   className="flex items-start gap-2 rounded-lg px-2.5 py-2"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
                 >
                   <div
                     className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0"

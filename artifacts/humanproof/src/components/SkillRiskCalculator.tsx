@@ -763,7 +763,7 @@ export default function SkillRiskCalculator({
                         alignItems: "center",
                         padding: "12px 16px",
                         cursor: "pointer",
-                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        borderBottom: "1px solid var(--alpha-bg-06)",
                       }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background =
@@ -1275,7 +1275,7 @@ export default function SkillRiskCalculator({
               style={{
                 marginTop: 32,
                 paddingTop: 32,
-                borderTop: "1px solid rgba(255,255,255,0.06)",
+                borderTop: "1px solid var(--alpha-bg-06)",
               }}
             >
               <div

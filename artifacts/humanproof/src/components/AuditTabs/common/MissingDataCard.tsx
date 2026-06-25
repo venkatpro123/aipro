@@ -168,7 +168,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
       transition={{ duration: 0.18 }}
       className="rounded-xl overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.02)',
+        background: 'var(--alpha-bg-04)',
         border: `1px solid ${headerColor}18`,
       }}
     >
@@ -210,7 +210,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
           >
             <div
               className="px-3.5 pb-3 pt-0"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+              style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
             >
               <p className="text-[10px] py-2 mb-2" style={{ color: 'var(--alpha-text-25)' }}>
                 What we don't know yet — and how it affects your score:

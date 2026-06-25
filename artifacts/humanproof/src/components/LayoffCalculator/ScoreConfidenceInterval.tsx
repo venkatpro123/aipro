@@ -82,7 +82,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
           alignItems: "center",
           gap: 6,
           background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.09)",
+          border: "1px solid var(--alpha-bg-08)",
           borderRadius: 20,
           padding: "4px 14px",
           cursor: "help",
@@ -140,7 +140,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
             transform: "translateX(-50%)",
             zIndex: 200,
             background: "rgba(10,15,25,0.97)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            border: "1px solid var(--alpha-bg-08)",
             borderRadius: 10,
             padding: "14px 18px",
             maxWidth: 320,
@@ -173,7 +173,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
             style={{
               marginTop: 10,
               paddingTop: 8,
-              borderTop: "1px solid rgba(255,255,255,0.06)",
+              borderTop: "1px solid var(--alpha-bg-06)",
               fontSize: "0.72rem",
               color: "#4b5563",
             }}

@@ -123,7 +123,7 @@ const PivotCard = ({
       onClick={() => setExpanded(!expanded)}
       style={{
         background: rank === 0 ? `linear-gradient(135deg, ${scoreColor}08, ${scoreColor}04)` : 'rgba(255,255,255,0.025)',
-        border: rank === 0 ? `1px solid ${scoreColor}30` : '1px solid rgba(255,255,255,0.08)',
+        border: rank === 0 ? `1px solid ${scoreColor}30` : '1px solid var(--alpha-bg-08)',
         borderRadius: 14, padding: '16px 18px', cursor: 'pointer',
         transition: 'all 0.2s', marginBottom: 10,
         position: 'relative', overflow: 'hidden',
@@ -174,9 +174,9 @@ const PivotCard = ({
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
-              background: 'rgba(255,255,255,0.06)', color: 'var(--text-2)',
+              background: 'var(--alpha-bg-06)', color: 'var(--text-2)',
               borderRadius: 6, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 600,
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--alpha-bg-08)',
             }}>
               <Clock size={9} /> {path.timeToTransition}
             </span>
@@ -189,7 +189,7 @@ const PivotCard = ({
           </div>
 
           {expanded && (
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
+            <div style={{ borderTop: '1px solid var(--alpha-bg-06)', paddingTop: 12 }}>
               <div style={{ marginBottom: 10 }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Skill Gap to Close</span>
                 <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{path.skillGap}</p>
@@ -199,9 +199,9 @@ const PivotCard = ({
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
                   {path.industryMapping.map(ind => (
                     <span key={ind} style={{
-                      background: 'rgba(255,255,255,0.06)', color: 'var(--text-2)',
+                      background: 'var(--alpha-bg-06)', color: 'var(--text-2)',
                       borderRadius: 6, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 600,
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      border: '1px solid var(--alpha-bg-08)',
                     }}>{ind}</span>
                   ))}
                 </div>
@@ -256,7 +256,7 @@ const PhaseCard = ({
       }}>{phaseNum}</div>
 
       <div style={{
-        background: 'rgba(255,255,255,0.03)', borderRadius: 12,
+        background: 'var(--alpha-bg-04)', borderRadius: 12,
         border: `1px solid ${color}25`,
         padding: '14px 16px',
       }}>
@@ -350,8 +350,8 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
         </div>
         {/* Tab switcher */}
         <div style={{
-          display: 'flex', background: 'rgba(255,255,255,0.05)',
-          borderRadius: 10, padding: 3, border: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex', background: 'var(--alpha-bg-06)',
+          borderRadius: 10, padding: 3, border: '1px solid var(--alpha-bg-08)',
         }}>
           {[
             { key: 'roadmap' as const, label: '📋 Roadmap', icon: <Layers size={12} /> },
@@ -407,8 +407,8 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
           ) : (
             /* Generative fallback when no data for experience level */
             <div style={{
-              background: 'rgba(255,255,255,0.03)', borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.08)', padding: 24,
+              background: 'var(--alpha-bg-04)', borderRadius: 12,
+              border: '1px solid var(--alpha-bg-08)', padding: 24,
             }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16 }}>
                 <AlertCircle size={16} color={scoreColor} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -467,20 +467,20 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
             <div>
               <div style={{
                 display: 'flex', gap: 12, marginBottom: 16,
-                padding: '12px 14px', background: 'rgba(255,255,255,0.03)',
-                borderRadius: 10, border: '1px solid rgba(255,255,255,0.07)',
+                padding: '12px 14px', background: 'var(--alpha-bg-04)',
+                borderRadius: 10, border: '1px solid var(--alpha-bg-08)',
                 flexWrap: 'wrap',
               }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.3rem', fontWeight: 900, color: scoreColor }}>{careerPaths.length}</div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pivot Paths</div>
                 </div>
-                <div style={{ width: 1, background: 'rgba(255,255,255,0.06)' }} />
+                <div style={{ width: 1, background: 'var(--alpha-bg-06)' }} />
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#10b981' }}>-{Math.max(...careerPaths.map(p => p.riskReduction))}%</div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Max Risk Drop</div>
                 </div>
-                <div style={{ width: 1, background: 'rgba(255,255,255,0.06)' }} />
+                <div style={{ width: 1, background: 'var(--alpha-bg-06)' }} />
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f59e0b' }}>{careerPaths[0]?.salaryDelta}</div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Top Salary △</div>
@@ -492,7 +492,7 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
             </div>
           ) : (
             <div style={{
-              padding: 24, borderRadius: 12, background: 'rgba(255,255,255,0.03)',
+              padding: 24, borderRadius: 12, background: 'var(--alpha-bg-04)',
               textAlign: 'center', color: 'var(--text-3)', fontSize: '0.85rem',
             }}>
               Career pivot data not yet available for this role.

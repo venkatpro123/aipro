@@ -152,7 +152,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
             <div
               key={i}
               className="flex items-start gap-2.5 rounded-xl px-3 py-2"
-              style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${c.color}22` }}
+              style={{ background: 'var(--alpha-bg-04)', border: `1px solid ${c.color}22` }}
             >
               <c.icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: c.color }} />
               <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>

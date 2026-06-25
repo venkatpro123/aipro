@@ -142,7 +142,7 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl p-4"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -191,7 +191,7 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
               </div>
             </div>
             {/* Bar */}
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--alpha-bg-06)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${dim.score}%` }}

@@ -84,7 +84,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
   return (
     <div
       className="rounded-xl px-4 py-3"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
@@ -115,7 +115,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
       </div>
 
       {/* Percentile bar */}
-      <div className="relative h-2 rounded-full mb-2" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="relative h-2 rounded-full mb-2" style={{ background: 'var(--alpha-bg-08)' }}>
         <div
           className="h-full rounded-full"
           style={{ width: `${overallPercentile}%`, background: cfg.color, transition: 'width 0.6s ease' }}
@@ -192,7 +192,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           {winRateEstimate && (
             <div className="rounded-lg px-2.5 py-2"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
               <p className="text-[9px] font-bold tracking-wider mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>
                 WIN RATE
               </p>
@@ -230,7 +230,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
             <div className="mt-2 space-y-1.5">
               {closeGapRoadmap.map((step, i) => (
                 <div key={i} className="flex items-center justify-between py-1.5 border-b"
-                  style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                  style={{ borderColor: 'var(--alpha-bg-06)' }}>
                   <p className="text-[10px] flex-1 min-w-0 pr-2" style={{ color: 'var(--alpha-text-55)' }}>
                     {step.action}
                   </p>

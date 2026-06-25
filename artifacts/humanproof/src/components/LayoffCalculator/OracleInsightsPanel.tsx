@@ -205,7 +205,7 @@ const SkillRiskCard: React.FC<{ skill: SkillRisk; type: 'obsolete' | 'at_risk' }
   const borderColor = type === 'obsolete' ? C.red : C.amber;
   return (
     <div className="card card-hover" style={{
-      background: 'rgba(255,255,255,0.02)', border: `1px solid ${borderColor}20`,
+      background: 'var(--alpha-bg-04)', border: `1px solid ${borderColor}20`,
       borderRadius: '12px', padding: '16px',
       display: 'flex', flexDirection: 'column', gap: '8px'
     }}>
@@ -523,7 +523,7 @@ export const OracleInsightsPanel: React.FC<Props> = ({
               </div>
             )}
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '20px', padding: '24px', border: '1px solid var(--border)' }}>
+          <div style={{ background: 'var(--alpha-bg-04)', borderRadius: '20px', padding: '24px', border: '1px solid var(--border)' }}>
              <DimensionRadar 
                dimensions={[
                  { key: 'automation', label: 'Automation', score: intelligence.skills.obsolete?.length ? 85 : 40 },

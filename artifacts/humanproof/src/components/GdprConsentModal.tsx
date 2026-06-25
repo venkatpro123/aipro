@@ -28,8 +28,8 @@ interface Props {
 }
 
 const CARD_STYLE: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  border:     '1px solid rgba(255,255,255,0.10)',
+  background: 'var(--alpha-bg-04)',
+  border:     '1px solid var(--alpha-bg-08)',
   borderRadius: 12,
   padding: '16px 20px',
 };
@@ -335,7 +335,7 @@ const OVERLAY: React.CSSProperties = {
 const PANEL: React.CSSProperties = {
   width: '100%', maxWidth: 480,
   background: '#0d1320',
-  border: '1px solid rgba(255,255,255,0.10)',
+  border: '1px solid var(--alpha-bg-08)',
   borderRadius: 20,
   padding: '28px 24px 24px',
   maxHeight: '90vh',

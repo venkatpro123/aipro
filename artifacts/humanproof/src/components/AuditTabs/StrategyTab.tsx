@@ -101,7 +101,7 @@ const ActionCard: React.FC<{
       transition: 'all 200ms ease',
     }}
     onClick={onToggle}
-    whileHover={{ background: 'rgba(255,255,255,0.06)' }}
+    whileHover={{ background: 'var(--alpha-bg-06)' }}
   >
     <button className="mt-0.5 flex-shrink-0" onClick={onToggle}>
       {completed
@@ -287,7 +287,7 @@ const OfferModal: React.FC<{
             <p className="text-xs mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>Score any job offer against your risk profile</p>
           </div>
           <button onClick={onClose} className="text-xs px-3 py-1.5 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--alpha-text-55)' }}>
+            style={{ background: 'var(--alpha-bg-08)', color: 'var(--alpha-text-55)' }}>
             Close
           </button>
         </div>
@@ -299,7 +299,7 @@ const OfferModal: React.FC<{
               <input value={offerCompany} onChange={e => setOfferCompany(e.target.value)}
                 placeholder="e.g. Google, Stripe, Razorpay"
                 className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }} />
+                style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)', color: 'var(--alpha-text-92)' }} />
             </div>
             <div>
               <label className="text-xs font-medium mb-1.5 block" style={{ color: 'var(--alpha-text-55)' }}>Offered Base Salary (annual)</label>
@@ -309,7 +309,7 @@ const OfferModal: React.FC<{
                   placeholder="e.g. 1500000"
                   type="number"
                   className="w-full pl-8 pr-3 py-2 rounded-lg text-sm"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }} />
+                  style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)', color: 'var(--alpha-text-92)' }} />
               </div>
               {currentSalary > 0 && (
                 <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-35)' }}>
@@ -323,13 +323,13 @@ const OfferModal: React.FC<{
               <input value={offerIndustry} onChange={e => setOfferIndustry(e.target.value)}
                 placeholder="e.g. fintech, healthcare, SaaS"
                 className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }} />
+                style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)', color: 'var(--alpha-text-92)' }} />
             </div>
             <div>
               <label className="text-xs font-medium mb-1.5 block" style={{ color: 'var(--alpha-text-55)' }}>Company Size</label>
               <select value={offerSize} onChange={e => setOfferSize(e.target.value as any)}
                 className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }}>
+                style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)', color: 'var(--alpha-text-92)' }}>
                 <option value="startup">Startup (&lt;50)</option>
                 <option value="smb">SMB (50–500)</option>
                 <option value="mid">Mid (500–5,000)</option>
@@ -372,7 +372,7 @@ const OfferModal: React.FC<{
               {offerResult.dimensions.map(dim => (
                 <div key={dim.id} className="flex items-center gap-3">
                   <span className="text-xs w-32 flex-shrink-0" style={{ color: 'var(--alpha-text-50)' }}>{dim.name}</span>
-                  <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
                     <div className="h-full rounded-full transition-all"
                       style={{ width: `${dim.score}%`, background: dim.score >= 70 ? '#10b981' : dim.score >= 45 ? '#f59e0b' : '#ef4444' }} />
                   </div>
@@ -414,7 +414,7 @@ const OfferModal: React.FC<{
             )}
 
             <button onClick={() => setOfferResult(null)} className="w-full py-2 rounded-lg text-xs"
-              style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)' }}>
+              style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-50)' }}>
               ← Evaluate Another Offer
             </button>
           </div>
@@ -464,7 +464,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
   if (!synthesis) {
     return (
-      <div className="flex flex-col items-center text-center gap-2.5 py-10 px-6 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex flex-col items-center text-center gap-2.5 py-10 px-6 rounded-2xl" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
         <Target className="w-5 h-5" style={{ color: 'var(--alpha-text-35)' }} />
         <p className="text-sm font-bold" style={{ color: 'var(--alpha-text-85)' }}>Strategy isn't ready yet</p>
         <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
@@ -518,7 +518,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             {/* Promotion timing — computed by the engine but never shown before.
                 Null when an exit strategy makes promotion timing irrelevant. */}
             {synthesis.promotionTimingNote && (
-              <div className="flex items-start gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-start gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--alpha-bg-08)' }}>
                 <TrendingUp className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: strategyColors.text }} />
                 <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                   <span className="font-semibold" style={{ color: strategyColors.text }}>Promotion timing: </span>
@@ -537,7 +537,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         </div>
 
         {/* Progress bar */}
-        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--alpha-bg-08)' }}>
           <div className="flex justify-between mb-1.5">
             <span className="text-xs" style={{ color: 'var(--alpha-text-50)' }}>
               {completedCount} of {allActions.length} actions completed
@@ -546,7 +546,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               {progressPct}%
             </span>
           </div>
-          <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <div className="h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
             <motion.div className="h-full rounded-full"
               style={{ background: `linear-gradient(90deg, ${strategyColors.accent}, ${strategyColors.text})` }}
               animate={{ width: `${progressPct}%` }}
@@ -628,8 +628,8 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
       <motion.button
         onClick={() => setShowOfferModal(true)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-xl"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
-        whileHover={{ background: 'rgba(255,255,255,0.07)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid rgba(255,255,255,0.1)' }}
+        whileHover={{ background: 'var(--alpha-bg-06)' }}
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{
@@ -650,7 +650,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         type="button"
         onClick={() => setShowFullBreakdown(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-xl"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
       >
         <div className="flex items-center gap-2">
           <Search className="w-4 h-4" style={{ color: 'var(--alpha-text-45)' }} />
@@ -691,7 +691,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
       {/* Career confidence summary */}
       {confidence && (
-        <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="rounded-2xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Brain className="w-4 h-4" style={{ color: '#a78bfa' }} />
@@ -722,7 +722,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             {confidence.pillars.map((pillar: any) => (
               <div key={pillar.id} className="flex items-center gap-3">
                 <span className="text-xs w-28 flex-shrink-0" style={{ color: 'var(--alpha-text-50)' }}>{pillar.name}</span>
-                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
                   <div className="h-full rounded-full"
                     style={{
                       width: `${pillar.score}%`,
@@ -757,10 +757,10 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
       {/* Competitive position + risk/opportunity — the 2-col grid previously had
           an empty second column (only BIGGEST RISK rendered), which read as a
           layout bug. Now pairs the biggest risk with the biggest opportunity. */}
-      <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="rounded-xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
         <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--alpha-text-30)' }}>WHERE YOU STAND</p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.competitivePositionStatement}</p>
-        <div className="mt-3 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="mt-3 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
             <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'rgba(239,68,68,0.85)' }}>
               <AlertTriangle className="w-3 h-3" /> MAIN CONCERN

@@ -29,7 +29,7 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
       padding: '8px 16px',
       background: 'rgba(var(--bg-rgb,9,12,20),0.94)',
       backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(255,255,255,0.07)',
+      borderBottom: '1px solid var(--alpha-bg-08)',
       flexWrap: 'wrap',
     }}>
       {/* Mini score ring */}
@@ -58,7 +58,7 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
         </div>
       </div>
 
-      <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.10)', flexShrink: 0 }} />
+      <div style={{ width: 1, height: 28, background: 'var(--alpha-bg-08)', flexShrink: 0 }} />
 
       {/* Wave status pill */}
       <div style={{
@@ -89,7 +89,7 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
         </span>
       </div>
 
-      <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.10)', flexShrink: 0 }} />
+      <div style={{ width: 1, height: 28, background: 'var(--alpha-bg-08)', flexShrink: 0 }} />
 
       {/* Confidence */}
       <div style={{ fontSize: 9, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase', flexShrink: 0 }}>

@@ -48,7 +48,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Collapsed header — always visible */}
       <button

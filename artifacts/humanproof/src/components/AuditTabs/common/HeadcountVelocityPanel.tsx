@@ -55,19 +55,19 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
 
       {/* 3-signal row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[11px] font-bold" style={{ color: TREND_COLOR[headcount.headcountTrend] }}>
             {headcount.headcountTrend.replace('_', ' ')}
           </div>
           <div className="text-[10px] opacity-40 mt-0.5">Headcount</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[11px] font-bold" style={{ color: POSTING_COLOR[headcount.postingVelocity] }}>
             {headcount.postingVelocity}
           </div>
           <div className="text-[10px] opacity-40 mt-0.5">Postings</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[11px] font-bold" style={{
             color: headcount.contractorRatioRisk === 'HIGH' ? '#ef4444'
               : headcount.contractorRatioRisk === 'MODERATE' ? '#f59e0b' : '#10b981',
@@ -79,7 +79,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       </div>
 
       {/* Headcount note */}
-      <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <Users className="w-3 h-3 flex-shrink-0" style={{ color: TREND_COLOR[headcount.headcountTrend] }} />
           <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>Headcount Signal</span>
@@ -91,7 +91,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
 
       {/* Contractor note */}
       {headcount.contractorRatioRisk !== 'UNKNOWN' && (
-        <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
           <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {headcount.contractorNote}
           </p>
@@ -121,7 +121,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
       {/* Net momentum */}
       {headcount.netHeadcountMomentum !== 'UNKNOWN' && (
         <div className="flex items-center gap-2 mt-2.5 rounded-lg p-2"
-          style={{ background: 'rgba(255,255,255,0.03)' }}>
+          style={{ background: 'var(--alpha-bg-04)' }}>
           <TrendingDown className="w-3 h-3 flex-shrink-0" style={{
             color: headcount.netHeadcountMomentum === 'NEGATIVE' ? '#ef4444' : '#10b981',
             transform: headcount.netHeadcountMomentum === 'POSITIVE' ? 'rotate(180deg)' : undefined,

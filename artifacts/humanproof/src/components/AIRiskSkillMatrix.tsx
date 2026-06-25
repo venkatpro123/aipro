@@ -67,7 +67,7 @@ const ImpactBar = ({ score, color, label }: { score: number; color: string; labe
       <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '0.75rem', color, fontWeight: 800 }}>{score}/100</span>
     </div>
-    <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: '99px', overflow: 'hidden' }}>
+    <div style={{ height: 5, background: 'var(--alpha-bg-06)', borderRadius: '99px', overflow: 'hidden' }}>
       <div style={{
         height: '100%', width: `${score}%`, background: color,
         borderRadius: '99px',
@@ -434,7 +434,7 @@ export const AIRiskSkillMatrix = ({ intel, scoreColor }: Props) => {
       {/* No data fallback */}
       {obsolete.length === 0 && atRisk.length === 0 && safe.length === 0 && (
         <div style={{
-          padding: 24, borderRadius: 12, background: 'rgba(255,255,255,0.04)',
+          padding: 24, borderRadius: 12, background: 'var(--alpha-bg-04)',
           textAlign: 'center', color: 'var(--text-3)', fontSize: '0.85rem',
         }}>
           Skill matrix data not yet available for this role.

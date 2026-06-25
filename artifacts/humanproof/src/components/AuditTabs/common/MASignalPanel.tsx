@@ -71,13 +71,13 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-sm font-bold" style={{ color: restructuringPct >= 60 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
             {restructuringPct}%
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Restructuring Prob.</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-92)' }}>
             {maRisk.acquisitionRiskMultiplier.toFixed(1)}×
           </div>
@@ -86,7 +86,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       </div>
 
       {/* Headcount estimate */}
-      <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <ShieldAlert className="w-3 h-3 flex-shrink-0" style={{ color: colors.text }} />
           <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-70)' }}>

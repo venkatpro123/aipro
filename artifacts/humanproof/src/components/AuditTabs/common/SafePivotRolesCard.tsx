@@ -81,8 +81,8 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
       transition={{ delay: 0.1 }}
       style={{
         borderRadius: 16,
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--alpha-bg-04)',
+        border: '1px solid var(--alpha-bg-08)',
         padding: '14px 16px',
       }}
     >
@@ -173,9 +173,9 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                         fontWeight: 600,
                         padding: '2px 6px',
                         borderRadius: 4,
-                        background: 'rgba(255,255,255,0.05)',
+                        background: 'var(--alpha-bg-06)',
                         color: 'var(--alpha-text-50)',
-                        border: '1px solid rgba(255,255,255,0.08)',
+                        border: '1px solid var(--alpha-bg-08)',
                       }}
                     >
                       +{skill}

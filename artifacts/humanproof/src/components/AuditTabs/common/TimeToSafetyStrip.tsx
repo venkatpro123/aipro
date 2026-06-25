@@ -153,7 +153,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.12 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">

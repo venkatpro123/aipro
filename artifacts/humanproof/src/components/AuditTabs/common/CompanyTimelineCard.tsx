@@ -177,12 +177,12 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.12 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-2 px-4 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
         <Building2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
         <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
@@ -223,7 +223,7 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
                 {!isLast && (
                   <div
                     className="flex-1 mt-1"
-                    style={{ width: 1, background: 'rgba(255,255,255,0.08)', minHeight: 16 }}
+                    style={{ width: 1, background: 'var(--alpha-bg-08)', minHeight: 16 }}
                   />
                 )}
               </div>

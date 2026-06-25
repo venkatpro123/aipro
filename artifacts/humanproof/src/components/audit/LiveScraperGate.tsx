@@ -265,7 +265,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         {realTotal > 0 && (
           <div style={{
             marginTop: '12px', paddingTop: '10px',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--alpha-bg-06)',
             fontSize: '0.6rem', color: 'var(--alpha-text-35)', letterSpacing: '0.05em',
           }}>
             {realDone}/{realTotal} live sources reconciled
@@ -287,7 +287,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           </span>
         </div>
         <div style={{
-          height: '6px', background: 'rgba(255,255,255,0.08)',
+          height: '6px', background: 'var(--alpha-bg-08)',
           borderRadius: '3px', overflow: 'hidden',
         }}>
           <div style={{
@@ -315,8 +315,8 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           <button
             onClick={fireReady}
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'var(--alpha-bg-06)',
+              border: '1px solid var(--alpha-bg-08)',
               borderRadius: '6px',
               color: 'var(--alpha-text-50)',
               fontSize: '0.65rem',

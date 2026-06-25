@@ -17,7 +17,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
       <div style={{
         fontSize: 10, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)',
         letterSpacing: '0.06em', padding: '7px 12px', borderRadius: 8,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
       }}>
         CAREER EVOLUTION PATH — How this role is likely to transform over time. Based on AI capability trajectories and career intelligence data.
       </div>
@@ -36,7 +36,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
                   display: 'flex', alignItems: 'flex-start', gap: 14,
                   padding: '16px 18px', borderRadius: 14,
                   background: step.isCurrentRole ? 'rgba(0,212,224,0.07)' : 'rgba(255,255,255,0.03)',
-                  border: step.isCurrentRole ? '1px solid rgba(0,212,224,0.25)' : '1px solid rgba(255,255,255,0.07)',
+                  border: step.isCurrentRole ? '1px solid rgba(0,212,224,0.25)' : '1px solid var(--alpha-bg-08)',
                 }}
               >
                 {/* Node */}

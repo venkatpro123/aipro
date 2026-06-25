@@ -77,7 +77,7 @@ export const PortfolioShield: React.FC<{ score?: number }> = ({ score: externalS
           background: 'rgba(0,0,0,0.2)', 
           borderRadius: '24px', 
           padding: '32px', 
-          border: '1px solid rgba(255,255,255,0.05)',
+          border: '1px solid var(--alpha-bg-06)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

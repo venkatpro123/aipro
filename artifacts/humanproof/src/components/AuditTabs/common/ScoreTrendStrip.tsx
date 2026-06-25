@@ -51,7 +51,7 @@ const DIRECTION_CONFIG = {
     Icon: Minus,
     color: 'var(--alpha-text-45)',
     bgColor: 'rgba(255,255,255,0.03)',
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'var(--alpha-bg-06)',
     label: 'Stable',
     pill: 'STABLE',
     pillBg: 'rgba(255,255,255,0.06)',

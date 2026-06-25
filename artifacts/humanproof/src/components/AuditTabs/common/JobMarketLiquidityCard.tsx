@@ -253,11 +253,11 @@ const CityCard: React.FC<{
       {/* Key metrics row */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-50)' }}>
+          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-50)' }}>
           ~{opp.roleData.avgPlacementWeeks}w to offer
         </span>
         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-50)' }}>
+          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-50)' }}>
           {opp.roleData.employerCount.toLocaleString()} employers
         </span>
         {opp.roleData.salaryPremiumPct !== 0 && (
@@ -352,7 +352,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
@@ -412,19 +412,19 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
       <div className="flex flex-wrap gap-1.5 px-4 pb-2">
         {activePostings != null && (
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)', border: '1px solid var(--alpha-bg-08)' }}>
             {activePostings.toLocaleString()} active postings
           </span>
         )}
         {demandRatio != null && (
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)' }}>
+            style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)', border: '1px solid var(--alpha-bg-08)' }}>
             {demandRatio.toFixed(1)}× demand ratio
           </span>
         )}
         {roleInRegionTrend && (
           <span className="text-[10px] px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.05)', color: trendColor, border: '1px solid rgba(255,255,255,0.10)' }}>
+            style={{ background: 'var(--alpha-bg-06)', color: trendColor, border: '1px solid var(--alpha-bg-08)' }}>
             {trendIcon} demand {roleInRegionTrend}
           </span>
         )}
@@ -557,7 +557,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                     const barColor = f.value >= 0.65 ? '#10b981' : f.value >= 0.45 ? '#f59e0b' : '#f97316';
                     return (
                       <div key={f.name} className="rounded-lg px-2.5 py-2"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-70)' }}>
                             {f.name}
@@ -566,7 +566,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                             {f.label}
                           </span>
                         </div>
-                        <div className="h-1 rounded-full mb-1" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div className="h-1 rounded-full mb-1" style={{ background: 'var(--alpha-bg-08)' }}>
                           <motion.div
                             className="h-1 rounded-full"
                             initial={{ width: 0 }}
@@ -601,7 +601,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
           Browser geolocation used as enhancement; profile metro as fallback.
       ══════════════════════════════════════════════════════════════════════ */}
       <div
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
       >
         <button
           type="button"
@@ -658,7 +658,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                         { label: 'Salary', value: `${cityMarketIntelligence.salaryPremiumPct > 0 ? '+' : ''}${cityMarketIntelligence.salaryPremiumPct}%` },
                       ].map(({ label, value }) => (
                         <div key={label} className="rounded-lg py-1.5 text-center"
-                          style={{ background: 'rgba(255,255,255,0.04)' }}>
+                          style={{ background: 'var(--alpha-bg-04)' }}>
                           <p className="text-[11px] font-black" style={{ color: 'var(--alpha-text-85)' }}>{value}</p>
                           <p className="text-[9px]" style={{ color: 'var(--alpha-text-30)' }}>{label}</p>
                         </div>

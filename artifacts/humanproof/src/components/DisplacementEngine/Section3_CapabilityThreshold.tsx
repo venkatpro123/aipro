@@ -35,7 +35,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
       <div style={{
         fontSize: 10, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)',
         letterSpacing: '0.06em', padding: '7px 12px', borderRadius: 8,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
       }}>
         NON-LINEAR MODEL — AI capability advances in waves, not gradual yearly increments. This model reflects structural stage transitions.
       </div>
@@ -43,7 +43,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
       {/* Stage pipeline */}
       <div style={{
         padding: '20px', borderRadius: 16,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', paddingBottom: 4 }}>
           {STAGES.map((stage, i) => {
@@ -130,7 +130,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
 
       {/* Trigger conditions */}
       {threshold.triggerConditions.length > 0 && (
-        <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '14px 16px', borderRadius: 12, background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
           <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>
             What Would Trigger the Next Stage
           </div>

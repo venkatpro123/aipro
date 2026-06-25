@@ -81,7 +81,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
   return (
     <div
       className="rounded-lg overflow-hidden border border-white/8"
-      style={{ background: 'rgba(255,255,255,0.03)' }}
+      style={{ background: 'var(--alpha-bg-04)' }}
     >
       {/* Email header row */}
       <button
@@ -130,7 +130,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
               {/* Body — pre-formatted, monospace for easy scanning */}
               <pre
                 className="text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap font-sans rounded-lg p-3 mb-2.5"
-                style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--alpha-bg-06)' }}
               >
                 {email.body}
               </pre>

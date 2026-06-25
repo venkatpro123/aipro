@@ -152,7 +152,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
       <button
         onClick={complete}
         className="absolute top-5 right-5 text-[10px] font-semibold px-3 py-1.5 rounded-full"
-        style={{ color: 'var(--alpha-text-25)', border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.04)' }}
+        style={{ color: 'var(--alpha-text-25)', border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}
       >
         Skip
       </button>

@@ -263,7 +263,7 @@ const StatRow: React.FC<{
   sub?: string;
 }> = ({ label, value, valueColor = 'rgba(255,255,255,0.85)', sub }) => (
   <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg"
-    style={{ background: 'rgba(255,255,255,0.04)' }}>
+    style={{ background: 'var(--alpha-bg-04)' }}>
     <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>{label}</span>
     <div className="text-right">
       <span className="text-[11px] font-bold" style={{ color: valueColor }}>{value}</span>
@@ -307,7 +307,7 @@ const CollapsibleSection: React.FC<{
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.22 }}
-          style={{ overflow: 'hidden', borderTop: `1px solid rgba(255,255,255,0.06)` }}
+          style={{ overflow: 'hidden', borderTop: `1px solid var(--alpha-bg-06)` }}
         >
           <div className="px-4 py-3">{children}</div>
         </motion.div>
@@ -498,7 +498,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                 <span className="text-[10px] font-bold capitalize">{trend}</span>
               </div>
             </div>
-            <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div className="h-2 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(100, demandIndex)}%` }}
@@ -541,7 +541,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           </div>
 
           {/* Salary insight */}
-          <div className="rounded-lg px-3 py-2 mb-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="rounded-lg px-3 py-2 mb-3" style={{ background: 'var(--alpha-bg-04)' }}>
             <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
               {salaryInsight}
             </p>
@@ -714,7 +714,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                 {Math.round(aiRisk * 100)}%
               </span>
             </div>
-            <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <div className="h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.round(aiRisk * 100)}%` }}
@@ -788,7 +788,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                 { label: 'Adjacent cuts', value: peerContagion.adjacentPeerCuts, warnIf: v => v > 2 },
                 { label: 'Contagion score', value: peerContagion.contagionScore, warnIf: v => v > 30 },
               ].map(({ label, value, warnIf }) => (
-                <div key={label} className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div key={label} className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
                   <div className="text-sm font-black" style={{ color: warnIf(value) ? ORANGE : 'rgba(255,255,255,0.75)' }}>
                     {value}
                   </div>
@@ -812,7 +812,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     className="flex items-center gap-2 rounded-lg px-2.5 py-2"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
+                    style={{ background: 'var(--alpha-bg-04)' }}
                   >
                     <Users style={{ width: 11, height: 11, color: 'var(--alpha-text-35)', flexShrink: 0 }} />
                     <span className="flex-1 text-[11px] font-medium capitalize" style={{ color: 'var(--alpha-text-70)' }}>

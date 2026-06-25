@@ -47,7 +47,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
   const selectStyle: React.CSSProperties = {
     flex: 1,
     padding: '8px 12px',
-    background: 'rgba(255,255,255,0.05)',
+    background: 'var(--alpha-bg-06)',
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: '6px',
     color: '#fff',
@@ -58,7 +58,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
   return (
     <div style={{
       marginTop: '40px',
-      background: 'rgba(255,255,255,0.02)',
+      background: 'var(--alpha-bg-04)',
       border: '1px solid rgba(0, 245, 255, 0.2)',
       borderRadius: '12px',
       padding: '24px',
@@ -134,7 +134,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
         <div style={{
           marginTop: '24px',
           padding: '16px',
-          background: 'rgba(255,255,255,0.05)',
+          background: 'var(--alpha-bg-06)',
           borderRadius: '8px',
           borderLeft: `4px solid ${diff > 0 ? '#ef4444' : diff < 0 ? '#10b981' : '#9ba5b4'}`
         }}>

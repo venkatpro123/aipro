@@ -155,7 +155,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
               style={{
                 width: "100%",
                 background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                border: "1px solid var(--alpha-bg-08)",
                 borderRadius: 8,
                 padding: "10px 12px",
                 color: "#e5e7eb",
@@ -184,7 +184,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
             <div
               style={{
                 background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid var(--alpha-bg-08)",
                 borderRadius: 10,
                 padding: 16,
                 animation: "fadeIn 0.25s ease-in",

@@ -199,7 +199,7 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
 
 const DrillCell: React.FC<{ title: string; tone: string; children: React.ReactNode }> = ({ title, tone, children }) => (
   <div className="rounded-xl px-3 py-2.5"
-    style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${tone}25` }}>
+    style={{ background: 'var(--alpha-bg-04)', border: `1px solid ${tone}25` }}>
     <p className="text-[10px] font-semibold tracking-wider uppercase mb-1" style={{ color: tone + 'cc' }}>{title}</p>
     {children}
   </div>

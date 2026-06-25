@@ -61,7 +61,7 @@ function readinessColor(score: number) {
 function ScoreBar({ score, color }: { score: number; color: string }) {
   return (
     <div className="flex items-center gap-2 flex-1">
-      <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
         <motion.div
           className="h-full rounded-full"
           style={{ background: color }}
@@ -85,7 +85,7 @@ function GapSection({ gap }: { gap: BehavioralPersonalizationResult['employmentG
   const color = sev === 'significant' ? '#ef4444' : sev === 'moderate' ? '#f59e0b' : '#94a3b8';
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--alpha-bg-06)' }}>
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left"
@@ -111,7 +111,7 @@ function GapSection({ gap }: { gap: BehavioralPersonalizationResult['employmentG
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-3">
-              <div className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <div className="p-3 rounded-lg" style={{ background: 'var(--alpha-bg-04)' }}>
                 <div className="text-[10px] text-white/40 uppercase tracking-wide mb-1">Interview framing</div>
                 <p className="text-sm text-white/75 leading-relaxed">{gap.narrativeFrame}</p>
               </div>
@@ -146,7 +146,7 @@ function CompetitiveSection({ cp }: { cp: BehavioralPersonalizationResult['compe
   const color = pct >= 65 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className="rounded-xl px-4 py-3.5 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-xl px-4 py-3.5 space-y-3" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Target className="w-3.5 h-3.5" style={{ color }} />
@@ -208,7 +208,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={`rounded-2xl overflow-hidden ${className}`}
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">
@@ -230,7 +230,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
       {/* 3-signal summary strip */}
       <div className="mx-4 mb-4 grid grid-cols-3 gap-2">
         {/* Trajectory */}
-        <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="flex items-center gap-1.5">
             {trajectoryIcon(b.careerTrajectory.trajectory)}
             <span className="text-[10px] text-white/40 uppercase tracking-wide">Trajectory</span>
@@ -240,7 +240,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
         </div>
 
         {/* Compensation */}
-        <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="flex items-center gap-1.5">
             <DollarSign className="w-3.5 h-3.5" style={{ color: compColor }} />
             <span className="text-[10px] text-white/40 uppercase tracking-wide">Market Fit</span>
@@ -252,7 +252,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
         </div>
 
         {/* Interview readiness */}
-        <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="flex flex-col gap-1.5 p-3 rounded-xl" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="flex items-center gap-1.5">
             <Star className="w-3.5 h-3.5" style={{ color: readColor }} />
             <span className="text-[10px] text-white/40 uppercase tracking-wide">Readiness</span>
@@ -274,7 +274,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
         </div>
 
         <div className="p-3 rounded-xl flex items-center justify-between"
-          style={{ background: 'rgba(255,255,255,0.04)' }}>
+          style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-white/40" />
             <span className="text-xs text-white/55">Weeks to active search readiness</span>
@@ -288,14 +288,14 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
       {/* Career trajectory detail */}
       <div className="mx-4 mb-3 space-y-2">
         <div className="text-[10px] text-white/40 uppercase tracking-wide px-1">Career trajectory</div>
-        <div className="p-3.5 rounded-xl space-y-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="p-3.5 rounded-xl space-y-2.5" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
           <div className="flex items-center gap-2">
             <div className="flex-1">
               <ScoreBar score={b.careerTrajectory.trajectoryScore} color={trajColor} />
             </div>
           </div>
           <p className="text-xs text-white/60 leading-snug">{b.careerTrajectory.insight}</p>
-          <div className="flex items-start gap-2 p-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <div className="flex items-start gap-2 p-2.5 rounded-lg" style={{ background: 'var(--alpha-bg-04)' }}>
             <Zap className="w-3.5 h-3.5 mt-0.5 text-amber-400/70 flex-shrink-0" />
             <p className="text-xs text-white/70 leading-snug">{b.careerTrajectory.urgentAction}</p>
           </div>
@@ -305,7 +305,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
       {/* Compensation detail */}
       <div className="mx-4 mb-3 space-y-2">
         <div className="text-[10px] text-white/40 uppercase tracking-wide px-1">Compensation intelligence</div>
-        <div className="p-3.5 rounded-xl space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="p-3.5 rounded-xl space-y-2" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
           <div className="flex items-center justify-between">
             <span className="text-xs text-white/50">Market midpoint</span>
             <span className="text-xs font-semibold text-white/80">{b.compensationIntelligence.marketMidpoint}</span>
@@ -329,7 +329,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
               const sevColor = gap.severity === 'critical' ? '#ef4444' : gap.severity === 'moderate' ? '#f59e0b' : '#94a3b8';
               return (
                 <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg"
-                  style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  style={{ background: 'var(--alpha-bg-04)' }}>
                   <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: sevColor }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
@@ -357,7 +357,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
 
       {/* Company transition (collapsible) */}
       {b.companyTransition.dynamic !== 'unknown_transition' && (
-        <div className="mx-4 mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="mx-4 mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid var(--alpha-bg-06)' }}>
           <button
             onClick={() => setShowTransition(!showTransition)}
             className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left"

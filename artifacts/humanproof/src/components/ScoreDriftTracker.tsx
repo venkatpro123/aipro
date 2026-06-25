@@ -538,7 +538,7 @@ export default function ScoreDriftTracker() {
                 style={{
                   fontSize: "0.76rem",
                   color: "var(--text2)",
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                  borderTop: "1px solid var(--alpha-bg-06)",
                   paddingTop: 8,
                   marginTop: 4,
                 }}

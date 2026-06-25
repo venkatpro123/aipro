@@ -495,7 +495,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
       style={{
         minHeight: 520,
         background: 'rgba(9,12,20,1)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--alpha-bg-08)',
         boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
         borderRadius: 20,
         overflow: 'hidden',
@@ -503,7 +503,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
       }}
     >
       {/* ── Progress bar ───────────────────────────────────────────────────── */}
-      <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}>
+      <div style={{ height: 3, background: 'var(--alpha-bg-06)', flexShrink: 0 }}>
         <motion.div
           animate={{ width: `${progress}%` }}
           transition={{ type: 'spring', stiffness: 120, damping: 18 }}
@@ -566,7 +566,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                       autoFocus
                       className="w-full rounded-2xl text-sm font-medium pl-10 pr-12 py-3.5 outline-none"
                       style={{
-                        background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)',
+                        background: 'var(--alpha-bg-06)', border: '1.5px solid rgba(255,255,255,0.12)',
                         color: '#fff', caretColor: '#22d3ee',
                       }}
                     />
@@ -582,7 +582,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
 
                   {/* Dropdown */}
                   {searchResults.length > 0 && (
-                    <div className="mt-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(15,18,28,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+                    <div className="mt-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(15,18,28,0.98)', border: '1px solid var(--alpha-bg-08)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
                       {searchResults.map(res => {
                         const ratio = computeMatchRatio(companySearch, res.name);
                         const isPartial = ratio < 0.80 && ratio >= FUZZY_MATCH_MIN_RATIO;
@@ -591,7 +591,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                             key={res.name}
                             onClick={() => selectCompany(res)}
                             className="flex items-center justify-between px-4 py-3 cursor-pointer"
-                            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: ratio < FUZZY_MATCH_MIN_RATIO ? 0.4 : 1 }}
+                            style={{ borderBottom: '1px solid var(--alpha-bg-06)', opacity: ratio < FUZZY_MATCH_MIN_RATIO ? 0.4 : 1 }}
                             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
@@ -633,7 +633,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                         </button>
                         <button type="button" onClick={() => { setPendingMatchConfirmation(null); setSearchResults([]); setSelectedCompany(null); }}
                           className="text-xs font-bold px-3 py-1.5 rounded-xl"
-                          style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-55)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-55)', border: '1px solid var(--alpha-bg-08)' }}>
                           Search again
                         </button>
                       </div>
@@ -690,14 +690,14 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     autoFocus
                     className="w-full rounded-2xl text-sm font-medium pl-10 pr-4 py-3.5 outline-none"
                     style={{
-                      background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.12)',
+                      background: 'var(--alpha-bg-06)', border: '1.5px solid rgba(255,255,255,0.12)',
                       color: '#fff', caretColor: '#22d3ee',
                     }}
                   />
                 </div>
 
                 {showRoleSuggestions && (
-                  <div className="mt-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(15,18,28,0.98)', border: '1px solid rgba(255,255,255,0.10)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+                  <div className="mt-2 rounded-2xl overflow-hidden" style={{ background: 'rgba(15,18,28,0.98)', border: '1px solid var(--alpha-bg-08)', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
                     {roleSuggestions.map((entry, idx) => {
                       const color = riskScoreColor(entry.currentRiskScore);
                       return (
@@ -706,7 +706,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                           onClick={() => selectRole(entry)}
                           className="flex items-center justify-between px-4 py-3 cursor-pointer"
                           style={{
-                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                            borderBottom: '1px solid var(--alpha-bg-06)',
                             background: idx === focusedSuggestionIndex ? 'rgba(34,211,238,0.08)' : 'transparent',
                           }}
                           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
@@ -894,7 +894,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             {qStep === 7 && (
               <div>
                 {/* Value display */}
-                <div className="rounded-2xl px-4 py-4 mb-5 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="rounded-2xl px-4 py-4 mb-5 text-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
                   <p className="text-3xl font-black mb-1" style={{ color: runwayColor(financialRunwayMonths) }}>
                     {financialRunwayMonths === 0 ? '—' : `${financialRunwayMonths}`}
                     <span className="text-base font-semibold ml-1" style={{ color: 'var(--alpha-text-45)' }}>
@@ -952,7 +952,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
       {/* ── Navigation ──────────────────────────────────────────────────────── */}
       <div
         className="flex items-center justify-between px-5 py-4"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(9,12,20,0.95)', flexShrink: 0 }}
+        style={{ borderTop: '1px solid var(--alpha-bg-06)', background: 'rgba(9,12,20,0.95)', flexShrink: 0 }}
       >
         {/* Back */}
         <button

@@ -137,7 +137,7 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
         {/* Range for estimated; point for sourced */}
         <span className="text-[11px] font-black" style={{ color: accentColor }}>{displayValue}</span>
       </div>
-      <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
@@ -465,7 +465,7 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
       {/* Header */}
       <div
         className="rounded-2xl p-4"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
@@ -498,7 +498,7 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
         {/* Decision framework */}
         <div
           className="mt-3 p-3 rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         >
           <p className="text-[11px] font-semibold mb-1" style={{ color: 'var(--alpha-text-55)' }}>
             Why {contingencyPlan.recommendedPath} is recommended ({Math.round(contingencyPlan.pathConfidence * 100)}% confidence)

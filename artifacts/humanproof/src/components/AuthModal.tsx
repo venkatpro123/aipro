@@ -69,8 +69,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '14px 18px',
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px',
+    background: 'var(--alpha-bg-04)',
+    border: '1px solid var(--alpha-bg-06)', borderRadius: '12px',
     color: '#fff', fontFamily: 'var(--body)', fontSize: '0.85rem',
     // v40.0 a11y: outline removed from inline style. Global `:focus:not(:focus-visible)`
     // CSS rule handles mouse focus, while `:focus-visible` preserves keyboard focus.
@@ -89,7 +89,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     >
       <div style={{
         background: '#020408',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--alpha-bg-08)',
         borderRadius: '32px', padding: '48px', width: '100%',
         maxWidth: '440px', position: 'relative',
         boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
@@ -101,7 +101,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         <button onClick={onClose} style={{
           position: 'absolute', top: '24px', right: '24px',
-          background: 'rgba(255,255,255,0.03)', border: 'none', color: '#64748b',
+          background: 'var(--alpha-bg-04)', border: 'none', color: '#64748b',
           cursor: 'pointer', fontSize: '1rem', width: 28, height: 28, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
         }}>×</button>

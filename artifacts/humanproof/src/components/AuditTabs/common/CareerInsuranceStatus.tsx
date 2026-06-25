@@ -133,7 +133,7 @@ const PillarRow: React.FC<{
               )}
             </div>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--alpha-bg-06)' }}>
             <motion.div
               className="h-full rounded-full"
               initial={{ width: 0 }}
@@ -161,7 +161,7 @@ const PillarRow: React.FC<{
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.18 }}
-            style={{ overflow: 'hidden', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ overflow: 'hidden', borderTop: '1px solid var(--alpha-bg-06)' }}
           >
             <div className="px-3 py-2.5 space-y-2">
               {(pillar.insight) && (
@@ -255,7 +255,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
                 Target: {targetPct}%
               </p>
             </div>
-            <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'var(--alpha-bg-06)' }}>
               {/* Target marker at 85 */}
               <div
                 className="absolute top-0 bottom-0 w-0.5"
@@ -317,7 +317,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
       {!isFullyInsured && criticalWeakness && (
         <div
           className="mx-3 mb-2 rounded-xl px-3 py-2.5"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         >
           <p className="text-[10px] font-bold tracking-widest mb-1.5" style={{ color: 'var(--alpha-text-25)' }}>
             WEAKEST PILLAR — CLOSE THIS FIRST

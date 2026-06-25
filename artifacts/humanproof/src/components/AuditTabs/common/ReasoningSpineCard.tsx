@@ -90,7 +90,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
           transition={{ duration: 0.3, ease: EASE, delay: 0.08 }}
           className="mt-3 rounded-xl p-2.5 sm:p-3"
           style={{
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--alpha-bg-04)',
             border: `1px solid ${primaryMove.feasibleForProfile ? ACCENT + '2e' : 'rgba(245,158,11,0.35)'}`,
           }}
         >

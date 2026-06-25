@@ -104,7 +104,7 @@ function SignupCard({
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && onSubscribe()}
               placeholder="your@email.com"
-              style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: `1px solid ${status === 'error' ? 'var(--red)' : 'var(--border)'}`, borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.85rem', outline: 'none' }}
+              style={{ flex: 1, background: 'var(--alpha-bg-06)', border: `1px solid ${status === 'error' ? 'var(--red)' : 'var(--border)'}`, borderRadius: 8, padding: '9px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.85rem', outline: 'none' }}
             />
             <button
               onClick={onSubscribe}

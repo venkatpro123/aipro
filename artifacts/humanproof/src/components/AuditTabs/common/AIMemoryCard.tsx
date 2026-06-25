@@ -104,7 +104,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
         {hasDays && (
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
           >
             <Clock className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--alpha-text-35)' }} />
             <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-50)' }}>

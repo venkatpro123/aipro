@@ -431,7 +431,7 @@ const DriverCard: React.FC<{ driver: KeyRiskDriver; index: number; expanded: boo
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '0 0 auto' }}>
               <div style={{
                 width: '80px', height: '4px',
-                background: 'rgba(255,255,255,0.08)',
+                background: 'var(--alpha-bg-08)',
                 borderRadius: '2px', overflow: 'hidden',
               }}>
                 <div style={{
@@ -670,7 +670,7 @@ export const KeyRiskDriversPanel: React.FC<Props> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '100px', height: '5px',
-              background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden',
+              background: 'var(--alpha-bg-08)', borderRadius: '3px', overflow: 'hidden',
             }}>
               <div style={{
                 height: '100%',

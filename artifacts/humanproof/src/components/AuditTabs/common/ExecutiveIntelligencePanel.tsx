@@ -207,7 +207,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                 {/* Severance */}
                 <div
                   className="rounded-xl p-3"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <SectionTitle icon={Scale} label="Severance range" color="#22d3ee" />
                   <p className="text-[18px] font-black" style={{ color: '#22d3ee' }}>
@@ -224,7 +224,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                 {/* Non-compete risk */}
                 <div
                   className="rounded-xl p-3"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <SectionTitle icon={Shield} label="Non-compete risk" color={ncRiskColor(nc.riskScore)} />
                   <p className="text-[18px] font-black" style={{ color: ncRiskColor(nc.riskScore) }}>
@@ -240,7 +240,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
               {intelligence.boardPressureScore >= 45 && (
                 <div
                   className="rounded-xl px-3.5 py-3"
-                  style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <SectionTitle icon={Users} label="Board pressure" />
@@ -294,7 +294,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
               {/* NC assessment */}
               <div
                 className="rounded-xl px-3.5 py-2.5"
-                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+                style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
               >
                 <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-35)' }}>
                   <span className="font-bold" style={{ color: 'var(--alpha-text-50)' }}>Non-compete: </span>

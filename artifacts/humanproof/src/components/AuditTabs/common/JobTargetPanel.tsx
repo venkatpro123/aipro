@@ -68,7 +68,7 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid var(--alpha-bg-08)' }}
     >
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -140,7 +140,7 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
             className="overflow-hidden"
           >
             <div className="px-3.5 pt-0 pb-3.5 space-y-3"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
               {target.linkedinApproachTemplate && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1.5">
@@ -154,7 +154,7 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
                     </button>
                   </div>
                   <div className="text-xs text-white/65 leading-relaxed whitespace-pre-wrap rounded-lg p-2.5"
-                    style={{ background: 'rgba(255,255,255,0.04)', fontFamily: 'monospace' }}>
+                    style={{ background: 'var(--alpha-bg-04)', fontFamily: 'monospace' }}>
                     {target.linkedinApproachTemplate}
                   </div>
                 </div>

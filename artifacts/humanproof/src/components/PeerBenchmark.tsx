@@ -135,7 +135,7 @@ export default function PeerBenchmark({ score, scoreType, jobTitle, industry }: 
           <span style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text2)' }}>Bottom 25%</span>
           <span style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text2)' }}>Top 10%</span>
         </div>
-        <div style={{ height: 8, background: 'rgba(255,255,255,0.07)', borderRadius: 4, position: 'relative', overflow: 'visible' }}>
+        <div style={{ height: 8, background: 'var(--alpha-bg-06)', borderRadius: 4, position: 'relative', overflow: 'visible' }}>
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0,
             width: `${percentile}%`, borderRadius: 4,
@@ -162,7 +162,7 @@ export default function PeerBenchmark({ score, scoreType, jobTitle, industry }: 
         </div>
       </div>
 
-      <div style={{ fontSize: '0.78rem', color: 'var(--text2)', lineHeight: 1.5, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
+      <div style={{ fontSize: '0.78rem', color: 'var(--text2)', lineHeight: 1.5, borderTop: '1px solid var(--alpha-bg-06)', paddingTop: 8 }}>
         {urgency}
         <span style={{ color: 'var(--text2)', fontSize: '0.72rem' }}> — Based on WEF Future of Jobs 2025 + McKinsey 2025 occupational data.</span>
       </div>

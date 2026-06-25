@@ -128,7 +128,7 @@ export const CommandPalette: React.FC = () => {
               }}
             >
               {/* Search input */}
-              <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}>
                 <Search className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--alpha-text-35)' }} />
                 <input
                   ref={inputRef}
@@ -142,7 +142,7 @@ export const CommandPalette: React.FC = () => {
                 />
                 <kbd
                   className="px-1.5 py-0.5 rounded text-[9px] font-mono"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-30)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-30)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   ESC
                 </kbd>
@@ -197,14 +197,14 @@ export const CommandPalette: React.FC = () => {
               {/* Footer hint */}
               <div
                 className="flex items-center justify-between px-4 py-2"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
-                    <kbd className="px-1 py-0.5 rounded text-[8px] font-mono" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>↑↓</kbd> navigate
+                    <kbd className="px-1 py-0.5 rounded text-[8px] font-mono" style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)' }}>↑↓</kbd> navigate
                   </span>
                   <span className="text-[9px]" style={{ color: 'var(--alpha-text-25)' }}>
-                    <kbd className="px-1 py-0.5 rounded text-[8px] font-mono" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>↵</kbd> open
+                    <kbd className="px-1 py-0.5 rounded text-[8px] font-mono" style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-08)' }}>↵</kbd> open
                   </span>
                 </div>
               </div>

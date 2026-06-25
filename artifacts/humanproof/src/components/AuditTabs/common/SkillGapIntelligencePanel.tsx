@@ -30,7 +30,7 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.07 }}
       className="flex items-start gap-3 py-3"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
     >
       {/* Urgency badge */}
       <span
@@ -66,7 +66,7 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
 const EmptyPrompt: React.FC = () => (
   <div
     className="rounded-2xl overflow-hidden flex flex-col items-center justify-center text-center py-10 px-6"
-    style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}
+    style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}
   >
     <Brain className="w-8 h-8 mb-3" style={{ color: 'rgba(255,255,255,0.2)' }} />
     <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-55)', marginBottom: '6px' }}>
@@ -112,9 +112,9 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
   const visibleGaps = showAll ? upskillPriority : upskillPriority.slice(0, 3);
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}>
+    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <Brain className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Skills To Improve
@@ -131,7 +131,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
         {/* Stats row */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           {/* Readiness score */}
-          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-xl p-3 text-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: readinessColor }}>
               {marketReadinessPct}%
             </div>
@@ -141,7 +141,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
           </div>
 
           {/* Skills to fix */}
-          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="rounded-xl p-3 text-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: criticalGaps.length > 0 ? '#ef4444' : '#10b981' }}>
               {criticalGaps.length}
             </div>
@@ -155,7 +155,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
         {narrativeSummary && (
           <div
             className="rounded-lg px-4 py-3 mb-4"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
           >
             <p style={{ fontSize: '11px', color: 'var(--alpha-text-55)', lineHeight: 1.55 }}>
               {narrativeSummary}

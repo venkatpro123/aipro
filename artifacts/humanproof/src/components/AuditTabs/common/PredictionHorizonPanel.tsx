@@ -88,10 +88,10 @@ const HorizonColumn: React.FC<{
       transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
       className="flex-1 rounded-xl p-4 relative overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.03)',
+        background: 'var(--alpha-bg-04)',
         border: isWarnOverride
           ? '1px solid rgba(239,68,68,0.35)'
-          : '1px solid rgba(255,255,255,0.08)',
+          : '1px solid var(--alpha-bg-08)',
         minWidth: 0,
       }}
     >
@@ -157,9 +157,9 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
   const { horizon30d, horizon90d, horizon180d, trajectoryNarrative, groundTruthOverride } = predictionHorizon;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}>
+    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <Clock className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Prediction Horizons
@@ -230,7 +230,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           animate={{ opacity: 1 }}
           transition={{ delay: 0.25 }}
           className="rounded-lg px-4 py-3"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
         >
           <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Trajectory Narrative

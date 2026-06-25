@@ -110,7 +110,7 @@ function hiringTrendLabel(trend: string | undefined): string {
 const SkeletonRow: React.FC<{ width?: string }> = ({ width = '80%' }) => (
   <div style={{
     height: '12px', width, borderRadius: '4px',
-    background: 'rgba(255,255,255,0.06)',
+    background: 'var(--alpha-bg-06)',
     animation: 'shimmer 1.8s ease-in-out infinite',
     marginBottom: '8px',
   }} />

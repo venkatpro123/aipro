@@ -83,8 +83,8 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
       <div
         className="rounded-xl overflow-hidden relative flex justify-center py-3"
         style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--alpha-bg-04)',
+          border: '1px solid var(--alpha-bg-08)',
         }}
       >
         <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full" style={{ maxWidth: 280, maxHeight: 280 }}>

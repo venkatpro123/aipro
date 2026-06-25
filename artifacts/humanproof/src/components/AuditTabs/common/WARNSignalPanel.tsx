@@ -66,7 +66,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
 
       {/* Key metrics grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-        <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-06)' }}>
           <div className="text-sm font-black" style={{ color: urgency.color }}>
             {warnSignal.daysUntilLayoff !== null && warnSignal.daysUntilLayoff > 0
               ? `${warnSignal.daysUntilLayoff}d`
@@ -74,7 +74,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
           </div>
           <div className="text-[10px] opacity-50 mt-0.5">Until planned layoff</div>
         </div>
-        <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-06)' }}>
           <div className="text-sm font-black" style={{ color: 'var(--alpha-text-92)' }}>
             {warnSignal.totalAffectedCount > 0
               ? warnSignal.totalAffectedCount.toLocaleString()
@@ -90,7 +90,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
           <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>WARN RISK SCORE</span>
           <span className="text-[10px] font-bold" style={{ color: urgency.color }}>{warnSignal.warnRiskScore}/100</span>
         </div>
-        <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <div className="h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
           <div
             className="h-1.5 rounded-full transition-all"
             style={{ width: `${warnSignal.warnRiskScore}%`, background: urgency.color }}
@@ -110,7 +110,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
               <span
                 key={i}
                 className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-55)' }}
+                style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-55)' }}
               >
                 {loc}
               </span>
@@ -118,7 +118,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
             {extraLocations > 0 && (
               <span
                 className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-45)' }}
+                style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)' }}
               >
                 +{extraLocations} more
               </span>
@@ -140,7 +140,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       {/* Ground truth disclaimer */}
       <div
         className="flex items-start gap-2 rounded-lg p-2.5"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
       >
         <Shield className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#10b981' }} />
         <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>

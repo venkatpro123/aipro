@@ -152,13 +152,13 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
       className="rounded-2xl overflow-hidden"
       style={{
         background: 'rgba(255,255,255,0.025)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid var(--alpha-bg-08)',
       }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-2.5 px-4 pt-3 pb-2.5"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
         <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
         <div className="flex-1 min-w-0">
@@ -179,7 +179,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
       </div>
 
       {/* Calibration mode */}
-      <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}>
         <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           {modeCopy.body}
         </p>
@@ -192,7 +192,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
 
       {/* Tier accuracy from modelCalibration */}
       {tierAccuracy && tierAccuracy.length > 0 && (
-        <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}>
           <div className="flex items-center gap-1.5 mb-2">
             <BarChart className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--alpha-text-30)' }} />
             <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-25)' }}>

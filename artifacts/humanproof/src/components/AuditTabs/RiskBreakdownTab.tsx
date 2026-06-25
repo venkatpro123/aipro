@@ -376,7 +376,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
           fontSize: "0.7rem",
           color: "var(--text-3)",
           lineHeight: 1.6,
-          borderTop: "1px solid rgba(255,255,255,0.05)",
+          borderTop: "1px solid var(--alpha-bg-06)",
           paddingTop: "var(--space-3)",
           marginTop: "2px",
         }}>

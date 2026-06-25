@@ -256,7 +256,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
     <div
       className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
       style={{
-        background: 'rgba(255,255,255,0.03)',
+        background: 'var(--alpha-bg-04)',
         border: `1px solid ${open ? tone + '35' : 'rgba(255,255,255,0.08)'}`,
         transition: 'border-color 0.18s ease',
       }}
@@ -318,8 +318,8 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         <div
           className="mx-3 mb-3 rounded-xl px-3 py-2.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-3 gap-y-1.5"
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.07)',
+            background: 'var(--alpha-bg-04)',
+            border: '1px solid var(--alpha-bg-08)',
           }}
         >
           {/* Company Name */}

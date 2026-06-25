@@ -84,7 +84,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-4 pt-3 pb-2"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}>
         <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
         <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'var(--alpha-text-35)' }}>
           YOUR ODDS — NEXT 12 MONTHS

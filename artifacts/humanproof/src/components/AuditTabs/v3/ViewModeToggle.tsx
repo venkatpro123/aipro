@@ -44,8 +44,8 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
       <div
         className="relative flex items-center rounded-full gap-0"
         style={{
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.10)',
+          background: 'var(--alpha-bg-06)',
+          border: '1px solid var(--alpha-bg-08)',
           padding: '2px',
         }}
       >

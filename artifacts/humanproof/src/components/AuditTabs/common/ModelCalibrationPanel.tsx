@@ -44,7 +44,7 @@ const TierRow: React.FC<{ record: TierAccuracyRecord; index: number }> = ({ reco
       <span className="text-[10px] w-12 flex-shrink-0" style={{ color: 'var(--alpha-text-35)' }}>
         {record.scoreRange}
       </span>
-      <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-06)' }}>
         <motion.div
           className="h-full rounded-full"
           style={{ background: barColor }}
@@ -136,7 +136,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       {/* Signal contributions toggle */}
       <button
         className="w-full flex items-center justify-between py-2 px-3 rounded-lg mb-2"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         onClick={() => setShowSignals(s => !s)}
       >
         <span className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>Signal contributions to accuracy</span>
@@ -167,7 +167,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       {/* Caveats toggle */}
       <button
         className="w-full flex items-center justify-between py-2 px-3 rounded-lg"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         onClick={() => setShowCaveats(s => !s)}
       >
         <span className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>Accuracy limitations & caveats</span>
@@ -185,7 +185,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       )}
 
       {/* Help improve */}
-      <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="mt-3 p-2 rounded-lg" style={{ background: 'var(--alpha-bg-04)' }}>
         <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
           <span className="font-bold" style={{ color: trust.color }}>Help improve accuracy: </span>
           {calibration.howToImproveAccuracy}

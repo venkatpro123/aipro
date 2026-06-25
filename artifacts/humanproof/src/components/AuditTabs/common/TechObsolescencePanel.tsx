@@ -60,7 +60,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
   return (
     <div
       className="rounded-xl px-4 py-3"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
@@ -90,7 +90,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
 
       {/* Obsolescence risk bar */}
       {overallObsolescenceScore != null && (
-        <div className="h-1.5 rounded-full mb-3" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <div className="h-1.5 rounded-full mb-3" style={{ background: 'var(--alpha-bg-08)' }}>
           <div
             className="h-full rounded-full"
             style={{
@@ -126,7 +126,7 @@ export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }
               <div
                 key={i}
                 className="flex items-center justify-between py-2 border-b"
-                style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+                style={{ borderColor: 'var(--alpha-bg-06)' }}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: tc.color, opacity: 0.7 }} />

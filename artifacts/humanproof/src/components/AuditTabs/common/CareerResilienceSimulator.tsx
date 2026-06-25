@@ -131,12 +131,12 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-2 px-4 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
         <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
         <div>
@@ -188,7 +188,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
       {urgency && (
         <div
           className="px-4 py-2.5"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+          style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
         >
           <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {urgency}

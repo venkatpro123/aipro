@@ -113,7 +113,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       <button onClick={onToggle} className="w-full p-3 text-left">
         <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
               </div>
             </div>
             {/* Score bar with optional benchmark tick */}
-            <div className="relative h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            <div className="relative h-1 rounded-full" style={{ background: 'var(--alpha-bg-06)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pillar.score}%` }}
@@ -198,7 +198,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
           >
             <div
               className="px-3 pb-3 pt-2 space-y-2"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
             >
               {/* Signals */}
               {pillar.signals.length > 0 && (
@@ -236,7 +236,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
               {pillar.benchmark && (
                 <div
                   className="rounded-lg px-2.5 py-2"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <p className="text-[10px] font-bold tracking-widest mb-1" style={{ color: 'var(--alpha-text-30)' }}>
                     BENCHMARK
@@ -322,7 +322,7 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
         {/* Narrative */}
         <div
           className="mt-3 p-3 rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         >
           <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
             {preparedness.preparednessNarrative}

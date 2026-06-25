@@ -46,7 +46,7 @@ export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {
         transition={{ duration: 0.4, delay: 0.08 }}
         style={{
           padding: '16px 18px', borderRadius: 12,
-          background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
         }}
       >
         <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 8 }}>The Broader Picture</div>
@@ -78,7 +78,7 @@ export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {
         transition={{ duration: 0.4, delay: 0.22 }}
         style={{
           padding: '12px 16px', borderRadius: 10,
-          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)',
         }}
       >
         <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase', marginBottom: 6 }}>Uncertainty Acknowledgment</div>

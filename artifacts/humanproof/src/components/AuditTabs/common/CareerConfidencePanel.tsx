@@ -32,7 +32,7 @@ const PillarRow: React.FC<{ pillar: ReadinessPillar; index: number }> = ({ pilla
       <span className="text-xs w-28 flex-shrink-0" style={{ color: 'var(--alpha-text-55)' }}>
         {pillar.name}
       </span>
-      <div className="flex-1 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--alpha-bg-06)' }}>
         <motion.div
           className="h-full rounded-full"
           style={{ background: `linear-gradient(90deg, ${pillarBarColor(pillar.score)}, ${pillarBarColor(pillar.score)}bb)` }}
@@ -112,7 +112,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       )}
 
       {/* Risk-confidence interpretation */}
-      <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
+      <div className="rounded-lg p-3" style={{ background: 'var(--alpha-bg-04)' }}>
         <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'var(--alpha-text-30)' }}>
           RISK × READINESS
         </p>

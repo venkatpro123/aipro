@@ -249,7 +249,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
         {/* GAP-A04: empirical precision disclosure */}
         {report.stage && precisionData && (
           <div className="mt-3 p-2.5 rounded-lg text-[10px] leading-relaxed"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
             {precisionKnown ? (
               <span style={{ color: 'var(--alpha-text-70)' }}>
                 <span className="font-semibold" style={{ color: badgeColor }}>

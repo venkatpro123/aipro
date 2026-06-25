@@ -91,7 +91,7 @@ const CheckItem: React.FC<{
       layout
       className="flex items-start gap-3 py-2.5 border-b"
       style={{
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'var(--alpha-bg-06)',
         opacity: phaseUnlocked ? 1 : 0.4,
       }}
     >
@@ -288,7 +288,7 @@ const PhaseBlock: React.FC<{
 
       {/* Progress bar */}
       {unlocked && (
-        <div className="h-1 mx-4 rounded-full mb-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-1 mx-4 rounded-full mb-0" style={{ background: 'var(--alpha-bg-06)' }}>
           <motion.div
             className="h-full rounded-full"
             style={{ background: cfg.accent }}

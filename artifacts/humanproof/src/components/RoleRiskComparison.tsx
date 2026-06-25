@@ -98,7 +98,7 @@ export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({
             style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
           >
             {/* VS DASHBOARD */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '16px', background: 'var(--alpha-bg-04)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border)' }}>
               <div style={{ textAlign: 'center' }}>
                 <div className="label-xs" style={{ marginBottom: '8px', fontSize: '0.6rem' }}>Current</div>
                 <div style={{ fontSize: '1.25rem', fontWeight: 900, fontFamily: 'var(--font-display)', color: getScoreColor(currentScore) }}>{currentScore}%</div>
@@ -115,7 +115,7 @@ export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({
             </div>
 
             {/* TRAJECTORY BAR */}
-            <div style={{ position: 'relative', height: '40px', background: 'rgba(0,0,0,0.2)', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ position: 'relative', height: '40px', background: 'rgba(0,0,0,0.2)', borderRadius: '20px', overflow: 'hidden', border: '1px solid var(--alpha-bg-06)' }}>
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.max(currentScore, targetScore)}%` }}

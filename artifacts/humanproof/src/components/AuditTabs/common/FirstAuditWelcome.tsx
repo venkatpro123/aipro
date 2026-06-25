@@ -123,7 +123,7 @@ export const FirstAuditWelcome: React.FC<Props> = ({
               <div
                 key={i}
                 className="rounded-xl p-2.5"
-                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${color}25` }}
+                style={{ background: 'var(--alpha-bg-04)', border: `1px solid ${color}25` }}
               >
                 <div className="flex items-center gap-1.5 mb-1">
                   <Icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />

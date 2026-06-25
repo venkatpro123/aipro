@@ -151,7 +151,7 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
       </div>
 
       {/* Headline */}
-      <div className="mx-4 mb-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="mx-4 mb-3 p-3 rounded-xl" style={{ background: 'var(--alpha-bg-04)' }}>
         <p className="text-sm text-white/80 leading-relaxed">{survival.headline}</p>
       </div>
 

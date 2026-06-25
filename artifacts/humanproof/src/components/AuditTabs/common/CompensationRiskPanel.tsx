@@ -102,13 +102,13 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
 
       {/* Metrics row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-sm font-bold" style={{ color: layoffProbPct >= 50 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
             {layoffProbPct}%
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">12mo Prob.</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-sm font-bold" style={{ color: 'var(--alpha-text-92)' }}>
             {compensation.marketDeltaPct !== null
               ? `${compensation.marketDeltaPct > 0 ? '+' : ''}${compensation.marketDeltaPct}%`
@@ -116,7 +116,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">vs. Market</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-92)' }}>
             {compensation.vestingProtection}
           </div>
@@ -130,7 +130,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
       </p>
 
       {/* Pay position */}
-      <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           {compensation.payPosition === 'HIGHLY_ABOVE_MARKET' || compensation.payPosition === 'ABOVE_MARKET'
             ? <AlertTriangle className="w-3 h-3" style={{ color: '#f59e0b' }} />

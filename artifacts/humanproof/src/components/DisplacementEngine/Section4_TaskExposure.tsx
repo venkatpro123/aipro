@@ -39,7 +39,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
         padding: '8px 14px', borderRadius: 10,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
       }}>
         <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>
           Estimated Task Exposure — AI Automatable Share
@@ -87,7 +87,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
               {/* Dual bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {/* Human bar */}
-                <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.07)', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--alpha-bg-06)', overflow: 'hidden', position: 'relative' }}>
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${task.humanPct}%`, background: 'linear-gradient(90deg,#10b981,#22d3ee)', borderRadius: 3, transition: 'width 0.8s ease' }} />
                 </div>
                 <div style={{ width: 40, textAlign: 'right', flexShrink: 0 }}>
@@ -98,7 +98,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 {/* AI bar */}
-                <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.07)', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--alpha-bg-06)', overflow: 'hidden', position: 'relative' }}>
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${task.aiPct}%`, background: `linear-gradient(90deg,${style.color}aa,${style.color})`, borderRadius: 3, transition: 'width 0.8s ease' }} />
                 </div>
                 <div style={{ width: 40, textAlign: 'right', flexShrink: 0 }}>

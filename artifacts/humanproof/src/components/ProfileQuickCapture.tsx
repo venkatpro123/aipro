@@ -158,8 +158,8 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                   onClick={() => handleVisa(opt.value)}
                   className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.10)',
+                    background: 'var(--alpha-bg-04)',
+                    border: '1px solid var(--alpha-bg-08)',
                   }}
                 >
                   <div>
@@ -197,8 +197,8 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                   onClick={() => handleRunway(m)}
                   className="flex-1 min-w-[60px] px-3 py-2 rounded-xl text-center transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.10)',
+                    background: 'var(--alpha-bg-04)',
+                    border: '1px solid var(--alpha-bg-08)',
                   }}
                 >
                   <p className="text-[13px] font-black" style={{ color: 'var(--alpha-text-85)' }}>
@@ -233,8 +233,8 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                   onClick={() => handleDependents(val)}
                   className="flex-1 py-3 rounded-xl font-semibold text-[12px] transition-all"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.10)',
+                    background: 'var(--alpha-bg-04)',
+                    border: '1px solid var(--alpha-bg-08)',
                     color: 'var(--alpha-text-70)',
                   }}
                 >

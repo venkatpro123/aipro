@@ -165,7 +165,7 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
       {/* Header */}
       <div
         className="flex items-center gap-2 px-4 pt-3 pb-2"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
         <Star className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
         <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'var(--alpha-text-35)' }}>
@@ -180,7 +180,7 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
       </div>
 
       {/* Opportunity rows */}
-      <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+      <div className="divide-y" style={{ borderColor: 'var(--alpha-bg-06)' }}>
         {opportunities.map((opp, i) => {
           const OppIcon = opp.icon;
           return (

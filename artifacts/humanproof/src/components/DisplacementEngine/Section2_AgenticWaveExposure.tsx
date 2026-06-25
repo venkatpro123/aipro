@@ -70,7 +70,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
           flexWrap: 'wrap', gap: 24,
           padding: '28px 24px', borderRadius: 16,
           background: 'linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))',
-          border: '1px solid rgba(255,255,255,0.09)',
+          border: '1px solid var(--alpha-bg-08)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -99,7 +99,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '10px 14px', borderRadius: 10,
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+        background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
       }}>
         <Zap size={13} style={{ color: 'var(--cyan,#22d3ee)', flexShrink: 0 }} />
         <div>
@@ -111,7 +111,7 @@ export const Section2_AgenticWaveExposure: React.FC<Props> = ({ waveScore }) => 
       </div>
 
       {/* Key drivers */}
-      <div style={{ padding: '16px 18px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ padding: '16px 18px', borderRadius: 12, background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
           Why the Gap Exists
         </div>

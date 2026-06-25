@@ -1382,7 +1382,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
 
         {/* Priority actions */}
         {p.priorityActions.length > 0 && (
-          <div className="border-t pt-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div className="border-t pt-2" style={{ borderColor: 'var(--alpha-bg-06)' }}>
             <div className="text-[10px] font-bold uppercase tracking-wide text-white/40 mb-1.5">
               Use the {lagStr} window to
             </div>
@@ -1627,14 +1627,14 @@ const CIWideningSourcesPanel: React.FC<{
   };
 
   return (
-    <div style={{ borderRadius: 12, padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div style={{ borderRadius: 12, padding: '14px 16px', background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <Layers style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--alpha-text-45)' }} />
         <span style={{ fontSize: '0.67rem', fontWeight: 800, color: 'var(--alpha-text-55)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
           CI Widening Sources — {ciRange}pt interval
         </span>
         {dominantKey && (
-          <span style={{ fontSize: '0.61rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)' }}>
+          <span style={{ fontSize: '0.61rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)', border: '1px solid var(--alpha-bg-08)' }}>
             {dominantLabel[dominantKey]}
           </span>
         )}
@@ -1795,7 +1795,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
               <div
                 key={iv.nominalCoverage}
                 className="rounded-lg p-2.5 text-center"
-                style={{ background: 'rgba(255,255,255,0.04)' }}
+                style={{ background: 'var(--alpha-bg-04)' }}
               >
                 <div className="text-sm font-bold" style={{ color: cohortStyle.text }}>
                   {iv.low}–{iv.high}
@@ -2555,7 +2555,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
 
                     {/* Empirical precision statement */}
                     <div className="mb-2 p-2.5 rounded-lg text-[10px] leading-relaxed"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
                       {precisionKnown ? (
                         <span style={{ color: 'var(--alpha-text-70)' }}>
                           <span className="font-bold" style={{ color: c.text }}>
@@ -2586,7 +2586,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     {/* Signal confidence vs empirical precision — distinguish the two */}
                     {sigConf != null && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                        <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
                           <div className="text-[10px] opacity-50 mb-0.5 uppercase tracking-wider">Signal Quality</div>
                           <div className="text-xs font-black" style={{ color: c.text }}>
                             {Math.round(sigConf * 100)}%
@@ -2595,7 +2595,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                             severity-weighted · internal
                           </div>
                         </div>
-                        <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                        <div className="rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
                           <div className="text-[10px] opacity-50 mb-0.5 uppercase tracking-wider">Empirical Precision</div>
                           <div className={`text-xs font-black ${precisionKnown ? 'text-emerald-400' : 'text-amber-400'}`}>
                             {precLabel}
@@ -3220,7 +3220,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     {isLive && hasDelta && (
                       <div
                         className="text-xs rounded-lg px-3 py-2 mb-2 font-mono"
-                        style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
+                        style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--alpha-bg-08)' }}
                       >
                         <span className="text-[var(--text-muted)]">
                           frozen +0.12 · declining +0.06 · stable 0 · growing −0.05
@@ -3609,13 +3609,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
                   <div className="text-sm font-bold" style={{ color: '#60a5fa' }}>
                     {(result as any).bayesianCI.ci80_low}–{(result as any).bayesianCI.ci80_high}
                   </div>
                   <div className="text-[10px] opacity-45 mt-0.5">80% Credible Interval</div>
                 </div>
-                <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
                   <div className="text-sm font-bold" style={{ color: 'var(--alpha-text-70)' }}>
                     {(result as any).bayesianCI.ci95_low}–{(result as any).bayesianCI.ci95_high}
                   </div>
@@ -3653,11 +3653,11 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
         {/* v14.0: Segmented Calibration — per-segment score adjustment */}
         {(result as any).segmentCalibration && (result as any).segmentCalibration.adjustmentDelta !== 0 && (
           <div className="mt-6">
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="rounded-2xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
               <div className="flex items-center justify-between gap-3 mb-2">
                 <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Segmented Calibration</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)' }}>
+                  style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-50)' }}>
                   {(result as any).segmentCalibration.calibrationStatus.replace('_', ' ')}
                 </span>
               </div>

@@ -44,7 +44,7 @@ const AccuracyBar: React.FC<{
       transition={{ delay: index * 0.06 }}
       className="flex items-center gap-3 py-2.5"
       style={{
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        borderBottom: '1px solid var(--alpha-bg-06)',
         background: isCurrent ? 'rgba(0,212,224,0.04)' : 'transparent',
         borderRadius: isCurrent ? '8px' : undefined,
         padding: isCurrent ? '8px 10px' : '10px 0',
@@ -64,7 +64,7 @@ const AccuracyBar: React.FC<{
 
       {/* Progress bar */}
       <div className="flex-1 relative">
-        <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        <div className="h-2 rounded-full" style={{ background: 'var(--alpha-bg-06)' }}>
           <motion.div
             className="h-full rounded-full"
             initial={{ width: 0 }}
@@ -107,16 +107,16 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
   const overallPct = Math.round(calibration.overallAccuracy * 100);
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}>
+    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <Shield className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Historical Prediction Accuracy
         </span>
         <span
           className="ml-auto text-[10px] font-black px-2 py-0.5 rounded"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'var(--font-mono)' }}
+          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'var(--font-mono)' }}
         >
           {calibration.dataSource === 'database' ? 'LIVE DATA' : calibration.dataSource === 'hybrid' ? 'HYBRID' : 'RESEARCH GROUNDED'}
         </span>
@@ -146,14 +146,14 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
 
           {/* Overall + sample size */}
           <div className="flex flex-col gap-2 flex-shrink-0">
-            <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
               <TrendingUp className="w-3.5 h-3.5 mb-1" style={{ color: 'var(--alpha-text-35)' }} />
               <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: tierColor(calibration.overallAccuracy) }}>
                 {overallPct}%
               </span>
               <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>overall</span>
             </div>
-            <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
               <Users className="w-3.5 h-3.5 mb-1" style={{ color: 'var(--alpha-text-35)' }} />
               <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: 'var(--alpha-text-70)' }}>
                 {calibration.totalOutcomesTracked.toLocaleString()}
@@ -181,7 +181,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
         {/* Trust narrative */}
         <div
           className="rounded-lg px-4 py-3"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
         >
           <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Validation note

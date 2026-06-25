@@ -203,7 +203,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                 {/* Client concentration */}
                 <div
                   className="rounded-xl p-3"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <Shield className="w-3 h-3" style={{ color: concentColor }} />
@@ -225,7 +225,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                 {/* Financial profile */}
                 <div
                   className="rounded-xl p-3"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <DollarSign className="w-3 h-3" style={{ color: '#22d3ee' }} />
@@ -275,7 +275,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
               {/* Rate benchmarking */}
               <div
                 className="rounded-xl px-3.5 py-2.5"
-                style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+                style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
               >
                 <p className="text-[10px] font-black tracking-widest mb-1" style={{ color: 'var(--alpha-text-25)' }}>
                   RATE BENCHMARK

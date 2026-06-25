@@ -35,7 +35,7 @@ function DeltaRow({ d }: { d: ScoreDelta }) {
   const sign = d.delta > 0 ? '+' : '';
 
   return (
-    <div className="flex items-center justify-between py-1.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+    <div className="flex items-center justify-between py-1.5 border-b" style={{ borderColor: 'var(--alpha-bg-06)' }}>
       <div className="flex items-center gap-2 min-w-0">
         <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />
         <span className="text-[10px] truncate" style={{ color: 'var(--alpha-text-55)' }}>

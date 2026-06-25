@@ -874,7 +874,7 @@ const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ bu
             <span>At-will baseline (US, 6%)</span>
             <span className="font-mono">{buffer.countryCode} · +{pct}%</span>
           </div>
-          <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'var(--alpha-bg-06)' }}>
             {/* Full protection bar */}
             <div className="absolute inset-y-0 left-0 rounded-full transition-all"
               style={{ width: `${barWidth}%`, background: accentColor, opacity: 0.75 }} />
@@ -1146,7 +1146,7 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
     <motion.div
       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
       className="mt-4 rounded-xl border overflow-hidden"
-      style={{ borderColor: 'rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.02)' }}
+      style={{ borderColor: 'var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}
     >
       {/* Header */}
       <div className="px-4 pt-3 pb-3 flex items-center gap-2 border-b border-white/[0.07]">
@@ -1287,7 +1287,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
     <motion.div
       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
       className="mt-4 rounded-xl border overflow-hidden"
-      style={{ borderColor: 'rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.02)' }}
+      style={{ borderColor: 'var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}
     >
       <div className="px-4 pt-3 pb-3 flex items-center gap-2 border-b border-white/[0.07]">
         <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color: scoreColor }} />
@@ -1941,7 +1941,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
             </p>
             {runway.savedRunwayMonths != null && (
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)' }}>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)' }}>
                   Savings: {runway.savedRunwayMonths}mo
                 </span>
                 <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>+</span>
@@ -2395,7 +2395,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               borderRadius: 'var(--radius-xl)',
               padding: isMobile ? 'var(--space-6) var(--space-5)' : 'var(--space-10) var(--space-8)',
               background: 'var(--elevation-1)',
-              border: '1px solid rgba(255,255,255,0.07)',
+              border: '1px solid var(--alpha-bg-08)',
               boxShadow: 'var(--shadow-elev-2)',
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : '220px 1fr',
@@ -2451,7 +2451,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                         ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
                     border: scoreVelocity.direction === 'accelerating'
                       ? '1px solid rgba(239,68,68,0.30)' : scoreVelocity.direction === 'improving'
-                        ? '1px solid rgba(16,185,129,0.30)' : '1px solid rgba(255,255,255,0.12)',
+                        ? '1px solid rgba(16,185,129,0.30)' : '1px solid var(--alpha-bg-08)',
                     color: scoreVelocity.direction === 'accelerating'
                       ? 'var(--red)' : scoreVelocity.direction === 'improving'
                         ? 'var(--emerald)' : 'var(--text-3)',

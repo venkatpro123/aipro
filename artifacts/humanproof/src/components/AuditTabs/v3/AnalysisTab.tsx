@@ -110,7 +110,7 @@ const IntelligenceBriefBlock: React.FC<{
 
   if (!brief) {
     return (
-      <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="rounded-2xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Brain className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.6)' }} />
@@ -142,7 +142,7 @@ const IntelligenceBriefBlock: React.FC<{
           <>
             <div className="space-y-2">
               {[70, 85, 60].map((w, i) => (
-                <div key={i} className="h-3 rounded-full animate-pulse" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.06)' }} />
+                <div key={i} className="h-3 rounded-full animate-pulse" style={{ width: `${w}%`, background: 'var(--alpha-bg-06)' }} />
               ))}
             </div>
             <p className="text-[10px] mt-2" style={{ color: 'var(--alpha-text-25)' }}>
@@ -297,7 +297,7 @@ const MiniGaugeRange: React.FC<{
       {/* Range bar replacing the circular gauge */}
       <div
         className="relative rounded-full overflow-hidden"
-        style={{ width: 72, height: 8, background: 'rgba(255,255,255,0.07)' }}
+        style={{ width: 72, height: 8, background: 'var(--alpha-bg-06)' }}
         aria-label={`Risk range ${ciLow} to ${ciHigh}`}
         role="img"
       >
@@ -376,7 +376,7 @@ const DualGaugePanel: React.FC<{
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl p-4"
-      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'var(--alpha-text-45)' }}>
         RISK vs. READINESS
@@ -397,7 +397,7 @@ const DualGaugePanel: React.FC<{
           ? <MiniGauge score={pScoreDisplay} color={pColor} label="Preparedness" sublabel="readiness index" />
           : (
             <div className="flex flex-col items-center gap-1" style={{ width: 80 }}>
-              <div className="w-20 h-20 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'rgba(255,255,255,0.12)' }}>
+              <div className="w-20 h-20 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'var(--alpha-bg-08)' }}>
                 <span className="text-[10px] text-center" style={{ color: 'var(--alpha-text-35)' }}>not<br/>assessed</span>
               </div>
               <p className="text-[11px] font-bold text-center" style={{ color: 'rgba(255,255,255,0.82)' }}>Preparedness</p>
@@ -434,7 +434,7 @@ const HorizonBar: React.FC<{
         {label}
       </span>
       <div className="flex-1 relative">
-        <div className="h-5 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+        <div className="h-5 rounded-lg overflow-hidden" style={{ background: 'var(--alpha-bg-06)' }}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${score}%` }}
@@ -491,7 +491,7 @@ const QuorumProgressBar: React.FC<{ stageLabel?: string }> = ({ stageLabel }) =>
           {stageLabel}
         </p>
       )}
-      <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: 'var(--alpha-bg-08)' }}>
         <motion.div
           className="h-1 rounded-full"
           style={{ background: 'rgba(0,212,224,0.6)', width: `${pct}%` }}

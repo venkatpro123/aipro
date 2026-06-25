@@ -64,19 +64,19 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
 
       {/* Key metrics row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-xs font-bold" style={{ color: 'var(--alpha-text-85)' }}>
             {REGIME_LABEL[macro.regime] ?? macro.regime}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Regime</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-xs font-bold" style={{ color: 'var(--alpha-text-85)' }}>
             {RATE_LABEL[macro.rateCyclePhase] ?? macro.rateCyclePhase}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Rate Cycle</div>
         </div>
-        <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-xs font-bold" style={{ color: macro.scoreMultiplier > 1.05 ? '#f97316' : '#10b981' }}>
             ×{macro.scoreMultiplier.toFixed(2)}
           </div>
@@ -85,7 +85,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       </div>
 
       {/* Sector exposure */}
-      <div className="p-2 rounded-lg mb-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="p-2 rounded-lg mb-3" style={{ background: 'var(--alpha-bg-04)' }}>
         <span className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-35)' }}>
           SECTOR EXPOSURE
         </span>
@@ -122,7 +122,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
 
       {/* India specific */}
       {macro.indiaSpecific && (
-        <div className="mt-3 pt-3 space-y-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="mt-3 pt-3 space-y-1" style={{ borderTop: '1px solid var(--alpha-bg-08)' }}>
           <p className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-30)' }}>INDIA MACRO</p>
           <p className="text-xs" style={{ color: 'var(--alpha-text-50)' }}>{macro.indiaSpecific.narrative}</p>
         </div>

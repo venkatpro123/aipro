@@ -84,8 +84,8 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
       <div
         className="rounded-xl overflow-x-auto px-4 py-4"
         style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'var(--alpha-bg-04)',
+          border: '1px solid var(--alpha-bg-08)',
           scrollbarWidth: 'none',
         }}
       >

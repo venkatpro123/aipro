@@ -76,9 +76,9 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
     <div style={{
       marginTop: '40px',
       padding: '24px',
-      background: 'rgba(255,255,255,0.02)',
+      background: 'var(--alpha-bg-04)',
       borderRadius: '12px',
-      border: '1px solid rgba(255,255,255,0.05)',
+      border: '1px solid var(--alpha-bg-06)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h3 style={{ color: '#fff', margin: 0 }}>Your Score History</h3>
@@ -191,8 +191,8 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
               {showFeedback && (
                 <div style={{
                   padding: '10px 16px 12px',
-                  borderTop: '1px solid rgba(255,255,255,0.04)',
-                  background: 'rgba(255,255,255,0.02)',
+                  borderTop: '1px solid var(--alpha-bg-06)',
+                  background: 'var(--alpha-bg-04)',
                 }}>
                   <p style={{ color: '#6b7280', fontSize: '0.75rem', margin: '0 0 8px' }}>
                     Was this prediction accurate? (helps us improve)
@@ -224,7 +224,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
               {outcome && (
                 <div style={{
                   padding: '8px 16px',
-                  borderTop: '1px solid rgba(255,255,255,0.04)',
+                  borderTop: '1px solid var(--alpha-bg-06)',
                   background: 'rgba(255,255,255,0.015)',
                   fontSize: '0.73rem',
                   color: outcome === 'correct' ? '#10b981' : '#6b7280',

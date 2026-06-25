@@ -118,7 +118,7 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
         {/* Score delta */}
         <div
           className="flex items-center justify-center gap-3 py-2 rounded-xl mb-3"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         >
           <div className="text-center">
             <p className="text-[22px] font-black" style={{ color: 'var(--alpha-text-45)' }}>

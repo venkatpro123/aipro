@@ -117,7 +117,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
 
       {/* Expanded details */}
       {expanded && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '12px 15px' }}>
+        <div style={{ borderTop: '1px solid var(--alpha-bg-08)', padding: '12px 15px' }}>
           {p.vulnerabilityFactors?.length > 0 && (
             <div style={{ marginBottom: 10 }}>
               <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
@@ -148,8 +148,8 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
             <div style={{
               padding: '8px 10px',
               borderRadius: 8,
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
+              background: 'var(--alpha-bg-04)',
+              border: '1px solid var(--alpha-bg-08)',
             }}>
               <p style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Recommended action

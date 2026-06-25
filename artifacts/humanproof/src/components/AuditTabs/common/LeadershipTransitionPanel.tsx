@@ -55,7 +55,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
       {/* Signals grid */}
       <div className="space-y-2 mb-3">
         {/* CEO tenure */}
-        <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+        <div className="rounded-lg p-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>CEO TENURE RISK</span>
             <span className="text-[10px] font-bold" style={{ color: SCORE_COLOR(leadershipRisk.ceoTenureRiskScore) }}>
@@ -69,7 +69,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
 
         {/* CFO signal */}
         {leadershipRisk.cfoSignal !== 'UNKNOWN' && (
-          <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          <div className="rounded-lg p-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>CFO SIGNAL</span>
               <span className="text-[10px] font-bold" style={{ color: leadershipRisk.cfoSignal === 'DEPARTED' ? '#ef4444' : 'rgba(255,255,255,0.70)' }}>

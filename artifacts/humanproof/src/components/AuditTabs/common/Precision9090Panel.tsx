@@ -85,7 +85,7 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
       className="rounded-xl overflow-hidden"
-      style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+      style={{ border: '1px solid var(--alpha-bg-06)' }}
     >
       <button
         onClick={() => setOpen(!open)}
@@ -147,7 +147,7 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
                   <div className="text-[10px] text-green-400/60 uppercase tracking-wide mb-0.5">Expected outcome</div>
                   <p className="text-xs text-white/65 leading-snug">{action.expectedOutcome}</p>
                 </div>
-                <div className="p-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                <div className="p-2.5 rounded-lg" style={{ background: 'var(--alpha-bg-04)' }}>
                   <div className="text-[10px] text-white/30 uppercase tracking-wide mb-0.5">Evidence</div>
                   <p className="text-xs text-white/45 leading-snug">{action.evidence}</p>
                 </div>
@@ -212,7 +212,7 @@ function WeekCard({ week }: { week: WeekMilestone }) {
                   <div className="space-y-1.5">
                     {week.dailyFocusPriorities.map((p, i) => (
                       <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg"
-                        style={{ background: 'rgba(255,255,255,0.03)' }}>
+                        style={{ background: 'var(--alpha-bg-04)' }}>
                         <span className="text-[10px] font-bold text-white/30 w-4 flex-shrink-0 mt-0.5">#{p.rank}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-white/70 leading-snug">{p.task}</p>
@@ -287,7 +287,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
                 <div className="space-y-2">
                   {checkpoint.targetMetrics.map((m, i) => (
                     <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg"
-                      style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      style={{ background: 'var(--alpha-bg-04)' }}>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-medium text-white/70">{m.metricName}</div>
                         <div className="text-[10px] text-white/35 mt-0.5 leading-snug">{m.measureHow}</div>
@@ -368,7 +368,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={`rounded-2xl overflow-hidden ${className}`}
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-3">
@@ -429,7 +429,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
       </div>
 
       {/* Tab navigation */}
-      <div className="mx-4 mb-3 flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="mx-4 mb-3 flex gap-1 p-1 rounded-xl overflow-x-auto" style={{ background: 'var(--alpha-bg-04)' }}>
         {tabs.map(tab => (
           <button
             key={tab.key}

@@ -153,7 +153,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       {hasScoreChange && scoreBefore != null && (
         <div
           className="flex items-center justify-center gap-4 px-4 py-2.5"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+          style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
         >
           <div className="text-center">
             <p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--alpha-text-25)' }}>Before</p>
@@ -182,7 +182,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
 
       {/* Market changes (if any) */}
       {marketChanges.length > 0 && (
-        <div className="px-4 pb-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="px-4 pb-3" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
           <p className="text-[9px] font-bold uppercase tracking-wider mt-2 mb-1.5" style={{ color: 'var(--alpha-text-25)' }}>
             Market Changes
           </p>

@@ -85,7 +85,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
             </span>
             <span className="text-xs font-semibold" style={{ color: tierColor }}>{progressPct}%</span>
           </div>
-          <div className="h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <div className="h-1 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
             <motion.div className="h-full rounded-full" style={{ background: tierColor }}
               animate={{ width: `${progressPct}%` }} transition={{ duration: 0.4 }} />
           </div>
@@ -156,7 +156,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
 
       {/* Severance strategy */}
       <div className="mx-4 mb-4 rounded-xl overflow-hidden"
-        style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
+        style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}>
         <button className="w-full flex items-center justify-between px-3 py-2.5 text-left"
           onClick={() => setShowSeverance(s => !s)}>
           <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-70)' }}>

@@ -236,7 +236,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
             {/* ── Footer: skip (left) + next/done (right) ───────────────── */}
             <div
               className="flex items-center justify-between px-4 py-2.5"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ borderTop: '1px solid var(--alpha-bg-06)' }}
             >
               <button
                 onClick={close}

@@ -55,7 +55,7 @@ const SkeletonLine: React.FC<{ width?: string }> = ({ width = '100%' }) => (
 
 const LoadingSkeleton: React.FC = () => (
   <div className="skeleton-panel" style={{ overflow: 'hidden' }}>
-    <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+    <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
       <Brain className="w-4 h-4 animate-pulse" style={{ color: 'rgba(0,212,224,0.5)' }} />
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(0,212,224,0.5)' }}>
         AI Intelligence Brief

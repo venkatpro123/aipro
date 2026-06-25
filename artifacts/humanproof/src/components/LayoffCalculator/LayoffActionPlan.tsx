@@ -106,7 +106,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
       aria-label="Action plan"
       style={{
         marginTop: '32px',
-        background: 'rgba(255,255,255,0.03)',
+        background: 'var(--alpha-bg-04)',
         border: '1px solid rgba(255,255,255,0.1)',
         borderRadius: '12px',
         padding: '24px',

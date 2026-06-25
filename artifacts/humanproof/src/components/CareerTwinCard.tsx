@@ -142,7 +142,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
           <div>
             <p className="text-[13px] font-black tracking-tight" style={{ color: '#00d4e0' }}>
               Share your transition
@@ -157,7 +157,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
             aria-label="Close transition form"
             title="Close"
             className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)' }}
+            style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-50)' }}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -177,7 +177,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
           <div className="p-5 space-y-3">
             {/* FROM */}
             <div className="rounded-xl p-3.5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
               <p className="text-[10px] font-black tracking-widest mb-2.5"
                 style={{ color: 'var(--alpha-text-25)' }}>WHERE YOU CAME FROM</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
@@ -491,7 +491,7 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
                     style={{
                       background: showContextWarning ? 'rgba(245,158,11,0.10)' : 'rgba(255,255,255,0.06)',
                       color:      showContextWarning ? '#fbbf24' : 'rgba(255,255,255,0.45)',
-                      border:     showContextWarning ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                      border:     showContextWarning ? '1px solid rgba(245,158,11,0.25)' : '1px solid var(--alpha-bg-08)',
                     }}
                   >
                     {twin.fromCountry === 'global' ? '🌐 Global' : `📍 ${twin.fromCountry}`}

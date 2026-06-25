@@ -216,8 +216,8 @@ const Section: React.FC<{ delay: number; card?: boolean; children: React.ReactNo
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.25, delay }}
     style={card ? {
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      background: 'var(--alpha-bg-04)',
+      border: '1px solid var(--alpha-bg-08)',
       borderRadius: '16px',
       padding: '16px',
     } : undefined}
@@ -299,7 +299,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                     <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-92)', margin: 0 }}>{driver.label}</p>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#dc2626' }}>{driver.score}/100</span>
                   </div>
-                  <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{ height: '3px', background: 'var(--alpha-bg-08)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${driver.score}%`, background: riskColor(driver.score), borderRadius: '2px', transition: 'width 0.8s ease' }} />
                   </div>
                   {driver.evidence && (
@@ -435,7 +435,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                   }}>{driver.score}/100</span>
                 </div>
                 {/* Score bar */}
-                <div style={{ height: '3px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden', marginBottom: driver.evidence ? '6px' : '0' }}>
+                <div style={{ height: '3px', background: 'var(--alpha-bg-08)', borderRadius: '2px', overflow: 'hidden', marginBottom: driver.evidence ? '6px' : '0' }}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${driver.score}%` }}
@@ -549,7 +549,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                         fontWeight: 600,
                         color: 'var(--alpha-text-45)',
                         padding: '1px 6px',
-                        background: 'rgba(255,255,255,0.06)',
+                        background: 'var(--alpha-bg-06)',
                         borderRadius: '10px',
                       }}>
                         {action.effortBadge}
@@ -614,8 +614,8 @@ const ConfidenceBadge: React.FC<{ text: string; color: string }> = ({ text, colo
     fontWeight: 600,
     color,
     padding: '3px 10px',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.10)',
+    background: 'var(--alpha-bg-06)',
+    border: '1px solid var(--alpha-bg-08)',
     borderRadius: '20px',
     whiteSpace: 'nowrap',
   }}>
