@@ -918,7 +918,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
             : <ScoreRangeHero gate={scoreSufficiency} />
           }
           {scoreSufficiency.sufficient && (
-            <p className="mt-3 text-[12px] leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>
+            <p className="mt-3 text-[12px] leading-relaxed max-w-xs" style={{ color: 'var(--alpha-text-70)' }}>
               {verdictLine(score, urgency, r.workTypeKey, r.tenureYears ?? undefined)}
             </p>
           )}
@@ -932,29 +932,29 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
         {/* Threat / Opportunity / Action — one line each, divider-separated */}
         <div className="flex flex-col px-4 sm:px-5 pb-4 pt-2">
-          <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'rgba(255,255,255,0.30)' }}>
+          <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
+            <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'var(--alpha-text-30)' }}>
               Main Concern
             </span>
-            <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.78)' }}>
+            <p className="text-[12px] leading-snug flex-1" style={{ color: 'var(--alpha-text-78)' }}>
               {(result as any).strategySynthesis?.singleBiggestRisk
                 ?? (topDrivers[0] ? `${topDrivers[0].label} is your biggest concern right now.` : 'Nothing stands out as a major concern right now.')}
             </p>
           </div>
 
           {biggestOpportunityLine && (
-            <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
               <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: 'rgba(16,185,129,0.55)' }}>
                 Best Opportunity
               </span>
-              <p className="text-[12px] leading-snug flex-1" style={{ color: 'rgba(255,255,255,0.78)' }}>
+              <p className="text-[12px] leading-snug flex-1" style={{ color: 'var(--alpha-text-78)' }}>
                 {biggestOpportunityLine}
               </p>
             </div>
           )}
 
           {adaptation.feed?.primaryMove && (
-            <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-start gap-2.5 py-2.5" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
               <span className="text-[9px] font-black tracking-[0.1em] uppercase flex-shrink-0 pt-0.5 w-[88px]" style={{ color: riskColor(score) + 'aa' }}>
                 What To Do Next
               </span>
