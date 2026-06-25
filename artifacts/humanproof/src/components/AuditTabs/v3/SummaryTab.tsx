@@ -79,7 +79,7 @@ const RING_CIRC = 2 * Math.PI * RING_R;
 const TREND_ARROW: Record<string, { sym: string; color: string }> = {
   accelerating_risk: { sym: '↑', color: '#dc2626' },
   deteriorating:     { sym: '↑', color: '#f97316' },
-  stable:            { sym: '→', color: 'rgba(255,255,255,0.40)' },
+  stable:            { sym: '→', color: 'var(--alpha-text-35)' },
   improving:         { sym: '↓', color: '#10b981' },
 };
 
@@ -192,7 +192,7 @@ const ScoreRingHero: React.FC<{
           >
             <NumberFlow value={score} respectMotionPreference />
           </motion.span>
-          <span style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
+          <span style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-30)', marginTop: 2 }}>
             /100
           </span>
           {/* Wave 6.3: Trend arrow at 6-o'clock — direction of risk change */}
@@ -234,7 +234,7 @@ const ScoreRingHero: React.FC<{
             marginTop: 'var(--space-2)',
             fontSize: '0.62rem',
             fontFamily: 'var(--font-mono)',
-            color: 'rgba(255,255,255,0.5)',
+            color: 'var(--alpha-text-50)',
           }}
           title={`Your last check was ${evolution.daysSince} day${evolution.daysSince === 1 ? '' : 's'} ago`}
         >
@@ -242,7 +242,7 @@ const ScoreRingHero: React.FC<{
           <span style={{ color: evolution.direction === 'increased' ? '#f97316' : '#10b981', fontWeight: 800 }}>
             {evolution.direction === 'increased' ? '↑' : '↓'} now {evolution.to}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.3)' }}>· vs your last check</span>
+          <span style={{ color: 'var(--alpha-text-30)' }}>· vs your last check</span>
         </motion.div>
       )}
 
@@ -259,12 +259,12 @@ const ScoreRingHero: React.FC<{
         >
           {densityStats.map((s, i) => (
             <React.Fragment key={s.label}>
-              {i > 0 && <span style={{ color: 'rgba(255,255,255,0.18)' }}>·</span>}
-              <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.42)', fontFamily: 'var(--font-mono)' }}>
+              {i > 0 && <span style={{ color: 'var(--alpha-text-25)' }}>·</span>}
+              <span style={{ fontSize: '0.6rem', color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)' }}>
                 <ScoreCountUp
                   to={s.value}
                   duration={1100}
-                  style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 700 }}
+                  style={{ color: 'var(--alpha-text-70)', fontWeight: 700 }}
                 />
                 {s.suffix ?? ''} {s.label}
               </span>
@@ -322,12 +322,12 @@ const ScoreRangeHero: React.FC<{
       {/* Bound numbers */}
       <div className="flex items-end gap-3 mb-3">
         <div className="text-center">
-          <span className="score-range-bound" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <span className="score-range-bound" style={{ color: 'var(--alpha-text-55)' }}>
             {ciLow}
           </span>
-          <p className="text-[10px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>LOW</p>
+          <p className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--alpha-text-25)' }}>LOW</p>
         </div>
-        <span className="pb-5 font-black text-xl" style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+        <span className="pb-5 font-black text-xl" style={{ color: 'var(--alpha-text-25)' }}>—</span>
         <div className="text-center">
           <span className="score-range-bound" style={{ color: worstColor }}>
             {ciHigh}
@@ -339,7 +339,7 @@ const ScoreRangeHero: React.FC<{
       {/* Range bar */}
       <div
         className="score-range-bar relative rounded-full overflow-hidden mb-2"
-        style={{ height: 8, background: 'rgba(255,255,255,0.08)' }}
+        style={{ height: 8, background: 'var(--alpha-bg-08)' }}
         aria-label={`Score range ${ciLow} to ${ciHigh} out of 100`}
         role="img"
       >
@@ -360,21 +360,21 @@ const ScoreRangeHero: React.FC<{
           <div
             key={t}
             className="absolute top-0 bottom-0 w-px"
-            style={{ left: `${t}%`, background: 'rgba(255,255,255,0.20)' }}
+            style={{ left: `${t}%`, background: 'var(--alpha-bg-08)' }}
           />
         ))}
       </div>
 
       {/* Axis label */}
       <div className="score-range-labels flex justify-between mb-3">
-        <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>0</span>
-        <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.22)' }}>100</span>
+        <span className="text-[10px] font-mono" style={{ color: 'var(--alpha-text-25)' }}>0</span>
+        <span className="text-[10px] font-mono" style={{ color: 'var(--alpha-text-25)' }}>100</span>
       </div>
 
       {/* Primary message — exact spec text */}
       <p
         className="text-center text-[11px] leading-relaxed max-w-xs"
-        style={{ color: 'rgba(255,255,255,0.72)' }}
+        style={{ color: 'var(--alpha-text-70)' }}
       >
         {message}
       </p>
@@ -382,7 +382,7 @@ const ScoreRangeHero: React.FC<{
       {/* Why */}
       <p
         className="mt-1.5 text-center text-[10px] leading-snug max-w-xs"
-        style={{ color: 'rgba(255,255,255,0.38)' }}
+        style={{ color: 'var(--alpha-text-35)' }}
       >
         In the worst case, your risk could be <span style={{ color: worstColor, fontWeight: 700 }}>{worstLabel}</span>.
         {' '}We need a bit more information to give you one exact number.
@@ -404,17 +404,17 @@ interface StatChipProps {
 const StatChip: React.FC<StatChipProps> = ({ label, value, sub, color = 'rgba(0,212,224,0.8)', icon: Icon }) => (
   <div
     className="flex-1 min-w-0 rounded-xl px-3 py-2.5 flex flex-col gap-0.5"
-    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+    style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
   >
     <div className="flex items-center gap-1 mb-0.5">
       <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />
       <span className="text-[10px] font-bold tracking-wider uppercase truncate"
-        style={{ color: 'rgba(255,255,255,0.35)' }}>
+        style={{ color: 'var(--alpha-text-35)' }}>
         {label}
       </span>
     </div>
     <span className="text-[15px] font-black leading-none" style={{ color }}>{value}</span>
-    {sub && <span className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.30)' }}>{sub}</span>}
+    {sub && <span className="text-[10px] truncate" style={{ color: 'var(--alpha-text-30)' }}>{sub}</span>}
   </div>
 );
 
@@ -502,11 +502,11 @@ export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }
   const scanning = useIntelligencePulse(drivers.length > 0);
   if (drivers.length === 0) {
     return (
-      <div className="rounded-xl px-4 py-6 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.50)' }}>
+      <div className="rounded-xl px-4 py-6 text-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
+        <p className="text-sm font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
           No major concerns found yet
         </p>
-        <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>
+        <p className="text-xs mt-1" style={{ color: 'var(--alpha-text-30)' }}>
           Add more details about your role and company to see what's driving your risk.
         </p>
       </div>
@@ -682,7 +682,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
     ? TrendingDown : Minus;
   const velocityColor = r.scoreDelta?.direction === 'worsening'
     ? '#dc2626' : r.scoreDelta?.direction === 'improving'
-    ? '#10b981' : 'rgba(255,255,255,0.35)';
+    ? '#10b981' : 'var(--alpha-text-35)';
 
   // v39.0 F4 — Tier-1 drivers strip.
   // Lowered the visibility threshold from score ≥ 35 to ≥ 15 so smaller
