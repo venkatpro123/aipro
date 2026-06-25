@@ -420,17 +420,55 @@ const StatChip: React.FC<StatChipProps> = ({ label, value, sub, color = 'rgba(0,
 
 // ── Verdict line ──────────────────────────────────────────────────────────────
 
-// v35.1: Verdict line phrasing — more specific, less clinical.
-// The VerdictReassurance below the ring provides emotional grounding;
-// this line provides the precise situational read (7 words max).
-const verdictLine = (score: number, urgency: string): string => {
-  if (urgency === 'CRITICAL' || score >= 75)
-    return 'High risk — months of lead time. Use it.';
-  if (urgency === 'HIGH' || score >= 55)
-    return 'Elevated risk. 30-day action window is open.';
-  if (score >= 35)
-    return 'Moderate signals. Build buffer while conditions are stable.';
-  return 'Low risk. Time to build career capital and leverage.';
+// Phase 5: Personalized Hero verdict — role + experience-aware situational read.
+// Replaces the generic 4-line verdict with context that acknowledges the user's
+// specific exposure: engineering vs. management vs. data vs. senior vs. early.
+function classifyRole(key: string | undefined): 'engineering' | 'management' | 'data' | 'sales' | 'creative' | 'other' {
+  if (!key) return 'other';
+  const k = key.toLowerCase();
+  if (/eng|dev|swe|software|frontend|backend|full.?stack|mobile|platform/.test(k)) return 'engineering';
+  if (/manag|director|vp|head|chief|exec|lead/.test(k)) return 'management';
+  if (/data|analyst|analytics|bi|scientist|ml|ai|research/.test(k)) return 'data';
+  if (/sales|account|bdr|sdr|revenue|growth/.test(k)) return 'sales';
+  if (/design|ux|ui|content|brand|market|creat/.test(k)) return 'creative';
+  return 'other';
+}
+
+const verdictLine = (
+  score: number,
+  urgency: string,
+  workTypeKey?: string,
+  tenureYears?: number,
+): string => {
+  const role = classifyRole(workTypeKey);
+  const band: 'early' | 'mid' | 'senior' =
+    tenureYears == null ? 'mid' : tenureYears < 3 ? 'early' : tenureYears < 8 ? 'mid' : 'senior';
+
+  if (urgency === 'CRITICAL' || score >= 75) {
+    if (role === 'engineering') return 'AI commoditization and cost-cutting compound your exposure. Act in the next 30 days.';
+    if (role === 'management') return 'Management layers are compressing industry-wide. Reposition now — your window is months.';
+    if (role === 'data') return 'Pure data roles face automation pressure. Shift toward judgment-heavy ML work immediately.';
+    if (band === 'early') return 'High risk early in your career — build external proof of skills before the window closes.';
+    if (band === 'senior') return 'Tenure does not buffer structural risk. Activate your network and reputation now.';
+    return 'High risk — months of lead time remaining. Use it before conditions lock in.';
+  }
+  if (urgency === 'HIGH' || score >= 55) {
+    if (role === 'engineering') return 'Elevated risk — AI is absorbing your execution layer. Shift toward architecture and judgment work.';
+    if (role === 'data') return 'Data roles are bifurcating. ML-native practitioners gain leverage; pure analysts face compression.';
+    if (role === 'sales') return 'Quota pressure plus automation creates a narrow window. Build relationship capital while the market is open.';
+    if (band === 'senior') return 'Elevated risk despite tenure. External reputation and network activation are your strongest buffers.';
+    if (band === 'early') return 'Elevated risk — build portfolio proof now and identify two escape paths before your window narrows.';
+    return 'Elevated risk. The 30-day action window is open — use it.';
+  }
+  if (score >= 35) {
+    if (role === 'engineering') return 'Moderate signals. AI is redefining which engineering skills compound — upskill toward judgment-heavy work.';
+    if (role === 'management') return 'Moderate signals. Flatten your dependency on headcount authority and grow your strategic influence.';
+    if (band === 'senior') return 'Moderate signals. Your experience creates optionality — protect it with visible external presence.';
+    return 'Moderate signals. Build your buffer while conditions are still stable.';
+  }
+  if (band === 'senior') return 'Low risk. Your experience creates optionality — grow network capital and leadership surface now.';
+  if (band === 'early') return 'Low risk. Build compounding skills and career capital aggressively while you have runway.';
+  return 'Low risk. Time to build career capital and leverage compounding returns.';
 };
 
 // ── Tier-1 strips ────────────────────────────────────────────────────────────
@@ -857,7 +895,11 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 pt-4">
           <span className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: riskColor(score) }}>
-            Where You Stand Today
+            {r.roleTitle
+              ? `${r.roleTitle} · Risk Position`
+              : r.workTypeKey
+              ? `${String(r.workTypeKey).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} · Risk Position`
+              : 'Where You Stand Today'}
           </span>
         </div>
 
@@ -877,7 +919,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           }
           {scoreSufficiency.sufficient && (
             <p className="mt-3 text-[12px] leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>
-              {verdictLine(score, urgency)}
+              {verdictLine(score, urgency, r.workTypeKey, r.tenureYears ?? undefined)}
             </p>
           )}
           {scoreSufficiency.sufficient && r.scoreDelta && Math.abs(r.scoreDelta.delta30d ?? 0) >= 1 && (
