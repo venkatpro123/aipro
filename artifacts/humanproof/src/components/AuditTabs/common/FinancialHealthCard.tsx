@@ -65,7 +65,7 @@ function computeVerdict(result: HybridResult): VerdictMeta {
 
   // No data? Surface honestly.
   if (stock == null && revYoy == null && fundingStage == null && monthsSinceRaise == null && !secMaterial) {
-    return { label: 'No data', color: '#64748b', rationale: 'Live financial signals unavailable for this company.', ring: 0 };
+    return { label: 'Awaiting Data', color: '#64748b', rationale: 'Financial signals not yet available — score uses sector-level estimates until live data arrives.', ring: 0 };
   }
 
   const ring = Math.min(100, score || 5);

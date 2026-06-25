@@ -58,7 +58,7 @@ const VERDICT_LABEL: Record<VerdictLabel, string> = {
   healthy:            'Healthy',
   'stable-confirmed': 'Stable',
   'data-unavailable': 'Unverified',
-  unknown:            'No data',
+  unknown:            'Awaiting Data',
 };
 
 // Pick the more severe of two signals for the headline.

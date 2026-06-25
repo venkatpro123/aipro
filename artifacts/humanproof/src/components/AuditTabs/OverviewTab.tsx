@@ -778,7 +778,7 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
           <CalendarHeatmap months={heatmapMonths} />
         ) : (
           <div className="text-[10px] text-muted-foreground opacity-60">
-            Calendar data not available for this company.
+            Activity calendar builds over time — check back after your next audit.
           </div>
         )}
 

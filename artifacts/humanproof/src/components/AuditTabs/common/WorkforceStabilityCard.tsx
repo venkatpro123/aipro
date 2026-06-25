@@ -61,7 +61,7 @@ function computeVerdict(result: HybridResult): VerdictMeta {
   else if (glassdoorTrend === 'falling')  { score += 6;  reasons.push('Glassdoor softening'); }
 
   if (score === 0 && !warnActive && layoffRounds === 0 && !headcountDelta && !hiringTrend) {
-    return { label: 'No data', color: '#64748b', rationale: 'Live signals did not surface workforce evidence.', ring: 0 };
+    return { label: 'Awaiting Data', color: '#64748b', rationale: 'Workforce signals not yet available — no layoff history or headcount changes surfaced for this company.', ring: 0 };
   }
 
   // The clamp keeps the ring readable; the verdict label expands the meaning.

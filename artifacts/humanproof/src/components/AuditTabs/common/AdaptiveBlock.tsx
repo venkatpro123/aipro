@@ -88,7 +88,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
               className="text-[10px] leading-tight mt-0.5 flex items-center gap-1"
               style={{ color: 'var(--alpha-text-35)' }}
             >
-              {empty ? 'No data available' : subtitle}
+              {empty ? 'Add more details to unlock this insight' : subtitle}
             </div>
           )}
         </div>
