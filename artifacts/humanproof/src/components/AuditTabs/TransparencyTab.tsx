@@ -1532,8 +1532,11 @@ const IndiaIntelligencePanel: React.FC<{
         </div>
       </div>
 
-      <p className="text-[10px] text-muted-foreground px-1">
-        Source: NASSCOM Trendlines 2025, Naukri Job Speak Mar 2026, EPFO Mar 2026. Sector pulse snapshot updated quarterly.
+      <p className={`text-[10px] px-1 ${enrichment.isDataStale ? 'text-amber-400' : 'text-muted-foreground'}`}>
+        Source: NASSCOM Trendlines, Naukri Job Speak, EPFO — sector pulse updated quarterly.{' '}
+        {enrichment.isDataStale
+          ? `⚠ Data as of ${enrichment.dataAsOf} — ${Math.floor(enrichment.dataAgeDays / 30)} mo old, refresh due.`
+          : `Data as of ${enrichment.dataAsOf} (${enrichment.dataAgeDays}d old).`}
       </p>
     </div>
   );

@@ -652,6 +652,12 @@ export const DisplacementTrajectoryPanel: React.FC<Props> = ({
             : <>Powered by Risk Oracle D1–D6 Multiplicative Engine · WEF Future of Jobs 2025 · McKinsey State of AI · Stanford AI Index<br /></>
           }
           Projections are probabilistic estimates, not guarantees. Update your assessment quarterly.
+          <br />
+          <span style={{ color: trajectory.isDataStale ? C.red : C.text3 }}>
+            {trajectory.isDataStale
+              ? `⚠ Growth-rate model as of ${trajectory.dataAsOf} — ${Math.floor(trajectory.dataAgeDays / 30)} mo old, refresh due.`
+              : `Growth-rate model as of ${trajectory.dataAsOf} (${trajectory.dataAgeDays}d old).`}
+          </span>
         </div>
       </div>
     </div>

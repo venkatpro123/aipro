@@ -3107,6 +3107,16 @@ ACTION_DB.bpo_associate = seniorityPool(
 // ── v37.0 Multi-industry action pool merge ───────────────────────────────────
 // Merges all industry-specific action pools into the main ACTION_DB.
 // Each module file defines its own BracketPool structure compatible with RoleActionDB.
+//
+// NOTE: a handful of core keys defined earlier in this file (llm_engineer,
+// data_engineer, nlp_engineer, portfolio_manager) are intentionally
+// overwritten here by their AI_ML_SPECIALIZATION / CLOUD_PLATFORM /
+// QUANT_ASSET_HEDGE counterparts below. Audited and confirmed deliberate:
+// the v38.0 specialization modules' content is more current and specific
+// (e.g. Claude 4.6/GPT-5 eval suites, dbt certification, Bloomberg-verified
+// track records) than the earlier core entries — the same "later, more
+// specific module supersedes an earlier generic one" pattern used
+// throughout roleResolution.ts's alias system. Not a collision bug.
 Object.assign(ACTION_DB, ACTION_DB_HEALTHCARE_LEGAL);
 Object.assign(ACTION_DB, ACTION_DB_CONSULTING_MARKETING_CX);
 Object.assign(ACTION_DB, ACTION_DB_MANUFACTURING_ENERGY_CONSTRUCTION);
