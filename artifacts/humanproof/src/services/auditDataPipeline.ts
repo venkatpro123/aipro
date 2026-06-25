@@ -108,7 +108,8 @@ import { computeMarketDemandReport } from "./roleMarketDemandService";
 // honest "using generic guidance" notice when the user's role isn't in our
 // 412-specialised database.
 import { getPersonalizedActions } from "./actionPersonalizationEngine";
-import { loadCompletionsLocal, loadLowRatedActionIds } from "./actionCompletionService";
+import { loadCompletionsLocal } from "./actionCompletionService";
+import { loadEffectiveSuppressedActionIds } from "./cohortFeedbackService";
 import { stableActionId } from "./actionIdUtil";
 // v39.0 D2: unified freshness verdict
 import { computeUnifiedFreshness } from "./freshnessUnifier";
@@ -3530,7 +3531,7 @@ export async function fetchAuditData(inputs: AuditInputs): Promise<{
       _riskAppetite45b,
       _maxCost45b,
       loadCompletionsLocal(),
-      loadLowRatedActionIds(),
+      loadEffectiveSuppressedActionIds(),
     );
     (hybridResult as any).personalizedActionSet = personalizedActionSet;
     // v40.0 FIX-6: hoist the derived profileSignals to the top of hybridResult so

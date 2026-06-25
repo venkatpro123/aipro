@@ -27,6 +27,7 @@ import {
   unmarkActionComplete,
   syncCompletionsFromServer,
 } from '../../../services/actionCompletionService';
+import { syncCohortFeedbackFromServer } from '../../../services/cohortFeedbackService';
 
 interface Props {
   actions: ActionPlanItem[];
@@ -339,6 +340,11 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
         setCompletedIds(new Set(state.completedIds));
       }
     }).catch(() => { /* non-fatal — localStorage state remains */ });
+    // Cohort feedback aggregate refresh — public read, so this runs regardless
+    // of auth state. Updates the local cache that getPersonalizedActions()
+    // reads on the NEXT audit; it does not change actions already rendered
+    // in this session.
+    syncCohortFeedbackFromServer().catch(() => { /* non-fatal */ });
   }, []);
 
   const p1Completed = phase1.filter(a => completedIds.has(a.id)).length;

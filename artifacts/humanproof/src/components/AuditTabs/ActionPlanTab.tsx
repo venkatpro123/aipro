@@ -50,7 +50,8 @@ import {
   resolveRoleGroup,
   scoreToRiskLevel,
 } from "@/services/actionPersonalizationEngine";
-import { loadCompletionsLocal, loadLowRatedActionIds } from "@/services/actionCompletionService";
+import { loadCompletionsLocal } from "@/services/actionCompletionService";
+import { loadEffectiveSuppressedActionIds } from "@/services/cohortFeedbackService";
 import { stableActionId } from "@/services/actionIdUtil";
 import { generateCareerInsurancePlan } from "@/services/careerInsuranceEngine";
 import { generateTrajectoryProjection } from "@/services/trajectoryProjection";
@@ -231,7 +232,7 @@ export function buildDynamicActions(
     equityVestMonths:   uf.equityVestMonths ?? null,
     metroArea:          uf.metroArea ?? null,
   };
-  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadLowRatedActionIds());
+  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadEffectiveSuppressedActionIds());
   const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a) => ({
     // Match the pipeline's `pa_<hash>` scheme so completion state set here
     // and in Action Progress refer to the same row. (was `personalized_${i}`,
@@ -1798,7 +1799,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                 dualIncomeHousehold: uf2.dualIncomeHousehold ?? null,
                 priorLayoffSurvived: uf2.priorLayoffSurvived ?? null,
               };
-              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2, undefined, uf2.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadLowRatedActionIds());
+              const personalizedSet = getPersonalizedActions(roleTitle, derivedBracket, result.total, region, undefined, undefined, userProfileLike2, undefined, uf2.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadEffectiveSuppressedActionIds());
               return (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Actions personalized for</span>

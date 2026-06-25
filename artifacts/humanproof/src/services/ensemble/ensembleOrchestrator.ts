@@ -70,7 +70,8 @@ import {
   resolveRoleGroup,
   getRoleGroupLabel,
 } from "../actionPersonalizationEngine";
-import { loadCompletionsLocal, loadLowRatedActionIds } from "../actionCompletionService";
+import { loadCompletionsLocal } from "../actionCompletionService";
+import { loadEffectiveSuppressedActionIds } from "../cohortFeedbackService";
 import { deriveSeniorityBracket } from "../seniorityActionEngine";
 
 // ── Agent status — transparent LLM failure reporting ─────────────────────────
@@ -574,7 +575,7 @@ export const runFullEnsembleAnalysis = async (
     };
     const _companyContext = _archetypeToContext(scenario.archetype);
     const seniorityBracket = deriveSeniorityBracket(tenureYears, 'average', uniquenessDepth, undefined);
-    const personalizedSet = getPersonalizedActions(role, seniorityBracket, score, cd.region, _companyContext, cd.name, undefined, undefined, undefined, undefined, undefined, loadCompletionsLocal(), loadLowRatedActionIds());
+    const personalizedSet = getPersonalizedActions(role, seniorityBracket, score, cd.region, _companyContext, cd.name, undefined, undefined, undefined, undefined, undefined, loadCompletionsLocal(), loadEffectiveSuppressedActionIds());
     // Null-safe: actions array may be empty if no pool matched (should not happen after v8.0 additions)
     const topPersonalizedAction = personalizedSet?.actions?.[0];
     const oneActionThisWeek = topPersonalizedAction?.description
