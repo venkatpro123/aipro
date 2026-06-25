@@ -743,7 +743,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                   <div style={{
                     width: 0, height: 0,
                     borderTop: '5px solid transparent', borderBottom: '5px solid transparent',
-                    borderLeft: '6px solid rgba(255,255,255,0.15)',
+                    borderLeft: '6px solid var(--alpha-bg-08)',
                   }} />
                 </div>
               </div>

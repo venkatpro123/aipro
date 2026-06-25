@@ -65,7 +65,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({ score, color, size = 100 }) => {
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={8} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--alpha-bg-06)" strokeWidth={8} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}

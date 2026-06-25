@@ -13,7 +13,7 @@ interface Props {
 }
 
 const shimmerStyle: React.CSSProperties = {
-  background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',
+  background: 'linear-gradient(90deg, var(--alpha-bg-04) 25%, var(--alpha-bg-08) 50%, var(--alpha-bg-04) 75%)',
   backgroundSize: '200% 100%',
   animation: 'skeleton-shimmer 1.4s ease-in-out infinite',
 };

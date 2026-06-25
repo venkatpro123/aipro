@@ -50,7 +50,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
         {/* Ring */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <svg width="130" height="130" viewBox="0 0 130 130">
-            <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+            <circle cx="65" cy="65" r="52" fill="none" stroke="var(--alpha-bg-06)" strokeWidth="8" />
             <circle cx="65" cy="65" r="52" fill="none"
               stroke={scoreColor} strokeWidth="8"
               strokeDasharray={circumference} strokeDashoffset={offset}

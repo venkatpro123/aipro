@@ -68,7 +68,7 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid var(--alpha-bg-08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-3 mb-3">

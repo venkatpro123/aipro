@@ -172,7 +172,7 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
             transition={{ duration: 0.25, delay: 0.08 + i * 0.05 }}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold" style={{ color: dim.available ? 'rgba(255,255,255,0.82)' : 'var(--alpha-text-35)' }}>
+              <span className="text-[11px] font-semibold" style={{ color: dim.available ? 'var(--alpha-text-85)' : 'var(--alpha-text-35)' }}>
                 {dim.label}
               </span>
               <div className="flex items-center gap-2">

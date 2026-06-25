@@ -59,7 +59,7 @@ export const Section7_EarlyWarningSignals: React.FC<Props> = ({ waveStatusDetail
                 <span style={{ fontSize: 8, fontWeight: isActive ? 800 : 600, color: isActive ? stage.color : isPast ? `${stage.color}70` : 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textAlign: 'center', lineHeight: 1.2 }}>
                   {stage.label}
                 </span>
-                <span style={{ fontSize: 8, color: isActive ? 'rgba(255,255,255,0.50)' : 'var(--alpha-text-25)', textAlign: 'center', lineHeight: 1.2, display: 'none' }}>
+                <span style={{ fontSize: 8, color: isActive ? 'var(--alpha-text-50)' : 'var(--alpha-text-25)', textAlign: 'center', lineHeight: 1.2, display: 'none' }}>
                   {stage.shortDesc}
                 </span>
                 {/* Connector line */}

@@ -106,7 +106,7 @@ export const ProgressNarrativeCard: React.FC<Props> = ({ scoreDelta, streakInfo 
       transition={{ duration: 0.25 }}
       className="rounded-2xl px-4 py-3 flex items-start gap-3"
       style={{
-        background: `linear-gradient(135deg, ${accent}12, rgba(255,255,255,0.02))`,
+        background: `linear-gradient(135deg, ${accent}12, var(--alpha-bg-04))`,
         border: `1px solid ${accent}28`,
       }}
     >

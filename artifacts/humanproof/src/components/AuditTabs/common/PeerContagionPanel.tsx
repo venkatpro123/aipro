@@ -55,7 +55,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       {!noData && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
           <div className="text-center rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
-            <div className="text-sm font-black" style={{ color: contagion.directCompetitorCuts > 0 ? colors.text : 'rgba(255,255,255,0.7)' }}>
+            <div className="text-sm font-black" style={{ color: contagion.directCompetitorCuts > 0 ? colors.text : 'var(--alpha-text-70)' }}>
               {contagion.directCompetitorCuts}
             </div>
             <div className="text-[10px] opacity-40 mt-0.5">Direct cuts</div>
@@ -67,7 +67,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
             <div className="text-[10px] opacity-40 mt-0.5">Adjacent cuts</div>
           </div>
           <div className="text-center rounded-lg p-2" style={{ background: 'var(--alpha-bg-04)' }}>
-            <div className="text-sm font-black" style={{ color: contagion.contagionScore > 30 ? colors.text : 'rgba(255,255,255,0.7)' }}>
+            <div className="text-sm font-black" style={{ color: contagion.contagionScore > 30 ? colors.text : 'var(--alpha-text-70)' }}>
               {contagion.contagionScore}
             </div>
             <div className="text-[10px] opacity-40 mt-0.5">Contagion score</div>

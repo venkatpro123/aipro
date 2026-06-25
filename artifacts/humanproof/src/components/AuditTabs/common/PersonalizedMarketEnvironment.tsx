@@ -666,7 +666,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             <StatRow
               label="Interview process"
               value={snapshot.timeToFillDays < 35 ? 'Fast — 2–3 rounds typical' : snapshot.timeToFillDays < 50 ? 'Normal — 3–4 rounds' : 'Extended — 4+ rounds common'}
-              valueColor="rgba(255,255,255,0.75)"
+              valueColor="var(--alpha-text-70)"
             />
           </div>
           <div className="rounded-lg px-3 py-2 flex items-start gap-2"

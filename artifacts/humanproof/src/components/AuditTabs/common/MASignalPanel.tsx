@@ -72,7 +72,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-          <div className="text-sm font-bold" style={{ color: restructuringPct >= 60 ? '#ef4444' : 'rgba(255,255,255,0.9)' }}>
+          <div className="text-sm font-bold" style={{ color: restructuringPct >= 60 ? '#ef4444' : 'var(--alpha-text-92)' }}>
             {restructuringPct}%
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Restructuring Prob.</div>

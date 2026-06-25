@@ -107,7 +107,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
       style={{
         marginTop: '32px',
         background: 'var(--alpha-bg-04)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: '1px solid var(--alpha-bg-08)',
         borderRadius: '12px',
         padding: '24px',
       }}
@@ -134,7 +134,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
                 style={{
                   fontSize: '0.8rem',
                   color: '#9ba5b4',
-                  background: 'rgba(255,255,255,0.1)',
+                  background: 'var(--alpha-bg-08)',
                   padding: '4px 8px',
                   borderRadius: '4px',
                   whiteSpace: 'nowrap',

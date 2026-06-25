@@ -146,7 +146,7 @@ export function CareerPortfolioPanel({ result }: Props) {
         <div className="shrink-0">
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
             {/* Background circle */}
-            <circle cx={cx} cy={cy} r={r} fill="rgba(255,255,255,0.03)" />
+            <circle cx={cx} cy={cy} r={r} fill="var(--alpha-bg-04)" />
             {/* Donut sectors */}
             {sectors.map((s) =>
               s.path ? (
@@ -167,7 +167,7 @@ export function CareerPortfolioPanel({ result }: Props) {
             <text x={cx} y={cy - 3} textAnchor="middle" fontSize="11" fontWeight="700" fill="white">
               {result.total}
             </text>
-            <text x={cx} y={cy + 8} textAnchor="middle" fontSize="5" fill="rgba(255,255,255,0.4)">
+            <text x={cx} y={cy + 8} textAnchor="middle" fontSize="5" fill="var(--alpha-text-35)">
               RISK
             </text>
           </svg>

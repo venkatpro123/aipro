@@ -165,7 +165,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="rgba(255,255,255,0.04)"
+          stroke="var(--alpha-bg-04)"
           strokeWidth={strokeWidth}
         />
 

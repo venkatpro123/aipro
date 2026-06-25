@@ -112,7 +112,7 @@ const ActionCard: React.FC<{
     <div className="flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium leading-snug" style={{
-          color: completed ? 'var(--alpha-text-45)' : 'rgba(255,255,255,0.9)',
+          color: completed ? 'var(--alpha-text-45)' : 'var(--alpha-text-92)',
           textDecoration: completed ? 'line-through' : 'none',
         }}>
           {action.title}
@@ -628,7 +628,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
       <motion.button
         onClick={() => setShowOfferModal(true)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-xl"
-        style={{ background: 'var(--alpha-bg-04)', border: '1px solid rgba(255,255,255,0.1)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         whileHover={{ background: 'var(--alpha-bg-06)' }}
       >
         <div className="flex items-center gap-3">

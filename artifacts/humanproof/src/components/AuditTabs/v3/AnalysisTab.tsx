@@ -199,7 +199,7 @@ const IntelligenceBriefBlock: React.FC<{
         </div>
       )}
 
-      <p className="text-[12px] leading-relaxed" style={{ color: showLowConfWarning ? 'rgba(255,255,255,0.60)' : 'var(--alpha-text-85)' }}>
+      <p className="text-[12px] leading-relaxed" style={{ color: showLowConfWarning ? 'var(--alpha-text-55)' : 'var(--alpha-text-85)' }}>
         {first}
       </p>
 
@@ -255,7 +255,7 @@ const MiniGauge: React.FC<{
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={7} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--alpha-bg-06)" strokeWidth={7} />
           <motion.circle
             cx={size / 2} cy={size / 2} r={r} fill="none"
             stroke={color} strokeWidth={7} strokeLinecap="round"

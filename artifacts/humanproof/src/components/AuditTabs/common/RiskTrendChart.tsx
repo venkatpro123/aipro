@@ -112,7 +112,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
   const delta = last - first;
   const direction = delta > 2 ? 'worsening' : delta < -2 ? 'improving' : 'stable';
   const DirIcon = direction === 'worsening' ? TrendingUp : direction === 'improving' ? TrendingDown : Minus;
-  const dirColor = direction === 'worsening' ? '#ef4444' : direction === 'improving' ? '#10b981' : 'rgba(255,255,255,0.4)';
+  const dirColor = direction === 'worsening' ? '#ef4444' : direction === 'improving' ? '#10b981' : 'var(--alpha-text-35)';
 
   return (
     <motion.div
@@ -271,7 +271,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
                   x={pt.x}
                   y={CHART_H - 5}
                   textAnchor="middle"
-                  fill={dp.isCurrent ? 'rgba(255,255,255,0.6)' : 'var(--alpha-text-25)'}
+                  fill={dp.isCurrent ? 'var(--alpha-text-55)' : 'var(--alpha-text-25)'}
                   fontSize="7.5"
                   fontFamily="var(--font-mono)"
                   fontWeight={dp.isCurrent ? '700' : '500'}

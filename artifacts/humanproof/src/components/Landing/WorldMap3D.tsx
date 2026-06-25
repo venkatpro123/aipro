@@ -179,7 +179,7 @@ export function WorldMap3D() {
 
           <text
             x={VB_W / 2} y={VB_H - 10} textAnchor="middle"
-            fontSize="9" fill="rgba(255,255,255,0.16)"
+            fontSize="9" fill="var(--alpha-text-25)"
             fontFamily="'JetBrains Mono', monospace" letterSpacing="0.12em"
           >
             LIVE INTELLIGENCE MONITORING · 28+ COUNTRIES

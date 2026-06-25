@@ -104,7 +104,7 @@ const RiskSparkline: React.FC<{
       </defs>
       {[0, 25, 50, 75, 100].map(v => (
         <g key={v}>
-          <line x1={PAD.left} y1={toY(v)} x2={PAD.left + cW} y2={toY(v)} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+          <line x1={PAD.left} y1={toY(v)} x2={PAD.left + cW} y2={toY(v)} stroke="var(--alpha-bg-04)" strokeWidth="1" />
           <text x={PAD.left - 4} y={toY(v) + 4} textAnchor="end" fill={C.text3} fontSize="9" fontFamily={C.mono}>{v}</text>
         </g>
       ))}

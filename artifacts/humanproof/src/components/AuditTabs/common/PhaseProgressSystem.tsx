@@ -205,7 +205,7 @@ const PhaseBlock: React.FC<{
       layout
       className="rounded-2xl overflow-hidden"
       style={{
-        background: unlocked ? 'var(--alpha-bg-04)' : 'rgba(255,255,255,0.015)',
+        background: unlocked ? 'var(--alpha-bg-04)' : 'var(--alpha-bg-04)',
         border: `1px solid ${unlocked ? `${cfg.accent}30` : 'var(--alpha-bg-06)'}`,
         filter: unlocked ? 'none' : 'saturate(0)',
       }}

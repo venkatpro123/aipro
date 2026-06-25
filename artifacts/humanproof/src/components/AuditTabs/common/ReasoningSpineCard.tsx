@@ -54,7 +54,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
       transition={{ duration: 0.3, ease: EASE }}
       className="rounded-2xl p-3 sm:p-4 relative overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, ${ACCENT}14, rgba(255,255,255,0.02))`,
+        background: `linear-gradient(135deg, ${ACCENT}14, var(--alpha-bg-04))`,
         border: `1px solid ${ACCENT}30`,
       }}
     >

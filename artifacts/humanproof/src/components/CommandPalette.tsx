@@ -178,7 +178,7 @@ export const CommandPalette: React.FC = () => {
                           <Icon className="w-3.5 h-3.5" style={{ color: isSelected ? 'var(--cyan)' : 'var(--alpha-text-45)' }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold truncate" style={{ color: isSelected ? 'rgba(255,255,255,0.90)' : 'var(--alpha-text-55)' }}>
+                          <p className="text-[12px] font-semibold truncate" style={{ color: isSelected ? 'var(--alpha-text-92)' : 'var(--alpha-text-55)' }}>
                             {item.label}
                           </p>
                           <p className="text-[10px] truncate" style={{ color: 'var(--alpha-text-30)' }}>

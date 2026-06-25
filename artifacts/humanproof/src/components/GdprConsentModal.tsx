@@ -305,7 +305,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
           style={{
             width: '100%', padding: '13px 0', borderRadius: 10, border: 'none',
             background: saving ? 'rgba(0,212,224,0.30)' : 'var(--cyan, #00d4e0)',
-            color: saving ? 'rgba(255,255,255,0.60)' : '#0a0f1a',
+            color: saving ? 'var(--alpha-text-55)' : '#0a0f1a',
             fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer',
             transition: 'background 0.2s',
           }}

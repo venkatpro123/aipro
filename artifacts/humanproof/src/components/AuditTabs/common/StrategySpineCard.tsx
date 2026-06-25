@@ -80,7 +80,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
       style={{
-        background: `linear-gradient(135deg, ${accent}10, rgba(255,255,255,0.02))`,
+        background: `linear-gradient(135deg, ${accent}10, var(--alpha-bg-04))`,
         border: `1px solid ${accent}30`,
       }}
     >
@@ -135,7 +135,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
 
       {/* Unified beat: time remaining + main concern + best opportunity */}
       <div className="px-4 pb-4 space-y-2">
-        <Row icon={CalendarClock} color="rgba(255,255,255,0.55)" label="Time"
+        <Row icon={CalendarClock} color="var(--alpha-text-55)" label="Time"
           text={safetyWindowPhrase(strategy.estimatedSafetyWindowDays)} />
         {strategy.singleBiggestRisk && (
           <Row icon={ShieldAlert} color="#f59e0b" label="Main Concern"

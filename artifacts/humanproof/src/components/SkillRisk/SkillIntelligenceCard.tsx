@@ -336,7 +336,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
         </div>
 
         {/* Right Side: Decomposition & Action */}
-        <div style={{ padding: 32, background: "rgba(255,255,255,0.01)" }}>
+        <div style={{ padding: 32, background: "transparent" }}>
           <div style={{ marginBottom: 32 }}>
             <div
               style={{

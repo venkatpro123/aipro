@@ -92,7 +92,7 @@ const TimelineNode: React.FC<{
       <p
         className="text-[9px] text-center font-semibold"
         style={{
-          color: isNow ? 'rgba(255,255,255,0.65)' : isPast ? 'var(--alpha-text-30)' : 'var(--alpha-text-45)',
+          color: isNow ? 'var(--alpha-text-55)' : isPast ? 'var(--alpha-text-30)' : 'var(--alpha-text-45)',
           letterSpacing: isNow ? '0.06em' : undefined,
         }}
       >
@@ -111,7 +111,7 @@ const Connector: React.FC<{ dashed?: boolean }> = ({ dashed }) => (
       width: 20,
       height: 1,
       background: dashed ? undefined : 'var(--alpha-bg-08)',
-      borderTop: dashed ? '1px dashed rgba(255,255,255,0.15)' : undefined,
+      borderTop: dashed ? '1px dashed var(--alpha-bg-08)' : undefined,
       // Shift up so the line sits in the center of the score chip (~32px tall),
       // not at the midpoint of the entire node column (chip + label).
       marginBottom: 18,

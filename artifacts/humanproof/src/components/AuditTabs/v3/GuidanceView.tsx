@@ -355,7 +355,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         <Section delay={0.18} card>
           <SectionLabel text="Confidence & Trust" />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="rgba(255,255,255,0.55)" />
+            <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="var(--alpha-text-55)" />
             {confidenceSummary.lowDataWarning && (
               <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />
             )}
@@ -579,7 +579,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           <ConfidenceBadge
             text={`${confidenceSummary.confidencePercent}% confident`}
-            color="rgba(255,255,255,0.55)"
+            color="var(--alpha-text-55)"
           />
           {confidenceSummary.lowDataWarning && (
             <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />

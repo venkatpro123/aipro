@@ -120,7 +120,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
         <div style={{ color: "#00F5FF", marginBottom: "8px", fontWeight: 600 }}>
           ⚠️ WHY HIGH SIGNALS DON'T ALWAYS MEAN HIGH RISK
         </div>
-        <div style={{ color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>
+        <div style={{ color: "var(--alpha-text-70)", lineHeight: 1.5 }}>
           Each agent is weighted by category (Market 32%, Company 30%, AI 22%,
           External 16%). Related agents compete in clusters, reducing their
           individual impact. Time decay also reduces older signals. Final score

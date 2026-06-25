@@ -62,7 +62,7 @@ export const ScoreSignalOrbit: React.FC<Props> = ({ nodes, className }) => {
           position: 'absolute',
           inset: 0,
           borderRadius: '50%',
-          border: '1px dashed rgba(255,255,255,0.07)',
+          border: '1px dashed var(--alpha-bg-06)',
         }}
       />
       {nodes.map((node, i) => {

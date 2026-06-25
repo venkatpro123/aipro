@@ -79,7 +79,7 @@ export const SharpenScorePrompt: React.FC = () => {
           onClick={() => setOpen(true)}
           className="w-full rounded-2xl px-4 py-3 flex items-start gap-3 text-left transition-all"
           style={{
-            background: `linear-gradient(135deg, ${ACCENT}14, rgba(255,255,255,0.02))`,
+            background: `linear-gradient(135deg, ${ACCENT}14, var(--alpha-bg-04))`,
             border: `1px solid ${ACCENT}30`,
             cursor: 'pointer',
           }}

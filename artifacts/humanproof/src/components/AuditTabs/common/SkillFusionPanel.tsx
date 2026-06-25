@@ -96,7 +96,7 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
       transition={{ delay: index * 0.07 }}
       className={`rounded-xl overflow-hidden`}
       style={{
-        background: isHighlighted ? `${premiumColor}09` : 'rgba(255,255,255,0.035)',
+        background: isHighlighted ? `${premiumColor}09` : 'var(--alpha-bg-04)',
         border: isHighlighted ? `1px solid ${premiumColor}30` : '1px solid var(--alpha-bg-08)',
       }}
     >

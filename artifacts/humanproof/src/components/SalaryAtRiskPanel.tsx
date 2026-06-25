@@ -974,7 +974,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                   className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border transition-colors font-mono uppercase tracking-wider"
                   style={{
                     borderColor: showInUsd ? 'rgba(6,182,212,0.5)' : 'var(--alpha-bg-08)',
-                    color:       showInUsd ? 'rgb(6,182,212)' : 'rgba(255,255,255,0.4)',
+                    color:       showInUsd ? 'rgb(6,182,212)' : 'var(--alpha-text-35)',
                     background:  showInUsd ? 'rgba(6,182,212,0.08)' : 'transparent',
                   }}
                 >
@@ -1034,7 +1034,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                         <line x1={PAD.l} y1={y} x2={SVG_W - PAD.r} y2={y}
                           stroke="var(--alpha-bg-06)" strokeWidth="1" />
                         <text x={PAD.l - 4} y={y + 3} textAnchor="end"
-                          fill="rgba(255,255,255,0.35)" fontSize="9" fontFamily="monospace">
+                          fill="var(--alpha-text-30)" fontSize="9" fontFamily="monospace">
                           {formatMoney(toDisplay(val), displayCurrency)}
                         </text>
                       </g>
@@ -1046,7 +1046,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                     const x = idx >= 0 ? PAD.l + (idx / (trajectory.length - 1)) * plotW : 0;
                     return (
                       <text key={m} x={x} y={SVG_H - 8} textAnchor="middle"
-                        fill="rgba(255,255,255,0.35)" fontSize="9" fontFamily="monospace">
+                        fill="var(--alpha-text-30)" fontSize="9" fontFamily="monospace">
                         M{m}
                       </text>
                     );
@@ -1090,9 +1090,9 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                         {baseX >= 0 && (
                           <>
                             <line x1={baseX} y1={PAD.t} x2={baseX} y2={PAD.t + plotH}
-                              stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="3 3" />
+                              stroke="var(--alpha-bg-08)" strokeWidth="1" strokeDasharray="3 3" />
                             <text x={baseX - 4} y={PAD.t + 14} textAnchor="end"
-                              fill="rgba(255,255,255,0.28)" fontSize="7" fontFamily="monospace">
+                              fill="var(--alpha-text-25)" fontSize="7" fontFamily="monospace">
                               Base M{params.baseStableMonths}
                             </text>
                           </>
@@ -1212,7 +1212,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                   className="ml-auto text-[9px] px-2 py-0.5 rounded border transition-colors font-mono uppercase tracking-wider"
                   style={{
                     borderColor: showScenario ? SCENARIO_COLORS.scenario : 'var(--alpha-bg-08)',
-                    color:       showScenario ? SCENARIO_COLORS.scenario : 'rgba(255,255,255,0.4)',
+                    color:       showScenario ? SCENARIO_COLORS.scenario : 'var(--alpha-text-35)',
                     background:  showScenario ? `${SCENARIO_COLORS.scenario}12` : 'transparent',
                   }}
                 >

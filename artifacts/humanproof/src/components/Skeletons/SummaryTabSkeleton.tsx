@@ -18,7 +18,7 @@ export const SummaryTabSkeleton: React.FC = () => (
         </div>
         {/* Ring placeholder */}
         <div className="w-28 h-28 rounded-full" style={{
-          background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',
+          background: 'linear-gradient(90deg, var(--alpha-bg-04) 25%, var(--alpha-bg-08) 50%, var(--alpha-bg-04) 75%)',
           backgroundSize: '200% 100%',
           animation: 'skeleton-shimmer 1.4s ease-in-out infinite',
         }} />
@@ -45,7 +45,7 @@ export const SummaryTabSkeleton: React.FC = () => (
         <div className="w-8 h-8 rounded-full flex-shrink-0" style={{
           background: 'var(--alpha-bg-06)', animation: 'skeleton-shimmer 1.4s ease-in-out infinite',
           backgroundSize: '200% 100%',
-          backgroundImage: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',
+          backgroundImage: 'linear-gradient(90deg, var(--alpha-bg-04) 25%, var(--alpha-bg-08) 50%, var(--alpha-bg-04) 75%)',
         }} />
         <div className="flex-1 flex flex-col gap-2">
           <TextSkeleton width="70%" height={12} />

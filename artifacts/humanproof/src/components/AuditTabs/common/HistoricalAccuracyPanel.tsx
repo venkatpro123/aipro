@@ -116,7 +116,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
         </span>
         <span
           className="ml-auto text-[10px] font-black px-2 py-0.5 rounded"
-          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'var(--font-mono)' }}
+          style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-35)', border: '1px solid var(--alpha-bg-08)', fontFamily: 'var(--font-mono)' }}
         >
           {calibration.dataSource === 'database' ? 'LIVE DATA' : calibration.dataSource === 'hybrid' ? 'HYBRID' : 'RESEARCH GROUNDED'}
         </span>

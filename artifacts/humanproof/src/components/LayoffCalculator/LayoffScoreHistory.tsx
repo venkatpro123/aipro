@@ -225,7 +225,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                 <div style={{
                   padding: '8px 16px',
                   borderTop: '1px solid var(--alpha-bg-06)',
-                  background: 'rgba(255,255,255,0.015)',
+                  background: 'var(--alpha-bg-04)',
                   fontSize: '0.73rem',
                   color: outcome === 'correct' ? '#10b981' : '#6b7280',
                 }}>

@@ -51,7 +51,7 @@ function ProbabilityGauge({ probability, label, color }: { probability: number; 
     <div className="flex flex-col items-center gap-1.5">
       <div className="relative w-16 h-16">
         <svg className="w-full h-full" viewBox="0 0 56 56">
-          <circle cx="28" cy="28" r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="5" strokeLinecap="round"
+          <circle cx="28" cy="28" r={r} fill="none" stroke="var(--alpha-bg-06)" strokeWidth="5" strokeLinecap="round"
             strokeDasharray={`${circ}`} strokeDashoffset="0" transform="rotate(-90 28 28)" />
           <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="5" strokeLinecap="round"
             strokeDasharray={`${circ}`} strokeDashoffset={`${circ * (1 - probability)}`} transform="rotate(-90 28 28)" />

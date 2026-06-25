@@ -27,7 +27,7 @@ export const GaugeDial: React.FC<GaugeDialProps> = ({
   label = "EXPOSURE",
   size = 140,
   color,
-  trackColor = "rgba(255,255,255,0.05)",
+  trackColor = "var(--alpha-bg-06)",
   className = "",
   showTicks = false,
 }) => {
@@ -169,7 +169,7 @@ export const GaugeDial: React.FC<GaugeDialProps> = ({
             y1={t.inner.y}
             x2={t.outer.x}
             y2={t.outer.y}
-            stroke="rgba(255,255,255,0.15)"
+            stroke="var(--alpha-bg-08)"
             strokeWidth={1.5}
           />
         ))}

@@ -126,9 +126,9 @@ export function SignalAttributionWaterfall({ result }: Props) {
         <line
           x1={scoreToX(50)} y1={0}
           x2={scoreToX(50)} y2={totalHeight - 30}
-          stroke="rgba(255,255,255,0.1)" strokeWidth={1} strokeDasharray="3 3"
+          stroke="var(--alpha-bg-08)" strokeWidth={1} strokeDasharray="3 3"
         />
-        <text x={scoreToX(50)} y={totalHeight - 15} textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.3)">
+        <text x={scoreToX(50)} y={totalHeight - 15} textAnchor="middle" fontSize="9" fill="var(--alpha-text-30)">
           50 (neutral)
         </text>
 
@@ -147,7 +147,7 @@ export function SignalAttributionWaterfall({ result }: Props) {
                 y={y + BAR_HEIGHT / 2 + 3}
                 textAnchor="end"
                 fontSize="9"
-                fill="rgba(255,255,255,0.55)"
+                fill="var(--alpha-text-55)"
               >
                 {bar.shortLabel}
               </text>
@@ -157,7 +157,7 @@ export function SignalAttributionWaterfall({ result }: Props) {
                 <line
                   x1={scoreToX(bar.start)} y1={y}
                   x2={scoreToX(bar.start)} y2={y - GAP}
-                  stroke="rgba(255,255,255,0.12)" strokeWidth={1}
+                  stroke="var(--alpha-bg-08)" strokeWidth={1}
                 />
               )}
 
@@ -217,9 +217,9 @@ export function SignalAttributionWaterfall({ result }: Props) {
         <line
           x1={scoreToX(result.total)} y1={0}
           x2={scoreToX(result.total)} y2={totalHeight - 30}
-          stroke="rgba(255,255,255,0.4)" strokeWidth={1.5}
+          stroke="var(--alpha-text-35)" strokeWidth={1.5}
         />
-        <text x={scoreToX(result.total)} y={totalHeight - 15} textAnchor="middle" fontSize="9" fontWeight="bold" fill="rgba(255,255,255,0.7)">
+        <text x={scoreToX(result.total)} y={totalHeight - 15} textAnchor="middle" fontSize="9" fontWeight="bold" fill="var(--alpha-text-70)">
           {result.total}
         </text>
       </svg>

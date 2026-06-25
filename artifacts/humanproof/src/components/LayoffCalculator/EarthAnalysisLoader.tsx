@@ -306,7 +306,7 @@ const GlobeSVG: React.FC = () => (
 
       {/* Cloud fill */}
       <linearGradient id="eal-cloud" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%"   stopColor="rgba(255,255,255,0.55)" />
+        <stop offset="0%"   stopColor="var(--alpha-text-55)" />
         <stop offset="100%" stopColor="rgba(235,245,255,0.35)" />
       </linearGradient>
 
@@ -321,8 +321,8 @@ const GlobeSVG: React.FC = () => (
 
       {/* Specular highlight */}
       <radialGradient id="eal-spec" cx="32%" cy="26%" r="42%">
-        <stop offset="0%"   stopColor="rgba(255,255,255,0.12)" />
-        <stop offset="60%"  stopColor="rgba(255,255,255,0.03)" />
+        <stop offset="0%"   stopColor="var(--alpha-bg-08)" />
+        <stop offset="60%"  stopColor="var(--alpha-bg-04)" />
         <stop offset="100%" stopColor="transparent" />
       </radialGradient>
 

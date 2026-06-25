@@ -82,7 +82,7 @@ const Ring: React.FC<{ pct: number; color: string; size?: number }> = ({ pct, co
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
       <circle cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+        stroke="var(--alpha-bg-06)" strokeWidth="3" />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none"
         stroke={color} strokeWidth="3" strokeLinecap="round"
         strokeDasharray={c} strokeDashoffset={offset}

@@ -566,7 +566,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                       autoFocus
                       className="w-full rounded-2xl text-sm font-medium pl-10 pr-12 py-3.5 outline-none"
                       style={{
-                        background: 'var(--alpha-bg-06)', border: '1.5px solid rgba(255,255,255,0.12)',
+                        background: 'var(--alpha-bg-06)', border: '1.5px solid var(--alpha-bg-08)',
                         color: '#fff', caretColor: '#22d3ee',
                       }}
                     />
@@ -690,7 +690,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     autoFocus
                     className="w-full rounded-2xl text-sm font-medium pl-10 pr-4 py-3.5 outline-none"
                     style={{
-                      background: 'var(--alpha-bg-06)', border: '1.5px solid rgba(255,255,255,0.12)',
+                      background: 'var(--alpha-bg-06)', border: '1.5px solid var(--alpha-bg-08)',
                       color: '#fff', caretColor: '#22d3ee',
                     }}
                   />

@@ -92,7 +92,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
         <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div
             className="text-sm font-black"
-            style={{ color: restructuringPct >= 70 ? '#ef4444' : restructuringPct >= 50 ? '#f97316' : 'rgba(255,255,255,0.9)' }}
+            style={{ color: restructuringPct >= 70 ? '#ef4444' : restructuringPct >= 50 ? '#f97316' : 'var(--alpha-text-92)' }}
           >
             {restructuringPct}%
           </div>

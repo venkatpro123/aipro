@@ -24,7 +24,7 @@ const C = {
   bg2:       'var(--alpha-bg-04)',
   bg3:       'var(--alpha-bg-06)',
   border:    'var(--alpha-bg-08)',
-  borderHi:  'rgba(255,255,255,0.14)',
+  borderHi:  'var(--alpha-bg-08)',
   cyan:      '#00F5FF',
   violet:    '#7C3AFF',
   green:     '#10b981',

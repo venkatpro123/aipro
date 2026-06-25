@@ -363,7 +363,7 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: activeTab === tab.key ? 'rgba(255,255,255,0.1)' : 'transparent',
+                background: activeTab === tab.key ? 'var(--alpha-bg-08)' : 'transparent',
                 color: activeTab === tab.key ? 'var(--text)' : 'var(--text-3)',
                 fontWeight: 700, fontSize: '0.75rem', transition: 'all 0.2s',
               }}

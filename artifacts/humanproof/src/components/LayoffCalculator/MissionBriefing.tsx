@@ -67,7 +67,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
         <div style={{ color: "#10b981", fontWeight: 700, marginBottom: "8px" }}>
           ALL OBJECTIVES COMPLETE
         </div>
-        <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem" }}>
+        <div style={{ color: "var(--alpha-text-55)", fontSize: "0.85rem" }}>
           Your risk profile is stable. Continue monitoring.
         </div>
       </div>
@@ -210,7 +210,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
               {/* Briefing */}
               <div
                 style={{
-                  color: "rgba(255,255,255,0.7)",
+                  color: "var(--alpha-text-70)",
                   fontSize: "0.85rem",
                   lineHeight: 1.5,
                   marginBottom: "12px",
@@ -240,7 +240,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
                   <span style={{ color: "var(--alpha-text-35)" }}>✓</span>
-                  <span style={{ color: "rgba(255,255,255,0.7)" }}>
+                  <span style={{ color: "var(--alpha-text-70)" }}>
                     SUCCESS: {obj.successCriteria}
                   </span>
                 </div>

@@ -35,7 +35,7 @@ export const IntelligenceHeader: React.FC<Props> = ({ result, agentic }) => {
       {/* Mini score ring */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
         <svg width="44" height="44" viewBox="0 0 44 44">
-          <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3.5" />
+          <circle cx="22" cy="22" r="18" fill="none" stroke="var(--alpha-bg-06)" strokeWidth="3.5" />
           <circle cx="22" cy="22" r="18" fill="none"
             stroke={scoreColor} strokeWidth="3.5"
             strokeDasharray={circumference}

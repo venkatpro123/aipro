@@ -126,7 +126,7 @@ export default function DisplacementForecast({ onNavigate }: { onNavigate?: (tab
             <CartesianGrid strokeDasharray="3 3" stroke="var(--alpha-bg-06)" />
             <XAxis dataKey="year" tick={{ fill: 'var(--text2)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
             <YAxis domain={[0, 100]} tick={{ fill: 'var(--text2)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--alpha-bg-08)' }} />
             <Legend formatter={(value) => <span style={{ color: 'var(--text2)', fontSize: '0.8rem', textTransform: 'capitalize' }}>{value}</span>} wrapperStyle={{ paddingTop: 16 }} />
             <ReferenceLine
               y={threshold}

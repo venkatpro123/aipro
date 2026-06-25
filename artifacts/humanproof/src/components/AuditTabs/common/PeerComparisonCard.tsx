@@ -149,7 +149,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
                   )}
                   <span
                     className="text-[11px] font-semibold truncate"
-                    style={{ color: peer.isCurrentCompany ? 'rgba(255,255,255,0.90)' : 'var(--alpha-text-55)' }}
+                    style={{ color: peer.isCurrentCompany ? 'var(--alpha-text-92)' : 'var(--alpha-text-55)' }}
                   >
                     {peer.name}
                   </span>

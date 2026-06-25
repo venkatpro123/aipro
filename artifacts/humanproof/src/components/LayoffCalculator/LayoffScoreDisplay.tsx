@@ -139,7 +139,7 @@ const ClassificationBadge: React.FC<{
         </div>
         <div
           style={{
-            color: "rgba(255,255,255,0.6)",
+            color: "var(--alpha-text-55)",
             fontSize: "0.8rem",
             marginTop: "2px",
           }}
@@ -687,7 +687,7 @@ const AnimatedScore: React.FC<{
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255,255,255,0.1)"
+          stroke="var(--alpha-bg-08)"
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -829,7 +829,7 @@ const LayerBar: React.FC<{ label: string; value: number; weight: string }> = ({
           left: 0,
           zIndex: 50,
           background: "rgba(10,15,25,0.97)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: "1px solid var(--alpha-bg-08)",
           borderRadius: "8px",
           padding: "10px 14px",
           fontSize: "0.78rem",
@@ -1502,8 +1502,8 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           fontStyle: "italic",
           textAlign: "center",
           padding: "16px",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          borderTop: "1px solid var(--alpha-bg-08)",
+          borderBottom: "1px solid var(--alpha-bg-08)",
           marginBottom: "32px",
         }}
       >

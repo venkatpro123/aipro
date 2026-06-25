@@ -41,7 +41,7 @@ export const FinancialRunwayIllustration: React.FC<IllustrationProps> = ({ size 
       </g>
     ))}
     {/* Axis */}
-    <line x1="20" y1="85" x2="100" y2="85" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+    <line x1="20" y1="85" x2="100" y2="85" stroke="var(--alpha-bg-06)" strokeWidth="0.5" />
     {/* Trend line */}
     <path d="M30 40 L45 50 L60 35 L75 55 L90 70" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="3 2" />
     <text x="60" y="105" textAnchor="middle" fill="#f59e0b" fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">RUNWAY</text>
@@ -96,7 +96,7 @@ export const InterviewIllustration: React.FC<IllustrationProps> = ({ size = 120,
 export const NegotiationIllustration: React.FC<IllustrationProps> = ({ size = 120, className }) => (
   <svg viewBox="0 0 120 120" width={size} height={size} className={className} aria-hidden="true">
     {/* Pillar */}
-    <line x1="60" y1="25" x2="60" y2="85" stroke="rgba(255,255,255,0.10)" strokeWidth="2" />
+    <line x1="60" y1="25" x2="60" y2="85" stroke="var(--alpha-bg-08)" strokeWidth="2" />
     {/* Beam */}
     <line x1="30" y1="45" x2="90" y2="40" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.4" />
     {/* Fulcrum triangle */}

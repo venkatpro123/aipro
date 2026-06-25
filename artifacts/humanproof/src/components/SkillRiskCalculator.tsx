@@ -767,7 +767,7 @@ export default function SkillRiskCalculator({
                       }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background =
-                          "rgba(255,255,255,0.05)")
+                          "var(--alpha-bg-06)")
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.background = "transparent")
@@ -1227,7 +1227,7 @@ export default function SkillRiskCalculator({
                     background: "var(--alpha-bg-06)",
                     padding: "4px 12px",
                     borderRadius: 4,
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    border: "1px solid var(--alpha-bg-08)",
                   }}
                 >
                   {selectedSkills.length}

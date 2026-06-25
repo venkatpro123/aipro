@@ -309,7 +309,7 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
       {/* Shimmer overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%)',
+        background: 'linear-gradient(110deg, transparent 30%, var(--alpha-bg-08) 50%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 

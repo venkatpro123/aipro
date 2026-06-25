@@ -112,7 +112,7 @@ const PillarRow: React.FC<{
           <div className="flex items-center justify-between mb-1">
             <span
               className="text-[11px] font-semibold truncate"
-              style={{ color: isCritical ? cfg.color : isTop ? 'rgba(255,255,255,0.90)' : 'var(--alpha-text-70)' }}
+              style={{ color: isCritical ? cfg.color : isTop ? 'var(--alpha-text-92)' : 'var(--alpha-text-70)' }}
             >
               {pillar.name}
               {isTop && (

@@ -106,8 +106,8 @@ export const ConflictDisclosurePanel: React.FC<Props> = ({
                         key={j}
                         className="text-xs px-2 py-1 rounded-lg border"
                         style={{
-                          background:   "rgba(255,255,255,0.04)",
-                          borderColor:  "rgba(255,255,255,0.08)",
+                          background: "var(--alpha-bg-04)",
+                          borderColor: "var(--alpha-bg-08)",
                           color:        "var(--text-2)",
                         }}
                       >

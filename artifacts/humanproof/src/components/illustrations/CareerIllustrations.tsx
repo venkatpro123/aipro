@@ -101,7 +101,7 @@ export const OpportunityIllustration: React.FC<IllustrationProps> = ({ size = 12
     </defs>
     {/* Grid lines */}
     {[30, 50, 70, 90].map(y => (
-      <line key={y} x1="20" y1={y} x2="100" y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
+      <line key={y} x1="20" y1={y} x2="100" y2={y} stroke="var(--alpha-bg-04)" strokeWidth="0.5" />
     ))}
     {/* Growth area */}
     <path d="M20 90 L40 75 L55 78 L70 55 L85 35 L100 25 L100 90 Z" fill="url(#opp-fill)" />
@@ -212,7 +212,7 @@ export const MarketDynamicsIllustration: React.FC<IllustrationProps> = ({ size =
       </g>
     ))}
     {/* Bottom axis */}
-    <line x1="15" y1="95" x2="105" y2="95" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+    <line x1="15" y1="95" x2="105" y2="95" stroke="var(--alpha-bg-06)" strokeWidth="0.5" />
     <text x="60" y="110" textAnchor="middle" fill="#00d4e0" fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">MARKET DYNAMICS</text>
   </svg>
 );

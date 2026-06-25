@@ -249,7 +249,7 @@ export const SeniorityBracketConfirmation: React.FC<SeniorityBracketConfirmation
                     onClick={() => applyOverride(bracket)}
                     className="flex flex-col items-start p-2.5 rounded-lg border text-left transition-all"
                     style={{
-                      borderColor: isDerived ? 'var(--violet, #8b5cf6)' : 'rgba(255,255,255,0.1)',
+                      borderColor: isDerived ? 'var(--violet, #8b5cf6)' : 'var(--alpha-bg-08)',
                       background:  isSelected ? 'rgba(139,92,246,0.15)' : 'var(--alpha-bg-04)',
                     }}
                   >

@@ -78,7 +78,7 @@ export const RiskCalculatorsView: React.FC<Props> = ({ onSwitchTab }) => {
               color:
                 activeCalculator === calc.id
                   ? "var(--cyan, #00F5FF)"
-                  : "rgba(255,255,255,0.6)",
+                  : "var(--alpha-text-55)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -128,7 +128,7 @@ export const RiskCalculatorsView: React.FC<Props> = ({ onSwitchTab }) => {
         </div>
         <p
           style={{
-            color: "rgba(255,255,255,0.6)",
+            color: "var(--alpha-text-55)",
             fontSize: "0.85rem",
             margin: 0,
           }}
