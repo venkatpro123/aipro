@@ -49,6 +49,7 @@ import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 // Beast Mode V3 — new AI OS components
 import { AIMemoryCard } from '../common/AIMemoryCard';
 import { RiskTrendChart } from '../common/RiskTrendChart';
+import { AchievementGallery } from '../../../components/AchievementGallery';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
 function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
@@ -985,6 +986,9 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         daysSinceLastAudit={daysSinceLastAudit}
         completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
       />
+
+      {/* ── Phase 9/18: Achievement Gallery — Career Title ladder + badges */}
+      <AchievementGallery />
 
       {/* ── Risk Trend Chart — visual score evolution over audit history */}
       {scoreHistoryForTimeline.length >= 1 && (

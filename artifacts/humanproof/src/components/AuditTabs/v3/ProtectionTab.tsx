@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import type { TabProps } from '../common/types';
 import SkillGapIntelligencePanel from '../common/SkillGapIntelligencePanel';
 import SkillPortfolioPanel from '../common/SkillPortfolioPanel';
@@ -103,9 +104,9 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
       {radarDimensions.length >= 3 && (
         <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
       )}
-      {skillGap      && <SkillGapIntelligencePanel skillGapIntelligence={skillGap} />}
-      {skillPortfolio && <SkillPortfolioPanel portfolio={skillPortfolio} />}
-      {intel && <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} />}
+      {skillGap      && <ScrollReveal><SkillGapIntelligencePanel skillGapIntelligence={skillGap} /></ScrollReveal>}
+      {skillPortfolio && <ScrollReveal><SkillPortfolioPanel portfolio={skillPortfolio} /></ScrollReveal>}
+      {intel && <ScrollReveal><AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} /></ScrollReveal>}
       {/* Skill dependency graph — derived from safe/at-risk skills */}
       {(() => {
         if (!intel) return null;
@@ -125,23 +126,27 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
           }
           if (safe.length >= 2) edges.push({ from: `safe-1`, to: `safe-0` });
         }
-        return nodes.length >= 3 ? <SkillDependencyGraph nodes={nodes} edges={edges} /> : null;
+        return nodes.length >= 3 ? <ScrollReveal><SkillDependencyGraph nodes={nodes} edges={edges} /></ScrollReveal> : null;
       })()}
 
       {careerPaths.length > 0 && (
-        <CareerPathMap
-          currentRole={currentRoleLabel}
-          currentScore={result.total}
-          paths={careerPaths}
-        />
+        <ScrollReveal>
+          <CareerPathMap
+            currentRole={currentRoleLabel}
+            currentScore={result.total}
+            paths={careerPaths}
+          />
+        </ScrollReveal>
       )}
 
-      <CareerEvolutionTimeline
-        currentRole={currentRoleLabel}
-        currentScore={result.total}
-        adjacentRoles={r.roleAdjacency?.adjacentRoles ?? []}
-        twoHopPaths={r.roleAdjacency?.twoHopPaths}
-      />
+      <ScrollReveal>
+        <CareerEvolutionTimeline
+          currentRole={currentRoleLabel}
+          currentScore={result.total}
+          adjacentRoles={r.roleAdjacency?.adjacentRoles ?? []}
+          twoHopPaths={r.roleAdjacency?.twoHopPaths}
+        />
+      </ScrollReveal>
       {!hasContent && (
         <div className="rounded-xl px-4 py-8 text-center flex flex-col items-center gap-3" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <SkillEvolutionIllustration size={80} />
