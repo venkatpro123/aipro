@@ -14,6 +14,25 @@ export interface RoleExposure {
   demandTrend: 'rising' | 'stable' | 'falling';
 }
 
+// ── Staleness disclosure ────────────────────────────────────────────────────
+// PROBLEM: these 210+ per-role risk scores are hardcoded with no refresh path
+// and — until now — no staleness disclosure, unlike industryRiskData.ts which
+// surfaces an explicit "as of [date] — N months old" label for its baselines.
+// Same pattern, applied here. (The role_exposure_data Supabase table mirrors
+// this file's vintage — it was seeded from it and has no independent refresh
+// job either, so the same dataAsOf applies regardless of which path serves it.)
+export const ROLE_EXPOSURE_DATA_AS_OF = '2026-01-01';
+export const ROLE_EXPOSURE_DATA_STALE_DAYS = 180;
+
+export function getRoleExposureDataAgeDays(): number {
+  const asOf = new Date(ROLE_EXPOSURE_DATA_AS_OF).getTime();
+  return Math.max(0, Math.round((Date.now() - asOf) / (24 * 60 * 60 * 1000)));
+}
+
+export function isRoleExposureDataStale(): boolean {
+  return getRoleExposureDataAgeDays() > ROLE_EXPOSURE_DATA_STALE_DAYS;
+}
+
 export const roleExposureData: Record<string, RoleExposure> = {
   // ── HIGH RISK ROLES (layoffRisk 0.65–0.95) ──
   'Data Entry Specialist':           { aiRisk: 0.97, layoffRisk: 0.88, demandTrend: 'falling' },

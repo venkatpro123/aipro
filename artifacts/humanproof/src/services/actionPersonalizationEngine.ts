@@ -4058,16 +4058,22 @@ function buildActionReservoir<T extends { title?: string }>(
       reservoir.push(item);
     }
   }
-  // Lowest-priority tier: advanced ownership/leadership actions, only for
-  // roles with hand-authored Phase-2 content. Only reached once every
-  // urgency-tier action above has already been seen/completed.
-  if (roleGroup && PHASE2_ACTION_DB[roleGroup]) {
-    for (const item of PHASE2_ACTION_DB[roleGroup]) {
-      const id = stableActionId('pa', item.title ?? '');
-      if (seen.has(id)) continue;
-      seen.add(id);
-      reservoir.push(item as T);
-    }
+  // Lowest-priority tier: advanced ownership/leadership actions. Roles with
+  // hand-authored Phase-2 content use it directly; every other role (the
+  // ~150+ multi-industry roles served from separate static pools — healthcare,
+  // manufacturing, energy, etc.) falls back to PHASE2_ACTION_DB.professional_services,
+  // the deliberately domain-agnostic "AI-tooling pilot / judgment-based
+  // contribution / negotiate expanded scope" trio. This means NO role is left
+  // with zero progression once its urgency-tier reservoir is exhausted — the
+  // alternative (nothing) is strictly worse than generic-but-genuine guidance.
+  // Only reached once every urgency-tier action above has already been
+  // seen/completed.
+  const phase2Pool = (roleGroup && PHASE2_ACTION_DB[roleGroup]) || PHASE2_ACTION_DB.professional_services;
+  for (const item of phase2Pool) {
+    const id = stableActionId('pa', item.title ?? '');
+    if (seen.has(id)) continue;
+    seen.add(id);
+    reservoir.push(item as T);
   }
   return reservoir;
 }

@@ -141,7 +141,14 @@ export const ACTION_DB_INDUSTRIAL_ENGINEERING: Record<string, BracketPool> = {
 // ── ALIAS ADDITIONS ──────────────────────────────────────────────────────────
 
 export const ALIAS_ADDITIONS_INDUSTRIAL_ENGINEERING: Record<string, { canonicalKey: string; displayRole: string }> = {
-  'reliability engineer': { canonicalKey: 'reliability_engineer', displayRole: 'Reliability Engineer' },
+  // NOTE: the bare 'reliability engineer' is intentionally NOT aliased here.
+  // On a tech-dominant platform, "Reliability Engineer" unqualified is
+  // overwhelmingly the software/SRE title (chaos engineering, error budgets —
+  // see qa_frontend_mobile_actions.ts's chaos_qa_engineer pool), not the
+  // manufacturing/CMRP discipline this module covers. This module loads
+  // after qa_frontend_mobile_actions.ts and was silently shadowing its
+  // correct mapping. Manufacturing-qualified variants below remain mapped
+  // here since they are unambiguous.
   'maintenance reliability engineer': { canonicalKey: 'reliability_engineer', displayRole: 'Maintenance & Reliability Engineer' },
   'plant reliability engineer': { canonicalKey: 'reliability_engineer', displayRole: 'Plant Reliability Engineer' },
   'cmrp engineer': { canonicalKey: 'reliability_engineer', displayRole: 'Reliability Engineer (CMRP)' },

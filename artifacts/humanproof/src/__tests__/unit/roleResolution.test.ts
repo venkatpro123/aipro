@@ -83,4 +83,18 @@ describe("roleResolution", () => {
     expect(resolveRoleInput("BI Analyst").canonicalKey).toBe("bi_analyst");
     expect(getPersonalizedActions("BI Analyst", "mid", 60, "US").roleGroup).toBe("bi_analyst");
   });
+
+  // Regression: industrial_engineering_actions.ts's alias module (loaded
+  // after qa_frontend_mobile_actions.ts) previously routed the bare
+  // "reliability engineer" — an extremely common, unqualified SOFTWARE/SRE
+  // title on a tech-dominant platform — to its manufacturing reliability_engineer
+  // pool (CMRP, Weibull++, predictive maintenance), shadowing the tech-relevant
+  // chaos_qa_engineer pool (Gremlin, k6, error budgets, FMEA ownership).
+  it("resolves the bare 'Reliability Engineer' to the tech chaos_qa_engineer group, not the manufacturing reliability_engineer group", () => {
+    expect(getPersonalizedActions("Reliability Engineer", "mid", 60, "US").roleGroup).toBe("chaos_qa_engineer");
+
+    // Manufacturing-qualified variants remain unambiguous and unaffected.
+    const manufacturing = getPersonalizedActions("Maintenance Reliability Engineer", "mid", 60, "US");
+    expect(manufacturing.roleGroup).toBe("reliability_engineer");
+  });
 });

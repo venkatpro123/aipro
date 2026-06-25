@@ -567,6 +567,20 @@ export const INDIA_SECTOR_PULSE_SNAPSHOT: Record<string, IndiaSectorPulse> = {
 // Single entry point: given a company name + industry + region,
 // returns the complete India risk enrichment package.
 
+// ── Staleness disclosure ────────────────────────────────────────────────────
+// PROBLEM: INDIA_SECTOR_BENCHMARKS, INDIA_SECTOR_PULSE_SNAPSHOT, and
+// INDIA_CONTAGION_MATRIX are all hardcoded (NASSCOM Tech Trendlines 2025,
+// "Updated: 2025-Q4"), with no refresh path and — until now — no staleness
+// disclosure, unlike industryRiskData.ts and careerPathMarket.ts which both
+// surface an explicit "as of [date]" label. Same pattern, applied here.
+export const INDIA_SECTOR_DATA_AS_OF = '2026-03-01';
+export const INDIA_SECTOR_DATA_STALE_DAYS = 120; // NASSCOM benchmarks refresh quarterly at best
+
+export function getIndiaSectorDataAgeDays(): number {
+  const asOf = new Date(INDIA_SECTOR_DATA_AS_OF).getTime();
+  return Math.max(0, Math.round((Date.now() - asOf) / (24 * 60 * 60 * 1000)));
+}
+
 export interface IndiaRiskEnrichment {
   isIndiaPrimary: boolean;
   sectorBenchmark: IndiaSectorBenchmark;
@@ -579,6 +593,12 @@ export interface IndiaRiskEnrichment {
   compositeRiskMultiplier: number;
   // Human-readable summary for UI / LLM prompt injection
   riskNarrative: string;
+  /** ISO date the NASSCOM-sourced benchmarks above were last calibrated. */
+  dataAsOf: string;
+  /** Days since dataAsOf — same staleness pattern as industryRiskData.ts. */
+  dataAgeDays: number;
+  /** true when dataAgeDays > INDIA_SECTOR_DATA_STALE_DAYS. */
+  isDataStale: boolean;
 }
 
 function mapIndustryToSectorKey(industry: string): string {
@@ -645,6 +665,8 @@ export function getIndiaRiskEnrichment(
     lines.push(`Seasonal risk window: ${seasonalRisk.quarter} (${seasonalRisk.window.months}) — multiplier ×${seasonalRisk.window.riskMultiplier.toFixed(2)}.`);
   }
 
+  const dataAgeDays = getIndiaSectorDataAgeDays();
+
   return {
     isIndiaPrimary,
     sectorBenchmark: benchmark,
@@ -655,5 +677,8 @@ export function getIndiaRiskEnrichment(
     sectorPulse: pulse,
     compositeRiskMultiplier,
     riskNarrative: lines.join(' '),
+    dataAsOf:    INDIA_SECTOR_DATA_AS_OF,
+    dataAgeDays,
+    isDataStale: dataAgeDays > INDIA_SECTOR_DATA_STALE_DAYS,
   };
 }

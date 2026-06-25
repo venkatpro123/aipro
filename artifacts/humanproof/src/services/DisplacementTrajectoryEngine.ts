@@ -73,6 +73,13 @@ export interface TrajectoryResult {
   recommendations: TrajectoryRecommendation[];
   displacementCrossover: string | null;    // year base crosses threshold, or null
   growthPerYear: number;                   // average annual % growth in base scenario
+  /** ISO date the ROLE_GROWTH_PROFILES table below was last calibrated. */
+  dataAsOf: string;
+  /** Days since dataAsOf — same staleness pattern as industryRiskData.ts. */
+  dataAgeDays: number;
+  /** true when dataAgeDays > DISPLACEMENT_DATA_STALE_DAYS — surfaces a disclosure
+   *  to the user instead of silently presenting a years-old forecast as current. */
+  isDataStale: boolean;
 }
 
 // ─── Annual growth rate table ──────────────────────────────────────────────
@@ -88,6 +95,20 @@ type GrowthProfile = {
   pessimisticExtra: number; // additional +% / year on top of base
   optimisticSave: number;   // how many % / year upskilling *saves* vs base
 };
+
+// ── Staleness disclosure ────────────────────────────────────────────────────
+// PROBLEM: this 6-year forecast is built entirely from the hardcoded
+// ROLE_GROWTH_PROFILES table below (WEF/McKinsey/Stanford AI Index sources),
+// with no refresh path and — until now — no staleness disclosure to the
+// user, unlike industryRiskData.ts and careerPathMarket.ts which both surface
+// an explicit "as of [date] — N months old" label. Same pattern, applied here.
+export const DISPLACEMENT_GROWTH_DATA_AS_OF = '2026-02-15';
+export const DISPLACEMENT_DATA_STALE_DAYS = 180; // growth-rate research updates far less often than job-opening counts
+
+export function getDisplacementDataAgeDays(): number {
+  const asOf = new Date(DISPLACEMENT_GROWTH_DATA_AS_OF).getTime();
+  return Math.max(0, Math.round((Date.now() - asOf) / (24 * 60 * 60 * 1000)));
+}
 
 const ROLE_GROWTH_PROFILES: Record<string, GrowthProfile> = {
   // ── Software / Tech ───────────────────────────────────────────────────────
@@ -579,6 +600,8 @@ export const computeTrajectory = (params: TrajectoryEngineParams): TrajectoryRes
     careerIntelligence
   );
 
+  const dataAgeDays = getDisplacementDataAgeDays();
+
   return {
     years,
     threshold,
@@ -591,5 +614,8 @@ export const computeTrajectory = (params: TrajectoryEngineParams): TrajectoryRes
     recommendations,
     displacementCrossover,
     growthPerYear,
+    dataAsOf:     DISPLACEMENT_GROWTH_DATA_AS_OF,
+    dataAgeDays,
+    isDataStale:  dataAgeDays > DISPLACEMENT_DATA_STALE_DAYS,
   };
 };

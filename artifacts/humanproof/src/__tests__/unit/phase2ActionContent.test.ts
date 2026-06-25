@@ -110,14 +110,33 @@ describe('PHASE2_ACTION_DB reachability', () => {
     }
   });
 
-  it('a role with no PHASE2_ACTION_DB entry is unaffected (no spurious content injected)', () => {
+  it('a role with no role-specific PHASE2_ACTION_DB entry gets the generic fallback, not another role\'s specific content', () => {
     // 'Civil Engineer' is served from the separate MANUFACTURING_ENERGY_CONSTRUCTION
-    // multi-industry pool and has no PHASE2_ACTION_DB entry — virtually every
-    // role group in the CORE ACTION_DB now has Phase-2 content.
+    // multi-industry pool and has no role-specific PHASE2_ACTION_DB entry — it
+    // now falls back to PHASE2_ACTION_DB.professional_services (see
+    // buildActionReservoir), not to a SPECIFIC unrelated role's content.
     const result = getPersonalizedActions('Civil Engineer', 'mid', 60, 'IN');
     expect(result.actions.length).toBeGreaterThan(0);
     // None of the swe-specific Phase-2 titles should leak into an unrelated role.
     const titles = result.actions.map(a => a.title ?? '');
     expect(titles.some(t => t.includes('AI-Adoption Reviewer'))).toBe(false);
+  });
+
+  it.each([
+    'Cardiologist', 'Petroleum Engineer', 'Hotel General Manager', 'Pilot', 'Paralegal',
+  ])('multi-industry role "%s" (no hand-authored Phase-2 entry) eventually reaches the generic fallback', (title) => {
+    let completed = new Set<string>();
+    let result = getPersonalizedActions(title, 'mid', 90, 'US', undefined, undefined, undefined, undefined, undefined, undefined, undefined, completed);
+    expect(result.actions.length).toBeGreaterThan(0);
+
+    let foundFallback = result.actions.some(a => (a.title ?? '').includes('AI-Tooling Pilot That Measurably Improves Your Core Workflow'));
+    let guard = 0;
+    while (!foundFallback && !result.allActionsExhausted && guard < 10) {
+      completed = new Set([...completed, ...idsOf(result.actions)]);
+      result = getPersonalizedActions(title, 'mid', 90, 'US', undefined, undefined, undefined, undefined, undefined, undefined, undefined, completed);
+      foundFallback = result.actions.some(a => (a.title ?? '').includes('AI-Tooling Pilot That Measurably Improves Your Core Workflow'));
+      guard++;
+    }
+    expect(foundFallback).toBe(true);
   });
 });

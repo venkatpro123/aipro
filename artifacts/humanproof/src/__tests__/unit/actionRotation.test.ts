@@ -85,24 +85,47 @@ describe('getPersonalizedActions — anti-repetition rotation', () => {
     expect(result.actions).toHaveLength(3); // still returns a usable plan, recycled
   });
 
-  it('a role without Phase-2 content exhausts after the urgency-tier reservoir alone', () => {
+  it('a role with no role-specific Phase-2 content still gets the generic professional_services fallback', () => {
     // 'Civil Engineer' resolves to the 'civil_engineer' roleGroup, served from
     // the separate MANUFACTURING_ENERGY_CONSTRUCTION multi-industry pool — it
-    // has no PHASE2_ACTION_DB entry, so exhaustion is purely a function of the
-    // risk-tier reservoir, same as before the Phase-2 fix. (Virtually every
-    // role group in the CORE ACTION_DB now has Phase-2 content, so a control
-    // case has to come from one of the separate multi-industry pools instead.)
+    // has no role-specific PHASE2_ACTION_DB entry. Rather than exhausting
+    // immediately (the old behaviour), buildActionReservoir now falls back to
+    // PHASE2_ACTION_DB.professional_services so NO role is left with zero
+    // progression once its urgency-tier reservoir is exhausted.
     const fresh = getPersonalizedActions('Civil Engineer', 'junior', 90, 'IN'); // critical risk
     expect(fresh.actions.length).toBeGreaterThan(0);
 
-    const afterAllCompleted = getPersonalizedActions(
+    const rotated = getPersonalizedActions(
       'Civil Engineer', 'junior', 90, 'IN',
       undefined, undefined, undefined, undefined, undefined, undefined, undefined,
       new Set(idsOf(fresh.actions)),
     );
-    // No tier is more urgent than 'critical', and no Phase-2 content exists for
-    // this role — reservoir == critical cell only.
-    expect(afterAllCompleted.allActionsExhausted).toBe(true);
+    // Reservoir now extends into the generic fallback tier — not exhausted yet.
+    expect(rotated.allActionsExhausted).toBeUndefined();
+    const titles = rotated.actions.map(a => a.title ?? '');
+    expect(titles.some(t => t.includes('AI-Tooling Pilot That Measurably Improves Your Core Workflow'))).toBe(true);
+  });
+
+  it('exhausts only after BOTH the urgency-tier reservoir AND the generic fallback are completed', () => {
+    const fresh = getPersonalizedActions('Civil Engineer', 'junior', 90, 'IN');
+    let completed = new Set(idsOf(fresh.actions));
+    let result = getPersonalizedActions(
+      'Civil Engineer', 'junior', 90, 'IN',
+      undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+      completed,
+    );
+    let guard = 0;
+    while (!result.allActionsExhausted && guard < 10) {
+      completed = new Set([...completed, ...idsOf(result.actions)]);
+      result = getPersonalizedActions(
+        'Civil Engineer', 'junior', 90, 'IN',
+        undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+        completed,
+      );
+      guard++;
+    }
+    expect(result.allActionsExhausted).toBe(true);
+    expect(result.actions).toHaveLength(3);
   });
 
   it('a critical-risk swe user who exhausts the urgency tiers receives Phase-2 leadership content next', () => {
