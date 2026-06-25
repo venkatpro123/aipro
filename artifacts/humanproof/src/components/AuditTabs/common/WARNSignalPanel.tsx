@@ -47,7 +47,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4" style={{ color: urgency.color }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-92)' }}>
             WARN Act Filing Detected
           </span>
         </div>
@@ -75,7 +75,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
           <div className="text-[10px] opacity-50 mt-0.5">Until planned layoff</div>
         </div>
         <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
-          <div className="text-sm font-black" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <div className="text-sm font-black" style={{ color: 'var(--alpha-text-92)' }}>
             {warnSignal.totalAffectedCount > 0
               ? warnSignal.totalAffectedCount.toLocaleString()
               : 'N/A'}
@@ -149,7 +149,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
       </div>
 
       {/* Calibration note */}
-      <p className="text-[10px] leading-relaxed mt-2.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
+      <p className="text-[10px] leading-relaxed mt-2.5" style={{ color: 'var(--alpha-text-30)' }}>
         {warnSignal.calibrationNote}
       </p>
     </motion.div>

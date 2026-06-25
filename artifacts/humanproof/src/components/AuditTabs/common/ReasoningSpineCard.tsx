@@ -100,11 +100,11 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
               style={{ color: primaryMove.feasibleForProfile ? ACCENT : '#f59e0b' }}
             />
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold leading-tight" style={{ color: 'rgba(255,255,255,0.9)' }}>
+              <p className="text-[12px] font-bold leading-tight" style={{ color: 'var(--alpha-text-92)' }}>
                 {primaryMove.moveLabel ?? primaryMove.action.title}
               </p>
               {primaryMove.rationale && (
-                <p className="text-[10.5px] leading-snug mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                <p className="text-[10.5px] leading-snug mt-1" style={{ color: 'var(--alpha-text-50)' }}>
                   {primaryMove.rationale}
                 </p>
               )}

@@ -60,7 +60,7 @@ const LoadingSkeleton: React.FC = () => (
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(0,212,224,0.5)' }}>
         AI Intelligence Brief
       </span>
-      <div className="ml-auto flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+      <div className="ml-auto flex items-center gap-1.5" style={{ color: 'var(--alpha-text-30)' }}>
         <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: 'var(--cyan)', opacity: 0.6 }} />
         <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)' }}>GENERATING...</span>
       </div>

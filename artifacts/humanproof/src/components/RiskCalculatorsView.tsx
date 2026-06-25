@@ -16,7 +16,7 @@ function LayoffAuditFallback() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '240px', gap: '12px' }}>
       <div style={{ width: '36px', height: '36px', borderRadius: '50%', border: '3px solid rgba(0,245,255,0.2)', borderTopColor: '#00F5FF', animation: 'spin 0.8s linear infinite' }} />
-      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', margin: 0 }}>Loading swarm intelligence…</p>
+      <p style={{ color: 'var(--alpha-text-35)', fontSize: '13px', margin: 0 }}>Loading swarm intelligence…</p>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );

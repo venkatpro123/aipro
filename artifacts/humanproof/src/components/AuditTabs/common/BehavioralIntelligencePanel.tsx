@@ -95,7 +95,7 @@ const TrajectorySection: React.FC<{ data: BehavioralPersonalizationResult['caree
             type="button"
             onClick={() => setShowPositioning(s => !s)}
             className="flex items-center gap-1 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.32)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ color: 'var(--alpha-text-30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             {showPositioning ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {showPositioning ? 'Hide' : 'Show'} interview positioning advice
@@ -387,7 +387,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
             type="button"
             onClick={() => setShowNegotiation(s => !s)}
             className="flex items-center gap-1 text-[10px] font-semibold"
-            style={{ color: 'rgba(255,255,255,0.32)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{ color: 'var(--alpha-text-30)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             {showNegotiation ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {showNegotiation ? 'Hide' : 'Show'} negotiation strategy

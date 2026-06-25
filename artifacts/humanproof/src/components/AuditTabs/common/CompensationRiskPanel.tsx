@@ -63,7 +63,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <DollarSign className="w-4 h-4" style={{ color: colors.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Compensation Risk</span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Compensation Risk</span>
         </div>
         <span
           className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
@@ -109,7 +109,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
           <div className="text-[10px] opacity-45 mt-0.5">12mo Prob.</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <div className="text-sm font-bold" style={{ color: 'var(--alpha-text-92)' }}>
             {compensation.marketDeltaPct !== null
               ? `${compensation.marketDeltaPct > 0 ? '+' : ''}${compensation.marketDeltaPct}%`
               : '—'}
@@ -117,7 +117,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
           <div className="text-[10px] opacity-45 mt-0.5">vs. Market</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
-          <div className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <div className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-92)' }}>
             {compensation.vestingProtection}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Vesting</div>
@@ -136,7 +136,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
             ? <AlertTriangle className="w-3 h-3" style={{ color: '#f59e0b' }} />
             : <CheckCircle className="w-3 h-3" style={{ color: '#10b981' }} />
           }
-          <span className="text-[11px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          <span className="text-[11px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             {compensation.payPositionLabel}
           </span>
         </div>

@@ -36,7 +36,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <UserMinus className="w-4 h-4" style={{ color }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             Executive Departure Pattern
           </span>
         </div>
@@ -131,7 +131,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
       )}
 
       {/* Calibration note */}
-      <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+      <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-30)' }}>
         {executiveDeparturePattern.calibrationNote}
       </p>
     </motion.div>

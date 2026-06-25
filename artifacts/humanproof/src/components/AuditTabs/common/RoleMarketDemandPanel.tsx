@@ -51,7 +51,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Briefcase className="w-4 h-4" style={{ color }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             Role Market Demand (2026-Q1)
           </span>
         </div>

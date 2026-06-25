@@ -174,7 +174,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
             LIVE INTELLIGENCE FETCH
           </span>
         </div>
-        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.62rem', letterSpacing: '1px' }}>
+        <span style={{ color: 'var(--alpha-text-30)', fontSize: '0.62rem', letterSpacing: '1px' }}>
           {elapsedSec}s elapsed
         </span>
       </div>
@@ -184,7 +184,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.15)',
         borderRadius: '8px', padding: '14px 16px', marginBottom: '24px',
       }}>
-        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem', letterSpacing: '1px', marginBottom: '4px' }}>
+        <div style={{ color: 'var(--alpha-text-35)', fontSize: '0.6rem', letterSpacing: '1px', marginBottom: '4px' }}>
           /// SCRAPING TARGET ///
         </div>
         <div style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 700, letterSpacing: '1px' }}>
@@ -209,7 +209,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           <div style={{ color: '#10b981', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '3px' }}>
             AUTHORITATIVE LIVE INTELLIGENCE
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.68rem', lineHeight: '1.5' }}>
+          <div style={{ color: 'var(--alpha-text-50)', fontSize: '0.68rem', lineHeight: '1.5' }}>
             Acquiring live evidence across workforce, hiring, financial, and layoff sources.
             The audit will complete only when sources cross-validate — no provisional results.
           </div>
@@ -279,7 +279,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           display: 'flex', justifyContent: 'space-between',
           marginBottom: '7px', fontSize: '0.65rem',
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.4)', letterSpacing: '1px' }}>
+          <span style={{ color: 'var(--alpha-text-35)', letterSpacing: '1px' }}>
             LIVE EVIDENCE ACQUIRED
           </span>
           <span style={{ color: '#00F5FF', fontWeight: 600 }}>

@@ -249,7 +249,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
               {dimensions[hoveredIdx].label}
             </p>
             <div className="flex gap-3">
-              <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.7)' }}>
+              <span className="text-[10px]" style={{ color: 'var(--alpha-text-70)' }}>
                 You: <strong style={{ color: '#fff' }}>{dimensions[hoveredIdx].value}</strong>
               </span>
               {dimensions[hoveredIdx].benchmark != null && (
@@ -271,7 +271,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
       <div className="flex items-center gap-4 mt-2 justify-center">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-0.5 rounded-full" style={{ background: 'var(--cyan)' }} />
-          <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Your profile</span>
+          <span className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>Your profile</span>
         </div>
         {benchmarkPolygon && (
           <div className="flex items-center gap-1.5">
@@ -279,7 +279,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
               className="w-2.5 h-0.5 rounded-full"
               style={{ background: 'rgba(245,158,11,0.6)', borderTop: '1px dashed rgba(245,158,11,0.6)' }}
             />
-            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Market avg</span>
+            <span className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>Market avg</span>
           </div>
         )}
       </div>

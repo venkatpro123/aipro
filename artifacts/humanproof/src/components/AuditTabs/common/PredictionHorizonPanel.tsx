@@ -62,7 +62,7 @@ const WeightMiniChart: React.FC<{ weights: HorizonRisk['weightsApplied'] }> = ({
               transition: 'height 0.4s ease',
             }}
           />
-          <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '8px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>
             {key}
           </span>
         </div>
@@ -101,7 +101,7 @@ const HorizonColumn: React.FC<{
       {/* Header */}
       <div className="flex items-start justify-between mb-3 pl-2">
         <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.12em', color: 'var(--alpha-text-35)', textTransform: 'uppercase' }}>
             {meta.sublabel}
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 900, color: 'var(--alpha-text-85)', letterSpacing: '0.06em' }}>
@@ -145,7 +145,7 @@ const HorizonColumn: React.FC<{
         <div style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
           Dominant signal
         </div>
-        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.4 }}>
+        <p style={{ fontSize: '10px', color: 'var(--alpha-text-55)', lineHeight: 1.4 }}>
           {horizon.dominantSignal}
         </p>
       </div>
@@ -164,7 +164,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Prediction Horizons
         </span>
-        <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginLeft: '4px' }}>
+        <span style={{ fontSize: '9px', color: 'var(--alpha-text-30)', marginLeft: '4px' }}>
           · signal weights adapt per horizon
         </span>
         {groundTruthOverride && (
@@ -212,7 +212,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           {WEIGHT_KEYS.map(key => (
             <div key={key} className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-sm" style={{ background: WEIGHT_COLORS[key] }} />
-              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>{key}: {WEIGHT_LABELS[key]}</span>
+              <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>{key}: {WEIGHT_LABELS[key]}</span>
             </div>
           ))}
         </div>
@@ -235,7 +235,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Trajectory Narrative
           </div>
-          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.55 }}>
+          <p style={{ fontSize: '11px', color: 'var(--alpha-text-70)', lineHeight: 1.55 }}>
             {trajectoryNarrative}
           </p>
         </motion.div>

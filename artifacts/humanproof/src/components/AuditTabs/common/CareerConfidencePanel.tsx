@@ -29,7 +29,7 @@ const PillarRow: React.FC<{ pillar: ReadinessPillar; index: number }> = ({ pilla
     className="group"
   >
     <div className="flex items-center gap-3 mb-0.5">
-      <span className="text-xs w-28 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      <span className="text-xs w-28 flex-shrink-0" style={{ color: 'var(--alpha-text-55)' }}>
         {pillar.name}
       </span>
       <div className="flex-1 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -61,7 +61,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4" style={{ color: tier.color }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Job-Search Readiness</span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Job-Search Readiness</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xl font-black" style={{ color: tier.color }}>
@@ -75,7 +75,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       </div>
 
       {/* Headline */}
-      <p className="text-xs mb-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      <p className="text-xs mb-3 leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
         {confidence.readinessHeadline}
       </p>
 
@@ -90,7 +90,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       {confidence.criticalGap && (
         <div className="rounded-xl p-3 mb-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}>
           <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: '#ef4444' }}>CRITICAL GAP</p>
-          <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          <p className="text-xs font-medium mb-1" style={{ color: 'var(--alpha-text-85)' }}>
             {confidence.criticalGap.name}
           </p>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
@@ -104,7 +104,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       {confidence.keyStrength && (
         <div className="rounded-xl p-3 mb-3" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
           <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: '#10b981' }}>KEY STRENGTH</p>
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <p className="text-xs" style={{ color: 'var(--alpha-text-70)' }}>
             <span className="font-semibold">{confidence.keyStrength.name}: </span>
             {confidence.keyStrength.topAction.slice(0, 120)}
           </p>
@@ -113,7 +113,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
 
       {/* Risk-confidence interpretation */}
       <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
-        <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'var(--alpha-text-30)' }}>
           RISK × READINESS
         </p>
         <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>

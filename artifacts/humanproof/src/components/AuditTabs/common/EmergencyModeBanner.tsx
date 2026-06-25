@@ -103,7 +103,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
               RISK ALERT
             </p>
             {/* Main headline — empathy-first */}
-            <p className="text-[12px] font-bold leading-snug" style={{ color: 'rgba(255,255,255,0.90)' }}>
+            <p className="text-[12px] font-bold leading-snug" style={{ color: 'var(--alpha-text-92)' }}>
               {main}
             </p>
             {/* Statistical grounding — "you are ahead" */}

@@ -155,7 +155,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
           {scenario.planningHorizonMonths && (
             <span
               className="text-[10px] font-mono px-2 py-0.5 rounded"
-              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.10)' }}
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
               {scenario.planningHorizonMonths}-month horizon
             </span>
@@ -293,7 +293,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
                         </p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           {action.effort && (
-                            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.32)' }}>{action.effort}</span>
+                            <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>{action.effort}</span>
                           )}
                           {(action.riskReductionPct ?? 0) > 0 && (
                             <span className="text-[10px]" style={{ color: 'rgba(16,185,129,0.60)' }}>

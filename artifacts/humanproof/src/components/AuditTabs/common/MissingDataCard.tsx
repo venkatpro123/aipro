@@ -236,7 +236,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
                             {item.impact}
                           </span>
                         </div>
-                        <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                        <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: 'var(--alpha-text-30)' }}>
                           {item.reason}
                         </p>
                         {item.userAction && (

@@ -55,7 +55,7 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 900, color: urg.color }}>
           {item.estimatedWeeksToLearn}w
         </div>
-        <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ fontSize: '8px', color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}>
           to learn
         </div>
       </div>
@@ -69,7 +69,7 @@ const EmptyPrompt: React.FC = () => (
     style={{ border: '1px solid rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}
   >
     <Brain className="w-8 h-8 mb-3" style={{ color: 'rgba(255,255,255,0.2)' }} />
-    <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: '6px' }}>
+    <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-55)', marginBottom: '6px' }}>
       Add your skills to see what to improve
     </h3>
     <p style={{ fontSize: '11px', color: 'var(--alpha-text-35)', lineHeight: 1.55, maxWidth: '320px', marginBottom: '16px' }}>
@@ -191,7 +191,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
           <div>
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
-              <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.5)' }}>
+              <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--alpha-text-50)' }}>
                 What To Learn First
               </span>
             </div>
@@ -204,7 +204,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
               <button
                 onClick={() => setShowAll(s => !s)}
                 className="flex items-center gap-1.5 mt-3 text-[10px] font-bold transition-colors"
-                style={{ color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}
+                style={{ color: 'var(--alpha-text-35)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em' }}
               >
                 {showAll ? (
                   <><ChevronUp className="w-3.5 h-3.5" /> Show fewer</>

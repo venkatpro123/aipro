@@ -105,7 +105,7 @@ const WARNAlertBanner: React.FC<Props> = ({ warnSignal, companyName }) => {
           </div>
 
           <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
-            <strong style={{ color: 'rgba(255,255,255,0.9)' }}>{companyName}</strong> has filed a
+            <strong style={{ color: 'var(--alpha-text-92)' }}>{companyName}</strong> has filed a
             WARN Act notice with state regulatory authorities.{' '}
             {affected > 0
               ? `${affected.toLocaleString()} workers are affected per the regulatory filing. `
@@ -136,7 +136,7 @@ const WARNAlertBanner: React.FC<Props> = ({ warnSignal, companyName }) => {
             onClick={handleDismiss}
             aria-label="Dismiss WARN Act alert"
             className="p-1.5 rounded transition-colors hover:bg-white/10"
-            style={{ color: 'rgba(255,255,255,0.5)' }}
+            style={{ color: 'var(--alpha-text-50)' }}
           >
             <X className="w-4 h-4" />
           </button>

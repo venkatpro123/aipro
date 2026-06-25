@@ -38,10 +38,10 @@ const TierRow: React.FC<{ record: TierAccuracyRecord; index: number }> = ({ reco
       className="flex items-center gap-3"
       style={{ opacity }}
     >
-      <span className="text-xs w-20 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      <span className="text-xs w-20 flex-shrink-0" style={{ color: 'var(--alpha-text-55)' }}>
         {record.tier}
       </span>
-      <span className="text-[10px] w-12 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }}>
+      <span className="text-[10px] w-12 flex-shrink-0" style={{ color: 'var(--alpha-text-35)' }}>
         {record.scoreRange}
       </span>
       <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
@@ -74,7 +74,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4" style={{ color: trust.color }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Engine Accuracy & Trust</span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Engine Accuracy & Trust</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xl font-black" style={{ color: trust.color }}>
@@ -101,14 +101,14 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       )}
 
       {/* Trust narrative */}
-      <p className="text-xs leading-relaxed mb-4" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      <p className="text-xs leading-relaxed mb-4" style={{ color: 'var(--alpha-text-55)' }}>
         {calibration.trustNarrative}
       </p>
 
       {/* Accuracy by tier */}
       <div className="mb-3">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-30)' }}>
             ACCURACY BY RISK TIER
           </p>
           <span className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
@@ -176,7 +176,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
       {showCaveats && (
         <ul className="mt-2 space-y-1.5 px-1">
           {calibration.calibrationCaveats.map((c, i) => (
-            <li key={i} className="flex gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <li key={i} className="flex gap-2 text-xs" style={{ color: 'var(--alpha-text-50)' }}>
               <span className="opacity-40">·</span>
               <span>{c}</span>
             </li>
@@ -186,7 +186,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
 
       {/* Help improve */}
       <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
-        <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+        <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
           <span className="font-bold" style={{ color: trust.color }}>Help improve accuracy: </span>
           {calibration.howToImproveAccuracy}
         </p>

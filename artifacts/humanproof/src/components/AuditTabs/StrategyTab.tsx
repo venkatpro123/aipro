@@ -124,7 +124,7 @@ const ActionCard: React.FC<{
           </span>
         )}
       </div>
-      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
         {action.description}
       </p>
       <div className="flex items-center gap-3 mt-2">
@@ -164,7 +164,7 @@ const PhaseCard: React.FC<{
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>
+            <span className="text-sm font-semibold" style={{ color: 'var(--alpha-text-92)' }}>
               {plan.phaseLabel}
             </span>
             <span className="text-xs px-2 py-0.5 rounded-full" style={{
@@ -173,7 +173,7 @@ const PhaseCard: React.FC<{
               {plan.timeframe}
             </span>
           </div>
-          <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>
             {plan.phaseObjective}
           </p>
         </div>
@@ -284,10 +284,10 @@ const OfferModal: React.FC<{
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-base font-bold" style={{ color: '#00d4e0' }}>Offer Evaluation</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>Score any job offer against your risk profile</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>Score any job offer against your risk profile</p>
           </div>
           <button onClick={onClose} className="text-xs px-3 py-1.5 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+            style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--alpha-text-55)' }}>
             Close
           </button>
         </div>
@@ -295,41 +295,41 @@ const OfferModal: React.FC<{
         {!offerResult ? (
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offer Company Name</label>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'var(--alpha-text-55)' }}>Offer Company Name</label>
               <input value={offerCompany} onChange={e => setOfferCompany(e.target.value)}
                 placeholder="e.g. Google, Stripe, Razorpay"
                 className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }} />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offered Base Salary (annual)</label>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'var(--alpha-text-55)' }}>Offered Base Salary (annual)</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{currSymbol}</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--alpha-text-50)' }}>{currSymbol}</span>
                 <input value={offerSalary} onChange={e => setOfferSalary(e.target.value)}
                   placeholder="e.g. 1500000"
                   type="number"
                   className="w-full pl-8 pr-3 py-2 rounded-lg text-sm"
-                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }} />
               </div>
               {currentSalary > 0 && (
-                <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-35)' }}>
                   Compared against your current {currSymbol}{currentSalary.toLocaleString()} from your saved profile.
                 </p>
               )}
             </div>
             {/* Offer industry — collected by the engine but had no input field before. */}
             <div>
-              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Offer Industry (optional)</label>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'var(--alpha-text-55)' }}>Offer Industry (optional)</label>
               <input value={offerIndustry} onChange={e => setOfferIndustry(e.target.value)}
                 placeholder="e.g. fintech, healthcare, SaaS"
                 className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }} />
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }} />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'rgba(255,255,255,0.6)' }}>Company Size</label>
+              <label className="text-xs font-medium mb-1.5 block" style={{ color: 'var(--alpha-text-55)' }}>Company Size</label>
               <select value={offerSize} onChange={e => setOfferSize(e.target.value as any)}
                 className="w-full px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)' }}>
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--alpha-text-92)' }}>
                 <option value="startup">Startup (&lt;50)</option>
                 <option value="smb">SMB (50–500)</option>
                 <option value="mid">Mid (500–5,000)</option>
@@ -341,7 +341,7 @@ const OfferModal: React.FC<{
               <input type="checkbox" id="recentLayoffs" checked={hasRecentLayoffs}
                 onChange={e => setHasRecentLayoffs(e.target.checked)}
                 className="w-4 h-4 rounded" />
-              <label htmlFor="recentLayoffs" className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <label htmlFor="recentLayoffs" className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>
                 This company has had recent layoffs
               </label>
             </div>
@@ -365,18 +365,18 @@ const OfferModal: React.FC<{
               <div className="text-sm font-bold" style={{ color: REC_COLORS[offerResult.recommendation] }}>
                 {OFFER_REC_HUMAN_LABELS[offerResult.recommendation] ?? offerResult.recommendation.replace(/_/g, ' ')}
               </div>
-              <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{offerResult.keyInsight}</p>
+              <p className="text-xs mt-2" style={{ color: 'var(--alpha-text-50)' }}>{offerResult.keyInsight}</p>
             </div>
 
             <div className="space-y-2">
               {offerResult.dimensions.map(dim => (
                 <div key={dim.id} className="flex items-center gap-3">
-                  <span className="text-xs w-32 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.55)' }}>{dim.name}</span>
+                  <span className="text-xs w-32 flex-shrink-0" style={{ color: 'var(--alpha-text-50)' }}>{dim.name}</span>
                   <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
                     <div className="h-full rounded-full transition-all"
                       style={{ width: `${dim.score}%`, background: dim.score >= 70 ? '#10b981' : dim.score >= 45 ? '#f59e0b' : '#ef4444' }} />
                   </div>
-                  <span className="text-xs w-8 text-right" style={{ color: 'rgba(255,255,255,0.5)' }}>{dim.score}</span>
+                  <span className="text-xs w-8 text-right" style={{ color: 'var(--alpha-text-50)' }}>{dim.score}</span>
                 </div>
               ))}
             </div>
@@ -386,12 +386,12 @@ const OfferModal: React.FC<{
                 <p className="text-xs font-semibold mb-2" style={{ color: '#f59e0b' }}>Negotiation Points</p>
                 {offerResult.negotiationPoints.map((pt, i) => (
                   <div key={i} className="mb-2">
-                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    <p className="text-xs" style={{ color: 'var(--alpha-text-70)' }}>
                       <span className="font-medium" style={{ color: '#f59e0b' }}>{toTitleCase(pt.priority)}: </span>
                       {pt.lever}
                     </p>
                     {pt.script && (
-                      <p className="text-[11px] mt-1 leading-snug pl-2" style={{ color: 'rgba(255,255,255,0.45)', borderLeft: '2px solid rgba(245,158,11,0.3)' }}>
+                      <p className="text-[11px] mt-1 leading-snug pl-2" style={{ color: 'var(--alpha-text-45)', borderLeft: '2px solid rgba(245,158,11,0.3)' }}>
                         “{pt.script}”
                       </p>
                     )}
@@ -406,7 +406,7 @@ const OfferModal: React.FC<{
             )}
             {/* Key strengths / concerns summary, if the engine surfaced them */}
             {offerResult.keyInsight && (
-              <p className="text-[11px] text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              <p className="text-[11px] text-center" style={{ color: 'var(--alpha-text-35)' }}>
                 {offerResult.recommendation === 'CANNOT_ACCEPT'
                   ? 'This offer has a hard eligibility block — review the dimensions above before proceeding.'
                   : 'Scores are directional — validate comp and stability claims before deciding.'}
@@ -414,7 +414,7 @@ const OfferModal: React.FC<{
             )}
 
             <button onClick={() => setOfferResult(null)} className="w-full py-2 rounded-lg text-xs"
-              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)' }}>
               ← Evaluate Another Offer
             </button>
           </div>
@@ -465,9 +465,9 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
   if (!synthesis) {
     return (
       <div className="flex flex-col items-center text-center gap-2.5 py-10 px-6 rounded-2xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <Target className="w-5 h-5" style={{ color: 'rgba(255,255,255,0.35)' }} />
-        <p className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.8)' }}>Strategy isn't ready yet</p>
-        <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <Target className="w-5 h-5" style={{ color: 'var(--alpha-text-35)' }} />
+        <p className="text-sm font-bold" style={{ color: 'var(--alpha-text-85)' }}>Strategy isn't ready yet</p>
+        <p className="text-xs max-w-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           We need a bit more signal — usually company, role, and experience details — before we can build your personalized strategy.
         </p>
         <button
@@ -512,7 +512,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <h2 className="text-lg font-black mb-1" style={{ color: strategyColors.text }}>
               {STRATEGY_HUMAN_LABELS[synthesis.overallStrategy] ?? synthesis.overallStrategy.replace(/_/g, ' ')}
             </h2>
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
               {synthesis.strategyRationale}
             </p>
             {/* Promotion timing — computed by the engine but never shown before.
@@ -520,7 +520,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             {synthesis.promotionTimingNote && (
               <div className="flex items-start gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <TrendingUp className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: strategyColors.text }} />
-                <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
                   <span className="font-semibold" style={{ color: strategyColors.text }}>Promotion timing: </span>
                   {synthesis.promotionTimingNote}
                 </p>
@@ -539,7 +539,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         {/* Progress bar */}
         <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex justify-between mb-1.5">
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <span className="text-xs" style={{ color: 'var(--alpha-text-50)' }}>
               {completedCount} of {allActions.length} actions completed
             </span>
             <span className="text-xs font-semibold" style={{ color: strategyColors.text }}>
@@ -576,7 +576,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         if (alerts.length === 0) return null;
         return (
           <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-            <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            <div className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--alpha-text-35)' }}>
               THINGS TO WATCH ({alerts.length})
             </div>
             {alerts.map((a, i) => (
@@ -596,17 +596,17 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <Star className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
             <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>DO THIS FIRST</span>
           </div>
-          <p className="text-sm font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>
+          <p className="text-sm font-semibold mb-1" style={{ color: 'var(--alpha-text-92)' }}>
             {synthesis.topPriorityAction?.title}
           </p>
           {/* Surface the rationale (WHY this is the priority) — previously dropped. */}
           {synthesis.topPriorityAction?.rationale && (
-            <p className="text-xs mb-1.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            <p className="text-xs mb-1.5 leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
               {synthesis.topPriorityAction.rationale}
             </p>
           )}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <span className="text-xs" style={{ color: 'var(--alpha-text-50)' }}>
               {synthesis.topPriorityAction?.timeHorizon}
             </span>
             {null /* sourceLayer is an internal signal code — not surfaced to users */}
@@ -618,7 +618,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <TrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
             <span className="text-[10px] font-bold tracking-widest" style={{ color: '#10b981' }}>BEST OPPORTUNITY</span>
           </div>
-          <p className="text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.75)' }}>
+          <p className="text-sm leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             {synthesis.singleBiggestOpportunity}
           </p>
         </div>
@@ -638,8 +638,8 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <DollarSign className="w-4 h-4" style={{ color: '#00d4e0' }} />
           </div>
           <div className="text-left">
-            <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Evaluate a Job Offer</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>Score any offer against your risk profile in 60 seconds</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Evaluate a Job Offer</p>
+            <p className="text-xs" style={{ color: 'var(--alpha-text-35)' }}>Score any offer against your risk profile in 60 seconds</p>
           </div>
         </div>
         <ArrowRight className="w-4 h-4 opacity-40" />
@@ -653,8 +653,8 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div className="flex items-center gap-2">
-          <Search className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.45)' }} />
-          <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          <Search className="w-4 h-4" style={{ color: 'var(--alpha-text-45)' }} />
+          <span className="text-sm font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             {showFullBreakdown ? 'Hide full plan' : 'See full plan'}
           </span>
         </div>
@@ -674,7 +674,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
       {/* Strategic phases */}
       <div>
-        <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] font-bold tracking-widest mb-3" style={{ color: 'var(--alpha-text-35)' }}>
           YOUR PLAN
         </p>
         <div className="space-y-3">
@@ -695,7 +695,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Brain className="w-4 h-4" style={{ color: '#a78bfa' }} />
-              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Job Search Readiness</span>
+              <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Job Search Readiness</span>
             </div>
             <div className="flex items-center gap-2">
               {typeof confidence.compositeScore === 'number' && (
@@ -711,7 +711,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           {/* Readiness headline + estimated time-to-ready — both computed but
               never shown. They answer "how ready am I and how long to fix it?" */}
           {confidence.readinessHeadline && (
-            <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>{confidence.readinessHeadline}</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--alpha-text-50)' }}>{confidence.readinessHeadline}</p>
           )}
           {typeof confidence.estimatedReadyInDays === 'number' && confidence.estimatedReadyInDays > 0 && (
             <p className="text-[11px] mb-3" style={{ color: 'rgba(167,139,250,0.85)' }}>
@@ -721,7 +721,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           <div className="space-y-2">
             {confidence.pillars.map((pillar: any) => (
               <div key={pillar.id} className="flex items-center gap-3">
-                <span className="text-xs w-28 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.55)' }}>{pillar.name}</span>
+                <span className="text-xs w-28 flex-shrink-0" style={{ color: 'var(--alpha-text-50)' }}>{pillar.name}</span>
                 <div className="flex-1 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
                   <div className="h-full rounded-full"
                     style={{
@@ -729,7 +729,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
                       background: pillar.score >= 70 ? '#10b981' : pillar.score >= 45 ? '#f59e0b' : '#ef4444',
                     }} />
                 </div>
-                <span className="text-xs w-8 text-right" style={{ color: 'rgba(255,255,255,0.4)' }}>{pillar.score}</span>
+                <span className="text-xs w-8 text-right" style={{ color: 'var(--alpha-text-35)' }}>{pillar.score}</span>
               </div>
             ))}
           </div>
@@ -737,7 +737,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
               profile shows both the asset and the weakness, not just the weakness. */}
           {confidence.keyStrength && (
             <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <p className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>
                 <span className="font-semibold" style={{ color: '#10b981' }}>Key strength ({confidence.keyStrength.name}): </span>
                 lead with this — it is your strongest readiness pillar.
               </p>
@@ -745,7 +745,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           )}
           {confidence.criticalGap && (
             <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <p className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>
                 <span className="font-semibold" style={{ color: '#ef4444' }}>Critical gap ({confidence.criticalGap.name}): </span>
                 {confidence.criticalGap.topAction}
               </p>
@@ -758,20 +758,20 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           an empty second column (only BIGGEST RISK rendered), which read as a
           layout bug. Now pairs the biggest risk with the biggest opportunity. */}
       <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>WHERE YOU STAND</p>
-        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.competitivePositionStatement}</p>
+        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--alpha-text-30)' }}>WHERE YOU STAND</p>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.competitivePositionStatement}</p>
         <div className="mt-3 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
             <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'rgba(239,68,68,0.85)' }}>
               <AlertTriangle className="w-3 h-3" /> MAIN CONCERN
             </p>
-            <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.singleBiggestRisk}</p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.singleBiggestRisk}</p>
           </div>
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
             <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#10b981' }}>
               <TrendingUp className="w-3 h-3" /> BEST OPPORTUNITY
             </p>
-            <p className="text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.6)' }}>{synthesis.singleBiggestOpportunity}</p>
+            <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.singleBiggestOpportunity}</p>
           </div>
         </div>
       </div>

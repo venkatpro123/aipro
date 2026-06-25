@@ -32,7 +32,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4" style={{ color: colors.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Sector Contagion Wave</span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Sector Contagion Wave</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full"
@@ -47,7 +47,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       </div>
 
       {/* Wave narrative */}
-      <p className="text-xs leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.6)' }}>
+      <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--alpha-text-55)' }}>
         {contagion.waveNarrative}
       </p>
 
@@ -61,7 +61,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
             <div className="text-[10px] opacity-40 mt-0.5">Direct cuts</div>
           </div>
           <div className="text-center rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <div className="text-sm font-black" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <div className="text-sm font-black" style={{ color: 'var(--alpha-text-70)' }}>
               {contagion.adjacentPeerCuts}
             </div>
             <div className="text-[10px] opacity-40 mt-0.5">Adjacent cuts</div>
@@ -78,7 +78,7 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
       {/* Affected peers list */}
       {contagion.affectedPeers.length > 0 && (
         <div className="mb-3">
-          <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="text-[10px] font-bold tracking-wider mb-2" style={{ color: 'var(--alpha-text-30)' }}>
             PEERS THAT CUT ({contagion.affectedPeers.length})
           </p>
           <div className="space-y-1.5">
@@ -95,14 +95,14 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
                   <Building2 className="w-3 h-3" style={{ color: colors.text }} />
                 </div>
                 <div className="flex-1">
-                  <span className="text-xs font-medium capitalize" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  <span className="text-xs font-medium capitalize" style={{ color: 'var(--alpha-text-85)' }}>
                     {peer.companyName}
                   </span>
                   <span className="text-[10px] ml-2 opacity-40">
                     {peer.relationshipType.replace(/_/g, ' ')}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                   <Clock className="w-2.5 h-2.5" />
                   {peer.daysAgo}d ago
                   {peer.estimatedPercentCut > 0 && (
@@ -132,10 +132,10 @@ const PeerContagionPanel: React.FC<PeerContagionPanelProps> = ({ contagion }) =>
 
       {/* Action implication */}
       <div className="rounded-lg p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
-        <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'var(--alpha-text-30)' }}>
           ACTION IMPLICATION
         </p>
-        <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
           {contagion.actionImplication}
         </p>
       </div>

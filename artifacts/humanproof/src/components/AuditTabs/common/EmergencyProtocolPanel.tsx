@@ -71,7 +71,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                 {emergency.protocolTier} — 72-HOUR PROTOCOL
               </span>
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
               {emergency.keyMessage}
             </p>
           </div>
@@ -159,7 +159,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
         style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
         <button className="w-full flex items-center justify-between px-3 py-2.5 text-left"
           onClick={() => setShowSeverance(s => !s)}>
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-70)' }}>
             Severance Negotiation Strategy
           </span>
           <div className="flex items-center gap-2">
@@ -176,14 +176,14 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
           {showSeverance && (
             <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
               transition={{ duration: 0.18 }} className="overflow-hidden">
-              <div className="px-3 pb-3 space-y-2 text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <div className="px-3 pb-3 space-y-2 text-xs" style={{ color: 'var(--alpha-text-55)' }}>
                 <p>
                   <span className="font-semibold" style={{ color: '#f59e0b' }}>Typical severance: </span>
                   {emergency.severanceStrategy.typicalSeveranceWeeks} weeks
                 </p>
                 <div>
                   <p className="font-semibold mb-1" style={{ color: 'var(--alpha-text-70)' }}>First move:</p>
-                  <p className="leading-relaxed p-2 rounded-lg" style={{ background: 'rgba(0,212,224,0.08)', border: '1px solid rgba(0,212,224,0.15)', color: 'rgba(255,255,255,0.7)' }}>
+                  <p className="leading-relaxed p-2 rounded-lg" style={{ background: 'rgba(0,212,224,0.08)', border: '1px solid rgba(0,212,224,0.15)', color: 'var(--alpha-text-70)' }}>
                     {emergency.severanceStrategy.firstNegotiationMove}
                   </p>
                 </div>

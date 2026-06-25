@@ -39,7 +39,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4" style={{ color: mainColor }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Leadership Stability</span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Leadership Stability</span>
         </div>
         <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${mainColor}18`, color: mainColor, border: `1px solid ${mainColor}30` }}>

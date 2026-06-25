@@ -335,7 +335,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
                   Company
                 </p>
-                <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'rgba(255,255,255,0.90)' }}
+                <p className="text-[12px] font-bold leading-snug truncate" style={{ color: 'var(--alpha-text-92)' }}
                    title={identity.name}>
                   {identity.name}
                 </p>

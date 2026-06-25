@@ -596,7 +596,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         onClick={onSwitchToBeast}
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'center', width: '100%', display: 'block' }}
       >
-        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)' }}>
+        <span style={{ fontSize: '12px', color: 'var(--alpha-text-30)' }}>
           Want the full picture?{' '}
         </span>
         <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>See full analysis →</span>

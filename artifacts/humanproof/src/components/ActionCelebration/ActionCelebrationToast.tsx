@@ -135,7 +135,7 @@ export const ActionCelebrationToast: React.FC = () => {
                     Phase {toast.phaseNum} complete!
                   </p>
                   {toast.nextPhase && (
-                    <p className="text-[9px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    <p className="text-[9px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
                       Phase {toast.nextPhase} is now unlocked ↓
                     </p>
                   )}
@@ -145,7 +145,7 @@ export const ActionCelebrationToast: React.FC = () => {
                   <p className="text-[11px] font-black leading-tight" style={{ color: '#22d3ee' }}>
                     {toast.count} actions complete!
                   </p>
-                  <p className="text-[9px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[9px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-50)' }}>
                     Est. risk impact: −2 to −5 pts on next audit
                   </p>
                 </>
@@ -154,7 +154,7 @@ export const ActionCelebrationToast: React.FC = () => {
                   <p className="text-[11px] font-bold leading-tight" style={{ color: '#10b981' }}>
                     ✓ Action completed
                   </p>
-                  <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>
                     Keep going — every action reduces risk
                   </p>
                 </>

@@ -339,7 +339,7 @@ const LocationCard: React.FC<{ loc: LocationOpportunity; roleDisplay: string }> 
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5 min-w-0">
           <MapPin style={{ width: 10, height: 10, color, flexShrink: 0 }} />
-          <span className="text-[11px] font-bold truncate" style={{ color: 'rgba(255,255,255,0.90)' }}>
+          <span className="text-[11px] font-bold truncate" style={{ color: 'var(--alpha-text-92)' }}>
             {loc.city}
           </span>
           {loc.isUserLocation && (

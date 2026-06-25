@@ -150,9 +150,9 @@ export default function ShareableScoreCard() {
             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#00F5FF', letterSpacing: '0.05em' }}>
               Human<span style={{ color: '#00FF9F' }}>Proof</span>
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>AI Displacement Intelligence</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-35)', marginTop: 2 }}>AI Displacement Intelligence</div>
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{cardYear}</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--alpha-text-35)' }}>{cardYear}</div>
         </div>
 
         <div style={{ marginBottom: 20 }}>

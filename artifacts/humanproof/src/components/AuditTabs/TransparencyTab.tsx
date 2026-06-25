@@ -914,11 +914,11 @@ const EffectiveWeightsPanel: React.FC<{
                     </div>
                   </td>
                   <td className="py-2.5 px-4 text-right font-mono opacity-60">{d8WeightRedistributed ? '0%' : pct(d8FormulaWt)}</td>
-                  <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'var(--alpha-text-50)' }}>
                     {d8IsActive ? mult(D8_CAL) : '—'}
                   </td>
                   {hasSegAdj && (
-                    <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    <td className="py-2.5 px-4 text-right font-mono" style={{ color: 'var(--alpha-text-50)' }}>
                       —
                     </td>
                   )}
@@ -1587,7 +1587,7 @@ const SourceRow: React.FC<{
         ))}
       </div>
     </div>
-    <div style={{ fontSize: '0.71rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{detail}</div>
+    <div style={{ fontSize: '0.71rem', color: 'var(--alpha-text-50)', lineHeight: 1.5 }}>{detail}</div>
     {subItems && subItems.length > 0 && (
       <div style={{ marginTop: 4 }}>
         {subItems.map((item, i) => (
@@ -1595,7 +1595,7 @@ const SourceRow: React.FC<{
         ))}
       </div>
     )}
-    <div style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.28)', marginTop: 5, fontStyle: 'italic' }}>{note}</div>
+    <div style={{ fontSize: '0.67rem', color: 'var(--alpha-text-25)', marginTop: 5, fontStyle: 'italic' }}>{note}</div>
   </div>
 );
 
@@ -1629,12 +1629,12 @@ const CIWideningSourcesPanel: React.FC<{
   return (
     <div style={{ borderRadius: 12, padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        <Layers style={{ width: 14, height: 14, flexShrink: 0, color: 'rgba(255,255,255,0.45)' }} />
-        <span style={{ fontSize: '0.67rem', fontWeight: 800, color: 'rgba(255,255,255,0.60)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+        <Layers style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--alpha-text-45)' }} />
+        <span style={{ fontSize: '0.67rem', fontWeight: 800, color: 'var(--alpha-text-55)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
           CI Widening Sources — {ciRange}pt interval
         </span>
         {dominantKey && (
-          <span style={{ fontSize: '0.61rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.42)', border: '1px solid rgba(255,255,255,0.10)' }}>
+          <span style={{ fontSize: '0.61rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)', border: '1px solid rgba(255,255,255,0.10)' }}>
             {dominantLabel[dominantKey]}
           </span>
         )}
@@ -1676,7 +1676,7 @@ const CIWideningSourcesPanel: React.FC<{
         />
       </div>
 
-      <p style={{ fontSize: '0.67rem', color: 'rgba(255,255,255,0.27)', marginTop: 12, lineHeight: 1.6, marginBottom: 0 }}>
+      <p style={{ fontSize: '0.67rem', color: 'var(--alpha-text-25)', marginTop: 12, lineHeight: 1.6, marginBottom: 0 }}>
         These three sources are independent — each can be resolved separately. The dominant source
         is the single largest contributor to the {ciRange}pt interval. Resolving it alone would
         narrow the CI; resolving all three would narrow it to its minimum achievable width given
@@ -1721,7 +1721,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 flex-shrink-0" style={{ color: cohortStyle.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             Conformal Prediction Interval
           </span>
         </div>
@@ -1759,7 +1759,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
             <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#fbbf24' }}>
               Pooled CI — cohort data insufficient
             </p>
-            <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
+            <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
               Your audit was classified as <span className="font-mono font-bold" style={{ color: COHORT_COLORS[requestedCohort]?.text ?? '#9ca3af' }}>{requestedCohort}</span>, but
               that cohort currently has fewer than 80 calibration outcomes.
               This confidence interval was computed from <span className="font-bold">{primary.calibrationN.toLocaleString()}</span> pooled{' '}
@@ -1778,7 +1778,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.22)' }}
         >
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(255,255,255,0.60)' }}>
+          <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
             Insufficient calibration data across all cohorts (fewer than 80 confirmed outcomes).
             This is a heuristic width estimate — not an empirically validated coverage guarantee.
             Do not interpret as a "90% credible interval."
@@ -1817,7 +1817,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
 
       {/* Calibration metadata */}
       {isConformal && primary && (
-        <div className="flex items-center gap-4 flex-wrap mt-1 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'rgba(255,255,255,0.40)' }}>
+        <div className="flex items-center gap-4 flex-wrap mt-1 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--alpha-text-45)' }}>
           <span>n = {primary.calibrationN.toLocaleString()} calibration outcomes</span>
           {primary.lastCalibratedAt && (
             <span>last calibrated {new Date(primary.lastCalibratedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
@@ -1830,13 +1830,13 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
 
       {/* Rationale */}
       {primary?.rationale && (
-        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-35)' }}>
           {primary.rationale}
         </p>
       )}
 
       {!isFallback && (
-        <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.22)' }}>
+        <p className="text-[10px] mt-2" style={{ color: 'var(--alpha-text-25)' }}>
           Split-conformal prediction. Interval = [score − q_α, score + q_α] where q_α is the{' '}
           ⌈(n+1)(1−α)⌉-th quantile of calibration non-conformity scores.
           Marginal coverage guarantee holds for i.i.d. data regardless of distribution.
@@ -2557,7 +2557,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     <div className="mb-2 p-2.5 rounded-lg text-[10px] leading-relaxed"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                       {precisionKnown ? (
-                        <span style={{ color: 'rgba(255,255,255,0.75)' }}>
+                        <span style={{ color: 'var(--alpha-text-70)' }}>
                           <span className="font-bold" style={{ color: c.text }}>
                             {stageLabels[stage]} classification
                           </span>
@@ -2569,7 +2569,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                           {horizonDays} days).
                         </span>
                       ) : (
-                        <span style={{ color: 'rgba(255,255,255,0.60)' }}>
+                        <span style={{ color: 'var(--alpha-text-55)' }}>
                           Stage label suppressed — empirical precision is{' '}
                           <span className="font-bold text-amber-400">{precLabel}</span>
                           {nEvents > 0
@@ -2612,7 +2612,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       <div className="flex items-start gap-1.5 mb-2 p-2 rounded-lg"
                         style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
                         <AlertTriangle className="w-3 h-3 text-rose-400/60 flex-shrink-0 mt-0.5" />
-                        <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                        <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                           <span className="font-bold text-amber-400/80">UNVERIFIED: </span>
                           Stage 3 cites "Historical median time to layoff announcement: 4–8 weeks" — no citation, not derived from outcome data. Treat as an estimate until validated.
                         </p>
@@ -2620,7 +2620,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     )}
 
                     {/* Precision gate explanation */}
-                    <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                    <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-35)' }}>
                       Signal Quality ({sigConf != null ? `${Math.round(sigConf * 100)}%` : '—'}) is a severity-weighted ratio of active signals — it is NOT the fraction of Stage {stage} predictions that confirmed as layoffs. Empirical precision gate: ≥20 outcomes AND precision ≥60% required before the stage label is shown. Until then: "Early warning signals present".
                     </p>
                   </div>
@@ -3602,7 +3602,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
           <div className="mt-6">
             <div className="rounded-2xl p-4" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.18)' }}>
               <div className="flex items-center justify-between gap-3 mb-3">
-                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Bayesian Credible Interval</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Bayesian Credible Interval</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                   style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.25)' }}>
                   TIER {(result as any).bayesianCI.dataQualityTier} · σ={((result as any).bayesianCI.sigma).toFixed(1)}pts
@@ -3616,16 +3616,16 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   <div className="text-[10px] opacity-45 mt-0.5">80% Credible Interval</div>
                 </div>
                 <div className="rounded-lg p-2.5 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                  <div className="text-sm font-bold" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                  <div className="text-sm font-bold" style={{ color: 'var(--alpha-text-70)' }}>
                     {(result as any).bayesianCI.ci95_low}–{(result as any).bayesianCI.ci95_high}
                   </div>
                   <div className="text-[10px] opacity-45 mt-0.5">95% Credible Interval</div>
                 </div>
               </div>
-              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                 {(result as any).bayesianCI.interpretation}
               </p>
-              <p className="text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[10px] mt-2" style={{ color: 'var(--alpha-text-35)' }}>
                 σ_total = √(σ_data² + σ_calibration²). Calibration σ=3.5pts from AUC-ROC=0.81 at n=200 events.
               </p>
             </div>
@@ -3655,25 +3655,25 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
           <div className="mt-6">
             <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div className="flex items-center justify-between gap-3 mb-2">
-                <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Segmented Calibration</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Segmented Calibration</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}>
+                  style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--alpha-text-50)' }}>
                   {(result as any).segmentCalibration.calibrationStatus.replace('_', ' ')}
                 </span>
               </div>
-              <p className="text-[11px] mb-2" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <p className="text-[11px] mb-2" style={{ color: 'var(--alpha-text-50)' }}>
                 {(result as any).segmentCalibration.segmentLabel}
               </p>
-              <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-45)' }}>
                 {(result as any).segmentCalibration.segmentInsight}
               </p>
               {(result as any).segmentCalibration.adjustmentDelta !== 0 && (
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Segment adjustment:</span>
+                  <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>Segment adjustment:</span>
                   <span className="text-[10px] font-bold" style={{ color: (result as any).segmentCalibration.adjustmentDelta > 0 ? '#ef4444' : '#10b981' }}>
                     {(result as any).segmentCalibration.adjustmentDelta > 0 ? '+' : ''}{(result as any).segmentCalibration.adjustmentDelta}pts
                   </span>
-                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
                     (segment base rate: {Math.round((result as any).segmentCalibration.baseLayoffRate * 100)}% vs. global 22%)
                   </span>
                 </div>

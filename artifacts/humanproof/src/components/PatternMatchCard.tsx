@@ -180,7 +180,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
   const roleFitChip =
     roleFit === 1  ? { label: 'YOUR ROLE IS AFFECTED',  bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',   color: '#ef4444' } :
     roleFit === -1 ? { label: 'YOUR ROLE IS PROTECTED', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.30)',  color: '#10b981' } :
-    roleFit === 0  ? { label: 'NEUTRAL FOR YOUR ROLE',  bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)' } :
+    roleFit === 0  ? { label: 'NEUTRAL FOR YOUR ROLE',  bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.15)', color: 'var(--alpha-text-35)' } :
     null;
 
   return (

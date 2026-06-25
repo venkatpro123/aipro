@@ -235,7 +235,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
               <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: '#ef4444' }}>
                 Stealth Layoff Pattern
               </p>
-              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.72)' }}>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
                 {stealthSignal.pctChange6mo != null
                   ? `Headcount delta ${stealthSignal.pctChange6mo.toFixed(1)}% over 6 months without public announcement`
                   : 'Silent headcount contraction detected without public announcement'
@@ -251,7 +251,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
           <div className="mt-3 p-2.5 rounded-lg text-[10px] leading-relaxed"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
             {precisionKnown ? (
-              <span style={{ color: 'rgba(255,255,255,0.70)' }}>
+              <span style={{ color: 'var(--alpha-text-70)' }}>
                 <span className="font-semibold" style={{ color: badgeColor }}>
                   Stage {report.stage} classification
                 </span>
@@ -261,7 +261,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                 did not have a confirmed layoff within {precisionData.stageHorizonDays} days).
               </span>
             ) : (
-              <span style={{ color: 'rgba(255,255,255,0.55)' }}>
+              <span style={{ color: 'var(--alpha-text-50)' }}>
                 <span className="font-semibold text-amber-400">Early warning signals present.</span>
                 {' '}Stage classification suppressed — empirical precision is{' '}
                 <span className="font-bold text-amber-400">{precisionData.stagePrecisionLabel}</span>

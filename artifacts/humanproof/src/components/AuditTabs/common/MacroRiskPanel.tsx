@@ -49,7 +49,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4" style={{ color: colors.text }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Macro-Economic Context</span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Macro-Economic Context</span>
         </div>
         <span className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${colors.text}18`, color: colors.text, border: `1px solid ${colors.text}30` }}>
@@ -89,7 +89,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
         <span className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-35)' }}>
           SECTOR EXPOSURE
         </span>
-        <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+        <p className="text-xs mt-1" style={{ color: 'var(--alpha-text-55)' }}>
           {macro.sectorExposure.reasoning}
         </p>
       </div>
@@ -97,8 +97,8 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       {/* Outlook */}
       <div className="flex items-center gap-2 mb-3">
         {OUTLOOK_ICON[macro.outlookDirection]}
-        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>
+        <span className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>
+          <span className="font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             {macro.outlookHorizon} outlook:{' '}
           </span>
           {macro.outlookNarrative.slice(0, 120)}…
@@ -108,13 +108,13 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       {/* Active risks */}
       {macro.keyMacroRisks.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+          <p className="text-[10px] font-bold tracking-wider mb-1.5" style={{ color: 'var(--alpha-text-30)' }}>
             ACTIVE MACRO RISKS
           </p>
           {macro.keyMacroRisks.slice(0, 2).map((risk, i) => (
             <div key={i} className="flex gap-2 mb-1.5">
               <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: colors.text, opacity: 0.6 }} />
-              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{risk}</p>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>{risk}</p>
             </div>
           ))}
         </div>
@@ -123,7 +123,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
       {/* India specific */}
       {macro.indiaSpecific && (
         <div className="mt-3 pt-3 space-y-1" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(255,255,255,0.3)' }}>INDIA MACRO</p>
+          <p className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--alpha-text-30)' }}>INDIA MACRO</p>
           <p className="text-xs" style={{ color: 'var(--alpha-text-50)' }}>{macro.indiaSpecific.narrative}</p>
         </div>
       )}

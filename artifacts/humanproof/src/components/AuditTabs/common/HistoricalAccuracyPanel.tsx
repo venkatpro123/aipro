@@ -57,7 +57,7 @@ const AccuracyBar: React.FC<{
           {record.tier}
           {isCurrent && <span style={{ color: 'var(--cyan)', marginLeft: '4px' }}>◀</span>}
         </div>
-        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ fontSize: '9px', color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}>
           {record.scoreRange}
         </div>
       </div>
@@ -116,7 +116,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
         </span>
         <span
           className="ml-auto text-[10px] font-black px-2 py-0.5 rounded"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'var(--font-mono)' }}
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-35)', border: '1px solid rgba(255,255,255,0.1)', fontFamily: 'var(--font-mono)' }}
         >
           {calibration.dataSource === 'database' ? 'LIVE DATA' : calibration.dataSource === 'hybrid' ? 'HYBRID' : 'RESEARCH GROUNDED'}
         </span>
@@ -139,7 +139,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
                 {currentAccuracyPct}%
               </span>
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--alpha-text-50)', marginTop: '2px' }}>
               {currentTier} tier · scores {currentTierRecord?.scoreRange ?? '–'}
             </div>
           </div>
@@ -147,15 +147,15 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
           {/* Overall + sample size */}
           <div className="flex flex-col gap-2 flex-shrink-0">
             <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <TrendingUp className="w-3.5 h-3.5 mb-1" style={{ color: 'rgba(255,255,255,0.4)' }} />
+              <TrendingUp className="w-3.5 h-3.5 mb-1" style={{ color: 'var(--alpha-text-35)' }} />
               <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: tierColor(calibration.overallAccuracy) }}>
                 {overallPct}%
               </span>
               <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>overall</span>
             </div>
             <div className="rounded-xl p-3 flex flex-col items-center" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <Users className="w-3.5 h-3.5 mb-1" style={{ color: 'rgba(255,255,255,0.4)' }} />
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: 'rgba(255,255,255,0.7)' }}>
+              <Users className="w-3.5 h-3.5 mb-1" style={{ color: 'var(--alpha-text-35)' }} />
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: 'var(--alpha-text-70)' }}>
                 {calibration.totalOutcomesTracked.toLocaleString()}
               </span>
               <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textAlign: 'center' }}>outcomes</span>
@@ -165,7 +165,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
 
         {/* Tier breakdown */}
         <div className="mb-4">
-          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
+          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-30)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '8px' }}>
             Accuracy by risk tier
           </div>
           {calibration.accuracyByTier.map((record, i) => (
@@ -189,7 +189,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
           <p style={{ fontSize: '11px', color: 'var(--alpha-text-55)', lineHeight: 1.55 }}>
             {calibration.trustNarrative}
           </p>
-          <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '6px' }}>
+          <p style={{ fontSize: '10px', color: 'var(--alpha-text-35)', marginTop: '6px' }}>
             Last calibrated: {new Date(calibration.lastCalibrationDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </p>
         </div>
