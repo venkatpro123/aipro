@@ -19,6 +19,7 @@ import {
   Shield, Zap, Star,
 } from 'lucide-react';
 import type { BehavioralPersonalizationResult } from '../../../services/behavioralPersonalizationEngine';
+import { InterviewIllustration } from '../../illustrations/AdditionalIllustrations';
 
 interface Props {
   data: BehavioralPersonalizationResult;
@@ -242,6 +243,11 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
 
   return (
     <div style={CARD_STYLE}>
+      {score < 75 && (
+        <div className="flex justify-center mb-3">
+          <InterviewIllustration size={56} className="opacity-75" />
+        </div>
+      )}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"

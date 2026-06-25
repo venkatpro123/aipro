@@ -65,6 +65,9 @@ import { ACTION_DB_MODERN_TECH_ROLES } from "../data/actions/modern_tech_roles_a
 import { ACTION_DB_GLOBAL_TECH } from "../data/actions/global_tech_actions";
 import { localizeActionCosts, extractCostUsd, convertPPP, formatCostLabel } from "./currencyService";
 import { stableActionId } from "./actionIdUtil";
+import type { UpskillPriorityItem } from "./skillGapIntelligenceService";
+import type { ReadinessPillar } from "./careerConfidenceEngine";
+import { generateEvolvedMissions } from "./missionEvolutionEngine";
 
 export type RiskLevel = 'critical' | 'high' | 'moderate' | 'low';
 
@@ -121,6 +124,14 @@ export interface PersonalizedActionSet {
    * presenting them as new guidance.
    */
   allActionsExhausted?: boolean;
+  /**
+   * Phase 8 — Mission Evolution: true when the authored reservoir was
+   * exhausted AND new missions were successfully generated from live
+   * skill-gap / readiness signals (missionEvolutionEngine). When this is
+   * set, the returned actions are evolved missions, not recycled authored
+   * content — callers should badge them accordingly.
+   */
+  missionsEvolved?: boolean;
 }
 
 /**
@@ -4173,6 +4184,15 @@ export function getPersonalizedActions(
   // actionCompletionService.loadLowRatedActionIds()). Removed from
   // consideration entirely — unlike completions, these never recycle as filler.
   suppressedActionIds?: Set<string>,
+  // Phase 8 — Mission Evolution: already-computed skill-gap and readiness
+  // signals from the audit pipeline. When the authored reservoir is exhausted,
+  // generateEvolvedMissions() uses these to produce new, genuine missions
+  // instead of recycling completed actions. Optional: callers without pipeline
+  // context simply omit this and the recycling fallback remains.
+  evolutionContext?: {
+    upskillPriority: UpskillPriorityItem[];
+    criticalGap: ReadinessPillar | null;
+  } | null,
 ): PersonalizedActionSet {
   const roleGroup = resolveRoleGroup(roleTitle);
   const riskLevel = scoreToRiskLevel(score);
@@ -4235,9 +4255,31 @@ export function getPersonalizedActions(
   );
   const suppressedSet = suppressedActionIds ?? new Set<string>();
   const rotation = selectWithRotation(reservoir, completedSet, suppressedSet);
-  const actions = isDbOverride ? dbActions!.slice(0, 3) : rotation.actions;
+  let actions = isDbOverride ? dbActions!.slice(0, 3) : rotation.actions;
   const allActionsExhausted = !isDbOverride && rotation.exhausted;
   const actionsRotated = !isDbOverride && rotation.rotated;
+
+  // Phase 8 — Mission Evolution Engine
+  // When the entire authored reservoir is completed, generate new missions from
+  // live skill-gap and readiness signals rather than recycling old ones.
+  // DB-curated overrides are exempt (they have their own admin lifecycle).
+  let missionsEvolved = false;
+  if (allActionsExhausted && !isDbOverride && evolutionContext) {
+    const hasSkillData = evolutionContext.upskillPriority.length > 0;
+    const hasGapData = evolutionContext.criticalGap != null &&
+      evolutionContext.criticalGap.status !== 'STRONG';
+    if (hasSkillData || hasGapData) {
+      const evolved = generateEvolvedMissions({
+        upskillPriority: evolutionContext.upskillPriority,
+        criticalGap: evolutionContext.criticalGap,
+        completedActionIds: completedSet,
+      });
+      if (evolved.length > 0) {
+        actions = evolved as typeof actions;
+        missionsEvolved = true;
+      }
+    }
+  }
 
   // Company context guidance note — injected as first priority action when present
   const contextGuidanceFn = COMPANY_CONTEXT_GUIDANCE[companyContext ?? 'unknown'];
@@ -4349,7 +4391,10 @@ export function getPersonalizedActions(
     costsCurrencyConverted: doLocalize ? true : undefined,
     costsDisplayCurrency: doLocalize ? localCurrencyCode : undefined,
     actionsRotated: actionsRotated || undefined,
-    allActionsExhausted: allActionsExhausted || undefined,
+    // Clear allActionsExhausted when evolution succeeded — we have new missions,
+    // not recycled repeats, so "exhausted" would be misleading to callers.
+    allActionsExhausted: (allActionsExhausted && !missionsEvolved) || undefined,
+    missionsEvolved: missionsEvolved || undefined,
   };
 }
 

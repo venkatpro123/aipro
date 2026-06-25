@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { CareerIntelligence, SkillRisk, SafeSkill } from '../data/intelligence/types.ts';
 import { AlertTriangle, XCircle, CheckCircle2, Clock, Zap, TrendingUp, Shield, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
 import { buildObsoleteAdvice, buildAtRiskAdvice } from '../services/skillAdviceBuilder';
+import { LearningIllustration } from './illustrations/AdditionalIllustrations';
 
 interface Props {
   intel: CareerIntelligence;
@@ -340,14 +341,17 @@ export const AIRiskSkillMatrix = ({ intel, scoreColor }: Props) => {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: 20, flexWrap: 'wrap', gap: 12,
       }}>
-        <div>
-          <h3 style={{
-            fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem',
-            letterSpacing: '-0.03em', color: 'var(--text)', margin: 0,
-          }}>AI Risk Skill Matrix</h3>
-          <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-3)' }}>
-            Skill-by-skill disruption analysis with impact intensity & time-to-disruption
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ flexShrink: 0, opacity: 0.85 }}><LearningIllustration size={52} /></div>
+          <div>
+            <h3 style={{
+              fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem',
+              letterSpacing: '-0.03em', color: 'var(--text)', margin: 0,
+            }}>AI Risk Skill Matrix</h3>
+            <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--text-3)' }}>
+              Skill-by-skill disruption analysis with impact intensity & time-to-disruption
+            </p>
+          </div>
         </div>
         {/* Pie-style summary */}
         <div style={{ display: 'flex', gap: 8 }}>

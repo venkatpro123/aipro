@@ -53,11 +53,13 @@ import {
 import { loadCompletionsLocal, markActionComplete, unmarkActionComplete } from "@/services/actionCompletionService";
 import { loadEffectiveSuppressedActionIds } from "@/services/cohortFeedbackService";
 import { stableActionId } from "@/services/actionIdUtil";
+import { checkAndUnlockAchievements } from "@/services/achievementService";
 import { generateCareerInsurancePlan } from "@/services/careerInsuranceEngine";
 import { generateTrajectoryProjection } from "@/services/trajectoryProjection";
 import { getMarketDemandSignals } from "@/services/marketDemandSignals";
 import { CareerInsuranceKit } from "@/components/CareerInsuranceKit";
 import { FinancialImpactCalculator } from "@/components/FinancialImpactCalculator";
+import { NetworkIllustration } from "@/components/illustrations/AdditionalIllustrations";
 import { SeniorityBracketConfirmation } from "@/components/SeniorityBracketConfirmation";
 import {
   getCareerPathMarket,
@@ -232,11 +234,20 @@ export function buildDynamicActions(
     equityVestMonths:   uf.equityVestMonths ?? null,
     metroArea:          uf.metroArea ?? null,
   };
-  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadEffectiveSuppressedActionIds());
+  // Phase 8 — Mission Evolution: pass already-computed pipeline signals so the
+  // engine can generate new missions when the authored reservoir is exhausted.
+  const _sg = (result as any).skillGapIntelligence;
+  const _cc = (result as any).careerConfidence;
+  const evolutionContext = (_sg || _cc)
+    ? { upskillPriority: _sg?.upskillPriority ?? [], criticalGap: _cc?.criticalGap ?? null }
+    : undefined;
+  const personalizedSet = getPersonalizedActions(roleTitle, seniorityBracket, score, region, undefined, undefined, userProfileLike, undefined, uf.localCurrencyCode ?? undefined, undefined, undefined, loadCompletionsLocal(), loadEffectiveSuppressedActionIds(), evolutionContext);
+  const actionEvidenceSource = personalizedSet.missionsEvolved
+    ? 'missionEvolutionEngine v1.0'
+    : 'actionPersonalizationEngine v8.0';
   const personalizedActions: ActionPlanItem[] = personalizedSet.actions.map((a) => ({
-    // Match the pipeline's `pa_<hash>` scheme so completion state set here
-    // and in Action Progress refer to the same row. (was `personalized_${i}`,
-    // an index-based ID that broke persistence on every re-order/re-audit.)
+    // Match the pipeline's `pa_<hash>` / `evolved_<hash>` scheme so completion
+    // state set here and in Action Progress refer to the same row.
     id: (a as any).id ?? stableActionId('pa', a.title ?? 'Action'),
     title: a.title ?? 'Action',
     description: a.description ?? '',
@@ -246,7 +257,7 @@ export function buildDynamicActions(
     deadline: a.deadline ?? '30 days',
     evidence: [{
       signal: `Role: ${getRoleGroupLabel(roleTitle)} · ${seniorityBracket} bracket · ${scoreToRiskLevel(score)} risk`,
-      source: 'actionPersonalizationEngine v8.0',
+      source: actionEvidenceSource,
       confidence: 'high' as const,
     }],
   }));
@@ -277,6 +288,47 @@ export function buildDynamicActions(
       riskReductionPct: 5,
       deadline: 'Ongoing',
       evidence: [{ signal: 'India sector intelligence', source: 'indiaSectorIntelligence v8.0', confidence: 'medium' as const }],
+    });
+  }
+
+  // Phase 8 — Mission Evolution state notices
+  // When the authored reservoir is fully exhausted AND new evolved missions were
+  // generated from live signals, prepend an explanatory card so the user
+  // understands why these actions look different from the authored ones.
+  if (personalizedSet.missionsEvolved) {
+    personalizedActions.unshift({
+      id: 'missions_evolved_notice',
+      title: 'New Missions Generated from Your Live Risk Profile',
+      description:
+        "You've completed every pre-authored mission available for your role and tier — that's a significant milestone. " +
+        "These new missions were generated from your live skill-gap and career readiness signals, " +
+        "targeting the specific weaknesses detected in your current profile. " +
+        "Complete them to keep your Career Confidence score rising and your protection layer active.",
+      priority: 'Medium',
+      layerFocus: 'L5 · Career Resilience — Mission Evolution',
+      riskReductionPct: 0,
+      deadline: 'Ongoing',
+      evidence: [{ signal: 'All authored tier missions completed', source: 'missionEvolutionEngine v1.0', confidence: 'high' as const }],
+    });
+  }
+
+  // When the reservoir is fully exhausted and no live signals were available to
+  // generate evolved missions (rare: requires no skill gap data in the pipeline),
+  // surface an explicit prompt to re-audit so fresh intelligence can unlock new missions.
+  if (personalizedSet.allActionsExhausted && !personalizedSet.missionsEvolved) {
+    personalizedActions.unshift({
+      id: 'all_missions_mastered',
+      title: 'All Tier Missions Complete — Re-Audit for New Intelligence',
+      description:
+        "You've completed every available mission for your current role and risk tier. " +
+        "Run a new audit to refresh the intelligence layer: market conditions, risk signals, and mission " +
+        "pools are updated continuously, and a re-audit may unlock a new tier or surface changed threats " +
+        "that generate a fresh mission set tailored to your evolved profile.",
+      priority: 'High',
+      layerFocus: 'L5 · Career Resilience',
+      riskReductionPct: 0,
+      deadline: 'Re-audit when ready',
+      evidence: [{ signal: 'Reservoir fully exhausted', source: 'actionPersonalizationEngine v8.0', confidence: 'high' as const }],
     });
   }
 
@@ -1520,11 +1572,16 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
   // localStorage key with no link to that engine, so actions completed here
   // never stopped recurring in future personalized recommendations.
   const toggleItemCompletion = (itemId: string, wasCompleted: boolean) => {
-    setCompletedItems(prev => ({ ...prev, [itemId]: !wasCompleted }));
+    const updatedItems = { ...completedItems, [itemId]: !wasCompleted };
+    setCompletedItems(updatedItems);
     if (wasCompleted) {
       unmarkActionComplete(itemId).catch(() => {});
     } else {
       markActionComplete(itemId, { scoreAtCompletion: result.total }).catch(() => {});
+      // Phase 8 delight loop — fire achievement check immediately on completion
+      // so toasts appear without waiting for a re-audit.
+      const completedCount = Object.values(updatedItems).filter(Boolean).length;
+      checkAndUnlockAchievements({ completedActionCount: completedCount, currentScore: result.total });
     }
   };
 
@@ -2109,6 +2166,13 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
         </div>
 
         {/* Career Twin Network */}
+        <div className="flex items-center gap-3 mb-3 mt-8">
+          <NetworkIllustration size={48} className="flex-shrink-0 opacity-80" />
+          <div>
+            <p className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)' }}>PROFESSIONAL NETWORK</p>
+            <p className="text-[13px] font-bold" style={{ color: 'rgba(255,255,255,0.75)' }}>Career Twin Intelligence</p>
+          </div>
+        </div>
         <CareerTwinCard
           userRole={result.workTypeKey}
           userExperience={result.tenureYears ?? 5}

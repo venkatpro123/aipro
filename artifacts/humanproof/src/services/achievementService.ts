@@ -1,16 +1,23 @@
-// achievementService.ts — P2 Retention
+// achievementService.ts — P2 Retention + Phase 9 Career Title Ladder
 //
 // Persistent achievement/badge system that tracks career maturity milestones.
 // Badges unlock based on user actions, audit history, and progression.
 // Stored in localStorage with optional Supabase sync.
+//
+// Phase 9 adds a 5-level career title progression on top of the flat badge
+// system: Observer → Builder → Operator → Strategist → Human-Proof Professional.
+// Title is derived from a composite of badge count + completed actions and
+// persists separately so promotions can trigger celebration toasts.
 
 import type { LucideIcon } from 'lucide-react';
 import {
   Search, TrendingDown, Zap, Flame, Gem, Target, Rocket, ShieldCheck,
   Eye, Palmtree, Map, Compass, CalendarCheck, Trophy,
+  Hammer, Settings, Brain, Crown,
 } from 'lucide-react';
 
 const LS_KEY = 'hp.achievements';
+const TITLE_LS_KEY = 'hp.career.title';
 
 export type AchievementId =
   | 'first_audit'
@@ -169,5 +176,193 @@ export function checkAndUnlockAchievements(context: {
     if (a) newly.push(a);
   }
 
+  // Phase 9 — also check for career title promotion on every achievement event
+  const promoted = checkCareerTitlePromotion(context.completedActionCount ?? 0);
+  if (promoted) newly.push(promoted);
+
   return newly;
+}
+
+// ─── Phase 9: Career Title Ladder ────────────────────────────────────────────
+//
+// Five-level progression built on top of the flat badge system.
+// Title is determined by a composite score: badge count + floor(actions / 3).
+// Gold/platinum badge requirements gate the upper two tiers.
+// Stored separately from badges (TITLE_LS_KEY) so promotions are detectable
+// and can fire celebration toasts without polluting the badge progress count.
+
+export type CareerTitleId =
+  | 'observer'
+  | 'builder'
+  | 'operator'
+  | 'strategist'
+  | 'humanproof';
+
+export interface CareerTitle {
+  id: CareerTitleId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+  requiresComposite: number;
+  requiresGoldPlus: boolean;
+  requiresPlatinum: boolean;
+}
+
+export const CAREER_TITLE_DEFS: CareerTitle[] = [
+  {
+    id: 'observer',
+    label: 'Observer',
+    shortLabel: 'Observer',
+    description: 'You have mapped your career risk landscape.',
+    icon: Eye,
+    color: '#6B7280',
+    requiresComposite: 0,
+    requiresGoldPlus: false,
+    requiresPlatinum: false,
+  },
+  {
+    id: 'builder',
+    label: 'Builder',
+    shortLabel: 'Builder',
+    description: 'You are actively strengthening your career position.',
+    icon: Hammer,
+    color: '#10B981',
+    requiresComposite: 1,
+    requiresGoldPlus: false,
+    requiresPlatinum: false,
+  },
+  {
+    id: 'operator',
+    label: 'Operator',
+    shortLabel: 'Operator',
+    description: 'You operate with discipline and strategic awareness.',
+    icon: Settings,
+    color: '#3B82F6',
+    requiresComposite: 4,
+    requiresGoldPlus: false,
+    requiresPlatinum: false,
+  },
+  {
+    id: 'strategist',
+    label: 'Strategist',
+    shortLabel: 'Strategist',
+    description: 'You think and act at the career system level.',
+    icon: Brain,
+    color: '#8B5CF6',
+    requiresComposite: 8,
+    requiresGoldPlus: true,
+    requiresPlatinum: false,
+  },
+  {
+    id: 'humanproof',
+    label: 'Human-Proof Professional',
+    shortLabel: 'HumanProof',
+    description: 'You have built career resilience that AI cannot replace.',
+    icon: Crown,
+    color: '#06B6D4',
+    requiresComposite: 12,
+    requiresGoldPlus: true,
+    requiresPlatinum: true,
+  },
+];
+
+export interface CareerTitleResult {
+  current: CareerTitle;
+  next: CareerTitle | null;
+  compositeScore: number;
+  progressToNext: number;
+}
+
+/**
+ * Derive the user's current career title from their achievement and action data.
+ * Pure function — no side effects, safe to call on every render.
+ */
+export function getCurrentCareerTitle(
+  unlockedAchievements: Achievement[],
+  completedActionCount: number,
+): CareerTitleResult {
+  const badgeCount = unlockedAchievements.length;
+  const hasGoldPlus = unlockedAchievements.some(
+    a => a.tier === 'gold' || a.tier === 'platinum',
+  );
+  const hasPlatinum = unlockedAchievements.some(a => a.tier === 'platinum');
+  const composite = badgeCount + Math.floor(completedActionCount / 3);
+
+  // Walk from highest title down — first one whose requirements are met wins.
+  let currentIdx = 0;
+  for (let i = CAREER_TITLE_DEFS.length - 1; i >= 0; i--) {
+    const t = CAREER_TITLE_DEFS[i];
+    if (
+      composite >= t.requiresComposite &&
+      (!t.requiresGoldPlus || hasGoldPlus) &&
+      (!t.requiresPlatinum || hasPlatinum)
+    ) {
+      currentIdx = i;
+      break;
+    }
+  }
+
+  const current = CAREER_TITLE_DEFS[currentIdx];
+  const next = currentIdx < CAREER_TITLE_DEFS.length - 1
+    ? CAREER_TITLE_DEFS[currentIdx + 1]
+    : null;
+
+  let progressToNext = 100;
+  if (next) {
+    const lo = current.requiresComposite;
+    const hi = next.requiresComposite;
+    progressToNext = hi > lo
+      ? Math.min(99, Math.round(((composite - lo) / (hi - lo)) * 100))
+      : 0;
+  }
+
+  return { current, next, compositeScore: composite, progressToNext };
+}
+
+/**
+ * Compare the current earned title against what's stored in localStorage.
+ * If the user has promoted to a new title, persist it and fire the
+ * hp.achievement.unlocked toast event so the delight loop triggers.
+ * Returns the title-as-Achievement if promoted, null otherwise.
+ */
+export function checkCareerTitlePromotion(
+  completedActionCount: number,
+): Achievement | null {
+  const unlocked = getUnlockedAchievements();
+  const { current } = getCurrentCareerTitle(unlocked, completedActionCount);
+
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(TITLE_LS_KEY);
+  } catch {}
+
+  if (stored === current.id) return null;
+
+  try {
+    localStorage.setItem(TITLE_LS_KEY, current.id);
+  } catch {}
+
+  // Only fire the promotion toast when going UP, not on first load (stored === null)
+  if (stored === null) return null;
+
+  // Build an Achievement-shaped object for the toast — not stored in ACHIEVEMENT_DEFINITIONS
+  // (doesn't count toward badge progress), but compatible with AchievementToast rendering.
+  const promotionAchievement: Achievement = {
+    id: `title_${current.id}` as AchievementId,
+    label: `Career Level: ${current.label}`,
+    description: current.description,
+    icon: current.icon,
+    tier: 'platinum',
+    unlockedAt: new Date().toISOString(),
+  };
+
+  try {
+    window.dispatchEvent(new CustomEvent('hp.achievement.unlocked', {
+      detail: promotionAchievement,
+    }));
+  } catch {}
+
+  return promotionAchievement;
 }
