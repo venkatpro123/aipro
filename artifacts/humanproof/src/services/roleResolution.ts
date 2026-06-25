@@ -115,6 +115,7 @@ const HUMAN_TITLE_ALIAS_MAP: Record<string, { canonicalKey: string; displayRole:
   "data analyst": { canonicalKey: "data_analyst", displayRole: "Data Analyst" },
   "business analyst": { canonicalKey: "data_analyst", displayRole: "Data Analyst" },
   "bi developer": { canonicalKey: "bi_analyst", displayRole: "BI Developer" },
+  "bi analyst": { canonicalKey: "bi_analyst", displayRole: "BI Analyst" },
   "business intelligence analyst": { canonicalKey: "bi_analyst", displayRole: "BI Analyst" },
   "business intelligence developer": { canonicalKey: "bi_analyst", displayRole: "BI Developer" },
   "tableau developer": { canonicalKey: "bi_analyst", displayRole: "BI Developer" },

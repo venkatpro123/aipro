@@ -86,13 +86,17 @@ describe('getPersonalizedActions — anti-repetition rotation', () => {
   });
 
   it('a role without Phase-2 content exhausts after the urgency-tier reservoir alone', () => {
-    // 'Compliance Officer' has no PHASE2_ACTION_DB entry — exhaustion is purely
-    // a function of the risk-tier reservoir, same as before the Phase-2 fix.
-    const fresh = getPersonalizedActions('Compliance Officer', 'junior', 90, 'IN'); // critical risk
+    // 'Civil Engineer' resolves to the 'civil_engineer' roleGroup, served from
+    // the separate MANUFACTURING_ENERGY_CONSTRUCTION multi-industry pool — it
+    // has no PHASE2_ACTION_DB entry, so exhaustion is purely a function of the
+    // risk-tier reservoir, same as before the Phase-2 fix. (Virtually every
+    // role group in the CORE ACTION_DB now has Phase-2 content, so a control
+    // case has to come from one of the separate multi-industry pools instead.)
+    const fresh = getPersonalizedActions('Civil Engineer', 'junior', 90, 'IN'); // critical risk
     expect(fresh.actions.length).toBeGreaterThan(0);
 
     const afterAllCompleted = getPersonalizedActions(
-      'Compliance Officer', 'junior', 90, 'IN',
+      'Civil Engineer', 'junior', 90, 'IN',
       undefined, undefined, undefined, undefined, undefined, undefined, undefined,
       new Set(idsOf(fresh.actions)),
     );

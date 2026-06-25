@@ -3672,7 +3672,353 @@ const PHASE2_ACTION_DB: Record<string, Array<Partial<ActionPlanItem>>> = {
       layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '14 days', priority: 'Low',
     },
   ],
+  llm_engineer: [
+    {
+      title: "Own Your Org's Prompt Versioning and Regression Testing Infrastructure",
+      description: 'Most teams shipping LLM features still hand-edit prompts in production with no version control or regression detection. Propose and build a prompt versioning system with automated golden-set regression tests run before every prompt or model change ships. Owning this infrastructure makes you the gatekeeper for every LLM feature release, not an interchangeable prompt-writer.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 24, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Model Routing / Cost-Quality Tradeoff Initiative',
+      description: 'Propose and own a model-routing layer that sends each request to the cheapest model that meets a quality bar (small model for simple queries, frontier model for complex ones), with measured cost savings and quality impact. This kind of system-level ownership is what separates a "prompt engineer" from an LLM systems architect.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Build Your Senior LLM Engineer Case Around Prompt-Infra and Routing Ownership',
+      description: 'Document your prompt versioning system and model-routing initiative into a structured case for a Senior LLM Engineer or LLM Platform Lead conversation. Owning the infrastructure layer beneath every LLM feature is one of the highest-leverage, most promotion-relevant scopes in this role right now.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  nlp_engineer: [
+    {
+      title: "Own Your Org's LLM-vs-Classical-NLP Decision Framework",
+      description: 'Many teams default to calling an LLM API for tasks a fine-tuned classical NLP model (faster, cheaper, more reliable for narrow tasks) would handle better. Propose and own a decision framework for when to use which approach, backed by a benchmark comparing cost/latency/accuracy on your team\'s actual use cases. This positions you as the person who prevents both over-engineering and under-engineering of NLP systems.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Fine-Tuning or Domain-Adaptation Project for a High-Value Internal Use Case',
+      description: 'Identify a high-volume text-processing task (support ticket classification, document extraction, entity recognition) and lead a fine-tuning or domain-adaptation project that measurably outperforms a generic LLM call on cost and accuracy. Owning a deployed, specialized model is a concrete differentiator from generalist prompt engineering.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '60 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for Senior NLP Engineer Using Your Decision-Framework and Fine-Tuning Work',
+      description: 'Compile your LLM-vs-classical decision framework and fine-tuning project results into a structured case for a Senior NLP Engineer conversation. Demonstrated judgment about WHEN to use which technique is a stronger differentiator than technique breadth alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  computer_vision_engineer: [
+    {
+      title: 'Own a Production Model Monitoring & Drift Detection System for Your Vision Pipeline',
+      description: 'Vision models silently degrade as real-world input distributions shift (lighting, camera hardware, new object types) — most teams discover this only after a customer complains. Propose and own a drift-detection and monitoring system that flags degradation before it is customer-visible. This operational ownership is durable in a way that model-building alone is not.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead an Edge-Deployment or Latency-Optimization Initiative',
+      description: 'Propose leading a project to deploy a vision model to edge hardware or reduce inference latency via quantization/distillation, with measured throughput and accuracy tradeoffs. Edge and real-time deployment expertise is a distinct, harder-to-automate skill set than model training alone.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '60 days', priority: 'Medium',
+    },
+    {
+      title: 'Build Your Senior CV Engineer Case Around Monitoring + Edge-Deployment Ownership',
+      description: 'Document your drift-detection system and edge-deployment work into a structured case for a Senior Computer Vision Engineer conversation. Production ownership (monitoring, deployment) is what separates a senior CV engineer from someone who only trains models in notebooks.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  embedded_engineer: [
+    {
+      title: 'Own an On-Device AI/ML Inference Initiative for Your Product Line',
+      description: 'As AI features move toward running on-device (for latency, privacy, or cost reasons), embedded engineers who can deploy quantized models to constrained hardware become the bridge between ML teams and shipped products. Propose and lead a pilot on-device inference project, measuring power/latency/accuracy tradeoffs. This positions you at the center of where embedded and AI roadmaps intersect.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '60 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Firmware Update / OTA Reliability Initiative',
+      description: 'Propose owning an improvement to your product\'s firmware update or OTA (over-the-air) reliability pipeline — reduced failure rate, rollback safety, staged rollout. This kind of systems-reliability ownership is high-trust, high-visibility work that is difficult to offshore or automate away.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for Senior/Staff Embedded Engineer Using Your On-Device AI and OTA Work',
+      description: 'Compile your on-device inference pilot and OTA reliability initiative into a structured case for a Senior or Staff Embedded Engineer conversation. Cross-disciplinary ownership (embedded + AI, embedded + reliability) is the clearest differentiator at this transition.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  principal_engineer: [
+    {
+      title: "Define Your Org's AI-Adoption Technical Strategy and Publish It as an RFC",
+      description: 'At the principal/staff level, the highest-leverage move is not building AI features yourself but defining HOW your org builds them — model selection criteria, build-vs-buy guidance, evaluation standards. Write and circulate an RFC that other teams adopt. Authoring the standard that shapes multiple teams\' decisions is the clearest principal-engineer-level signal available right now.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Cross-Org Technical Initiative With Measurable Business Impact',
+      description: 'Identify one technical initiative that spans multiple teams or orgs (a shared AI platform, a migration, a reliability program) and lead it to a measurable business outcome (cost savings, latency reduction, incident reduction). Cross-org technical leadership with quantified impact is the standard evidence for the next promotion or external principal-level offer.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '90 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate Your Market Rate Using External Principal/Distinguished-Level Benchmarks',
+      description: 'At this level, internal calibration is often slower than the external market. Gather 3-5 comparable principal/staff/distinguished engineer compensation data points (Levels.fyi, direct recruiter conversations) and bring them to your manager or to an external offer process. Engineers at this level who do not actively benchmark externally are the most likely to be underpaid relative to market.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  bi_analyst: [
+    {
+      title: "Own Your Org's Semantic Layer / Metrics Governance Initiative",
+      description: 'As natural-language-to-dashboard and AI-assisted BI tools spread, the bottleneck shifts to having clean, governed metric definitions for those tools to query. Propose owning a semantic layer or metrics governance initiative — standardized definitions, a single source of truth for key business metrics. This makes you the foundational dependency for every AI-assisted analytics tool that follows.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Pilot of AI-Assisted Dashboarding Against Your Current BI Stack',
+      description: 'Propose piloting a natural-language-query or AI-assisted insight tool against your team\'s current dashboard-building workflow, with a clear comparison of speed and accuracy. BI analysts who lead this evaluation shape how the tool gets adopted, rather than having adoption decided without their input.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Build Your Senior BI Analyst / Analytics Lead Case Around Governance + AI-Tooling Evaluation',
+      description: 'Document your metrics governance initiative and AI-tooling pilot into a structured case for a Senior BI Analyst or Analytics Lead conversation. Owning the trust layer beneath every dashboard is one of the clearest emerging differentiators in this role right now.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  quantitative_analyst: [
+    {
+      title: 'Lead the Evaluation of an LLM-Assisted Research or Signal-Generation Workflow',
+      description: 'Propose piloting an LLM-assisted approach to a research task (earnings call summarization, news sentiment signal extraction, alternative-data parsing) against your team\'s current process, with a rigorous backtested comparison of signal quality. Quants who lead this evaluation rigorously — not anecdotally — become the internal authority on where AI genuinely adds alpha versus where it adds noise.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Own a Model Risk / Backtesting Governance Framework for AI-Assisted Strategies',
+      description: 'As AI-assisted signals enter production strategies, propose owning a model risk framework specifically for AI-derived signals — overfitting checks, regime-change sensitivity, kill-switch criteria. Being the person who ensures AI-assisted strategies are trustworthy, not just profitable in backtest, is a durable, high-trust role.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '60 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate a Senior Quant / Portfolio Strategist Track Using Your AI-Evaluation Rigor',
+      description: 'Bring your LLM-evaluation results and model risk framework to your manager as concrete evidence for a Senior Quantitative Analyst or Portfolio Strategist conversation. Demonstrated rigor in separating genuine signal from AI-generated noise is a rare, highly compensated differentiator.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  portfolio_manager: [
+    {
+      title: "Lead Your Firm's Evaluation of AI-Assisted Research Tools Against Your Current Process",
+      description: 'Propose piloting an AI-assisted research or screening tool (thematic search, earnings analysis, risk-factor decomposition) against your current research workflow, with a clear comparison of speed and decision quality. PMs who lead this evaluation shape how AI tools get integrated into the investment process, rather than having it decided without their input.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Document a Differentiated, Repeatable Edge That AI Tools Cannot Replicate',
+      description: 'Identify and formally document the specific judgment-based edge in your process — qualitative management assessment, contrarian thesis development, position sizing under uncertainty — that depends on experience and judgment rather than pattern-matching on historical data. This documentation is both a career-protection asset and a stronger case for capital allocation.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate Increased AUM Allocation Using Your AI-Tool Evaluation Leadership + Documented Edge',
+      description: 'Bring your AI-tool evaluation results and documented differentiated edge to your CIO or allocation committee as the basis for a conversation about increased capital allocation or a senior PM track. Demonstrated judgment plus tool fluency is a stronger case than track record alone in an environment where allocators are increasingly AI-skeptical of pure pattern-matching strategies.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  vp_sales: [
+    {
+      title: "Own Your Org's AI-Assisted Sales Forecasting and Pipeline Intelligence Rollout",
+      description: 'Propose piloting AI-assisted deal scoring and forecasting (win-probability modeling, pipeline health signals) against your current forecasting process, with a clear comparison of forecast accuracy. VPs who lead this evaluation shape how AI tools get integrated into the revenue org, rather than having adoption decided above or below them.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Strategic Enterprise Relationship That Requires Executive-Level Trust',
+      description: 'Identify and personally lead one strategic account relationship or partnership at the executive sponsor level that depends on long-term trust and multi-year relationship management AI tools cannot replicate. Document the relationship strategy and outcome. This builds the track record in exactly the part of sales leadership that remains durably human.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '90 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate an SVP / CRO Track Using Your Forecasting-Tooling and Strategic-Account Results',
+      description: 'Compile your AI-forecasting rollout results and strategic account outcome into a case for an SVP Sales or Chief Revenue Officer conversation. Quantified forecast-accuracy improvement plus a documented executive-level relationship win is a substantially stronger case than quota attainment alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  hr_director: [
+    {
+      title: "Lead Your Company's Responsible-AI Workforce Strategy",
+      description: 'Propose owning a company-wide responsible-AI workforce strategy — covering AI-in-hiring fairness review, AI-upskilling program design, and policy for AI tool usage across departments. HR Directors who own this integrated strategy (not departmental pieces of it) become the executive-level authority on workforce AI adoption, not a downstream administrator of policies set elsewhere.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Build and Present a Workforce AI-Readiness Scorecard to the Executive Team',
+      description: 'Develop a scorecard measuring AI-tool adoption, upskilling program participation, and AI-related attrition risk across business units, and present it quarterly to the executive team. HR Directors who bring this kind of forward-looking, data-driven workforce intelligence to the leadership table are positioned for CHRO tracks.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for CHRO / VP People Using Your AI-Workforce-Strategy Leadership',
+      description: 'Compile your responsible-AI workforce strategy and readiness scorecard into a structured case for a CHRO or VP People conversation. Demonstrated ownership of how the ENTIRE workforce adapts to AI — not just HR\'s own function — is what separates CHRO candidates from HR Directors who stay in the role.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  swe_mobile: [
+    {
+      title: "Own Your App's AI-Powered Feature Roadmap End-to-End",
+      description: 'Identify one on-device or API-backed AI feature (smart suggestions, on-device transcription, personalization) your app should ship, and propose owning it end-to-end — client architecture, model integration, performance budget. Mobile engineers who own a shipped AI feature, not just UI screens, are the ones who become irreplaceable as more app functionality becomes AI-driven.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '60 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead a Cross-Platform Performance or Battery-Efficiency Initiative',
+      description: 'Propose leading a measurable improvement to app startup time, battery usage, or crash rate — and document the before/after metrics. Performance ownership at the app level is durable, high-visibility work that differentiates a senior mobile engineer from someone who only ships feature tickets.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for Senior/Staff Mobile Engineer Using Your AI-Feature and Performance Ownership',
+      description: 'Compile your AI feature ownership and performance initiative into a structured case for a Senior or Staff Mobile Engineer conversation. End-to-end feature ownership plus measurable performance impact is the clearest differentiator at this transition.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  solution_architect: [
+    {
+      title: "Own Your Org's Reference Architecture for AI-Integrated Solutions",
+      description: 'Customers and internal teams increasingly ask "how should we integrate AI into this system?" with no consistent answer. Propose authoring a reference architecture — patterns for model integration, data flow, security boundaries — that becomes the template other architects and engineers follow. Owning the pattern that shapes multiple implementations is the clearest principal-architect-level signal available right now.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Lead the Technical Strategy for One High-Stakes, Multi-Stakeholder Enterprise Deal or Migration',
+      description: 'Identify and lead the architecture strategy for one complex, high-visibility engagement — a major customer integration or platform migration involving multiple stakeholders and competing technical constraints. Document the tradeoffs you navigated and the outcome. This judgment-intensive work is what differentiates a senior solution architect from someone who only follows existing patterns.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 20, deadline: '90 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate a Principal Architect Track Using Your Reference-Architecture and Deal Results',
+      description: 'Compile your reference architecture authorship and high-stakes engagement results into a case for a Principal Solution Architect conversation. A documented pattern that other architects use, plus a complex deal won, is a stronger case than deal count alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  support_engineer: [
+    {
+      title: "Own Your Org's AI-Assisted Ticket Triage and Resolution Tooling",
+      description: 'Propose piloting an AI-assisted triage system (auto-categorization, suggested-resolution retrieval from your knowledge base) against your current manual process, measuring resolution-time improvement. Support engineers who lead this evaluation become the ones who run and improve the new tooling, not the ones it eventually displaces.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Own the Escalation Path for the Most Complex, Ambiguous Customer Issues',
+      description: 'Volunteer to be the designated owner for tier-3 escalations — the issues with no clear root cause that require deep product knowledge and judgment. Document your resolution process for a few of these as internal case studies. This is the part of support work that AI-assisted tooling augments but does not replace, and it is the clearest path to a senior support or support-engineering-lead role.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate a Senior Support Engineer / Support Lead Track Using Your Tooling + Escalation Results',
+      description: 'Compile your AI-tooling pilot results and complex-escalation resolution record into a case for a Senior Support Engineer or Support Engineering Lead conversation. Quantified resolution-time improvement plus a documented track record on the hardest issues is a stronger case than ticket volume alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  professional_services: [
+    {
+      title: 'Own One AI-Tooling Pilot That Measurably Improves Your Core Workflow',
+      description: 'Identify the single most repetitive, time-consuming part of your role and propose piloting an AI tool against it (drafting, summarization, data extraction, scheduling) — measuring time saved and quality impact. Professionals who lead this evaluation, rather than waiting for it to be decided for them, shape how the tool gets adopted on their own terms.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 16, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Document a Judgment-Based Contribution That Is Difficult to Automate',
+      description: 'Identify and formally document one recurring decision or relationship-management responsibility in your role that depends on context, judgment, or trust built over time — not pattern-matching on historical data. Write it up as a case study with a concrete outcome. This documentation is both a career-protection asset and useful evidence in any promotion or compensation conversation.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '21 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate Expanded Scope or a Title Change Using Your Tooling-Adoption and Judgment Evidence',
+      description: 'Bring your AI-tooling pilot results and documented judgment-based contribution to your manager as concrete evidence for a scoped conversation — expanded responsibilities, a title change, or a compensation discussion. Quantified efficiency gains plus documented judgment work is a stronger case than tenure alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 12, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  brand_designer: [
+    {
+      title: "Lead Your Org's AI-Generated Brand Asset Quality Standard",
+      description: 'AI image/design tools now generate brand assets fast but inconsistently — brand drift is the new bottleneck. Propose and own a lightweight standard: which AI-generated asset types are pre-approved, which require design review, and a checklist that protects brand consistency at scale. Owning this standard makes you the person every other team learns the new workflow from.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Own a Brand System Extension for AI-Generated or AI-Assisted Campaigns',
+      description: 'Identify a campaign or product surface where AI-assisted asset generation is being used or considered, and own building the brand guardrails (prompt templates, style references, approved color/type constraints) that keep AI output on-brand. Concrete, demoable guardrails are a strong differentiator in a market full of designers who can only describe brand guidelines, not operationalize them for AI tools.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 16, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for Senior/Lead Brand Designer Using Your AI-Standard and Guardrail Ownership',
+      description: 'Compile your AI-asset quality standard and brand-guardrail work into a structured case for a Senior or Lead Brand Designer conversation. Owning how the brand stays consistent as AI tools scale asset production is one of the clearest emerging differentiators in this role right now.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  compliance_officer: [
+    {
+      title: "Lead Your Org's AI Governance and Regulatory-Risk Review",
+      description: 'As AI tools enter decision-making processes (lending, hiring, claims, underwriting), regulatory exposure grows faster than most compliance functions have adapted to. Propose leading a formal review of every AI-assisted decision process against applicable regulations, and own building the ongoing monitoring framework. Being first to formally map this risk makes you the de facto owner of AI compliance policy going forward.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Build an AI Tool Usage and Data-Handling Policy and Get It Formally Adopted',
+      description: 'Draft a practical policy covering which AI tools are approved for use with sensitive or regulated data, what audit trail is required for AI-assisted decisions, and escalation criteria. Get it formally adopted, not just circulated. Compliance officers who own this policy layer become structurally central to every AI rollout decision in the company.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for Chief Compliance Officer / Head of GRC Using Your AI-Governance Leadership',
+      description: 'Compile your AI governance review and policy-adoption work into a structured case for a Chief Compliance Officer or Head of GRC conversation. Demonstrated ownership of the company\'s AI regulatory exposure — proactively, not reactively — is the clearest differentiator at this level right now.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  sales_operations_analyst: [
+    {
+      title: "Own Your Org's AI-Assisted Forecasting and Deal-Scoring Model",
+      description: 'Propose piloting an AI-assisted forecasting or deal-scoring model against your team\'s current spreadsheet-based process, measuring forecast accuracy improvement. Sales ops analysts who lead this evaluation become the ones who own and tune the new model, not the ones whose manual reporting it eventually replaces.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: "Lead a CRM Data-Quality and Governance Initiative That Other Teams Depend On",
+      description: 'Propose owning a CRM data-quality initiative — standardized field definitions, automated validation rules, a single source of truth for pipeline data. Every AI-assisted sales tool depends on clean CRM data to work; owning this foundation makes you the dependency every analytics and forecasting initiative builds on.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate a Senior Sales Ops / Revenue Operations Lead Track Using Your Model + Data-Quality Results',
+      description: 'Compile your forecasting model results and CRM data-quality initiative into a case for a Senior Sales Operations Analyst or Revenue Operations Lead conversation. Quantified forecast-accuracy improvement plus foundational data ownership is a stronger case than reporting volume alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  talent_acquisition_specialist: [
+    {
+      title: "Lead Your Org's Responsible AI-in-Sourcing and Screening Review",
+      description: 'AI sourcing and resume-screening tools are entering recruiting workflows quickly, often without a formal bias or fairness review. Propose leading a review of every AI tool in your hiring pipeline against fairness and legal criteria, and own the ongoing monitoring. Being the person who ensures AI-assisted hiring is fair and defensible makes you structurally central to recruiting operations, not a candidate for replacement by the tools you evaluate.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 20, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Own the Candidate Experience for Your Hardest-to-Fill, Highest-Stakes Roles',
+      description: 'Volunteer to own full-cycle recruiting for your most senior or hardest-to-fill open roles — the searches that require judgment, relationship-building, and negotiation that automated sourcing cannot replicate. Document your placement outcomes. This is the part of recruiting work that remains durably human and is the clearest path to a senior recruiter or recruiting-lead role.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 18, deadline: '60 days', priority: 'Medium',
+    },
+    {
+      title: 'Negotiate a Senior Recruiter / Recruiting Lead Track Using Your AI-Review and Placement Results',
+      description: 'Bring your AI-in-hiring review work and senior-role placement record to your manager as concrete evidence for a Senior Talent Acquisition Specialist or Recruiting Lead conversation. Demonstrated governance ownership plus a track record on the hardest searches is a stronger case than requisitions-closed volume alone.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '14 days', priority: 'Low',
+    },
+  ],
+  recruiting_manager: [
+    {
+      title: "Own Your Function's AI-Sourcing Tool Evaluation and Governance Framework",
+      description: 'Propose leading a formal evaluation of AI sourcing and screening tools against fairness, accuracy, and candidate-experience criteria, and own the governance framework that gets adopted across your recruiting team. Recruiting managers who own this evaluation shape how the entire function adopts AI, rather than having tools imposed without their input.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '45 days', priority: 'Medium',
+    },
+    {
+      title: 'Build and Present a Recruiting-Function AI-Readiness and Efficiency Scorecard',
+      description: 'Develop a scorecard tracking time-to-fill, quality-of-hire, and AI-tool adoption across your recruiting team, and present it quarterly to HR leadership. Recruiting managers who bring this kind of data-driven function-level intelligence to the leadership table are positioned for Director of Talent Acquisition tracks.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 16, deadline: '30 days', priority: 'Medium',
+    },
+    {
+      title: 'Position for Director of Talent Acquisition Using Your AI-Governance and Scorecard Leadership',
+      description: 'Compile your AI-sourcing governance framework and efficiency scorecard into a structured case for a Director of Talent Acquisition conversation. Demonstrated ownership of how the entire recruiting function adapts to AI tools — not just your own team\'s day-to-day — is the clearest differentiator at this transition.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 14, deadline: '21 days', priority: 'Low',
+    },
+  ],
+  bpo_associate: [
+    {
+      title: 'Volunteer to Pilot AI-Assisted Workflow Tools Before They Are Mandated',
+      description: 'Propose piloting an AI-assisted tool for your highest-volume task (call summarization, document processing, response drafting) and measure the time saved and quality impact yourself. Associates who proactively lead this evaluation are far more likely to be retained and promoted into oversight roles than those who wait for the tool to be imposed on them.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 18, deadline: '21 days', priority: 'Critical',
+    },
+    {
+      title: 'Become the Designated Quality Reviewer for AI-Assisted Output on Your Team',
+      description: 'Volunteer to review and correct AI-assisted output (chatbot responses, automated document processing) before it reaches customers. Document your error-catch rate. This is the highest-value pivot available right now: from being a unit of throughput to being the quality-control layer the AI system needs to function reliably.',
+      layerFocus: 'L3 · Role Displacement', riskReductionPct: 22, deadline: '14 days', priority: 'Critical',
+    },
+    {
+      title: 'Build a Case for a Process-Lead or QA-Lead Role Using Your AI-Pilot and Review Results',
+      description: 'Compile your AI-tool pilot results and quality-review track record into a case for a Process Lead, Team Lead, or QA Lead conversation. Demonstrated ownership of how your team adopts AI tools is the clearest, fastest path out of pure-throughput roles into supervisory or specialist tracks.',
+      layerFocus: 'L5 · Personal Protection', riskReductionPct: 16, deadline: '14 days', priority: 'High',
+    },
+  ],
 };
+// "Full Stack Developer/Engineer" titles resolve to the distinct roleGroup
+// string 'swe_fullstack' (see resolveRoleGroup), even though its underlying
+// static ACTION_DB pool already aliases to swe_backend. Without this alias,
+// buildActionReservoir's exact-key lookup would silently find no Phase-2
+// content for that title despite swe_backend having a full entry.
+PHASE2_ACTION_DB.swe_fullstack = PHASE2_ACTION_DB.swe_backend;
 
 // ─── Anti-repetition reservoir ────────────────────────────────────────────────
 //

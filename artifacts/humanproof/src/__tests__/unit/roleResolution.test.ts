@@ -74,4 +74,13 @@ describe("roleResolution", () => {
     const manufacturingQuality = getPersonalizedActions("Quality Engineer", "mid", 70, "US");
     expect(manufacturingQuality.roleGroup).toBe("quality_engineer");
   });
+
+  // Regression: "BI Analyst" (the common short-form title) had no base-map
+  // alias entry — only the long form "Business Intelligence Analyst" and
+  // "BI Developer" resolved. A user typing the obvious abbreviation fell
+  // through to "unresolved" and never reached the dedicated bi_analyst pool.
+  it("resolves the short-form 'BI Analyst' title to the bi_analyst group", () => {
+    expect(resolveRoleInput("BI Analyst").canonicalKey).toBe("bi_analyst");
+    expect(getPersonalizedActions("BI Analyst", "mid", 60, "US").roleGroup).toBe("bi_analyst");
+  });
 });

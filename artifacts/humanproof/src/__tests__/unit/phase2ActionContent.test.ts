@@ -1,12 +1,14 @@
-// phase2ActionContent.test.ts — Master Loop iterations 2-5
+// phase2ActionContent.test.ts — Master Loop iterations 2-6
 //
 // Verifies that the hand-authored PHASE2_ACTION_DB content is reachable for
-// each of the 28 high-traffic roles it was written for, and that exhausting
-// the urgency-tier reservoir surfaces genuinely new (non-repeating) content
-// rather than recycling. This directly addresses the audit's "Action
-// Evolution" requirement (Month 1 -> Month 12 progression) for the roles
-// with authored content, without overclaiming coverage for the other ~20
-// role groups that still recycle as before.
+// every role group in the core ACTION_DB (49 of ~52 entries — the remaining
+// 3 are structurally unreachable aliases: cv_engineer, staff_engineer, and
+// distinguished_engineer all collapse into other, covered roleGroups), and
+// that exhausting the urgency-tier reservoir surfaces genuinely new
+// (non-repeating) content rather than recycling. This directly addresses the
+// audit's "Action Evolution" requirement (Month 1 -> Month 12 progression).
+// Separate multi-industry pools (healthcare, manufacturing, etc.) are NOT
+// covered by this content — see the 'Civil Engineer' control tests below.
 
 import { describe, it, expect } from 'vitest';
 import { getPersonalizedActions } from '../../services/actionPersonalizationEngine';
@@ -48,6 +50,27 @@ const ROLE_CASES: Array<{ group: string; title: string; phase2Fragment: string }
   { group: 'hr_generalist',        title: 'HR Generalist',        phase2Fragment: 'Responsible AI-in-HR Tooling Review' },
   { group: 'investment_banker',    title: 'Investment Banker',    phase2Fragment: 'AI-Assisted Pitch Book and Comp Analysis' },
   { group: 'sales_engineer',       title: 'Sales Engineer',       phase2Fragment: 'AI-Assisted Technical Demo and POC Workflow' },
+  { group: 'llm_engineer',         title: 'LLM Engineer',         phase2Fragment: 'Prompt Versioning and Regression Testing' },
+  { group: 'nlp_engineer',         title: 'NLP Engineer',         phase2Fragment: 'LLM-vs-Classical-NLP Decision Framework' },
+  { group: 'computer_vision_engineer', title: 'Computer Vision Engineer', phase2Fragment: 'Model Monitoring & Drift Detection' },
+  { group: 'embedded_engineer',    title: 'Embedded Engineer',    phase2Fragment: 'On-Device AI/ML Inference Initiative' },
+  { group: 'principal_engineer',   title: 'Principal Engineer',   phase2Fragment: 'AI-Adoption Technical Strategy' },
+  { group: 'bi_analyst',           title: 'BI Analyst',           phase2Fragment: 'Semantic Layer / Metrics Governance' },
+  { group: 'quantitative_analyst', title: 'Quantitative Analyst', phase2Fragment: 'LLM-Assisted Research or Signal-Generation' },
+  { group: 'portfolio_manager',    title: 'Portfolio Manager',    phase2Fragment: "Firm's Evaluation of AI-Assisted Research Tools" },
+  { group: 'vp_sales',             title: 'VP Sales',             phase2Fragment: 'AI-Assisted Sales Forecasting and Pipeline Intelligence' },
+  { group: 'hr_director',          title: 'HR Director',          phase2Fragment: "Responsible-AI Workforce Strategy" },
+  { group: 'swe_mobile',           title: 'Mobile Developer',     phase2Fragment: "App's AI-Powered Feature Roadmap" },
+  { group: 'solution_architect',   title: 'Solutions Architect',  phase2Fragment: 'Reference Architecture for AI-Integrated Solutions' },
+  { group: 'support_engineer',     title: 'Support Engineer',     phase2Fragment: 'AI-Assisted Ticket Triage and Resolution Tooling' },
+  { group: 'professional_services', title: 'Professional Services Consultant', phase2Fragment: 'AI-Tooling Pilot That Measurably Improves Your Core Workflow' },
+  { group: 'brand_designer',       title: 'Brand Designer',       phase2Fragment: 'AI-Generated Brand Asset Quality Standard' },
+  { group: 'compliance_officer',   title: 'Compliance Officer',   phase2Fragment: 'AI Governance and Regulatory-Risk Review' },
+  { group: 'sales_operations_analyst', title: 'Sales Operations Analyst', phase2Fragment: 'AI-Assisted Forecasting and Deal-Scoring Model' },
+  { group: 'talent_acquisition_specialist', title: 'Talent Acquisition Specialist', phase2Fragment: 'Responsible AI-in-Sourcing and Screening Review' },
+  { group: 'recruiting_manager',   title: 'Recruiting Manager',   phase2Fragment: 'AI-Sourcing Tool Evaluation and Governance Framework' },
+  { group: 'bpo_associate',        title: 'BPO Associate',        phase2Fragment: 'Pilot AI-Assisted Workflow Tools Before They Are Mandated' },
+  { group: 'swe_fullstack',        title: 'Full Stack Developer', phase2Fragment: 'AI Infrastructure Cost & Governance' },
 ];
 
 describe('PHASE2_ACTION_DB reachability', () => {
@@ -88,7 +111,10 @@ describe('PHASE2_ACTION_DB reachability', () => {
   });
 
   it('a role with no PHASE2_ACTION_DB entry is unaffected (no spurious content injected)', () => {
-    const result = getPersonalizedActions('Compliance Officer', 'mid', 60, 'IN');
+    // 'Civil Engineer' is served from the separate MANUFACTURING_ENERGY_CONSTRUCTION
+    // multi-industry pool and has no PHASE2_ACTION_DB entry — virtually every
+    // role group in the CORE ACTION_DB now has Phase-2 content.
+    const result = getPersonalizedActions('Civil Engineer', 'mid', 60, 'IN');
     expect(result.actions.length).toBeGreaterThan(0);
     // None of the swe-specific Phase-2 titles should leak into an unrelated role.
     const titles = result.actions.map(a => a.title ?? '');
