@@ -156,7 +156,7 @@ export const CareerCopilotButton: React.FC<{ context: CopilotContext }> = ({ con
               className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[380px] z-50 rounded-2xl overflow-hidden"
               style={{
                 background: 'var(--bg-card, #1a1c24)',
-                border: '1px solid var(--alpha-bg-08, rgba(255,255,255,0.08))',
+                border: '1px solid var(--alpha-bg-08)',
                 boxShadow: '0 16px 48px rgba(0,0,0,0.50)',
                 maxHeight: 'calc(100vh - 120px)',
               }}
