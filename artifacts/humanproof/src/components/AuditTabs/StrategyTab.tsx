@@ -112,7 +112,7 @@ const ActionCard: React.FC<{
     <div className="flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium leading-snug" style={{
-          color: completed ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.9)',
+          color: completed ? 'var(--alpha-text-45)' : 'rgba(255,255,255,0.9)',
           textDecoration: completed ? 'line-through' : 'none',
         }}>
           {action.title}
@@ -351,7 +351,7 @@ const OfferModal: React.FC<{
               className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
               style={{
                 background: offerSalary && offerCompany ? 'linear-gradient(135deg, #00d4e0, #0099a8)' : 'var(--alpha-bg-08)',
-                color: offerSalary && offerCompany ? '#fff' : 'rgba(255,255,255,0.3)',
+                color: offerSalary && offerCompany ? '#fff' : 'var(--alpha-text-30)',
               }}>
               Evaluate Offer →
             </button>

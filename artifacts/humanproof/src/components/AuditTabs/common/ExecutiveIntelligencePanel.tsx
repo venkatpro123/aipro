@@ -51,7 +51,7 @@ function ncRiskColor(score: number): string {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 const SectionTitle: React.FC<{ icon: React.ElementType; label: string; color?: string }> = ({
-  icon: Icon, label, color = 'rgba(255,255,255,0.35)',
+  icon: Icon, label, color = 'var(--alpha-text-35)',
 }) => (
   <div className="flex items-center gap-1.5 mb-2">
     <Icon className="w-3 h-3 flex-shrink-0" style={{ color }} />

@@ -481,7 +481,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const runwayLabel = (m: number) =>
     m === 0 ? 'Not specified' : m < 3 ? `${m} months — Critical` : m < 6 ? `${m} months — Elevated` : m < 12 ? `${m} months — Comfortable` : `${m} months — Strong`;
   const runwayColor = (m: number) =>
-    m === 0 ? 'rgba(255,255,255,0.35)' : m < 3 ? '#ef4444' : m < 6 ? '#f97316' : m < 12 ? '#f59e0b' : '#10b981';
+    m === 0 ? 'var(--alpha-text-35)' : m < 3 ? '#ef4444' : m < 6 ? '#f97316' : m < 12 ? '#f59e0b' : '#10b981';
 
   return (
     <div
@@ -592,7 +592,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                             onClick={() => selectCompany(res)}
                             className="flex items-center justify-between px-4 py-3 cursor-pointer"
                             style={{ borderBottom: '1px solid var(--alpha-bg-06)', opacity: ratio < FUZZY_MATCH_MIN_RATIO ? 0.4 : 1 }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--alpha-bg-06)')}
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
                             <div>
@@ -709,7 +709,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                             borderBottom: '1px solid var(--alpha-bg-06)',
                             background: idx === focusedSuggestionIndex ? 'rgba(34,211,238,0.08)' : 'transparent',
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--alpha-bg-06)')}
                           onMouseLeave={e => (e.currentTarget.style.background = idx === focusedSuggestionIndex ? 'rgba(34,211,238,0.08)' : 'transparent')}
                         >
                           <div>
@@ -960,7 +960,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           onClick={goBack}
           className="text-sm font-semibold px-3 py-2 rounded-xl transition-all"
           style={{
-            color: qStep === 0 ? 'rgba(255,255,255,0.15)' : 'var(--alpha-text-50)',
+            color: qStep === 0 ? 'var(--alpha-bg-08)' : 'var(--alpha-text-50)',
             background: 'transparent', border: 'none', cursor: qStep === 0 ? 'default' : 'pointer',
           }}
           disabled={qStep === 0}

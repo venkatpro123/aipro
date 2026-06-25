@@ -183,7 +183,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
               y1={scoreToY(threshold)}
               x2={PAD_X + PLOT_W}
               y2={scoreToY(threshold)}
-              stroke="rgba(255,255,255,0.06)"
+              stroke="var(--alpha-bg-06)"
               strokeWidth="0.5"
               strokeDasharray="4 4"
             />

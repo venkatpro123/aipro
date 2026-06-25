@@ -1264,7 +1264,7 @@ const ProgressIndicator: React.FC<{ completed: number; total: number }> = ({ com
         {/* Mini completion ring */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={7} />
+            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--alpha-bg-06)" strokeWidth={7} />
             <motion.circle
               cx={size/2} cy={size/2} r={r}
               fill="none" stroke={color} strokeWidth={7}

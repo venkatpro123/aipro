@@ -133,7 +133,7 @@ const CheckItem: React.FC<{
         <p
           className="text-[11px] font-semibold leading-snug"
           style={{
-            color: isCompleted ? 'rgba(255,255,255,0.35)' : 'var(--alpha-text-85)',
+            color: isCompleted ? 'var(--alpha-text-35)' : 'var(--alpha-text-85)',
             textDecoration: isCompleted ? 'line-through' : 'none',
           }}
         >
@@ -205,7 +205,7 @@ const PhaseBlock: React.FC<{
       layout
       className="rounded-2xl overflow-hidden"
       style={{
-        background: unlocked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.015)',
+        background: unlocked ? 'var(--alpha-bg-04)' : 'rgba(255,255,255,0.015)',
         border: `1px solid ${unlocked ? `${cfg.accent}30` : 'var(--alpha-bg-06)'}`,
         filter: unlocked ? 'none' : 'saturate(0)',
       }}

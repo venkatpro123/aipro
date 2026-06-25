@@ -67,7 +67,7 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
         <circle
           cx="70" cy="70" r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
+          stroke="var(--alpha-bg-06)"
           strokeWidth="10"
         />
         {/* Score arc */}

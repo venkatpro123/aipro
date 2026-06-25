@@ -58,8 +58,8 @@ export const LearningIllustration: React.FC<IllustrationProps> = ({ size = 120, 
     {/* Page lines */}
     {[35,42,49,56].map(y => (
       <g key={y}>
-        <line x1="40" y1={y} x2="56" y2={y-1.5} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-        <line x1="64" y1={y-1.5} x2="80" y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+        <line x1="40" y1={y} x2="56" y2={y-1.5} stroke="var(--alpha-bg-06)" strokeWidth="0.5" />
+        <line x1="64" y1={y-1.5} x2="80" y2={y} stroke="var(--alpha-bg-06)" strokeWidth="0.5" />
       </g>
     ))}
     {/* Knowledge glow */}

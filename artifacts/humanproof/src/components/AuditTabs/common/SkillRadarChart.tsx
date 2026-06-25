@@ -107,7 +107,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 key={`ring-${i}`}
                 points={points}
                 fill="none"
-                stroke="rgba(255,255,255,0.06)"
+                stroke="var(--alpha-bg-06)"
                 strokeWidth="0.5"
               />
             );
@@ -123,7 +123,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 y1={CENTER}
                 x2={x}
                 y2={y}
-                stroke="rgba(255,255,255,0.06)"
+                stroke="var(--alpha-bg-06)"
                 strokeWidth="0.5"
               />
             );
@@ -220,7 +220,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 y={y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fill={isHovered ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-45)'}
+                fill={isHovered ? 'var(--alpha-text-85)' : 'var(--alpha-text-45)'}
                 fontSize={isHovered ? '8.5' : '7.5'}
                 fontFamily="var(--font-body)"
                 fontWeight={isHovered ? '700' : '500'}

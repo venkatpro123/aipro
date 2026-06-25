@@ -192,7 +192,7 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
               <p className="text-[10px] font-black" style={{ color: isActive ? cfg.accent : 'var(--alpha-text-45)' }}>
                 {cfg.tag}
               </p>
-              <p className="text-[11px] font-black" style={{ color: isActive ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-35)' }}>
+              <p className="text-[11px] font-black" style={{ color: isActive ? 'var(--alpha-text-85)' : 'var(--alpha-text-35)' }}>
                 {normalisedProb(key)}%
               </p>
             </button>

@@ -215,7 +215,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
                   }}
                 >
                   <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                  <p className="flex-1 text-[10px]" style={{ color: isUserTier ? 'rgba(255,255,255,0.75)' : 'var(--alpha-text-45)' }}>
+                  <p className="flex-1 text-[10px]" style={{ color: isUserTier ? 'var(--alpha-text-78)' : 'var(--alpha-text-45)' }}>
                     {rangeLabel}
                     {isUserTier && <span className="ml-1.5 font-bold" style={{ color }}>← your range</span>}
                   </p>

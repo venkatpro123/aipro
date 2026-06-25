@@ -21,9 +21,9 @@ interface Props {
 // ─── Design tokens (match existing spy-themed dark UI) ───────────────────────
 const C = {
   bg1:       'rgba(10, 15, 25, 0.95)',
-  bg2:       'rgba(255,255,255,0.03)',
-  bg3:       'rgba(255,255,255,0.06)',
-  border:    'rgba(255,255,255,0.08)',
+  bg2:       'var(--alpha-bg-04)',
+  bg3:       'var(--alpha-bg-06)',
+  border:    'var(--alpha-bg-08)',
   borderHi:  'rgba(255,255,255,0.14)',
   cyan:      '#00F5FF',
   violet:    '#7C3AFF',
@@ -135,7 +135,7 @@ const TrajectoryChart: React.FC<{
         return (
           <g key={v}>
             <line x1={PAD.left} y1={y} x2={PAD.left + chartW} y2={y}
-              stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              stroke="var(--alpha-bg-06)" strokeWidth="1" />
             <text x={PAD.left - 6} y={y + 4} textAnchor="end"
               fill={C.text3} fontSize="10" fontFamily={C.mono}>
               {v}

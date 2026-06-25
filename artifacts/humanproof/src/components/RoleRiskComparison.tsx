@@ -184,7 +184,7 @@ export const RoleRiskComparison: React.FC<RoleRiskComparisonProps> = ({
             key="comparison-empty"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            style={{ textAlign: 'center', padding: '48px 32px', border: '1px dashed var(--border)', borderRadius: '24px', background: 'rgba(255,255,255,0.01)' }}
+            style={{ textAlign: 'center', padding: '48px 32px', border: '1px dashed var(--border)', borderRadius: '24px', background: 'transparent' }}
           >
             <GitCompare size={40} style={{ margin: '0 auto 20px', color: 'var(--text-3)', opacity: 0.3 }} />
             <p className="label-xs" style={{ margin: 0, color: 'var(--text-3)' }}>Select a target role to visualize the Risk Delta</p>

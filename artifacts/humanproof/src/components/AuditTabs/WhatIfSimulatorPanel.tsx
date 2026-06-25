@@ -41,7 +41,7 @@ function SimulatedScoreRing({ score, color }: { score: number; color: string }) 
   return (
     <div className="relative inline-flex items-center justify-center">
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true">
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={sw} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--alpha-bg-06)" strokeWidth={sw} />
         <motion.circle
           cx={size/2} cy={size/2} r={r} fill="none"
           stroke={color} strokeWidth={sw}

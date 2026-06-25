@@ -843,13 +843,13 @@ const EffectiveWeightsPanel: React.FC<{
                   </td>
                   <td className="py-2.5 px-4 text-right font-mono opacity-60">{pct(fw)}</td>
                   <td className="py-2.5 px-4 text-right font-mono" style={{
-                    color: gc > 1.05 ? 'var(--amber)' : gc < 0.95 ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-50)'
+                    color: gc > 1.05 ? 'var(--amber)' : gc < 0.95 ? 'var(--alpha-text-45)' : 'var(--alpha-text-50)'
                   }}>
                     {mult(gc)}
                   </td>
                   {hasSegAdj && (
                     <td className="py-2.5 px-4 text-right font-mono" style={{
-                      color: sm > 1.1 ? 'var(--amber)' : sm < 0.9 ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-50)'
+                      color: sm > 1.1 ? 'var(--amber)' : sm < 0.9 ? 'var(--alpha-text-45)' : 'var(--alpha-text-50)'
                     }}>
                       {mult(sm)}
                     </td>

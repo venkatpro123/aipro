@@ -123,7 +123,7 @@ export default function DisplacementForecast({ onNavigate }: { onNavigate?: (tab
       <div style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, marginBottom: 12 }}>
         <ResponsiveContainer width="100%" height={340}>
           <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--alpha-bg-06)" />
             <XAxis dataKey="year" tick={{ fill: 'var(--text2)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
             <YAxis domain={[0, 100]} tick={{ fill: 'var(--text2)', fontSize: 12 }} axisLine={{ stroke: 'var(--border)' }} />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />

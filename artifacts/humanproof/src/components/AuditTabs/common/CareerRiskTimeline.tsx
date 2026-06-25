@@ -92,7 +92,7 @@ const TimelineNode: React.FC<{
       <p
         className="text-[9px] text-center font-semibold"
         style={{
-          color: isNow ? 'rgba(255,255,255,0.65)' : isPast ? 'rgba(255,255,255,0.30)' : 'var(--alpha-text-45)',
+          color: isNow ? 'rgba(255,255,255,0.65)' : isPast ? 'var(--alpha-text-30)' : 'var(--alpha-text-45)',
           letterSpacing: isNow ? '0.06em' : undefined,
         }}
       >

@@ -1032,7 +1032,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                     return (
                       <g key={f}>
                         <line x1={PAD.l} y1={y} x2={SVG_W - PAD.r} y2={y}
-                          stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+                          stroke="var(--alpha-bg-06)" strokeWidth="1" />
                         <text x={PAD.l - 4} y={y + 3} textAnchor="end"
                           fill="rgba(255,255,255,0.35)" fontSize="9" fontFamily="monospace">
                           {formatMoney(toDisplay(val), displayCurrency)}

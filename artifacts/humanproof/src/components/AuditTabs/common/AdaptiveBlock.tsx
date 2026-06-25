@@ -65,19 +65,19 @@ export const AdaptiveBlock: React.FC<Props> = ({
         {/* Accent rail */}
         <div
           className="w-0.5 h-7 rounded-full flex-shrink-0"
-          style={{ background: empty ? 'rgba(255,255,255,0.10)' : accentColor }}
+          style={{ background: empty ? 'var(--alpha-bg-08)' : accentColor }}
         />
         {Icon && (
           <Icon
             className="w-4 h-4 flex-shrink-0"
-            style={{ color: empty ? 'rgba(255,255,255,0.20)' : accentColor + 'cc' }}
+            style={{ color: empty ? 'var(--alpha-text-25)' : accentColor + 'cc' }}
           />
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p
               className="text-[12px] font-bold leading-tight sm:truncate"
-              style={{ color: empty ? 'rgba(255,255,255,0.30)' : 'var(--alpha-text-85)' }}
+              style={{ color: empty ? 'var(--alpha-text-30)' : 'var(--alpha-text-85)' }}
             >
               {title}
             </p>

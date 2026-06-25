@@ -94,7 +94,7 @@ export const DimensionRadar: React.FC<Props> = ({
             key={idx}
             d={line.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--alpha-bg-06)"
             strokeWidth="0.5"
           />
         ))}
@@ -109,7 +109,7 @@ export const DimensionRadar: React.FC<Props> = ({
               y1={CENTER}
               x2={CENTER + RADIUS * Math.cos(angle)}
               y2={CENTER + RADIUS * Math.sin(angle)}
-              stroke="rgba(255,255,255,0.06)"
+              stroke="var(--alpha-bg-06)"
               strokeWidth="0.5"
             />
           );

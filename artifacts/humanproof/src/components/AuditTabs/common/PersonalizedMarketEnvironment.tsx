@@ -261,7 +261,7 @@ const StatRow: React.FC<{
   value: string;
   valueColor?: string;
   sub?: string;
-}> = ({ label, value, valueColor = 'rgba(255,255,255,0.85)', sub }) => (
+}> = ({ label, value, valueColor = 'var(--alpha-text-85)', sub }) => (
   <div className="flex items-center justify-between py-1.5 px-2.5 rounded-lg"
     style={{ background: 'var(--alpha-bg-04)' }}>
     <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>{label}</span>

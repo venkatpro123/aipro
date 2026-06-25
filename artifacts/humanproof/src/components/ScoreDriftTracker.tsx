@@ -598,7 +598,7 @@ export default function ScoreDriftTracker() {
             >
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.06)"
+                stroke="var(--alpha-bg-06)"
               />
               <XAxis
                 dataKey="date"

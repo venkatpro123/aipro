@@ -245,14 +245,14 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
                 <span style={{ fontSize: '0.75rem', flexShrink: 0 }}>{src.icon}</span>
                 <span style={{
                   fontSize: '0.7rem', flex: 1,
-                  color: isDone ? 'rgba(255,255,255,0.75)' : isLoading ? '#fff' : 'rgba(255,255,255,0.3)',
+                  color: isDone ? 'var(--alpha-text-78)' : isLoading ? '#fff' : 'var(--alpha-text-30)',
                 }}>
                   {src.label}
                 </span>
                 {/* Status badge */}
                 <span style={{
                   fontSize: '0.55rem', fontWeight: 800, letterSpacing: '0.1em',
-                  color: isDone ? '#10b981' : isLoading ? src.color : 'rgba(255,255,255,0.2)',
+                  color: isDone ? '#10b981' : isLoading ? src.color : 'var(--alpha-text-25)',
                   minWidth: '52px', textAlign: 'right',
                 }}>
                   {isDone ? '✓ DONE' : isLoading ? 'ACQUIRING' : 'QUEUED'}
@@ -326,12 +326,12 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
               transition: 'all 0.2s',
             }}
             onMouseEnter={e => {
-              (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.12)';
+              (e.target as HTMLButtonElement).style.background = 'var(--alpha-bg-08)';
               (e.target as HTMLButtonElement).style.color = '#fff';
             }}
             onMouseLeave={e => {
-              (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)';
-              (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)';
+              (e.target as HTMLButtonElement).style.background = 'var(--alpha-bg-06)';
+              (e.target as HTMLButtonElement).style.color = 'var(--alpha-text-55)';
             }}
           >
             Continue with current evidence

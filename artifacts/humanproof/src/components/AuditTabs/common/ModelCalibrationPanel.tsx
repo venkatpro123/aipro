@@ -149,7 +149,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
               <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0`}
                 style={{ background: sig.availableForCurrentAudit ? '#10b981' : '#6b7280' }} />
               <div>
-                <span className="text-xs font-medium" style={{ color: sig.availableForCurrentAudit ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.4)' }}>
+                <span className="text-xs font-medium" style={{ color: sig.availableForCurrentAudit ? 'var(--alpha-text-78)' : 'rgba(255,255,255,0.4)' }}>
                   {sig.signalName}
                 </span>
                 <span className="text-[10px] ml-2" style={{ color: trust.color }}>

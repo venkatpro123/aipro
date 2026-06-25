@@ -207,7 +207,7 @@ export const MarketDynamicsIllustration: React.FC<IllustrationProps> = ({ size =
     {/* Data markers */}
     {[[25, 55], [50, 60], [75, 50], [95, 58]].map(([cx, cy], i) => (
       <g key={i}>
-        <line x1={cx} y1={cy} x2={cx} y2={90} stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+        <line x1={cx} y1={cy} x2={cx} y2={90} stroke="var(--alpha-bg-06)" strokeWidth="0.5" />
         <circle cx={cx} cy={cy} r="2.5" fill="#00d4e0" fillOpacity="0.4" stroke="#00d4e0" strokeWidth="0.5" strokeOpacity="0.3" />
       </g>
     ))}

@@ -145,7 +145,7 @@ export default function PeerBenchmark({ score, scoreType, jobTitle, industry }: 
           {/* Median marker */}
           <div style={{
             position: 'absolute', left: '50%', top: -3, bottom: -3,
-            width: 2, background: 'rgba(255,255,255,0.3)', borderRadius: 1,
+            width: 2, background: 'var(--alpha-text-30)', borderRadius: 1,
           }} title="Peer median" />
           {/* Your position marker */}
           <div style={{

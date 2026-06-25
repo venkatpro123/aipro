@@ -75,7 +75,7 @@ function PercentileRing({
     <div className="relative w-28 h-28">
       <svg className="w-full h-full" viewBox="0 0 100 100">
         {/* Track */}
-        <circle cx="50" cy="50" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--alpha-bg-06)" strokeWidth="6" />
         {/* Progress */}
         <circle
           cx="50" cy="50" r={radius}
@@ -316,8 +316,8 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
               onClick={() => setActiveTab(tab)}
               className="flex-1 py-1.5 rounded-md text-xs font-medium transition-all"
               style={{
-                background: activeTab === tab ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === tab ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-35)',
+                background: activeTab === tab ? 'var(--alpha-bg-08)' : 'transparent',
+                color: activeTab === tab ? 'var(--alpha-text-85)' : 'var(--alpha-text-35)',
               }}
             >
               {tab === 'gaps' ? `Gap Roadmap (${position.gaps.length})` : `Competitive Edges (${position.competitiveEdges.length})`}

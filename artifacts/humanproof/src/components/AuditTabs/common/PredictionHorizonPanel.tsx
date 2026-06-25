@@ -194,7 +194,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
             const prev = key === '30d' ? currentScore : key === '90d' ? horizon30d.score : horizon90d.score;
             const diff = h.score - prev;
             const arrow = diff > 2 ? '↑' : diff < -2 ? '↓' : '→';
-            const arrowColor = diff > 2 ? '#ef4444' : diff < -2 ? '#10b981' : 'rgba(255,255,255,0.3)';
+            const arrowColor = diff > 2 ? '#ef4444' : diff < -2 ? '#10b981' : 'var(--alpha-text-30)';
             return (
               <React.Fragment key={key}>
                 <span style={{ color: arrowColor, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{arrow}</span>

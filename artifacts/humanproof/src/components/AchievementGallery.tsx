@@ -227,13 +227,13 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
               <div className="flex-1 min-w-0">
                 <p
                   className="text-[10px] font-bold truncate"
-                  style={{ color: isUnlocked ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-35)' }}
+                  style={{ color: isUnlocked ? 'var(--alpha-text-85)' : 'var(--alpha-text-35)' }}
                 >
                   {def.label}
                 </p>
                 <p
                   className="text-[9px] leading-snug mt-0.5"
-                  style={{ color: isUnlocked ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-25)' }}
+                  style={{ color: isUnlocked ? 'var(--alpha-text-45)' : 'var(--alpha-text-25)' }}
                 >
                   {isUnlocked ? def.description : '???'}
                 </p>

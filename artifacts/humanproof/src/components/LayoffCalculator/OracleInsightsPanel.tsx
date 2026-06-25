@@ -21,8 +21,8 @@ import { useAdaptiveSystem } from '../../hooks/useAdaptiveSystem';
 // ── Design tokens ─────────────────────────────────────────────────────────
 const C = {
   bg1:    'rgba(10,15,25,0.98)',
-  bg2:    'rgba(255,255,255,0.03)',
-  bg3:    'rgba(255,255,255,0.06)',
+  bg2:    'var(--alpha-bg-04)',
+  bg3:    'var(--alpha-bg-06)',
   border: 'var(--alpha-bg-08)',
   borderHi: 'var(--alpha-bg-08)',
   cyan:   '#00F5FF',

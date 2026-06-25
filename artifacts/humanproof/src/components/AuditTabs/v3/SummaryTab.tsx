@@ -153,7 +153,7 @@ const ScoreRingHero: React.FC<{
           {/* Track ring */}
           <circle
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
-            fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={10}
+            fill="none" stroke="var(--alpha-bg-06)" strokeWidth={10}
           />
           {/* Wave 6.3: CI confidence shadow arc — renders the uncertainty band */}
           {hasCIShadow && (

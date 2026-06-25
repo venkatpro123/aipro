@@ -189,7 +189,7 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
 
                   <p
                     className="text-[12px] font-semibold leading-tight"
-                    style={{ color: isFirst ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-55)' }}
+                    style={{ color: isFirst ? 'var(--alpha-text-85)' : 'var(--alpha-text-55)' }}
                   >
                     {node.role}
                   </p>

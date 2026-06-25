@@ -116,7 +116,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
       {open && (
         <div
           className="px-4 pb-3 pt-2"
-          style={{ background: isFirst ? 'rgba(34,211,238,0.02)' : 'rgba(255,255,255,0.01)' }}
+          style={{ background: isFirst ? 'rgba(34,211,238,0.02)' : 'transparent' }}
         >
           {dim.dataPoint && (
             <div className="mb-2 px-2 py-1 rounded-lg inline-flex"
