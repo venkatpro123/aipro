@@ -321,7 +321,7 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
           boxShadow: `0 0 8px ${dotColor}`,
           flexShrink: 0,
         }} />
-        <Icon className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.9)', flexShrink: 0 }} />
+        <Icon className="w-4 h-4" style={{ color: 'var(--alpha-text-92)', flexShrink: 0 }} />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, position: 'relative' }}>
@@ -331,7 +331,7 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
           fontWeight: 900,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.98)',
+          color: 'var(--alpha-text-92)',
         }}>
           {verdict.toUpperCase()}
         </span>
@@ -341,7 +341,7 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
           fontWeight: 700,
           letterSpacing: '0.10em',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.72)',
+          color: 'var(--alpha-text-70)',
           marginTop: '2px',
         }}>
           {getUrgency(score)} ACTION REQUIRED
@@ -1936,19 +1936,19 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
                 End-of-Service Gratuity Included
               </span>
             </div>
-            <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.60)' }}>
+            <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
               {runway.gratuityNarrative}
             </p>
             {runway.savedRunwayMonths != null && (
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.45)' }}>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--alpha-text-45)' }}>
                   Savings: {runway.savedRunwayMonths}mo
                 </span>
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>+</span>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>+</span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
                   Gratuity: {runway.gratuityMonths.toFixed(1)}mo
                 </span>
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.30)' }}>=</span>
+                <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>=</span>
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ background: `${color}15`, color }}>
                   Effective: {runway.runwayMonths.toFixed(1)}mo
                 </span>
