@@ -5,6 +5,7 @@ import SkillPortfolioPanel from '../common/SkillPortfolioPanel';
 import AIRiskSkillMatrix from '@/components/AIRiskSkillMatrix';
 import { SkillRadarChart, type RadarDimension } from '../common/SkillRadarChart';
 import { CareerPathMap } from '../common/CareerPathMap';
+import { CareerEvolutionTimeline } from '../common/CareerEvolutionTimeline';
 import { SkillDependencyGraph, type SkillNode, type SkillEdge } from '../common/SkillDependencyGraph';
 import { SkillEvolutionIllustration } from '../../illustrations/CareerIllustrations';
 import { getCareerIntelligence } from '@/data/intelligence';
@@ -134,6 +135,13 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
           paths={careerPaths}
         />
       )}
+
+      <CareerEvolutionTimeline
+        currentRole={currentRoleLabel}
+        currentScore={result.total}
+        adjacentRoles={r.roleAdjacency?.adjacentRoles ?? []}
+        twoHopPaths={r.roleAdjacency?.twoHopPaths}
+      />
       {!hasContent && (
         <div className="rounded-xl px-4 py-8 text-center flex flex-col items-center gap-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <SkillEvolutionIllustration size={80} />
