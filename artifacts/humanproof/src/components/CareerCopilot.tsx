@@ -6,7 +6,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, ChevronRight, Sparkles, Shield, TrendingDown, Zap } from 'lucide-react';
+import { MessageCircle, X, ChevronRight, Sparkles, Shield, TrendingDown, Zap, BookOpen, Building2, Clock } from 'lucide-react';
 import { riskColor, riskLabel } from '../lib/riskTokens';
 
 interface CopilotContext {
@@ -76,6 +76,38 @@ function generateInsights(ctx: CopilotContext): QuickInsight[] {
       : `You're in a strong position. Compound it: (1) Deepen skills that are human-durable — empathy, cross-functional leadership, novel problem-solving. (2) Build external reputation (writing, speaking, open-source). (3) Grow your network while you have leverage.`,
     accent: '#06B6D4',
   });
+
+  if (ctx.skillGapCount != null && ctx.skillGapCount > 0) {
+    insights.push({
+      id: 'skills',
+      icon: BookOpen,
+      question: `How many skill gaps do I have?`,
+      answer: `Your audit identified ${ctx.skillGapCount} skill gap${ctx.skillGapCount > 1 ? 's' : ''} where market demand is outpacing your current proficiency. These are ranked by urgency in your Protection tab. Focus on the top-priority gap first — closing one high-urgency gap typically reduces your score by 8-15 points.`,
+      accent: '#8B5CF6',
+    });
+  }
+
+  if (ctx.companyName) {
+    insights.push({
+      id: 'company',
+      icon: Building2,
+      question: `Is ${ctx.companyName} a safe employer?`,
+      answer: ctx.score >= 55
+        ? `${ctx.companyName} shows elevated risk signals. This could be financial stress, layoff history, or sector headwinds. Check the Company tab for specific indicators. Regardless of company health, having a personal escape plan is the strongest insurance.`
+        : `${ctx.companyName} appears relatively stable based on available signals. However, company health is just one of five risk dimensions. Even at stable companies, role-level AI disruption can create individual risk. Stay audit-aware.`,
+      accent: '#3B82F6',
+    });
+  }
+
+  if (ctx.escapePaths != null && ctx.escapePaths > 0) {
+    insights.push({
+      id: 'escape',
+      icon: Clock,
+      question: 'What are my escape paths?',
+      answer: `Your audit found ${ctx.escapePaths} viable escape path${ctx.escapePaths > 1 ? 's' : ''} — adjacent roles you could transition to with targeted upskilling. The best path is shown in your Protection tab's Career Evolution Timeline. Each path includes the specific skills to bridge and estimated time to qualify.`,
+      accent: '#10b981',
+    });
+  }
 
   return insights;
 }
