@@ -133,7 +133,7 @@ const CheckItem: React.FC<{
         <p
           className="text-[11px] font-semibold leading-snug"
           style={{
-            color: isCompleted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)',
+            color: isCompleted ? 'rgba(255,255,255,0.35)' : 'var(--alpha-text-85)',
             textDecoration: isCompleted ? 'line-through' : 'none',
           }}
         >
@@ -206,7 +206,7 @@ const PhaseBlock: React.FC<{
       className="rounded-2xl overflow-hidden"
       style={{
         background: unlocked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.015)',
-        border: `1px solid ${unlocked ? `${cfg.accent}30` : 'rgba(255,255,255,0.06)'}`,
+        border: `1px solid ${unlocked ? `${cfg.accent}30` : 'var(--alpha-bg-06)'}`,
         filter: unlocked ? 'none' : 'saturate(0)',
       }}
     >
@@ -257,7 +257,7 @@ const PhaseBlock: React.FC<{
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black tracking-[0.15em]"
-              style={{ color: unlocked ? cfg.accent : 'rgba(255,255,255,0.25)' }}>
+              style={{ color: unlocked ? cfg.accent : 'var(--alpha-text-25)' }}>
               PHASE {phase}: {cfg.label}
             </span>
             {isComplete && (

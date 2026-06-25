@@ -127,7 +127,7 @@ function DimensionBar({ dim }: { dim: CompetitiveDimension }) {
           {/* Benchmark marker */}
           <div
             className="absolute top-1/2 -translate-y-1/2 w-0.5 h-2.5 rounded-full"
-            style={{ left: `${dim.benchmarkScore}%`, background: 'rgba(255,255,255,0.25)' }}
+            style={{ left: `${dim.benchmarkScore}%`, background: 'var(--alpha-text-25)' }}
           />
         </div>
         <span className="text-[11px] w-12 text-right font-medium" style={{ color: status.color }}>
@@ -285,7 +285,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
       {/* Dimension breakdown */}
       <div
         className="rounded-2xl p-4"
-        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
       >
         <div className="text-xs font-medium text-white/40 uppercase tracking-wide mb-3">
           6 Competitive Dimensions
@@ -317,7 +317,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
               className="flex-1 py-1.5 rounded-md text-xs font-medium transition-all"
               style={{
                 background: activeTab === tab ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: activeTab === tab ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)',
+                color: activeTab === tab ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-35)',
               }}
             >
               {tab === 'gaps' ? `Gap Roadmap (${position.gaps.length})` : `Competitive Edges (${position.competitiveEdges.length})`}
@@ -335,7 +335,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
             >
               <div
                 className="rounded-2xl px-4 py-2"
-                style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+                style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
               >
                 <div className="text-[10px] text-white/30 mt-2 mb-1">Sorted by ROI (percentile gain ÷ effort)</div>
                 {displayGaps.map((gap, i) => (
@@ -363,7 +363,7 @@ const CompetitivePositionPanel: React.FC<CompetitivePositionPanelProps> = ({
               {position.competitiveEdges.length === 0 ? (
                 <div
                   className="rounded-xl p-4 text-center"
-                  style={{ background: 'rgba(255,255,255,0.025)' }}
+                  style={{ background: 'var(--alpha-bg-04)' }}
                 >
                   <p className="text-sm text-white/40">
                     No clear advantages yet — closing the top gaps will create edges.

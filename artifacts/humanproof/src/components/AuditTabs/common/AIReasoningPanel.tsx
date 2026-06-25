@@ -61,19 +61,19 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ border: `1px solid ${isFirst ? 'rgba(34,211,238,0.20)' : 'rgba(255,255,255,0.07)'}` }}
+      style={{ border: `1px solid ${isFirst ? 'rgba(34,211,238,0.20)' : 'var(--alpha-bg-06)'}` }}
     >
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-3 p-3 text-left"
-        style={{ background: isFirst ? 'rgba(34,211,238,0.04)' : 'rgba(255,255,255,0.02)' }}
+        style={{ background: isFirst ? 'rgba(34,211,238,0.04)' : 'var(--alpha-bg-04)' }}
       >
         {/* Rank badge */}
         <span
           className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
           style={{
-            background: isFirst ? 'rgba(34,211,238,0.18)' : 'rgba(255,255,255,0.07)',
-            color: isFirst ? '#22d3ee' : 'rgba(255,255,255,0.35)',
+            background: isFirst ? 'rgba(34,211,238,0.18)' : 'var(--alpha-bg-06)',
+            color: isFirst ? '#22d3ee' : 'var(--alpha-text-35)',
           }}
         >
           {rank + 1}

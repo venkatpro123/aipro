@@ -729,7 +729,7 @@ export default function HumanEdgeJournal({
           style={{
             flex: 1,
             minWidth: 180,
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--alpha-bg-04)",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "8px 12px",
@@ -747,7 +747,7 @@ export default function HumanEdgeJournal({
               background:
                 viewMode === "list"
                   ? "rgba(0,245,255,0.1)"
-                  : "rgba(255,255,255,0.04)",
+                  : "var(--alpha-bg-04)",
               border: `1px solid ${viewMode === "list" ? "var(--cyan)" : "var(--border)"}`,
               borderRadius: "8px 0 0 8px",
               color: viewMode === "list" ? "var(--cyan)" : "var(--text2)",
@@ -764,7 +764,7 @@ export default function HumanEdgeJournal({
               background:
                 viewMode === "timeline"
                   ? "rgba(0,245,255,0.1)"
-                  : "rgba(255,255,255,0.04)",
+                  : "var(--alpha-bg-04)",
               border: `1px solid ${viewMode === "timeline" ? "var(--cyan)" : "var(--border)"}`,
               borderRadius: "0 8px 8px 0",
               color: viewMode === "timeline" ? "var(--cyan)" : "var(--text2)",
@@ -779,7 +779,7 @@ export default function HumanEdgeJournal({
           value={filterDim}
           onChange={(e) => setFilterDim(e.target.value as Dimension | "all")}
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--alpha-bg-04)",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "8px 12px",
@@ -804,7 +804,7 @@ export default function HumanEdgeJournal({
           placeholder="Filter by tag…"
           style={{
             minWidth: 140,
-            background: "rgba(255,255,255,0.04)",
+            background: "var(--alpha-bg-04)",
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "8px 12px",
@@ -822,7 +822,7 @@ export default function HumanEdgeJournal({
             style={{
               textAlign: "center",
               padding: "60px 20px",
-              background: "rgba(255,255,255,0.02)",
+              background: "var(--alpha-bg-04)",
               border: "1px solid var(--border)",
               borderRadius: 12,
             }}
@@ -876,7 +876,7 @@ export default function HumanEdgeJournal({
                 <div
                   key={entry.id}
                   style={{
-                    background: "rgba(255,255,255,0.03)",
+                    background: "var(--alpha-bg-04)",
                     border: `1px solid ${dimColor}30`,
                     borderRadius: 12,
                     padding: "20px 24px",
@@ -1044,7 +1044,7 @@ export default function HumanEdgeJournal({
                             fontSize: "0.7rem",
                             padding: "2px 8px",
                             borderRadius: 4,
-                            background: "rgba(255,255,255,0.05)",
+                            background: "var(--alpha-bg-06)",
                             color: "var(--text2)",
                             border: "1px solid var(--border)",
                           }}
@@ -1150,7 +1150,7 @@ export default function HumanEdgeJournal({
                   }
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.06)",
+                    background: "var(--alpha-bg-06)",
                     border: "1px solid var(--border)",
                     borderRadius: 8,
                     padding: "10px 12px",
@@ -1190,7 +1190,7 @@ export default function HumanEdgeJournal({
                   placeholder="e.g. Resolved team conflict under pressure"
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.06)",
+                    background: "var(--alpha-bg-06)",
                     border: "1px solid var(--border)",
                     borderRadius: 8,
                     padding: "10px 12px",
@@ -1236,7 +1236,7 @@ export default function HumanEdgeJournal({
                   rows={5}
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.06)",
+                    background: "var(--alpha-bg-06)",
                     border: "1px solid var(--border)",
                     borderRadius: 8,
                     padding: "10px 12px",
@@ -1285,7 +1285,7 @@ export default function HumanEdgeJournal({
                   placeholder="e.g. leadership, conflict resolution"
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.06)",
+                    background: "var(--alpha-bg-06)",
                     border: "1px solid var(--border)",
                     borderRadius: 8,
                     padding: "10px 12px",

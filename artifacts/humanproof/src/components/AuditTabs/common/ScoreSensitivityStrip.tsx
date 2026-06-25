@@ -69,7 +69,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
               {/* Rank pill */}
               <span
                 className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black"
-                style={{ background: i === 0 ? 'rgba(34,211,238,0.15)' : 'rgba(255,255,255,0.07)', color: i === 0 ? '#22d3ee' : 'rgba(255,255,255,0.40)' }}
+                style={{ background: i === 0 ? 'rgba(34,211,238,0.15)' : 'var(--alpha-bg-06)', color: i === 0 ? '#22d3ee' : 'var(--alpha-text-45)' }}
               >
                 {i + 1}
               </span>

@@ -208,7 +208,7 @@ const BehavioralInsightPanel: React.FC<BehavioralInsightPanelProps> = ({ behavio
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={`rounded-2xl overflow-hidden ${className}`}
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="px-4 pt-4 pb-3 flex items-start gap-3">

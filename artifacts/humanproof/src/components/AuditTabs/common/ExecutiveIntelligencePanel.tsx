@@ -71,7 +71,7 @@ const ActionRow: React.FC<{
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${color}18` }}
+      style={{ background: 'var(--alpha-bg-04)', border: `1px solid ${color}18` }}
     >
       <button
         onClick={() => setOpen(o => !o)}
@@ -240,7 +240,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
               {intelligence.boardPressureScore >= 45 && (
                 <div
                   className="rounded-xl px-3.5 py-3"
-                  style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+                  style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <SectionTitle icon={Users} label="Board pressure" />

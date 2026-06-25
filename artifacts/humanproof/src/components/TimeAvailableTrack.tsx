@@ -102,8 +102,8 @@ export const TimeAvailableTrack: React.FC<Props> = ({
               whileTap={{ scale: 0.98 }}
               className="relative rounded-xl p-4 text-left transition-all"
               style={{
-                background: isActive ? `${track.color}12` : "rgba(255,255,255,0.03)",
-                border: `1px solid ${isActive ? track.color : "rgba(255,255,255,0.08)"}`,
+                background: isActive ? `${track.color}12` : "var(--alpha-bg-04)",
+                border: `1px solid ${isActive ? track.color : "var(--alpha-bg-08)"}`,
                 cursor: "pointer",
               }}
             >

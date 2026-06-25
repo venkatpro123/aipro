@@ -43,8 +43,8 @@ export default function ShareableScoreCard() {
         '--bg': '#0f1118', '--text': '#e8e5dc', '--text2': '#8888a8',
         '--cyan': '#00F5FF', '--emerald': '#00FF9F', '--violet': '#7C3AFF',
         '--violet-light': '#A78BFA', '--red': '#FF4757', '--orange': '#FF7043',
-        '--yellow': '#FCD34D', '--border': 'rgba(255,255,255,0.08)',
-        '--border2': 'rgba(255,255,255,0.12)', '--mono': 'monospace',
+        '--yellow': '#FCD34D', '--border': 'var(--alpha-bg-08)',
+        '--border2': 'var(--alpha-bg-08)', '--mono': 'monospace',
         '--body': 'Inter, system-ui, sans-serif',
       };
       const canvas = await html2canvas(cardRef.current, {

@@ -65,7 +65,7 @@ const FactorGauge = ({ label, value, color, icon: Icon }: any) => (
     <div
       style={{
         height: 6,
-        background: "rgba(255,255,255,0.06)",
+        background: "var(--alpha-bg-06)",
         borderRadius: 3,
         overflow: "hidden",
       }}
@@ -95,7 +95,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
     return (
       <div
         style={{
-          background: "rgba(255,255,255,0.02)",
+          background: "var(--alpha-bg-04)",
           border: "1px solid var(--border)",
           borderRadius: 12,
           padding: 32,
@@ -130,7 +130,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--alpha-bg-04)",
         border: "1px solid var(--border)",
         borderRadius: 16,
         overflow: "hidden",
@@ -146,7 +146,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: "rgba(255,255,255,0.02)",
+          background: "var(--alpha-bg-04)",
         }}
       >
         <div>
@@ -322,7 +322,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
               <div
                 style={{
                   padding: 16,
-                  background: "rgba(255,255,255,0.04)",
+                  background: "var(--alpha-bg-04)",
                   borderRadius: 8,
                   fontSize: "0.8rem",
                   color: "var(--text2)",
@@ -362,7 +362,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
                     justifyContent: "space-between",
                     alignItems: "center",
                     padding: "10px 14px",
-                    background: "rgba(255,255,255,0.03)",
+                    background: "var(--alpha-bg-04)",
                     borderRadius: 8,
                     border: "1px solid var(--alpha-bg-06)",
                   }}
@@ -377,7 +377,7 @@ export const SkillIntelligenceCard: React.FC<Props> = ({
                       style={{
                         width: 40,
                         height: 4,
-                        background: "rgba(255,255,255,0.1)",
+                        background: "var(--alpha-text-25)",
                         borderRadius: 2,
                         overflow: "hidden",
                       }}

@@ -101,7 +101,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
             AGENT SIGNAL BREAKDOWN
           </span>
         </div>
-        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem" }}>
+        <span style={{ color: "var(--alpha-text-50)", fontSize: "0.7rem" }}>
           {signals.length} agents analyzed
         </span>
       </div>
@@ -196,7 +196,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
                   <div
                     style={{
                       height: "4px",
-                      background: "rgba(255,255,255,0.1)",
+                      background: "var(--alpha-text-25)",
                       borderRadius: "2px",
                       overflow: "hidden",
                     }}
@@ -224,7 +224,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
                 </span>
                 <span
                   style={{
-                    color: "rgba(255,255,255,0.4)",
+                    color: "var(--alpha-text-35)",
                     fontSize: "0.6rem",
                     minWidth: "50px",
                   }}
@@ -344,7 +344,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
           alignItems: "center",
         }}
       >
-        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
+        <span style={{ color: "var(--alpha-text-50)", fontSize: "0.75rem" }}>
           WEIGHTED SWARM SCORE
         </span>
         <span

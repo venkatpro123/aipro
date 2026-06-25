@@ -843,13 +843,13 @@ const EffectiveWeightsPanel: React.FC<{
                   </td>
                   <td className="py-2.5 px-4 text-right font-mono opacity-60">{pct(fw)}</td>
                   <td className="py-2.5 px-4 text-right font-mono" style={{
-                    color: gc > 1.05 ? 'var(--amber)' : gc < 0.95 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.55)'
+                    color: gc > 1.05 ? 'var(--amber)' : gc < 0.95 ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-50)'
                   }}>
                     {mult(gc)}
                   </td>
                   {hasSegAdj && (
                     <td className="py-2.5 px-4 text-right font-mono" style={{
-                      color: sm > 1.1 ? 'var(--amber)' : sm < 0.9 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.55)'
+                      color: sm > 1.1 ? 'var(--amber)' : sm < 0.9 ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-50)'
                     }}>
                       {mult(sm)}
                     </td>
@@ -1563,8 +1563,8 @@ const SourceRow: React.FC<{
 }> = ({ icon, label, isDominant, color, impactLevel, detail, note, subItems }) => (
   <div style={{
     borderRadius: 8, padding: '10px 12px',
-    background: impactLevel > 0 ? `${color}09` : 'rgba(255,255,255,0.02)',
-    border: `1px solid ${impactLevel > 0 ? color + '25' : 'rgba(255,255,255,0.07)'}`,
+    background: impactLevel > 0 ? `${color}09` : 'var(--alpha-bg-04)',
+    border: `1px solid ${impactLevel > 0 ? color + '25' : 'var(--alpha-bg-06)'}`,
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
       {icon}
@@ -1581,7 +1581,7 @@ const SourceRow: React.FC<{
             key={pip}
             style={{
               width: 6, height: 6, borderRadius: 2,
-              background: pip <= Math.round(impactLevel) ? color : 'rgba(255,255,255,0.10)',
+              background: pip <= Math.round(impactLevel) ? color : 'var(--alpha-bg-08)',
             }}
           />
         ))}

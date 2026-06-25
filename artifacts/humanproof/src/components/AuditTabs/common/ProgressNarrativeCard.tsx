@@ -87,7 +87,7 @@ function buildNarrative(scoreDelta?: ScoreDeltaLike | null, streak?: StreakLike 
   // No movement, but the user has history worth acknowledging.
   return {
     icon: streakLen >= 2 ? Flame : Minus,
-    accent: streakLen >= 2 ? '#f97316' : 'rgba(255,255,255,0.55)',
+    accent: streakLen >= 2 ? '#f97316' : 'var(--alpha-text-50)',
     headline: streakLen >= 2 ? `You're on a ${streakLen}-week streak` : 'Holding steady since your last visit',
     body: `${momentum}${atRiskNudge}`,
   };

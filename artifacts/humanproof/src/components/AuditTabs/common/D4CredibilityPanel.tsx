@@ -141,7 +141,7 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
                 style={{
                   flexShrink: 0,
                   marginTop: 1,
-                  color: sig.severity === 'high' ? '#f97316' : sig.severity === 'medium' ? '#f59e0b' : 'rgba(255,255,255,0.35)',
+                  color: sig.severity === 'high' ? '#f97316' : sig.severity === 'medium' ? '#f59e0b' : 'var(--alpha-text-35)',
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>

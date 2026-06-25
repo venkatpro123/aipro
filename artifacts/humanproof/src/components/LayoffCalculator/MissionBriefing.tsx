@@ -109,7 +109,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
           </div>
           <div
             style={{
-              color: "rgba(255,255,255,0.5)",
+              color: "var(--alpha-text-50)",
               fontSize: "0.7rem",
             }}
           >
@@ -130,7 +130,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
               style={{
                 background: isCritical
                   ? `${color}08`
-                  : "rgba(255,255,255,0.02)",
+                  : "var(--alpha-bg-04)",
                 border: `1px solid ${color}${isCritical ? '50' : '30'}`,
                 borderLeft: isCritical ? `3px solid ${color}` : undefined,
                 borderRadius: "8px",
@@ -184,7 +184,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
               {/* Mission ID */}
               <div
                 style={{
-                  color: "rgba(255,255,255,0.4)",
+                  color: "var(--alpha-text-35)",
                   fontSize: "0.65rem",
                   letterSpacing: "1px",
                   marginBottom: "8px",
@@ -233,13 +233,13 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
                 <div
                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
-                  <span style={{ color: "rgba(255,255,255,0.4)" }}>⏱</span>
+                  <span style={{ color: "var(--alpha-text-35)" }}>⏱</span>
                   <span style={{ color }}>DEADLINE: {obj.deadline}</span>
                 </div>
                 <div
                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
-                  <span style={{ color: "rgba(255,255,255,0.4)" }}>✓</span>
+                  <span style={{ color: "var(--alpha-text-35)" }}>✓</span>
                   <span style={{ color: "rgba(255,255,255,0.7)" }}>
                     SUCCESS: {obj.successCriteria}
                   </span>
@@ -252,7 +252,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
                   style={{
                     marginTop: "10px",
                     fontSize: "0.7rem",
-                    color: "rgba(255,255,255,0.4)",
+                    color: "var(--alpha-text-35)",
                   }}
                 >
                   <span style={{ marginRight: "6px" }}>📡</span>
@@ -273,7 +273,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
           display: "flex",
           justifyContent: "space-between",
           fontSize: "0.65rem",
-          color: "rgba(255,255,255,0.3)",
+          color: "var(--alpha-text-30)",
           letterSpacing: "1px",
         }}
       >

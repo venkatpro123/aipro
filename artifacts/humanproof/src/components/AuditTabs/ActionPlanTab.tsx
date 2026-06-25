@@ -1978,8 +1978,8 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                 onClick={() => setHideCompleted(v => !v)}
                 className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-colors"
                 style={{
-                  background:   hideCompleted ? 'rgba(16,185,129,0.10)' : 'rgba(255,255,255,0.05)',
-                  borderColor:  hideCompleted ? 'rgba(16,185,129,0.30)' : 'rgba(255,255,255,0.10)',
+                  background:   hideCompleted ? 'rgba(16,185,129,0.10)' : 'var(--alpha-bg-06)',
+                  borderColor:  hideCompleted ? 'rgba(16,185,129,0.30)' : 'var(--alpha-bg-08)',
                   color:        hideCompleted ? 'var(--emerald)' : 'var(--text-3)',
                 }}
                 title={hideCompleted

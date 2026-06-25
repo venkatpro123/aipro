@@ -75,7 +75,7 @@ const ActionRow: React.FC<{
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${color}18` }}
+      style={{ background: 'var(--alpha-bg-04)', border: `1px solid ${color}18` }}
     >
       <button
         onClick={() => setOpen(o => !o)}

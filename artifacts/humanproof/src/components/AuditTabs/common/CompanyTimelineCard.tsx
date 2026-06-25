@@ -177,7 +177,7 @@ export const CompanyTimelineCard: React.FC<CompanyTimelineCardProps> = ({ result
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.12 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div

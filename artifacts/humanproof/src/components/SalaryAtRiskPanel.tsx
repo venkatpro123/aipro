@@ -973,7 +973,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                   onClick={() => setShowInUsd(v => !v)}
                   className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border transition-colors font-mono uppercase tracking-wider"
                   style={{
-                    borderColor: showInUsd ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.15)',
+                    borderColor: showInUsd ? 'rgba(6,182,212,0.5)' : 'var(--alpha-bg-08)',
                     color:       showInUsd ? 'rgb(6,182,212)' : 'rgba(255,255,255,0.4)',
                     background:  showInUsd ? 'rgba(6,182,212,0.08)' : 'transparent',
                   }}
@@ -1001,7 +1001,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                 disabled={annual <= 0}
                 className="px-4 py-2.5 rounded-lg text-sm font-bold transition-colors"
                 style={{
-                  background: annual > 0 ? "var(--cyan)" : "rgba(255,255,255,0.05)",
+                  background: annual > 0 ? "var(--cyan)" : "var(--alpha-bg-06)",
                   color: annual > 0 ? "#000" : "var(--text-3)",
                   cursor: annual > 0 ? "pointer" : "not-allowed",
                 }}
@@ -1211,7 +1211,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                   onClick={() => setShowScenario(v => !v)}
                   className="ml-auto text-[9px] px-2 py-0.5 rounded border transition-colors font-mono uppercase tracking-wider"
                   style={{
-                    borderColor: showScenario ? SCENARIO_COLORS.scenario : 'rgba(255,255,255,0.15)',
+                    borderColor: showScenario ? SCENARIO_COLORS.scenario : 'var(--alpha-bg-08)',
                     color:       showScenario ? SCENARIO_COLORS.scenario : 'rgba(255,255,255,0.4)',
                     background:  showScenario ? `${SCENARIO_COLORS.scenario}12` : 'transparent',
                   }}

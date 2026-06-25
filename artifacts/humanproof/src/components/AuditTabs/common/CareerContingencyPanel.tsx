@@ -226,7 +226,7 @@ const ActionList: React.FC<ActionListProps> = ({ title, actions, accentColor, ur
   <div className="mb-3">
     <div className="flex items-center gap-1.5 mb-2">
       {urgent ? <Zap className="w-3 h-3" style={{ color: accentColor }} /> : <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--alpha-text-35)' }} />}
-      <span className="text-[10px] font-semibold tracking-wider" style={{ color: urgent ? accentColor : 'rgba(255,255,255,0.45)' }}>
+      <span className="text-[10px] font-semibold tracking-wider" style={{ color: urgent ? accentColor : 'var(--alpha-text-45)' }}>
         {title}
       </span>
     </div>
@@ -235,7 +235,7 @@ const ActionList: React.FC<ActionListProps> = ({ title, actions, accentColor, ur
         <div key={i} className="flex items-start gap-2">
           <div
             className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
-            style={{ background: urgent ? accentColor : 'rgba(255,255,255,0.25)' }}
+            style={{ background: urgent ? accentColor : 'var(--alpha-text-25)' }}
           />
           <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
             {action}

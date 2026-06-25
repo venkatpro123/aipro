@@ -124,7 +124,7 @@ export default function JournalTimeline({
                     onClick={() => onEntryClick?.(entry)}
                     style={{
                       padding: "12px 16px",
-                      background: "rgba(255,255,255,0.02)",
+                      background: "var(--alpha-bg-04)",
                       border: `1px solid ${dimColor}20`,
                       borderRadius: 8,
                       cursor: onEntryClick ? "pointer" : "default",

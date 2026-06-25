@@ -65,7 +65,7 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
   const scoreDeltaDir: string = r.scoreDelta?.direction ?? '';
   const scoreDelta30d: number = Math.abs(r.scoreDelta?.delta30d ?? 0);
   const velocityColor = scoreDeltaDir === 'worsening' ? '#dc2626'
-    : scoreDeltaDir === 'improving' ? '#10b981' : 'rgba(255,255,255,0.35)';
+    : scoreDeltaDir === 'improving' ? '#10b981' : 'var(--alpha-text-35)';
   const VelocityIcon = scoreDeltaDir === 'worsening' ? TrendingUp
     : scoreDeltaDir === 'improving' ? TrendingDown : Minus;
 

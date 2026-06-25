@@ -123,8 +123,8 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
                     transition={{ delay: colIdx * 0.05 + rowIdx * 0.03 }}
                     className="rounded-lg px-2.5 py-2 cursor-pointer"
                     style={{
-                      background: isHovered ? `${color}18` : 'rgba(255,255,255,0.02)',
-                      border: `1px solid ${isHovered || isConnected ? `${color}40` : 'rgba(255,255,255,0.05)'}`,
+                      background: isHovered ? `${color}18` : 'var(--alpha-bg-04)',
+                      border: `1px solid ${isHovered || isConnected ? `${color}40` : 'var(--alpha-bg-06)'}`,
                       transition: 'all 150ms ease-out',
                     }}
                     onMouseEnter={() => setHoveredNode(node.id)}
@@ -137,7 +137,7 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
                       />
                       <span
                         className="text-[10px] font-semibold truncate"
-                        style={{ color: isHovered ? color : 'rgba(255,255,255,0.60)' }}
+                        style={{ color: isHovered ? color : 'var(--alpha-text-55)' }}
                       >
                         {node.label}
                       </span>

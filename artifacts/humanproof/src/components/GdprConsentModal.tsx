@@ -36,7 +36,7 @@ const CARD_STYLE: React.CSSProperties = {
 
 const TOGGLE_STYLE = (on: boolean): React.CSSProperties => ({
   width: 40, height: 22, borderRadius: 11,
-  background: on ? 'var(--cyan, #00d4e0)' : 'rgba(255,255,255,0.15)',
+  background: on ? 'var(--cyan, #00d4e0)' : 'var(--alpha-bg-08)',
   border: 'none', cursor: 'pointer', padding: 0,
   position: 'relative', transition: 'background 0.2s', flexShrink: 0,
 });
@@ -280,10 +280,10 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
                 type="button"
                 onClick={handleDeleteRequest}
                 style={{
-                  background: deletePhase === 'confirm' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${deletePhase === 'confirm' ? 'rgba(239,68,68,0.40)' : 'rgba(255,255,255,0.12)'}`,
+                  background: deletePhase === 'confirm' ? 'rgba(239,68,68,0.15)' : 'var(--alpha-bg-06)',
+                  border: `1px solid ${deletePhase === 'confirm' ? 'rgba(239,68,68,0.40)' : 'var(--alpha-bg-08)'}`,
                   borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
-                  color: deletePhase === 'confirm' ? '#ef4444' : 'rgba(255,255,255,0.40)',
+                  color: deletePhase === 'confirm' ? '#ef4444' : 'var(--alpha-text-45)',
                   fontSize: 10, display: 'flex', alignItems: 'center', gap: 5,
                 }}
               >

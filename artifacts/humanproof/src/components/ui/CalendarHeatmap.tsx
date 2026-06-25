@@ -24,7 +24,7 @@ function amplifierToColor(amp: number, isCurrent: boolean): { bg: string; border
   if (amp >= 1.04) return { bg: "rgba(245,158,11,0.25)", border: "rgba(245,158,11,0.40)", text: "#f59e0b" };
   if (amp <= 0.88) return { bg: "rgba(16,185,129,0.28)", border: "rgba(16,185,129,0.45)", text: "#10b981" };
   if (amp <= 0.95) return { bg: "rgba(16,185,129,0.14)", border: "rgba(16,185,129,0.25)", text: "#6ee7b7" };
-  return { bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.10)", text: "var(--text-3)" };
+  return { bg: "var(--alpha-bg-06)", border: "var(--alpha-bg-08)", text: "var(--text-3)" };
 }
 
 export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, className = "" }) => {
@@ -158,7 +158,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
           {[
             { color: "#ef4444", label: "High risk" },
             { color: "#f59e0b", label: "Elevated" },
-            { color: "rgba(255,255,255,0.3)", label: "Neutral" },
+            { color: "var(--alpha-text-30)", label: "Neutral" },
             { color: "#10b981", label: "Safe window" },
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-1">

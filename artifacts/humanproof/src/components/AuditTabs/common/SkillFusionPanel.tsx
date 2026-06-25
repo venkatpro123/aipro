@@ -22,7 +22,7 @@ function ScarcityBadge({ level }: { level: SkillCombo['candidateScarcity'] }) {
     extreme:     { label: 'Extreme Scarcity', color: '#ef4444', bg: 'rgba(239,68,68,0.10)'  },
     high:        { label: 'High Demand',      color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
     moderate:    { label: 'Moderate',         color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
-    competitive: { label: 'Competitive',      color: 'var(--alpha-text-35)', bg: 'rgba(255,255,255,0.05)' },
+    competitive: { label: 'Competitive',      color: 'var(--alpha-text-35)', bg: 'var(--alpha-bg-06)' },
   };
   const c = config[level] ?? config.competitive;
   return (

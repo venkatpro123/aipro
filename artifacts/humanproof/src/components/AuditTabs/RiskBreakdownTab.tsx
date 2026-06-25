@@ -512,7 +512,7 @@ const ScoreConfidenceInterval: React.FC<{
             onClick={() => setShowEpistemicNote(v => !v)}
             title="What does this interval mean?"
             aria-label="Explain confidence interval"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px', color: showEpistemicNote ? 'var(--cyan)' : 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', borderRadius: 4, transition: 'color 0.15s' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px', color: showEpistemicNote ? 'var(--cyan)' : 'var(--alpha-text-35)', display: 'flex', alignItems: 'center', borderRadius: 4, transition: 'color 0.15s' }}
           >
             <Info size={12} />
           </button>

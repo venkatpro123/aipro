@@ -224,8 +224,8 @@ const CityCard: React.FC<{
     <div
       className="rounded-xl p-3 flex flex-col gap-1.5"
       style={{
-        background: isHighlighted ? 'rgba(0,212,224,0.06)' : 'rgba(255,255,255,0.03)',
-        border: `1px solid ${isHighlighted ? 'rgba(0,212,224,0.28)' : 'rgba(255,255,255,0.08)'}`,
+        background: isHighlighted ? 'rgba(0,212,224,0.06)' : 'var(--alpha-bg-04)',
+        border: `1px solid ${isHighlighted ? 'rgba(0,212,224,0.28)' : 'var(--alpha-bg-08)'}`,
       }}
     >
       {/* City name + state + score */}

@@ -35,7 +35,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: 14,
                   padding: '16px 18px', borderRadius: 14,
-                  background: step.isCurrentRole ? 'rgba(0,212,224,0.07)' : 'rgba(255,255,255,0.03)',
+                  background: step.isCurrentRole ? 'rgba(0,212,224,0.07)' : 'var(--alpha-bg-04)',
                   border: step.isCurrentRole ? '1px solid rgba(0,212,224,0.25)' : '1px solid var(--alpha-bg-08)',
                 }}
               >
@@ -58,7 +58,7 @@ export const Section6_FutureRoleEvolution: React.FC<Props> = ({ steps }) => {
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: step.isCurrentRole ? 800 : 700, color: step.isCurrentRole ? 'var(--cyan,#22d3ee)' : 'rgba(255,255,255,0.85)', lineHeight: 1.2 }}>
+                    <span style={{ fontSize: 14, fontWeight: step.isCurrentRole ? 800 : 700, color: step.isCurrentRole ? 'var(--cyan,#22d3ee)' : 'var(--alpha-text-85)', lineHeight: 1.2 }}>
                       {step.role}
                     </span>
                     {step.isCurrentRole && (

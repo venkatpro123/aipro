@@ -105,7 +105,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div
@@ -149,7 +149,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
                   )}
                   <span
                     className="text-[11px] font-semibold truncate"
-                    style={{ color: peer.isCurrentCompany ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.65)' }}
+                    style={{ color: peer.isCurrentCompany ? 'rgba(255,255,255,0.90)' : 'var(--alpha-text-55)' }}
                   >
                     {peer.name}
                   </span>

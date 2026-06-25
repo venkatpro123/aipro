@@ -62,8 +62,8 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       {/* Integration phase */}
       {maRisk.integrationPhase !== 'NOT_APPLICABLE' && (
         <div className="flex items-center gap-1.5 mb-3">
-          <Clock className="w-3 h-3 flex-shrink-0" style={{ color: maRisk.isInPeakRiskWindow ? '#ef4444' : 'rgba(255,255,255,0.40)' }} />
-          <span className="text-[10px]" style={{ color: maRisk.isInPeakRiskWindow ? '#ef4444' : 'rgba(255,255,255,0.55)' }}>
+          <Clock className="w-3 h-3 flex-shrink-0" style={{ color: maRisk.isInPeakRiskWindow ? '#ef4444' : 'var(--alpha-text-45)' }} />
+          <span className="text-[10px]" style={{ color: maRisk.isInPeakRiskWindow ? '#ef4444' : 'var(--alpha-text-50)' }}>
             {maRisk.integrationPhaseLabel}
           </span>
         </div>

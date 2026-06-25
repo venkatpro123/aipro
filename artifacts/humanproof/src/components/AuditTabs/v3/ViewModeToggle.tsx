@@ -60,7 +60,7 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
               aria-label={`Switch to ${label} mode`}
               className="relative flex items-center justify-center rounded-full z-10 transition-colors"
               style={{
-                color: isActive ? '#000' : 'rgba(255,255,255,0.45)',
+                color: isActive ? '#000' : 'var(--alpha-text-45)',
                 fontWeight: isActive ? 700 : 500,
                 letterSpacing: '0.02em',
                 whiteSpace: 'nowrap',
@@ -86,7 +86,7 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({
                   width: 11,
                   height: 11,
                   flexShrink: 0,
-                  color: isActive ? '#000' : 'rgba(255,255,255,0.45)',
+                  color: isActive ? '#000' : 'var(--alpha-text-45)',
                 }}
               />
               {/* Show abbreviated label on phones, full label on larger screens */}

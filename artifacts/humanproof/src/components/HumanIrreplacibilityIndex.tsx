@@ -624,7 +624,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
               key={i}
               onClick={() => handleSelect(opt.score)}
               style={{
-                width: '100%', background: selected === opt.score ? (quizMode === 'adaptive' ? 'rgba(0,245,255,0.1)' : 'rgba(0,255,159,0.1)') : 'rgba(255,255,255,0.03)', border: selected === opt.score ? `1px solid ${quizMode === 'adaptive' ? 'var(--cyan)' : 'var(--emerald)'}` : '1px solid var(--border)', borderRadius: 10, padding: '14px 20px', color: 'var(--text)', textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s'
+                width: '100%', background: selected === opt.score ? (quizMode === 'adaptive' ? 'rgba(0,245,255,0.1)' : 'rgba(0,255,159,0.1)') : 'var(--alpha-bg-04)', border: selected === opt.score ? `1px solid ${quizMode === 'adaptive' ? 'var(--cyan)' : 'var(--emerald)'}` : '1px solid var(--border)', borderRadius: 10, padding: '14px 20px', color: 'var(--text)', textAlign: 'left', cursor: 'pointer', transition: 'all 0.15s'
               }}
             >
               <span style={{ color: selected === opt.score ? (quizMode === 'adaptive' ? 'var(--cyan)' : 'var(--emerald)') : 'var(--text2)', fontFamily: 'var(--mono)', fontSize: '0.75rem', marginRight: 10 }}>{String.fromCharCode(65 + i)}</span>
@@ -646,7 +646,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
           onClick={quizMode === 'standard' ? handleNext : submitAdaptiveAnswer}
           disabled={selected === null && adaptiveText === ''}
           style={{
-            background: (selected !== null || adaptiveText !== '') ? (quizMode === 'adaptive' ? 'var(--cyan)' : 'var(--emerald)') : 'rgba(255,255,255,0.08)',
+            background: (selected !== null || adaptiveText !== '') ? (quizMode === 'adaptive' ? 'var(--cyan)' : 'var(--emerald)') : 'var(--alpha-bg-08)',
             color: (selected !== null || adaptiveText !== '') ? 'black' : 'var(--text2)', border: 'none', borderRadius: 8, padding: '12px 32px', fontWeight: 700, cursor: (selected !== null || adaptiveText !== '') ? 'pointer' : 'not-allowed'
           }}
         >

@@ -81,7 +81,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
-          background: "rgba(255,255,255,0.04)",
+          background: "var(--alpha-bg-04)",
           border: "1px solid var(--alpha-bg-08)",
           borderRadius: 20,
           padding: "4px 14px",

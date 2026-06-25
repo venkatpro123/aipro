@@ -172,18 +172,18 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
             transition={{ duration: 0.25, delay: 0.08 + i * 0.05 }}
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold" style={{ color: dim.available ? 'rgba(255,255,255,0.82)' : 'rgba(255,255,255,0.35)' }}>
+              <span className="text-[11px] font-semibold" style={{ color: dim.available ? 'rgba(255,255,255,0.82)' : 'var(--alpha-text-35)' }}>
                 {dim.label}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-[10px]" style={{ color: dim.available ? dim.color : 'rgba(255,255,255,0.25)' }}>
+                <span className="text-[10px]" style={{ color: dim.available ? dim.color : 'var(--alpha-text-25)' }}>
                   {dim.valueLabel}
                 </span>
                 <span
                   className="text-[10px] font-black px-1.5 py-0.5 rounded"
                   style={{
-                    background: dim.available ? dim.color + '18' : 'rgba(255,255,255,0.04)',
-                    color: dim.available ? dim.color : 'rgba(255,255,255,0.25)',
+                    background: dim.available ? dim.color + '18' : 'var(--alpha-bg-04)',
+                    color: dim.available ? dim.color : 'var(--alpha-text-25)',
                   }}
                 >
                   {dim.score}
@@ -198,7 +198,7 @@ export const CareerHealthDashboard: React.FC<CareerHealthDashboardProps> = ({
                 transition={{ duration: 0.8, delay: 0.12 + i * 0.06, ease: 'easeOut' }}
                 className="h-1.5 rounded-full"
                 style={{
-                  background: dim.available ? dim.color : 'rgba(255,255,255,0.12)',
+                  background: dim.available ? dim.color : 'var(--alpha-bg-08)',
                   opacity: dim.available ? 1 : 0.5,
                 }}
               />

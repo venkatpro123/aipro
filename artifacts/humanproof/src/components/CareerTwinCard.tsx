@@ -305,7 +305,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
                 onChange={e => setWhatWorked(e.target.value)}
                 placeholder="e.g. Built a RAG side project on GitHub, wrote a Medium article, got a LinkedIn inbound from an AI startup..."
               />
-              <p className="text-[9px] mt-1" style={{ color: whatWorked.length < 20 ? 'rgba(249,115,22,0.70)' : 'rgba(255,255,255,0.22)' }}>
+              <p className="text-[9px] mt-1" style={{ color: whatWorked.length < 20 ? 'rgba(249,115,22,0.70)' : 'var(--alpha-text-25)' }}>
                 {whatWorked.length}/20 minimum · Be specific — vague advice doesn't help others
               </p>
             </div>
@@ -320,9 +320,9 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
               onClick={handleSubmit}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-[12px] transition-all"
               style={{
-                background: valid ? 'rgba(0,212,224,0.18)' : 'rgba(255,255,255,0.04)',
-                border: `1px solid ${valid ? 'rgba(0,212,224,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                color: valid ? '#00d4e0' : 'rgba(255,255,255,0.25)',
+                background: valid ? 'rgba(0,212,224,0.18)' : 'var(--alpha-bg-04)',
+                border: `1px solid ${valid ? 'rgba(0,212,224,0.35)' : 'var(--alpha-bg-08)'}`,
+                color: valid ? '#00d4e0' : 'var(--alpha-text-25)',
                 cursor: valid ? 'pointer' : 'not-allowed',
               }}
             >
@@ -489,8 +489,8 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
                   <span
                     className="text-[9px] px-1.5 py-0.5 rounded font-mono ml-auto flex-shrink-0"
                     style={{
-                      background: showContextWarning ? 'rgba(245,158,11,0.10)' : 'rgba(255,255,255,0.06)',
-                      color:      showContextWarning ? '#fbbf24' : 'rgba(255,255,255,0.45)',
+                      background: showContextWarning ? 'rgba(245,158,11,0.10)' : 'var(--alpha-bg-06)',
+                      color:      showContextWarning ? '#fbbf24' : 'var(--alpha-text-45)',
                       border:     showContextWarning ? '1px solid rgba(245,158,11,0.25)' : '1px solid var(--alpha-bg-08)',
                     }}
                   >

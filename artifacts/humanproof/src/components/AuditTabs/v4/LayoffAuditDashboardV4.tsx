@@ -207,7 +207,7 @@ const DesktopTabBar: React.FC<{ active: TabKeyV4; onChange: (v: TabKeyV4) => voi
           style={{
             background: isActive ? 'rgba(0,212,224,0.12)' : 'transparent',
             border: `1px solid ${isActive ? 'rgba(0,212,224,0.30)' : 'transparent'}`,
-            color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.50)',
+            color: isActive ? 'var(--cyan,#00d4e0)' : 'var(--alpha-text-50)',
           }}
         >
           <Icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -270,7 +270,7 @@ const MobileBottomNav: React.FC<{ active: TabKeyV4; onChange: (v: TabKeyV4) => v
             aria-label={`${label} tab${badge ? `: ${badge.text}` : ''}`}
             onClick={() => onChange(value)}
             className="flex-1 flex flex-col items-center justify-center relative"
-            style={{ color: isActive ? 'var(--cyan,#00d4e0)' : 'rgba(255,255,255,0.42)', minHeight: 58, padding: '8px 2px 6px', transition: 'color 0.18s ease' }}
+            style={{ color: isActive ? 'var(--cyan,#00d4e0)' : 'var(--alpha-text-45)', minHeight: 58, padding: '8px 2px 6px', transition: 'color 0.18s ease' }}
           >
             {isActive && (
               <motion.div

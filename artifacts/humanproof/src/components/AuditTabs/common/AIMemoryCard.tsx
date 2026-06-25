@@ -34,7 +34,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
   const direction = scoreDelta?.direction;
 
   const ScoreDriftIcon = direction === 'worsening' ? TrendingUp : direction === 'improving' ? TrendingDown : Minus;
-  const driftColor = direction === 'worsening' ? '#dc2626' : direction === 'improving' ? '#10b981' : 'rgba(255,255,255,0.40)';
+  const driftColor = direction === 'worsening' ? '#dc2626' : direction === 'improving' ? '#10b981' : 'var(--alpha-text-45)';
   const driftLabel = direction === 'worsening' ? `+${deltaRounded}pt` : direction === 'improving' ? `-${deltaRounded}pt` : `${deltaRounded}pt`;
 
   return (

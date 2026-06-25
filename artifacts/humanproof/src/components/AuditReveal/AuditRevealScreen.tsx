@@ -96,7 +96,7 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
             style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'var(--alpha-text-92)', lineHeight: 1 }}
           />
         ) : (
-          <span style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'rgba(255,255,255,0.0)', fontWeight: 900 }}>—</span>
+          <span style={{ fontSize: 'clamp(28px, 7vw, 38px)', color: 'transparent', fontWeight: 900 }}>—</span>
         )}
         <p className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-45)', marginTop: 2 }}>
           RISK SCORE

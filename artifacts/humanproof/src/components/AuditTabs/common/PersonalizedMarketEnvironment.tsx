@@ -282,7 +282,7 @@ const CollapsibleSection: React.FC<{
 }> = ({ id, open, onToggle, header, children, accentColor = CYAN }) => (
   <div
     className="rounded-2xl overflow-hidden"
-    style={{ background: 'rgba(255,255,255,0.025)', border: `1px solid ${open ? accentColor + '28' : 'rgba(255,255,255,0.07)'}`, transition: 'border-color 0.2s' }}
+    style={{ background: 'var(--alpha-bg-04)', border: `1px solid ${open ? accentColor + '28' : 'var(--alpha-bg-06)'}`, transition: 'border-color 0.2s' }}
   >
     <button
       onClick={onToggle}
@@ -331,8 +331,8 @@ const LocationCard: React.FC<{ loc: LocationOpportunity; roleDisplay: string }> 
     <div
       className="rounded-xl p-3 flex flex-col gap-1.5"
       style={{
-        background: loc.isUserLocation ? 'rgba(0,212,224,0.06)' : 'rgba(255,255,255,0.03)',
-        border: `1px solid ${loc.isUserLocation ? CYAN + '30' : 'rgba(255,255,255,0.08)'}`,
+        background: loc.isUserLocation ? 'rgba(0,212,224,0.06)' : 'var(--alpha-bg-04)',
+        border: `1px solid ${loc.isUserLocation ? CYAN + '30' : 'var(--alpha-bg-08)'}`,
       }}
     >
       {/* City + country */}
@@ -789,7 +789,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
                 { label: 'Contagion score', value: peerContagion.contagionScore, warnIf: v => v > 30 },
               ].map(({ label, value, warnIf }) => (
                 <div key={label} className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-                  <div className="text-sm font-black" style={{ color: warnIf(value) ? ORANGE : 'rgba(255,255,255,0.75)' }}>
+                  <div className="text-sm font-black" style={{ color: warnIf(value) ? ORANGE : 'var(--alpha-text-70)' }}>
                     {value}
                   </div>
                   <div className="text-[10px] mt-0.5 opacity-40">{label}</div>

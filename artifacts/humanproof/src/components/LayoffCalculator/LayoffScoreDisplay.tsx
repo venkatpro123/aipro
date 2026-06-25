@@ -106,7 +106,7 @@ const ClassificationBadge: React.FC<{
         </div>
         <span
           style={{
-            color: "rgba(255,255,255,0.4)",
+            color: "var(--alpha-text-35)",
             fontSize: "0.65rem",
             letterSpacing: "1px",
           }}
@@ -119,7 +119,7 @@ const ClassificationBadge: React.FC<{
       <div style={{ marginBottom: "12px" }}>
         <div
           style={{
-            color: "rgba(255,255,255,0.5)",
+            color: "var(--alpha-text-50)",
             fontSize: "0.65rem",
             letterSpacing: "1px",
             marginBottom: "4px",
@@ -155,7 +155,7 @@ const ClassificationBadge: React.FC<{
           justifyContent: "space-between",
           alignItems: "center",
           fontSize: "0.7rem",
-          color: "rgba(255,255,255,0.4)",
+          color: "var(--alpha-text-35)",
         }}
       >
         <span>INTEL TIMESTAMP</span>
@@ -317,7 +317,7 @@ const SwarmBadge: React.FC<{
           <div
             key={c.label}
             style={{
-              background: "rgba(255,255,255,0.04)",
+              background: "var(--alpha-bg-04)",
               borderRadius: "8px",
               padding: "6px 12px",
               textAlign: "center",
@@ -402,7 +402,7 @@ const ModelAgreementMeter: React.FC<{
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--alpha-bg-04)",
         border: "1px solid var(--alpha-bg-08)",
         borderRadius: "12px",
         padding: "16px 20px",
@@ -434,7 +434,7 @@ const ModelAgreementMeter: React.FC<{
       <div
         style={{
           height: "6px",
-          background: "rgba(255,255,255,0.08)",
+          background: "var(--alpha-bg-08)",
           borderRadius: "3px",
           overflow: "hidden",
           marginBottom: "14px",
@@ -458,7 +458,7 @@ const ModelAgreementMeter: React.FC<{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              background: "rgba(255,255,255,0.04)",
+              background: "var(--alpha-bg-04)",
               border: `1px solid ${scoreColor(s.score)}30`,
               borderRadius: "8px",
               padding: "8px 12px",
@@ -595,7 +595,7 @@ const AIInsightCards: React.FC<{
           <div
             key={card.id}
             style={{
-              background: "rgba(255,255,255,0.03)",
+              background: "var(--alpha-bg-04)",
               border: `1px solid ${card.borderColor}`,
               borderRadius: "10px",
               padding: "14px 16px",
@@ -760,7 +760,7 @@ const AnimatedScore: React.FC<{
               marginTop: 6,
               padding: "2px 8px",
               borderRadius: 12,
-              background: "rgba(255,255,255,0.08)",
+              background: "var(--alpha-bg-08)",
               fontSize: "0.78rem",
               color: "#cbd5e1",
               fontFamily: "var(--mono, ui-monospace, monospace)",
@@ -844,7 +844,7 @@ const LayerBar: React.FC<{ label: string; value: number; weight: string }> = ({
       <div
         style={{
           height: "8px",
-          background: "rgba(255,255,255,0.1)",
+          background: "var(--alpha-text-25)",
           borderRadius: "4px",
           overflow: "hidden",
         }}
@@ -1234,7 +1234,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
       {/* ── Data source row (fallback / legacy) ── */}
       <div
         style={{
-          background: "rgba(255,255,255,0.03)",
+          background: "var(--alpha-bg-04)",
           padding: "12px 16px",
           borderRadius: "8px",
           marginBottom: "32px",
@@ -1318,7 +1318,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
       >
         <div
           style={{
-            background: "rgba(255,255,255,0.03)",
+            background: "var(--alpha-bg-04)",
             padding: "12px 16px",
             borderBottom: "1px solid var(--alpha-bg-06)",
             display: "flex",
@@ -1398,7 +1398,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                     <span style={{ color: "#9ba5b4" }}>{label} <span style={{ color: "#4b5563" }}>({wt})</span></span>
                     <span style={{ color: c, fontFamily: "monospace", fontWeight: 700 }}>{val}</span>
                   </div>
-                  <div style={{ height: "4px", background: "rgba(255,255,255,0.06)", borderRadius: "2px" }}>
+                  <div style={{ height: "4px", background: "var(--alpha-bg-06)", borderRadius: "2px" }}>
                     <div style={{ height: "100%", width: `${val}%`, background: c, borderRadius: "2px", transition: "width 1s ease-out" }} />
                   </div>
                 </div>
@@ -1469,7 +1469,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                     <span style={{ color: "#9ba5b4" }}>{label} <span style={{ color: "#4b5563" }}>({wt})</span></span>
                     <span style={{ color: c, fontFamily: "monospace", fontWeight: 700 }}>{val}</span>
                   </div>
-                  <div style={{ height: "4px", background: "rgba(255,255,255,0.06)", borderRadius: "2px" }}>
+                  <div style={{ height: "4px", background: "var(--alpha-bg-06)", borderRadius: "2px" }}>
                     <div style={{ height: "100%", width: `${val}%`, background: c, borderRadius: "2px", transition: "width 1s ease-out" }} />
                   </div>
                   <div style={{ fontSize: "0.68rem", color: "#4b5563", marginTop: "3px" }}>→ {action}</div>

@@ -112,7 +112,7 @@ const PillarRow: React.FC<{
           <div className="flex items-center justify-between mb-1">
             <span
               className="text-[11px] font-semibold truncate"
-              style={{ color: isCritical ? cfg.color : isTop ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.78)' }}
+              style={{ color: isCritical ? cfg.color : isTop ? 'rgba(255,255,255,0.90)' : 'var(--alpha-text-70)' }}
             >
               {pillar.name}
               {isTop && (
@@ -215,18 +215,18 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl overflow-hidden"
-      style={{ border: `1px solid ${isFullyInsured ? 'rgba(16,185,129,0.28)' : 'rgba(255,255,255,0.09)'}` }}
+      style={{ border: `1px solid ${isFullyInsured ? 'rgba(16,185,129,0.28)' : 'var(--alpha-bg-08)'}` }}
     >
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div
         className="px-4 pt-4 pb-3"
-        style={{ background: isFullyInsured ? 'rgba(16,185,129,0.07)' : 'rgba(255,255,255,0.03)' }}
+        style={{ background: isFullyInsured ? 'rgba(16,185,129,0.07)' : 'var(--alpha-bg-04)' }}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Shield
               className="w-4 h-4"
-              style={{ color: isFullyInsured ? '#10b981' : 'rgba(255,255,255,0.45)' }}
+              style={{ color: isFullyInsured ? '#10b981' : 'var(--alpha-text-45)' }}
             />
             <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
               CAREER INSURANCE STATUS
@@ -259,7 +259,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
               {/* Target marker at 85 */}
               <div
                 className="absolute top-0 bottom-0 w-0.5"
-                style={{ left: `${targetPct}%`, background: 'rgba(255,255,255,0.25)' }}
+                style={{ left: `${targetPct}%`, background: 'var(--alpha-text-25)' }}
               />
               <motion.div
                 className="h-full rounded-full"

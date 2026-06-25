@@ -191,7 +191,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
                         ? 'rgba(34,211,238,0.85)'
                         : i < step
                           ? 'rgba(34,211,238,0.38)'
-                          : 'rgba(255,255,255,0.12)',
+                          : 'var(--alpha-bg-08)',
                     }}
                   />
                 ))}
@@ -223,7 +223,7 @@ export const FirstAuditTour: React.FC<Props> = ({ result, open, onClose }) => {
               >
                 <p
                   className="text-[13px] font-bold leading-snug mb-1.5"
-                  style={{ color: step === 0 ? scoreCol : 'rgba(255,255,255,0.90)' }}
+                  style={{ color: step === 0 ? scoreCol : 'var(--alpha-text-92)' }}
                 >
                   {current.headline(result)}
                 </p>

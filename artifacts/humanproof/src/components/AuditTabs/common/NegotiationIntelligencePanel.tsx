@@ -59,9 +59,9 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
       onClick={handleCopy}
       className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-1 rounded transition-colors"
       style={{
-        background: copied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
-        color:      copied ? '#34d399' : 'rgba(255,255,255,0.45)',
-        border:     `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.10)'}`,
+        background: copied ? 'rgba(16,185,129,0.12)' : 'var(--alpha-bg-06)',
+        color:      copied ? '#34d399' : 'var(--alpha-text-45)',
+        border:     `1px solid ${copied ? 'rgba(16,185,129,0.25)' : 'var(--alpha-bg-08)'}`,
       }}
       title="Copy email to clipboard"
     >

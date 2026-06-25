@@ -82,7 +82,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                 <span className="text-[10px] font-semibold" style={{ color: '#10b981' }}>{s.skill}</span>
                 <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-45)' }}>
                   {s.demandIn12Months != null && (
-                    <span style={{ color: s.demandIn12Months > s.demandScore ? '#10b981' : 'rgba(255,255,255,0.30)' }}>
+                    <span style={{ color: s.demandIn12Months > s.demandScore ? '#10b981' : 'var(--alpha-text-30)' }}>
                       getting more valuable
                     </span>
                   )}

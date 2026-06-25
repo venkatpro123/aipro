@@ -130,7 +130,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
                   ? '#00d4e0'
                   : i === currentStepIdx
                   ? 'rgba(0,212,224,0.50)'
-                  : 'rgba(255,255,255,0.12)',
+                  : 'var(--alpha-bg-08)',
               }}
             />
           ))}

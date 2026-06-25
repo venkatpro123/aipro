@@ -70,7 +70,7 @@ export const RiskCalculatorsView: React.FC<Props> = ({ onSwitchTab }) => {
             style={{
               padding: "12px 20px",
               borderRadius: "8px",
-              border: `1px solid ${activeCalculator === calc.id ? "var(--cyan, #00F5FF)" : "rgba(255,255,255,0.1)"}`,
+              border: `1px solid ${activeCalculator === calc.id ? "var(--cyan, #00F5FF)" : "var(--alpha-text-25)"}`,
               background:
                 activeCalculator === calc.id
                   ? "rgba(0,245,255,0.1)"

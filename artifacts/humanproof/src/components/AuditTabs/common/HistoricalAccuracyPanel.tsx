@@ -53,7 +53,7 @@ const AccuracyBar: React.FC<{
     >
       {/* Tier label */}
       <div style={{ width: '72px', flexShrink: 0 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: isCurrent ? 'var(--cyan)' : 'rgba(255,255,255,0.45)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', color: isCurrent ? 'var(--cyan)' : 'var(--alpha-text-45)' }}>
           {record.tier}
           {isCurrent && <span style={{ color: 'var(--cyan)', marginLeft: '4px' }}>◀</span>}
         </div>

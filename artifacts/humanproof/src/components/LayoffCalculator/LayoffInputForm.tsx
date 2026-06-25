@@ -64,8 +64,8 @@ const OptionCard: React.FC<{
     onClick={onClick}
     className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-left"
     style={{
-      background: selected ? `${accent}12` : 'rgba(255,255,255,0.03)',
-      border: `1.5px solid ${selected ? `${accent}55` : 'rgba(255,255,255,0.08)'}`,
+      background: selected ? `${accent}12` : 'var(--alpha-bg-04)',
+      border: `1.5px solid ${selected ? `${accent}55` : 'var(--alpha-bg-08)'}`,
       cursor: 'pointer',
       transition: 'all 0.18s ease',
     }}
@@ -73,13 +73,13 @@ const OptionCard: React.FC<{
     {icon && (
       <div
         className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
-        style={{ background: selected ? `${accent}22` : 'rgba(255,255,255,0.06)' }}
+        style={{ background: selected ? `${accent}22` : 'var(--alpha-bg-06)' }}
       >
         {icon}
       </div>
     )}
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold leading-snug" style={{ color: selected ? '#fff' : 'rgba(255,255,255,0.78)' }}>
+      <p className="text-sm font-semibold leading-snug" style={{ color: selected ? '#fff' : 'var(--alpha-text-70)' }}>
         {label}
       </p>
       {desc && (
@@ -91,7 +91,7 @@ const OptionCard: React.FC<{
     <div
       className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
       style={{
-        border: `2px solid ${selected ? accent : 'rgba(255,255,255,0.20)'}`,
+        border: `2px solid ${selected ? accent : 'var(--alpha-text-25)'}`,
         background: selected ? accent : 'transparent',
         transition: 'all 0.15s ease',
       }}
@@ -519,7 +519,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
               key={i}
               style={{
                 width: i === qStep ? 16 : 5, height: 5, borderRadius: 3,
-                background: i < qStep ? '#22d3ee' : i === qStep ? '#22d3ee' : 'rgba(255,255,255,0.12)',
+                background: i < qStep ? '#22d3ee' : i === qStep ? '#22d3ee' : 'var(--alpha-bg-08)',
                 transition: 'all 0.25s ease',
               }}
             />
@@ -930,9 +930,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                       onClick={() => setFinancialRunwayMonths(m.val)}
                       className="text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
                       style={{
-                        background: financialRunwayMonths === m.val ? `${m.color}22` : 'rgba(255,255,255,0.05)',
-                        color: financialRunwayMonths === m.val ? m.color : 'rgba(255,255,255,0.40)',
-                        border: `1px solid ${financialRunwayMonths === m.val ? `${m.color}50` : 'rgba(255,255,255,0.08)'}`,
+                        background: financialRunwayMonths === m.val ? `${m.color}22` : 'var(--alpha-bg-06)',
+                        color: financialRunwayMonths === m.val ? m.color : 'var(--alpha-text-45)',
+                        border: `1px solid ${financialRunwayMonths === m.val ? `${m.color}50` : 'var(--alpha-bg-08)'}`,
                       }}
                     >
                       {m.label}
@@ -960,7 +960,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           onClick={goBack}
           className="text-sm font-semibold px-3 py-2 rounded-xl transition-all"
           style={{
-            color: qStep === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.50)',
+            color: qStep === 0 ? 'rgba(255,255,255,0.15)' : 'var(--alpha-text-50)',
             background: 'transparent', border: 'none', cursor: qStep === 0 ? 'default' : 'pointer',
           }}
           disabled={qStep === 0}
@@ -978,8 +978,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
           style={{
             background: canProceed && !isProfiling
               ? 'linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%)'
-              : 'rgba(255,255,255,0.07)',
-            color: canProceed && !isProfiling ? '#09090b' : 'rgba(255,255,255,0.25)',
+              : 'var(--alpha-bg-06)',
+            color: canProceed && !isProfiling ? '#09090b' : 'var(--alpha-text-25)',
             border: 'none',
             cursor: canProceed && !isProfiling ? 'pointer' : 'default',
             boxShadow: canProceed && !isProfiling ? '0 0 20px rgba(34,211,238,0.25)' : 'none',

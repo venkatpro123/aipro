@@ -69,7 +69,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
             : { background: 'var(--alpha-bg-04)', color: 'var(--alpha-text-35)', border: '1px solid var(--alpha-bg-08)' }
           }
         >
-          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.quitsFallSignal ? '#ef4444' : 'rgba(255,255,255,0.20)', color: 'transparent' }} />
+          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.quitsFallSignal ? '#ef4444' : 'var(--alpha-text-25)', color: 'transparent' }} />
           Quits Fall
         </span>
         <span
@@ -79,7 +79,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
             : { background: 'var(--alpha-bg-04)', color: 'var(--alpha-text-35)', border: '1px solid var(--alpha-bg-08)' }
           }
         >
-          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.yieldCurveWarning ? '#f59e0b' : 'rgba(255,255,255,0.20)', color: 'transparent' }} />
+          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.yieldCurveWarning ? '#f59e0b' : 'var(--alpha-text-25)', color: 'transparent' }} />
           Yield Curve Inverted
         </span>
         <span

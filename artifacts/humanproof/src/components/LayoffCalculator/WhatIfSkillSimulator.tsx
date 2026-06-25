@@ -154,7 +154,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
               onChange={(e) => setSelectedSkill(e.target.value)}
               style={{
                 width: "100%",
-                background: "rgba(255,255,255,0.06)",
+                background: "var(--alpha-bg-06)",
                 border: "1px solid var(--alpha-bg-08)",
                 borderRadius: 8,
                 padding: "10px 12px",
@@ -183,7 +183,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
           {selected && (
             <div
               style={{
-                background: "rgba(255,255,255,0.03)",
+                background: "var(--alpha-bg-04)",
                 border: "1px solid var(--alpha-bg-08)",
                 borderRadius: 10,
                 padding: 16,
@@ -281,7 +281,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
               <div
                 style={{
                   height: 6,
-                  background: "rgba(255,255,255,0.08)",
+                  background: "var(--alpha-bg-08)",
                   borderRadius: 3,
                   overflow: "hidden",
                   marginBottom: 12,

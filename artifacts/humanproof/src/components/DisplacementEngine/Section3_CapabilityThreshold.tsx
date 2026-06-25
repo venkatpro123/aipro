@@ -49,7 +49,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
           {STAGES.map((stage, i) => {
             const isDone   = i < activeIdx;
             const isActive = i === activeIdx;
-            const color    = isActive ? stage.color : isDone ? stage.color : 'rgba(255,255,255,0.20)';
+            const color    = isActive ? stage.color : isDone ? stage.color : 'var(--alpha-text-25)';
             return (
               <React.Fragment key={stage.key}>
                 <motion.div

@@ -840,7 +840,7 @@ export default function UpskillingRoadmap({
           <div
             style={{
               height: 4,
-              background: "rgba(255,255,255,0.08)",
+              background: "var(--alpha-bg-08)",
               borderRadius: 2,
             }}
           >
@@ -889,7 +889,7 @@ export default function UpskillingRoadmap({
                   style={{
                     background: phaseComplete
                       ? "rgba(0,255,159,0.04)"
-                      : "rgba(255,255,255,0.03)",
+                      : "var(--alpha-bg-04)",
                     border: `1px solid ${phaseComplete ? "rgba(0,255,159,0.3)" : "rgba(251,191,36,0.2)"}`,
                     borderRadius: 12,
                     overflow: "hidden",
@@ -1025,7 +1025,7 @@ export default function UpskillingRoadmap({
                               style={{
                                 background: done
                                   ? "rgba(0,255,159,0.06)"
-                                  : "rgba(255,255,255,0.04)",
+                                  : "var(--alpha-bg-04)",
                                 borderRadius: 10,
                                 padding: "14px 16px",
                                 display: "flex",
@@ -1203,7 +1203,7 @@ export default function UpskillingRoadmap({
               <div
                 key={skill.id}
                 style={{
-                  background: "rgba(255,255,255,0.03)",
+                  background: "var(--alpha-bg-04)",
                   border: `1px solid ${cssVar}40`,
                   borderRadius: 12,
                   overflow: "hidden",
@@ -1464,7 +1464,7 @@ export default function UpskillingRoadmap({
                                 style={{
                                   background: done
                                     ? "rgba(0,255,159,0.06)"
-                                    : "rgba(255,255,255,0.04)",
+                                    : "var(--alpha-bg-04)",
                                   borderRadius: 10,
                                   padding: "16px 18px",
                                   display: "flex",

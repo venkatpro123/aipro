@@ -257,7 +257,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
       className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
       style={{
         background: 'var(--alpha-bg-04)',
-        border: `1px solid ${open ? tone + '35' : 'rgba(255,255,255,0.08)'}`,
+        border: `1px solid ${open ? tone + '35' : 'var(--alpha-bg-08)'}`,
         transition: 'border-color 0.18s ease',
       }}
     >

@@ -183,16 +183,16 @@ export const ScenarioExplorer: React.FC<Props> = ({ scenario, currentScore }) =>
               onClick={() => setActive(key)}
               className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all"
               style={{
-                background: isActive ? cfg.bg : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${isActive ? cfg.border : 'rgba(255,255,255,0.07)'}`,
+                background: isActive ? cfg.bg : 'var(--alpha-bg-04)',
+                border: `1px solid ${isActive ? cfg.border : 'var(--alpha-bg-06)'}`,
                 minWidth: 90,
               }}
             >
-              <Icon className="w-3.5 h-3.5" style={{ color: isActive ? cfg.accent : 'rgba(255,255,255,0.35)' }} />
-              <p className="text-[10px] font-black" style={{ color: isActive ? cfg.accent : 'rgba(255,255,255,0.40)' }}>
+              <Icon className="w-3.5 h-3.5" style={{ color: isActive ? cfg.accent : 'var(--alpha-text-35)' }} />
+              <p className="text-[10px] font-black" style={{ color: isActive ? cfg.accent : 'var(--alpha-text-45)' }}>
                 {cfg.tag}
               </p>
-              <p className="text-[11px] font-black" style={{ color: isActive ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)' }}>
+              <p className="text-[11px] font-black" style={{ color: isActive ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-35)' }}>
                 {normalisedProb(key)}%
               </p>
             </button>

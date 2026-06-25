@@ -50,8 +50,8 @@ export const AdaptiveBlock: React.FC<Props> = ({
     <div
       className="rounded-2xl overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: `1px solid ${open ? accentColor + '35' : 'rgba(255,255,255,0.08)'}`,
+        background: 'var(--alpha-bg-04)',
+        border: `1px solid ${open ? accentColor + '35' : 'var(--alpha-bg-08)'}`,
         transition: 'border-color 0.18s ease',
       }}
     >
@@ -77,7 +77,7 @@ export const AdaptiveBlock: React.FC<Props> = ({
           <div className="flex items-center gap-1.5">
             <p
               className="text-[12px] font-bold leading-tight sm:truncate"
-              style={{ color: empty ? 'rgba(255,255,255,0.30)' : 'rgba(255,255,255,0.85)' }}
+              style={{ color: empty ? 'rgba(255,255,255,0.30)' : 'var(--alpha-text-85)' }}
             >
               {title}
             </p>

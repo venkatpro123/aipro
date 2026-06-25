@@ -140,7 +140,7 @@ const QuorumCard: React.FC<CardProps> = ({ title, icon, status, accentColor, chi
     ? 'rgba(148,163,184,0.20)'
     : status === 'resolved'
       ? `${accentColor}30`
-      : 'rgba(255,255,255,0.06)';
+      : 'var(--alpha-bg-06)';
 
   return (
     <div style={{
@@ -167,11 +167,11 @@ const QuorumCard: React.FC<CardProps> = ({ title, icon, status, accentColor, chi
           padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase',
           background: status === 'unavailable' ? 'rgba(148,163,184,0.12)'
             : status === 'resolved' ? `${accentColor}18`
-            : 'rgba(255,255,255,0.06)',
+            : 'var(--alpha-bg-06)',
           color: status === 'unavailable' ? '#94a3b8'
             : status === 'resolved' ? accentColor
-            : 'rgba(255,255,255,0.25)',
-          border: `1px solid ${status === 'resolved' ? `${accentColor}30` : 'rgba(255,255,255,0.06)'}`,
+            : 'var(--alpha-text-25)',
+          border: `1px solid ${status === 'resolved' ? `${accentColor}30` : 'var(--alpha-bg-06)'}`,
         }}>
           {status === 'pending' ? '...' : status === 'resolved' ? 'Found' : 'N/A'}
         </span>

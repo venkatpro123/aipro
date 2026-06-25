@@ -96,8 +96,8 @@ const ActionCard: React.FC<{
     transition={{ delay: index * 0.06 }}
     className="flex gap-3 p-3 rounded-xl cursor-pointer group"
     style={{
-      background: completed ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${completed ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.07)'}`,
+      background: completed ? 'rgba(16,185,129,0.06)' : 'var(--alpha-bg-04)',
+      border: `1px solid ${completed ? 'rgba(16,185,129,0.2)' : 'var(--alpha-bg-06)'}`,
       transition: 'all 200ms ease',
     }}
     onClick={onToggle}
@@ -350,7 +350,7 @@ const OfferModal: React.FC<{
               disabled={!offerSalary || !offerCompany}
               className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
               style={{
-                background: offerSalary && offerCompany ? 'linear-gradient(135deg, #00d4e0, #0099a8)' : 'rgba(255,255,255,0.08)',
+                background: offerSalary && offerCompany ? 'linear-gradient(135deg, #00d4e0, #0099a8)' : 'var(--alpha-bg-08)',
                 color: offerSalary && offerCompany ? '#fff' : 'rgba(255,255,255,0.3)',
               }}>
               Evaluate Offer →

@@ -157,8 +157,8 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 viewMode === "grid" ? "rgba(0, 245, 255, 0.2)" : "transparent",
               border: "1px solid",
               borderColor:
-                viewMode === "grid" ? "#00F5FF" : "rgba(255,255,255,0.1)",
-              color: viewMode === "grid" ? "#00F5FF" : "rgba(255,255,255,0.5)",
+                viewMode === "grid" ? "#00F5FF" : "var(--alpha-text-25)",
+              color: viewMode === "grid" ? "#00F5FF" : "var(--alpha-text-50)",
               borderRadius: "4px",
               cursor: "pointer",
               letterSpacing: "1px",
@@ -175,8 +175,8 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 viewMode === "list" ? "rgba(0, 245, 255, 0.2)" : "transparent",
               border: "1px solid",
               borderColor:
-                viewMode === "list" ? "#00F5FF" : "rgba(255,255,255,0.1)",
-              color: viewMode === "list" ? "#00F5FF" : "rgba(255,255,255,0.5)",
+                viewMode === "list" ? "#00F5FF" : "var(--alpha-text-25)",
+              color: viewMode === "list" ? "#00F5FF" : "var(--alpha-text-50)",
               borderRadius: "4px",
               cursor: "pointer",
               letterSpacing: "1px",
@@ -208,7 +208,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
         >
           <div
             style={{
-              color: "rgba(255,255,255,0.5)",
+              color: "var(--alpha-text-50)",
               fontSize: "0.65rem",
               marginBottom: "4px",
               letterSpacing: "1px",
@@ -233,7 +233,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
         >
           <div
             style={{
-              color: "rgba(255,255,255,0.5)",
+              color: "var(--alpha-text-50)",
               fontSize: "0.65rem",
               marginBottom: "4px",
               letterSpacing: "1px",
@@ -258,7 +258,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
         >
           <div
             style={{
-              color: "rgba(255,255,255,0.5)",
+              color: "var(--alpha-text-50)",
               fontSize: "0.65rem",
               marginBottom: "4px",
               letterSpacing: "1px",
@@ -335,8 +335,8 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 background:
                   agent.status === "complete"
                     ? `${getCategoryColor(agent.category)}15`
-                    : "rgba(255,255,255,0.02)",
-                border: `1px solid ${agent.status === "complete" ? getCategoryColor(agent.category) : "rgba(255,255,255,0.05)"}`,
+                    : "var(--alpha-bg-04)",
+                border: `1px solid ${agent.status === "complete" ? getCategoryColor(agent.category) : "var(--alpha-bg-06)"}`,
                 borderRadius: "4px",
                 padding: "6px 8px",
                 textAlign: "center",
@@ -349,7 +349,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                   color:
                     agent.status === "complete"
                       ? getCategoryColor(agent.category)
-                      : "rgba(255,255,255,0.3)",
+                      : "var(--alpha-text-30)",
                   fontSize: "0.6rem",
                   fontWeight: 600,
                   marginBottom: "2px",
@@ -361,7 +361,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 <div
                   style={{
                     height: "3px",
-                    background: "rgba(255,255,255,0.1)",
+                    background: "var(--alpha-text-25)",
                     borderRadius: "2px",
                     overflow: "hidden",
                   }}
@@ -398,7 +398,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                   alignItems: "center",
                   gap: "8px",
                   padding: "6px 10px",
-                  background: "rgba(255,255,255,0.02)",
+                  background: "var(--alpha-bg-04)",
                   borderRadius: "4px",
                   fontSize: "0.7rem",
                 }}
@@ -438,7 +438,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
         >
           <div
             style={{
-              color: "rgba(255,255,255,0.5)",
+              color: "var(--alpha-text-50)",
               fontSize: "0.65rem",
               marginBottom: "8px",
               letterSpacing: "1px",
@@ -465,7 +465,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
               >
                 {sig.agentId}
               </span>
-              <span style={{ color: "rgba(255,255,255,0.4)" }}>→</span>
+              <span style={{ color: "var(--alpha-text-35)" }}>→</span>
               <span
                 style={{
                   color:

@@ -624,7 +624,7 @@ export default function SkillRiskCalculator({
 
       <div
         style={{
-          background: "rgba(255,255,255,0.03)",
+          background: "var(--alpha-bg-04)",
           border: "1px solid var(--border)",
           borderRadius: 12,
           padding: 24,
@@ -684,7 +684,7 @@ export default function SkillRiskCalculator({
             placeholder="Type any skill (e.g. Python, AI Ethics, Strategy)..."
             style={{
               width: "100%",
-              background: "rgba(255,255,255,0.06)",
+              background: "var(--alpha-bg-06)",
               border: "1px solid var(--border2)",
               borderRadius: 10,
               padding: "12px 14px 12px 42px",
@@ -918,7 +918,7 @@ export default function SkillRiskCalculator({
               <div
                 key={skill.id}
                 style={{
-                  background: "rgba(255,255,255,0.03)",
+                  background: "var(--alpha-bg-04)",
                   border: `1px solid ${cssVar}30`,
                   borderRadius: 10,
                   padding: "12px 16px",
@@ -1090,7 +1090,7 @@ export default function SkillRiskCalculator({
         <div className="reveal">
           <div
             style={{
-              background: "rgba(255,255,255,0.03)",
+              background: "var(--alpha-bg-04)",
               border: "1px solid var(--border)",
               borderRadius: 16,
               padding: "32px 40px",
@@ -1224,7 +1224,7 @@ export default function SkillRiskCalculator({
                     fontFamily: "var(--mono)",
                     fontSize: "0.9rem",
                     color: "var(--text)",
-                    background: "rgba(255,255,255,0.05)",
+                    background: "var(--alpha-bg-06)",
                     padding: "4px 12px",
                     borderRadius: 4,
                     border: "1px solid rgba(255,255,255,0.1)",
@@ -1311,8 +1311,8 @@ export default function SkillRiskCalculator({
                       style={{
                         background: active
                           ? `${projInfo.cssVar}15`
-                          : "rgba(255,255,255,0.02)",
-                        border: `1px solid ${active ? projInfo.cssVar : "rgba(255,255,255,0.08)"}`,
+                          : "var(--alpha-bg-04)",
+                        border: `1px solid ${active ? projInfo.cssVar : "var(--alpha-bg-08)"}`,
                         borderRadius: 12,
                         padding: "14px 24px",
                         cursor: "pointer",
@@ -1419,7 +1419,7 @@ export default function SkillRiskCalculator({
 
           <div
             style={{
-              background: "rgba(255,255,255,0.02)",
+              background: "var(--alpha-bg-04)",
               border: "1px solid var(--border)",
               borderRadius: 12,
               padding: 32,
@@ -1537,7 +1537,7 @@ export default function SkillRiskCalculator({
                     key={i}
                     style={{
                       padding: "16px",
-                      background: "rgba(255,255,255,0.02)",
+                      background: "var(--alpha-bg-04)",
                       border: "1px solid var(--border2)",
                       borderRadius: 10,
                     }}
@@ -1744,7 +1744,7 @@ export default function SkillRiskCalculator({
               style={{
                 flex: 1,
                 minWidth: 200,
-                background: "rgba(255,255,255,0.02)",
+                background: "var(--alpha-bg-04)",
                 border: "1px solid var(--border)",
                 color: "var(--text)",
                 borderRadius: 12,

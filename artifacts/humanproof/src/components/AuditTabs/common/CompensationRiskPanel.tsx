@@ -86,7 +86,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
               style={{
                 background: idx <= currentStageIdx
                   ? idx === currentStageIdx ? colors.text : `${colors.text}55`
-                  : 'rgba(255,255,255,0.10)',
+                  : 'var(--alpha-bg-08)',
               }}
             />
           ))}

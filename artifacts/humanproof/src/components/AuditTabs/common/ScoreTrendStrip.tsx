@@ -50,11 +50,11 @@ const DIRECTION_CONFIG = {
   stable: {
     Icon: Minus,
     color: 'var(--alpha-text-45)',
-    bgColor: 'rgba(255,255,255,0.03)',
+    bgColor: 'var(--alpha-bg-04)',
     borderColor: 'var(--alpha-bg-06)',
     label: 'Stable',
     pill: 'STABLE',
-    pillBg: 'rgba(255,255,255,0.06)',
+    pillBg: 'var(--alpha-bg-06)',
   },
   improving: {
     Icon: TrendingDown,

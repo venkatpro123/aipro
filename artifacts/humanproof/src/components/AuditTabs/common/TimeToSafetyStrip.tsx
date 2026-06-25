@@ -153,7 +153,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.12 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
@@ -189,7 +189,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 {/* Connector line */}
                 <div className="flex flex-col items-center ml-[-6px]" style={{ width: 12 }}>
                   <div className="w-0.5 flex-1 min-h-[20px]"
-                    style={{ background: m.isSafetyReached ? safeColor + '60' : 'rgba(255,255,255,0.10)' }}
+                    style={{ background: m.isSafetyReached ? safeColor + '60' : 'var(--alpha-bg-08)' }}
                   />
                   <div
                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"

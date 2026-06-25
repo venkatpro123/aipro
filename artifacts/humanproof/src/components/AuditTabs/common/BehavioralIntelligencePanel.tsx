@@ -444,7 +444,7 @@ const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['comp
       {/* Percentile bar */}
       <div className="relative h-1.5 rounded-full mb-2" style={{ background: 'var(--alpha-bg-08)' }}>
         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
-        <div className="absolute top-0 h-full w-px" style={{ left: '50%', background: 'rgba(255,255,255,0.22)' }} />
+        <div className="absolute top-0 h-full w-px" style={{ left: '50%', background: 'var(--alpha-text-25)' }} />
       </div>
 
       {/* Differentiator */}
@@ -614,7 +614,7 @@ const RiskProfileBar: React.FC<{
 
   return (
     <div className="rounded-xl px-3 py-2.5 mb-2"
-      style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-08)' }}>
+      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
       {/* Profile summary */}
       {profileSummary && (
         <p className="text-[10px] mb-2 pb-2" style={{ color: 'var(--alpha-text-35)', borderBottom: '1px solid var(--alpha-bg-06)' }}>

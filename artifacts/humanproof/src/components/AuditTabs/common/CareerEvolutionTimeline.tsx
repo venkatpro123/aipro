@@ -133,7 +133,7 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
         </span>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--alpha-bg-06)' }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
         <div className="px-4 py-3">
           <p className="text-[12px] font-semibold mb-1" style={{ color: 'var(--alpha-text-70)' }}>
             Your Projected Career Trajectory
@@ -189,7 +189,7 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
 
                   <p
                     className="text-[12px] font-semibold leading-tight"
-                    style={{ color: isFirst ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.65)' }}
+                    style={{ color: isFirst ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-55)' }}
                   >
                     {node.role}
                   </p>

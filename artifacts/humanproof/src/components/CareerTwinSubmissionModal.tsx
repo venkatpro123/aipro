@@ -335,7 +335,7 @@ export const CareerTwinSubmissionModal: React.FC<Props> = ({
                   disabled={!isValid || state === 'submitting'}
                   className="w-full py-3 rounded-xl text-sm font-black transition-all"
                   style={{
-                    background: isValid ? 'var(--cyan)' : 'rgba(255,255,255,0.05)',
+                    background: isValid ? 'var(--cyan)' : 'var(--alpha-bg-06)',
                     color: isValid ? '#000' : 'var(--text-3)',
                     cursor: isValid ? 'pointer' : 'not-allowed',
                   }}

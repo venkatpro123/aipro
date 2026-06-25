@@ -131,7 +131,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                           </div>
                           <div>
                             <p className="text-xs font-medium leading-snug" style={{
-                              color: completedIds.has(action.id) ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)',
+                              color: completedIds.has(action.id) ? 'rgba(255,255,255,0.35)' : 'var(--alpha-text-85)',
                               textDecoration: completedIds.has(action.id) ? 'line-through' : 'none',
                             }}>
                               {action.title}

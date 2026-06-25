@@ -134,7 +134,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
                 title={t.label}
                 className="w-2 h-2 rounded-full transition-all duration-300"
                 style={{
-                  background: isCurrent ? current.color : isPast ? `${t.color}80` : 'rgba(255,255,255,0.10)',
+                  background: isCurrent ? current.color : isPast ? `${t.color}80` : 'var(--alpha-bg-08)',
                   boxShadow: isCurrent ? `0 0 8px ${current.color}60` : 'none',
                   transform: isCurrent ? 'scale(1.4)' : 'scale(1)',
                 }}
@@ -143,7 +143,7 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
                 <div
                   className="flex-1 h-px"
                   style={{
-                    background: isPast ? `${t.color}40` : 'rgba(255,255,255,0.06)',
+                    background: isPast ? `${t.color}40` : 'var(--alpha-bg-06)',
                   }}
                 />
               )}
@@ -213,27 +213,27 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
               transition={{ delay: i * 0.03 }}
               className="rounded-xl px-3 py-2.5 flex items-start gap-2.5"
               style={{
-                background: isUnlocked ? bg : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${isUnlocked ? border : 'rgba(255,255,255,0.05)'}`,
+                background: isUnlocked ? bg : 'var(--alpha-bg-04)',
+                border: `1px solid ${isUnlocked ? border : 'var(--alpha-bg-06)'}`,
                 opacity: isUnlocked ? 1 : 0.45,
               }}
             >
               <span
                 className="flex-shrink-0 mt-0.5"
-                style={{ color: isUnlocked ? border : 'rgba(255,255,255,0.30)' }}
+                style={{ color: isUnlocked ? border : 'var(--alpha-text-30)' }}
               >
                 {isUnlocked ? <Icon size={18} strokeWidth={1.8} /> : <Lock size={18} strokeWidth={1.8} />}
               </span>
               <div className="flex-1 min-w-0">
                 <p
                   className="text-[10px] font-bold truncate"
-                  style={{ color: isUnlocked ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)' }}
+                  style={{ color: isUnlocked ? 'rgba(255,255,255,0.85)' : 'var(--alpha-text-35)' }}
                 >
                   {def.label}
                 </p>
                 <p
                   className="text-[9px] leading-snug mt-0.5"
-                  style={{ color: isUnlocked ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.20)' }}
+                  style={{ color: isUnlocked ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-25)' }}
                 >
                   {isUnlocked ? def.description : '???'}
                 </p>

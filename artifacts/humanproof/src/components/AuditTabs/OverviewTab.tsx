@@ -747,8 +747,8 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
       initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
       className="mt-4 rounded-xl border overflow-hidden"
       style={{
-        borderColor: isAmplified ? 'rgba(239,68,68,0.22)' : isDampened ? 'rgba(16,185,129,0.22)' : 'rgba(255,255,255,0.08)',
-        background: isAmplified ? 'rgba(239,68,68,0.04)' : isDampened ? 'rgba(16,185,129,0.04)' : 'rgba(255,255,255,0.02)',
+        borderColor: isAmplified ? 'rgba(239,68,68,0.22)' : isDampened ? 'rgba(16,185,129,0.22)' : 'var(--alpha-bg-08)',
+        background: isAmplified ? 'rgba(239,68,68,0.04)' : isDampened ? 'rgba(16,185,129,0.04)' : 'var(--alpha-bg-04)',
       }}
     >
       {/* Header */}
@@ -880,7 +880,7 @@ const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ bu
               style={{ width: `${barWidth}%`, background: accentColor, opacity: 0.75 }} />
             {/* US baseline marker */}
             <div className="absolute inset-y-0 rounded-full"
-              style={{ left: `${usBarWidth}%`, width: '2px', background: 'rgba(255,255,255,0.35)' }} />
+              style={{ left: `${usBarWidth}%`, width: '2px', background: 'var(--alpha-text-35)' }} />
           </div>
           <div className="flex justify-between text-[10px] text-white/30 font-mono">
             <span>0%</span>
@@ -1179,8 +1179,8 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
             <div key={path.id}
               className="rounded-xl border overflow-hidden transition-colors"
               style={{
-                borderColor: isBest ? `${scoreColor}30` : 'rgba(255,255,255,0.07)',
-                background: isBest ? `${scoreColor}07` : 'rgba(255,255,255,0.02)',
+                borderColor: isBest ? `${scoreColor}30` : 'var(--alpha-bg-06)',
+                background: isBest ? `${scoreColor}07` : 'var(--alpha-bg-04)',
               }}
             >
               {/* Path header — always visible */}
@@ -2448,7 +2448,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     padding: '3px 8px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700,
                     background: scoreVelocity.direction === 'accelerating'
                       ? 'rgba(239,68,68,0.12)' : scoreVelocity.direction === 'improving'
-                        ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.06)',
+                        ? 'rgba(16,185,129,0.12)' : 'var(--alpha-bg-06)',
                     border: scoreVelocity.direction === 'accelerating'
                       ? '1px solid rgba(239,68,68,0.30)' : scoreVelocity.direction === 'improving'
                         ? '1px solid rgba(16,185,129,0.30)' : '1px solid var(--alpha-bg-08)',

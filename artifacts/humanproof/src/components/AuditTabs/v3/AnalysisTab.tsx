@@ -199,7 +199,7 @@ const IntelligenceBriefBlock: React.FC<{
         </div>
       )}
 
-      <p className="text-[12px] leading-relaxed" style={{ color: showLowConfWarning ? 'rgba(255,255,255,0.60)' : 'rgba(255,255,255,0.85)' }}>
+      <p className="text-[12px] leading-relaxed" style={{ color: showLowConfWarning ? 'rgba(255,255,255,0.60)' : 'var(--alpha-text-85)' }}>
         {first}
       </p>
 

@@ -139,7 +139,7 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
       transition={{ duration: 0.18, delay: index * 0.06 }}
       className="rounded-xl overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.025)',
+        background: 'var(--alpha-bg-04)',
         border: `1px solid ${color}20`,
       }}
     >

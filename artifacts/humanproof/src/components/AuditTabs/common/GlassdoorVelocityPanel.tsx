@@ -29,7 +29,7 @@ const GlassdoorVelocityPanel: React.FC<GlassdoorVelocityPanelProps> = ({ glassdo
     ? (glassdoorVelocity.ceoApprovalVelocity < -2 ? '#ef4444'
       : glassdoorVelocity.ceoApprovalVelocity < 0 ? '#f97316'
       : '#10b981')
-    : 'rgba(255,255,255,0.40)';
+    : 'var(--alpha-text-45)';
 
   return (
     <motion.div

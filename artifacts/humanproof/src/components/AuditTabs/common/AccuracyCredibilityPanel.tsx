@@ -151,7 +151,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
       transition={{ duration: 0.22 }}
       className="rounded-2xl overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.025)',
+        background: 'var(--alpha-bg-04)',
         border: '1px solid var(--alpha-bg-08)',
       }}
     >
@@ -215,7 +215,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
                   }}
                 >
                   <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                  <p className="flex-1 text-[10px]" style={{ color: isUserTier ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.40)' }}>
+                  <p className="flex-1 text-[10px]" style={{ color: isUserTier ? 'rgba(255,255,255,0.75)' : 'var(--alpha-text-45)' }}>
                     {rangeLabel}
                     {isUserTier && <span className="ml-1.5 font-bold" style={{ color }}>← your range</span>}
                   </p>

@@ -176,7 +176,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                     left: `${pillar.benchmark.medianScore}%`,
                     width: '1.5px',
                     height: '5px',
-                    background: 'rgba(255,255,255,0.45)',
+                    background: 'var(--alpha-text-45)',
                     borderRadius: '1px',
                     transform: 'translateX(-50%)',
                   }}

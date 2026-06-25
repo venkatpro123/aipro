@@ -18,12 +18,12 @@ const SCORE_BG = (score: number) =>
 
 const TREND_COLOR: Record<HeadcountTrend, string> = {
   GROWING: '#10b981', STABLE: '#f59e0b', DECLINING: '#f97316',
-  DECLINING_SHARPLY: '#ef4444', UNKNOWN: 'rgba(255,255,255,0.40)',
+  DECLINING_SHARPLY: '#ef4444', UNKNOWN: 'var(--alpha-text-45)',
 };
 
 const POSTING_COLOR: Record<PostingVelocity, string> = {
   ACCELERATING: '#10b981', STABLE: '#f59e0b', DECELERATING: '#f97316',
-  FROZEN: '#ef4444', UNKNOWN: 'rgba(255,255,255,0.40)',
+  FROZEN: '#ef4444', UNKNOWN: 'var(--alpha-text-45)',
 };
 
 const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcount }) => {

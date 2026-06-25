@@ -51,22 +51,22 @@ export const Section7_EarlyWarningSignals: React.FC<Props> = ({ waveStatusDetail
                   style={{
                     width: isActive ? 12 : 8, height: isActive ? 12 : 8,
                     borderRadius: '50%',
-                    background: isPast || isActive ? stage.color : 'rgba(255,255,255,0.15)',
+                    background: isPast || isActive ? stage.color : 'var(--alpha-bg-08)',
                     boxShadow: isActive ? `0 0 10px ${stage.color}80` : 'none',
                     flexShrink: 0,
                   }}
                 />
-                <span style={{ fontSize: 8, fontWeight: isActive ? 800 : 600, color: isActive ? stage.color : isPast ? `${stage.color}70` : 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textAlign: 'center', lineHeight: 1.2 }}>
+                <span style={{ fontSize: 8, fontWeight: isActive ? 800 : 600, color: isActive ? stage.color : isPast ? `${stage.color}70` : 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textAlign: 'center', lineHeight: 1.2 }}>
                   {stage.label}
                 </span>
-                <span style={{ fontSize: 8, color: isActive ? 'rgba(255,255,255,0.50)' : 'rgba(255,255,255,0.20)', textAlign: 'center', lineHeight: 1.2, display: 'none' }}>
+                <span style={{ fontSize: 8, color: isActive ? 'rgba(255,255,255,0.50)' : 'var(--alpha-text-25)', textAlign: 'center', lineHeight: 1.2, display: 'none' }}>
                   {stage.shortDesc}
                 </span>
                 {/* Connector line */}
                 {i < WAVE_STAGES.length - 1 && (
                   <div style={{
                     position: 'absolute', right: -1, top: '50%', width: 2, height: 16,
-                    background: i < activeIdx ? WAVE_STAGES[i].color : 'rgba(255,255,255,0.10)',
+                    background: i < activeIdx ? WAVE_STAGES[i].color : 'var(--alpha-bg-08)',
                     transform: 'translateY(-50%)',
                     display: 'none',
                   }} />

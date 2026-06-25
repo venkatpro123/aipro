@@ -237,7 +237,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
                 {/* Dot */}
                 <div style={{
                   width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                  background: isDone ? '#10b981' : isLoading ? src.color : 'rgba(255,255,255,0.12)',
+                  background: isDone ? '#10b981' : isLoading ? src.color : 'var(--alpha-bg-08)',
                   boxShadow: isLoading ? `0 0 10px ${src.color}80` : isDone ? '0 0 8px #10b981' : 'none',
                   animation: isLoading ? 'lsg-pulse 1s ease-in-out infinite' : 'none',
                 }} />

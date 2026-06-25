@@ -128,8 +128,8 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
                   onClick={() => setExpandedNode(isExpanded ? null : node.key)}
                   className="w-full rounded-xl px-3.5 py-2.5 text-left transition-all"
                   style={{
-                    background: isExpanded ? colors.bg : 'rgba(255,255,255,0.02)',
-                    border: `1px solid ${isExpanded ? colors.border : 'rgba(255,255,255,0.06)'}`,
+                    background: isExpanded ? colors.bg : 'var(--alpha-bg-04)',
+                    border: `1px solid ${isExpanded ? colors.border : 'var(--alpha-bg-06)'}`,
                   }}
                 >
                   <div className="flex items-center gap-2.5">

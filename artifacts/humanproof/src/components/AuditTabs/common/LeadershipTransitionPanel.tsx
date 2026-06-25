@@ -72,7 +72,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
           <div className="rounded-lg p-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>CFO SIGNAL</span>
-              <span className="text-[10px] font-bold" style={{ color: leadershipRisk.cfoSignal === 'DEPARTED' ? '#ef4444' : 'rgba(255,255,255,0.70)' }}>
+              <span className="text-[10px] font-bold" style={{ color: leadershipRisk.cfoSignal === 'DEPARTED' ? '#ef4444' : 'var(--alpha-text-70)' }}>
                 {leadershipRisk.cfoSignal.replace('_', ' ')}
               </span>
             </div>
@@ -85,10 +85,10 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
         {/* VP clustering */}
         {leadershipRisk.vpClusteringAlert !== 'UNKNOWN' && leadershipRisk.vpClusteringAlert !== 'NONE' && (
           <div className="rounded-lg p-2.5"
-            style={{ background: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? 'rgba(239,68,68,0.08)' : 'rgba(255,255,255,0.04)', border: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '1px solid rgba(239,68,68,0.20)' : 'none' }}>
+            style={{ background: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? 'rgba(239,68,68,0.08)' : 'var(--alpha-bg-04)', border: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '1px solid rgba(239,68,68,0.20)' : 'none' }}>
             <div className="flex items-center gap-1.5 mb-1">
               <UserMinus className="w-3 h-3" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '#ef4444' : '#f59e0b' }} />
-              <span className="text-[10px] font-semibold" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '#ef4444' : 'rgba(255,255,255,0.60)' }}>
+              <span className="text-[10px] font-semibold" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '#ef4444' : 'var(--alpha-text-55)' }}>
                 VP DEPARTURE CLUSTER — {leadershipRisk.vpClusteringAlert}
               </span>
             </div>

@@ -405,7 +405,7 @@ export default function ScoreDriftTracker() {
             background:
               Math.abs(drift.change) > DRIFT_THRESHOLD.default
                 ? "rgba(255,71,87,0.06)"
-                : "rgba(255,255,255,0.03)",
+                : "var(--alpha-bg-04)",
             border: `1px solid ${Math.abs(drift.change) > DRIFT_THRESHOLD.default ? "rgba(255,71,87,0.3)" : "var(--border)"}`,
             borderRadius: 12,
             padding: 20,
@@ -506,7 +506,7 @@ export default function ScoreDriftTracker() {
               style={{
                 marginTop: 6,
                 padding: "12px 16px",
-                background: "rgba(255,255,255,0.02)",
+                background: "var(--alpha-bg-04)",
                 border: "1px solid var(--border)",
                 borderRadius: 8,
                 fontSize: "0.82rem",
@@ -555,7 +555,7 @@ export default function ScoreDriftTracker() {
       {history.length >= 2 ? (
         <div
           style={{
-            background: "rgba(255,255,255,0.03)",
+            background: "var(--alpha-bg-04)",
             border: "1px solid var(--border)",
             borderRadius: 12,
             padding: 24,
@@ -657,7 +657,7 @@ export default function ScoreDriftTracker() {
       ) : hasSinglePoint ? (
         <div
           style={{
-            background: "rgba(255,255,255,0.03)",
+            background: "var(--alpha-bg-04)",
             border: "1px solid var(--border)",
             borderRadius: 12,
             padding: 32,
@@ -718,7 +718,7 @@ export default function ScoreDriftTracker() {
       ) : (
         <div
           style={{
-            background: "rgba(255,255,255,0.02)",
+            background: "var(--alpha-bg-04)",
             border: "1px solid var(--border)",
             borderRadius: 12,
             padding: 40,
@@ -774,7 +774,7 @@ export default function ScoreDriftTracker() {
             <div
               key={label}
               style={{
-                background: "rgba(255,255,255,0.03)",
+                background: "var(--alpha-bg-04)",
                 border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: 16,

@@ -123,7 +123,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
         {/* Marker at 50th percentile */}
         <div
           className="absolute top-0 h-full w-px"
-          style={{ left: '50%', background: 'rgba(255,255,255,0.20)' }}
+          style={{ left: '50%', background: 'var(--alpha-text-25)' }}
         />
       </div>
       <p className="text-[10px] mb-3" style={{ color: 'var(--alpha-text-35)' }}>

@@ -116,8 +116,8 @@ export const FinancialHealthCard: React.FC<Props> = ({ result, defaultOpen = fal
   return (
     <div className="rounded-2xl overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.025)',
-        border: `1px solid ${open ? verdict.color + '35' : 'rgba(255,255,255,0.08)'}`,
+        background: 'var(--alpha-bg-04)',
+        border: `1px solid ${open ? verdict.color + '35' : 'var(--alpha-bg-08)'}`,
         transition: 'border-color 0.2s',
       }}
     >

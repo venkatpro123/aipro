@@ -158,7 +158,7 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
       transition={{ duration: 0.22 }}
       className="rounded-2xl overflow-hidden"
       style={{
-        background: 'rgba(255,255,255,0.025)',
+        background: 'var(--alpha-bg-04)',
         border: '1px solid rgba(16,185,129,0.20)',
       }}
     >

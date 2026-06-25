@@ -54,14 +54,14 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-3 p-3 text-left"
-        style={{ background: rank === 0 ? 'rgba(34,211,238,0.05)' : 'rgba(255,255,255,0.02)' }}
+        style={{ background: rank === 0 ? 'rgba(34,211,238,0.05)' : 'var(--alpha-bg-04)' }}
       >
         {/* Rank */}
         <span
           className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black"
           style={{
-            background: rank === 0 ? 'rgba(34,211,238,0.18)' : 'rgba(255,255,255,0.07)',
-            color: rank === 0 ? '#22d3ee' : 'rgba(255,255,255,0.35)',
+            background: rank === 0 ? 'rgba(34,211,238,0.18)' : 'var(--alpha-bg-06)',
+            color: rank === 0 ? '#22d3ee' : 'var(--alpha-text-35)',
           }}
         >
           {rank + 1}
@@ -87,7 +87,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-45)' }}>{fmt(currentScore)}</span>
           <ArrowRight className="w-3 h-3" style={{ color: '#22d3ee' }} />
-          <span className="text-[13px] font-black" style={{ color: rank === 0 ? '#22d3ee' : 'rgba(255,255,255,0.70)' }}>
+          <span className="text-[13px] font-black" style={{ color: rank === 0 ? '#22d3ee' : 'var(--alpha-text-70)' }}>
             {projected}
           </span>
           <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.55)' }}>

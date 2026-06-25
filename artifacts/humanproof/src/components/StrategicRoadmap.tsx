@@ -122,7 +122,7 @@ const PivotCard = ({
     <div
       onClick={() => setExpanded(!expanded)}
       style={{
-        background: rank === 0 ? `linear-gradient(135deg, ${scoreColor}08, ${scoreColor}04)` : 'rgba(255,255,255,0.025)',
+        background: rank === 0 ? `linear-gradient(135deg, ${scoreColor}08, ${scoreColor}04)` : 'var(--alpha-bg-04)',
         border: rank === 0 ? `1px solid ${scoreColor}30` : '1px solid var(--alpha-bg-08)',
         borderRadius: 14, padding: '16px 18px', cursor: 'pointer',
         transition: 'all 0.2s', marginBottom: 10,
@@ -140,7 +140,7 @@ const PivotCard = ({
         {/* Rank badge */}
         <div style={{
           width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-          background: rank === 0 ? scoreColor : 'rgba(255,255,255,0.07)',
+          background: rank === 0 ? scoreColor : 'var(--alpha-bg-06)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '0.8rem', fontWeight: 900,
           color: rank === 0 ? '#fff' : 'var(--text-3)',

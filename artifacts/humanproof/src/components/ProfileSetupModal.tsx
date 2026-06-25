@@ -159,7 +159,7 @@ function StepIndicator({ step }: { step: number }) {
             className="profile-step-label"
             style={{
               textAlign: i === 0 ? 'left' : i === STEP_LABELS.length - 1 ? 'right' : 'center',
-              color: i === step ? 'var(--cyan, #00d4e0)' : i < step ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.20)',
+              color: i === step ? 'var(--cyan, #00d4e0)' : i < step ? 'rgba(255,255,255,0.45)' : 'var(--alpha-text-25)',
             }}
           >
             {label}
