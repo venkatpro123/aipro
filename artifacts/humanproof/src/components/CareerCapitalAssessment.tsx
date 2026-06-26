@@ -230,7 +230,7 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
       {/* Header */}
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left"
+        className="w-full flex items-center gap-3 p-4 hover:bg-[var(--alpha-bg-05)] transition-colors text-left"
       >
         <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
           <Award className="w-4 h-4 text-violet-400" />
@@ -257,7 +257,7 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 border-t border-white/5">
+            <div className="px-4 pb-4 border-t border-[var(--alpha-bg-05)]">
               <p className="text-xs text-muted-foreground py-3 leading-relaxed">
                 Two professionals with identical titles can have vastly different career capital.
                 The metrics below adjust your displacement risk to reflect what you've actually built — not just your current job title.
@@ -281,7 +281,7 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
                       value={field.value}
                       onChange={e => field.set(e.target.value)}
                       placeholder={field.placeholder}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                      className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
                     />
                   </div>
                 ))}
@@ -322,7 +322,7 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
                   onChange={e => setUniqueKnowledge(e.target.value)}
                   placeholder="e.g., 'I know every major client's internal procurement process and the 3 stakeholders who actually approve vendor changes'"
                   rows={2}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 resize-none"
+                  className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 resize-none"
                 />
                 <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground opacity-60">
                   <Lock className="w-2.5 h-2.5" />
@@ -342,13 +342,13 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
               {saved && capitalScore && tierConf && (
                 <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-5 space-y-4">
                   {/* Score display */}
-                  <div className="rounded-xl border border-white/10 p-4 text-center">
+                  <div className="rounded-xl border border-[var(--alpha-bg-10)] p-4 text-center">
                     <div className="text-4xl font-black tracking-tighter" style={{ color: tierConf.color }}>
                       {capitalScore.total}<span className="text-lg text-muted-foreground">/100</span>
                     </div>
                     <div className="text-base font-black mt-1" style={{ color: tierConf.color }}>{capitalScore.tier}</div>
                     <p className="text-xs text-muted-foreground mt-1">{tierConf.description}</p>
-                    <div className="mt-3 pt-3 border-t border-white/5">
+                    <div className="mt-3 pt-3 border-t border-[var(--alpha-bg-05)]">
                       <span className="text-sm text-emerald-400 font-bold">−{capitalScore.riskReduction} pts</span>
                       <span className="text-xs text-muted-foreground ml-2">
                         capital adjustment: {currentRiskScore} → {adjustedRisk}
@@ -364,10 +364,10 @@ export const CareerCapitalAssessment: React.FC<Props> = ({
                         deliveryCapital: 'Delivery', influenceCapital: 'Influence',
                       };
                       return (
-                        <div key={key} className="p-3 rounded-xl bg-white/5 border border-white/5">
+                        <div key={key} className="p-3 rounded-xl bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-05)]">
                           <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{labels[key]}</div>
                           <div className="flex items-center gap-2 mt-1">
-                            <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div className="flex-1 h-1.5 bg-[var(--alpha-bg-05)] rounded-full overflow-hidden">
                               <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${(val / 25) * 100}%` }} />
                             </div>
                             <span className="text-xs font-bold font-mono text-cyan-400">{val}/25</span>

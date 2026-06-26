@@ -912,7 +912,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
   return (
     <div className="glass-panel-heavy rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 p-5 border-b border-white/10">
+      <div className="flex items-center gap-3 p-5 border-b border-[var(--alpha-bg-10)]">
         <div className="p-2 rounded-lg bg-amber-500/10">
           <DollarSign className="w-5 h-5 text-amber-400" />
         </div>
@@ -993,7 +993,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                   placeholder={`e.g. ${Math.round(80_000 * currMeta.unitsPerUsd).toLocaleString()}`}
                   value={annualInput}
                   onChange={e => setAnnualInput(e.target.value)}
-                  className="w-full pl-8 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                  className="w-full pl-8 pr-4 py-2.5 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
                 />
               </div>
               <button
@@ -1023,7 +1023,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
               <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
                 Monthly Income Trajectory — 36 Months
               </div>
-              <div className="bg-white/3 rounded-xl p-3 overflow-x-auto">
+              <div className="bg-[var(--alpha-bg-04)] rounded-xl p-3 overflow-x-auto">
                 <svg width={SVG_W} height={SVG_H} viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full">
                   {/* Grid lines */}
                   {[0, 0.25, 0.5, 0.75, 1].map(f => {
@@ -1281,7 +1281,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                 },
               ].map(card => (
                 <div key={card.label}
-                  className="p-4 rounded-xl border border-white/5 bg-white/3"
+                  className="p-4 rounded-xl border border-[var(--alpha-bg-05)] bg-[var(--alpha-bg-04)]"
                   style={{ borderLeft: `3px solid ${card.color}` }}>
                   <div className="flex items-center gap-2 mb-1" style={{ color: card.color }}>
                     {card.icon}
@@ -1315,14 +1315,14 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                     {inactionCost > 0 ? (
                       <>
                         Cost of inaction:{' '}
-                        <strong className="text-white">
+                        <strong className="text-[var(--text)]">
                           {formatMoney(toDisplay(Math.abs(inactionCost)), displayCurrency)}
                         </strong>{' '}
                         cumulative income gap over 36 months (full transition vs. no action).
                         {roiMultiple > 0 && (
                           <>
                             {' '}A HumanProof Survivor plan costs{' '}
-                            <strong className="text-white">
+                            <strong className="text-[var(--text)]">
                               {formatMoney(toDisplay(planCostLocal), displayCurrency)}/year
                             </strong>.{' '}
                             That is a{' '}
@@ -1363,7 +1363,7 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
 
         {/* Pre-submit teaser */}
         {!submitted && annual <= 0 && (
-          <div className="rounded-xl border border-white/10 p-4 bg-white/3">
+          <div className="rounded-xl border border-[var(--alpha-bg-10)] p-4 bg-[var(--alpha-bg-04)]">
             <div className="text-xs text-muted-foreground text-center leading-relaxed">
               Enter your current salary to see what inaction costs you in real money over 3 years,
               across three scenarios — no action, partial adaptation, and full transition.

@@ -56,7 +56,7 @@ const ActionCard: React.FC<{
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="rounded-xl border border-white/8 bg-white/[0.03] overflow-hidden hover:border-white/14 transition-colors"
+      className="rounded-xl border border-[var(--alpha-bg-08)] bg-[var(--alpha-bg-04)] overflow-hidden hover:border-[var(--alpha-bg-12)] transition-colors"
     >
       {/* Header row */}
       <button
@@ -102,7 +102,7 @@ const ActionCard: React.FC<{
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-3 border-t border-white/6 pt-3">
+            <div className="px-4 pb-4 space-y-3 border-t border-[var(--alpha-bg-06)] pt-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Why This Specifically</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{action.rationale}</p>
@@ -111,7 +111,7 @@ const ActionCard: React.FC<{
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Expected Impact</p>
                 <p className="text-xs text-emerald-400/80 leading-relaxed">{action.expectedImpact}</p>
               </div>
-              <div className="flex items-start gap-2 p-2 rounded-lg bg-white/4 border border-white/6">
+              <div className="flex items-start gap-2 p-2 rounded-lg bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-06)]">
                 <BookOpen className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[10px] font-semibold text-cyan-300">Resource</p>
@@ -154,7 +154,7 @@ const TimelineSection: React.FC<{
           <div className={`w-2 h-2 rounded-full ${colorClass}`} />
           <span className="text-sm font-bold tracking-tight">{title}</span>
           <span className="text-xs text-muted-foreground font-mono">{subtitle}</span>
-          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/6 text-muted-foreground`}>
+          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--alpha-bg-06)] text-muted-foreground`}>
             {actions.length} actions
           </span>
         </div>
@@ -211,11 +211,11 @@ const SkillUpgradeCard: React.FC<{
       </span>
     </div>
     <div className="grid grid-cols-2 gap-2 text-[10px]">
-      <div className="p-2 rounded bg-white/4">
+      <div className="p-2 rounded bg-[var(--alpha-bg-04)]">
         <p className="text-muted-foreground">Time</p>
         <p className="font-semibold">{skill.estimatedWeeks} weeks</p>
       </div>
-      <div className="p-2 rounded bg-white/4">
+      <div className="p-2 rounded bg-[var(--alpha-bg-04)]">
         <p className="text-muted-foreground">Cost</p>
         <p className="font-semibold">{skill.estimatedCost}</p>
       </div>
@@ -320,7 +320,7 @@ export const CareerInsuranceKit: React.FC<CareerInsuranceKitProps> = ({ plan, co
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <p className={`text-sm font-black tracking-tight ${urgencyConfig.textColor}`}>{urgencyConfig.label}</p>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/8 text-muted-foreground">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--alpha-bg-08)] text-muted-foreground">
                 {pct12}% 12-month probability
               </span>
             </div>
@@ -330,7 +330,7 @@ export const CareerInsuranceKit: React.FC<CareerInsuranceKitProps> = ({ plan, co
       </div>
 
       {/* Inaction consequence */}
-      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-02)] p-4">
         <div className="flex items-center gap-2 mb-2">
           <BarChart2 className="w-4 h-4 text-muted-foreground" />
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">If No Action Is Taken</p>

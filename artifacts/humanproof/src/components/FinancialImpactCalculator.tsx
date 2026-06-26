@@ -285,7 +285,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
       <div className="flex items-center gap-2 flex-wrap">
         <DollarSign className="w-5 h-5 text-emerald-400" />
         <h3 className="text-sm font-black uppercase tracking-widest">Financial Impact Calculator</h3>
-        <span className="text-[10px] px-2 py-0.5 rounded bg-white/6 text-muted-foreground font-mono">
+        <span className="text-[10px] px-2 py-0.5 rounded bg-[var(--alpha-bg-06)] text-muted-foreground font-mono">
           {ctx ? `From your ${meta.name} profile` : 'Estimate — add your financial context for accuracy'}
         </span>
       </div>
@@ -302,7 +302,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
               type="number"
               value={salary}
               onChange={e => setSalary(Number(e.target.value) || 0)}
-              className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm font-semibold focus:outline-none focus:border-white/20"
+              className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] text-sm font-semibold focus:outline-none focus:border-[var(--alpha-bg-12)]"
               step={currency === 'INR' ? 50000 : 5000}
               min={0}
               aria-label="Annual base salary"
@@ -327,7 +327,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
                 const v = Number(e.target.value);
                 setMonthlyExpenses(e.target.value === '' ? null : (v || 0));
               }}
-              className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm font-semibold focus:outline-none focus:border-white/20"
+              className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] text-sm font-semibold focus:outline-none focus:border-[var(--alpha-bg-12)]"
               step={currency === 'INR' ? 5000 : 250}
               min={0}
               aria-label="Monthly living expenses"
@@ -448,7 +448,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
       <div>
         <button
           onClick={() => setShowDetails(d => !d)}
-          className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-white transition-colors"
+          className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-[var(--text)] transition-colors"
         >
           {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           {showDetails ? 'Hide' : 'Show'} cost breakdown
@@ -458,7 +458,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="mt-3 rounded-xl border border-white/8 overflow-hidden"
+            className="mt-3 rounded-xl border border-[var(--alpha-bg-08)] overflow-hidden"
           >
             <div className="p-4 space-y-2 text-[11px]">
               {[
@@ -467,7 +467,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
                 { label: 'Job search costs (services, premium listings, travel)', value: fmt(impact.jobSearchCosts) },
                 { label: 'Panic-acceptance salary discount (year 1 only)', value: fmt(impact.salaryDiscountOnPanic), note: 'Avoidable with adequate runway' },
               ].map((row) => (
-                <div key={row.label} className="flex justify-between items-center py-1.5 border-b border-white/5 gap-3">
+                <div key={row.label} className="flex justify-between items-center py-1.5 border-b border-[var(--alpha-bg-05)] gap-3">
                   <span className="text-muted-foreground">{row.label}</span>
                   <div className="text-right flex-shrink-0">
                     <span className="font-semibold">{row.value}</span>
@@ -480,7 +480,7 @@ export const FinancialImpactCalculator: React.FC<FinancialImpactCalculatorProps>
                 <span className="font-black text-red-400">{fmt(impact.totalCostP75)}</span>
               </div>
             </div>
-            <div className="px-4 py-3 bg-white/[0.015] border-t border-white/6">
+            <div className="px-4 py-3 bg-[var(--alpha-bg-02)] border-t border-[var(--alpha-bg-06)]">
               <p className="text-[10px] text-muted-foreground leading-relaxed">
                 P75 = 75th-percentile search duration for your role. The panic discount is largely avoidable:
                 candidates with 3+ months of runway can decline low offers and wait for the right role.

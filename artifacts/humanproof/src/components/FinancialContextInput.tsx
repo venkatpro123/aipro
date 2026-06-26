@@ -149,7 +149,7 @@ export const FinancialContextInput: React.FC<Props> = ({
       <button
         type="button"
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left"
+        className="w-full flex items-center gap-3 p-4 hover:bg-[var(--alpha-bg-05)] transition-colors text-left"
       >
         <div className="p-2 rounded-lg bg-blue-500/10 flex-shrink-0">
           <Wallet className="w-4 h-4 text-blue-400" />
@@ -177,7 +177,7 @@ export const FinancialContextInput: React.FC<Props> = ({
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 border-t border-white/5">
+            <div className="px-4 pb-4 border-t border-[var(--alpha-bg-05)]">
               {/* Privacy notice */}
               <div className="flex items-center gap-2 py-3 mb-4 text-[10px] text-muted-foreground">
                 <Lock className="w-3 h-3 flex-shrink-0" />
@@ -193,7 +193,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                   title="Currency"
                   value={selectedCurrency}
                   onChange={e => handleCurrencyChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
+                  className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
                 >
                   {CURRENCY_OPTIONS.map(o => (
                     <option key={o.code} value={o.code}>{o.label}</option>
@@ -214,7 +214,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                       placeholder={`e.g. ${Math.round(3_000 * currMeta.unitsPerUsd).toLocaleString()}`}
                       value={expenses}
                       onChange={e => setExpenses(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                      className="w-full pl-7 pr-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
                     />
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                     placeholder="e.g. 3.5"
                     value={runwayMonths}
                     onChange={e => setRunwayMonths(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                    className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
                   />
                 </div>
 
@@ -243,7 +243,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                     title="Financial Dependents"
                     value={dependents}
                     onChange={e => setDependents(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none"
+                    className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none"
                   >
                     <option value="0">None</option>
                     <option value="1">1 (spouse or parent)</option>
@@ -265,7 +265,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                       placeholder={`e.g. ${Math.round(80_000 * currMeta.unitsPerUsd).toLocaleString()}`}
                       value={income}
                       onChange={e => setIncome(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                      className="w-full pl-7 pr-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
                     />
                   </div>
                 </div>
@@ -280,7 +280,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                     placeholder="e.g. London, Singapore, Dubai, Bangalore, Manila"
                     value={city}
                     onChange={e => setCity(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
+                    className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
                   />
                   <p className="text-[10px] text-muted-foreground mt-1">
                     When provided, your action plan names specific companies hiring in your city.
@@ -315,7 +315,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                         title="Country of Employment"
                         value={countryCode}
                         onChange={e => setCountryCode(e.target.value)}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none"
+                        className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none"
                       >
                         <option value="">Select country</option>
                         {MENA_COUNTRIES.map(c => (
@@ -333,7 +333,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                         placeholder="e.g. 7"
                         value={tenureYears}
                         onChange={e => setTenureYears(e.target.value)}
-                        className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
+                        className="w-full px-3 py-2 bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50 font-mono"
                       />
                     </div>
                   </div>
@@ -383,9 +383,9 @@ export const FinancialContextInput: React.FC<Props> = ({
                           <div className="text-muted-foreground leading-relaxed">{profile.advice.avoid}</div>
                         </div>
                       </div>
-                      <div className="mt-2 pt-2 border-t border-white/5 text-[10px] text-muted-foreground">
+                      <div className="mt-2 pt-2 border-t border-[var(--alpha-bg-05)] text-[10px] text-muted-foreground">
                         Effective runway:{' '}
-                        <strong className="text-white">{profile.emergencyRunway}</strong>
+                        <strong className="text-[var(--text)]">{profile.emergencyRunway}</strong>
                         {profile.gratuityMonths > 0 && (
                           <span className="text-emerald-400 ml-1">
                             (+{profile.gratuityMonths.toFixed(1)} mo gratuity)
@@ -395,7 +395,7 @@ export const FinancialContextInput: React.FC<Props> = ({
                         Transition budget: <strong>{profile.transitionBudgetRange}</strong>
                       </div>
                       {profile.gratuityDisclosure && (
-                        <div className="mt-1 pt-1 border-t border-white/5 text-[9px] text-emerald-300/70 leading-relaxed">
+                        <div className="mt-1 pt-1 border-t border-[var(--alpha-bg-05)] text-[9px] text-emerald-300/70 leading-relaxed">
                           {profile.gratuityDisclosure}
                         </div>
                       )}

@@ -208,7 +208,7 @@ export const SeniorityBracketConfirmation: React.FC<SeniorityBracketConfirmation
               <button
                 type="button"
                 onClick={() => setUIState('picking')}
-                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-muted-foreground hover:bg-white/10 hover:text-[var(--text)] transition-colors"
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-12)] text-muted-foreground hover:bg-[var(--alpha-bg-10)] hover:text-[var(--text)] transition-colors"
               >
                 No, adjust
                 <ChevronDown className="w-3 h-3" />
@@ -223,7 +223,7 @@ export const SeniorityBracketConfirmation: React.FC<SeniorityBracketConfirmation
   // ── Picking: bracket grid ──────────────────────────────────────────────────
   if (uiState === 'picking') {
     return (
-      <div className="rounded-xl border border-white/15 bg-white/[0.03] p-4 mb-4">
+      <div className="rounded-xl border border-[var(--alpha-bg-12)] bg-[var(--alpha-bg-04)] p-4 mb-4">
         <div className="flex items-start gap-3">
           <Brain className="w-4 h-4 flex-shrink-0 mt-0.5 text-violet-400" />
           <div className="flex-1 min-w-0">
@@ -277,7 +277,7 @@ export const SeniorityBracketConfirmation: React.FC<SeniorityBracketConfirmation
   // ── Confirmed / Overridden: compact badge ─────────────────────────────────
   const isOverridden = uiState === 'overridden';
   return (
-    <div className="rounded-xl border border-white/10 p-4 mb-4 bg-white/[0.03]">
+    <div className="rounded-xl border border-[var(--alpha-bg-10)] p-4 mb-4 bg-[var(--alpha-bg-04)]">
       <div className="flex items-start gap-3">
         <Brain className="w-4 h-4 flex-shrink-0 mt-0.5 text-violet-400" />
         <div className="flex-1 min-w-0">
@@ -305,14 +305,14 @@ export const SeniorityBracketConfirmation: React.FC<SeniorityBracketConfirmation
             <button
               type="button"
               onClick={reset}
-              className="text-[10px] px-2.5 py-1 rounded border border-white/15 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
+              className="text-[10px] px-2.5 py-1 rounded border border-[var(--alpha-bg-12)] bg-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-10)] text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
             >
               {isOverridden ? `Reset to derived (${BRACKET_LABELS[derivedBracket]})` : 'Reconsider'}
             </button>
             <button
               type="button"
               onClick={() => setUIState('picking')}
-              className="text-[10px] px-2.5 py-1 rounded border border-white/15 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
+              className="text-[10px] px-2.5 py-1 rounded border border-[var(--alpha-bg-12)] bg-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-10)] text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
             >
               Change bracket
             </button>
