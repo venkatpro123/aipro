@@ -35,6 +35,7 @@ import {
 } from '../../../services/executiveIntelligenceEngine';
 import type { UserProfile } from '../../../services/userProfileService';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePanel';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -598,6 +599,13 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
       {/* Executive Intelligence Panel (P2) */}
       {executiveIntelligence && executiveIntelligence.isExecutive && (
         <ScrollReveal><ExecutiveIntelligencePanel intelligence={executiveIntelligence} /></ScrollReveal>
+      )}
+
+      {/* Behavioral Intelligence Panel — interview prep, negotiation, transitions */}
+      {r.behavioralPersonalization && (
+        <ScrollReveal>
+          <BehavioralIntelligencePanel data={r.behavioralPersonalization} />
+        </ScrollReveal>
       )}
 
       {/* Profile context note (P2) */}

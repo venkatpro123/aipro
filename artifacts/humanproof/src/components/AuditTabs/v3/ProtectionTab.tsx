@@ -12,6 +12,7 @@ import { SkillEvolutionIllustration } from '../../illustrations/CareerIllustrati
 import { getCareerIntelligence } from '@/data/intelligence';
 import type { CareerIntelligence } from '@/data/intelligence/types';
 import { riskColor } from '../../../lib/riskTokens';
+import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 
 // Fallback intel for roles with no seeded data — mirrors the same fallback
 // previously used by the now-retired CareerSkillsTab. Only the `skills` field
@@ -136,6 +137,13 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
             currentScore={result.total}
             paths={careerPaths}
           />
+        </ScrollReveal>
+      )}
+
+      {/* Financial runway assessment — above career evolution timeline */}
+      {r.userFinancialRunway && (
+        <ScrollReveal>
+          <UserFinancialRunwayPanel userFinancialRunway={r.userFinancialRunway} />
         </ScrollReveal>
       )}
 
