@@ -3597,7 +3597,6 @@ select option:hover {
   color: var(--text);
   font-size: 0.95rem;
   font-weight: 600;
-  outline: none;
   cursor: pointer;
   transition: all var(--dur-normal) var(--ease-out);
   backdrop-filter: blur(12px);
@@ -3662,7 +3661,6 @@ select option:hover {
   color: var(--text-2);
   font-size: 0.92rem;
   font-weight: 500;
-  outline: none;
   cursor: pointer;
   user-select: none;
   transition: all var(--dur-fast) var(--ease-out);
