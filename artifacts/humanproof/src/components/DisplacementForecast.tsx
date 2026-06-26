@@ -76,12 +76,12 @@ export default function DisplacementForecast({ onNavigate }: { onNavigate?: (tab
       </div>
 
       {currentScore === null && (
-        <div style={{ padding: '14px 18px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, marginBottom: 24, fontSize: '0.875rem', color: '#FCD34D', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <div style={{ padding: '14px 18px', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 10, marginBottom: 24, fontSize: '0.875rem', color: 'var(--color-amber500-text)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
           <span>Complete a risk calculator to personalise your forecast. Showing baseline standard for role.</span>
           {onNavigate && (
             <button
               onClick={() => onNavigate('job-risk')}
-              style={{ background: 'none', border: '1px solid rgba(251,191,36,0.5)', color: '#FCD34D', borderRadius: 6, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: '0.75rem', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em' }}
+              style={{ background: 'none', border: '1px solid rgba(251,191,36,0.5)', color: 'var(--color-amber500-text)', borderRadius: 6, padding: '4px 12px', fontFamily: 'var(--mono)', fontSize: '0.75rem', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em' }}
             >
               Calculate Job Risk Score →
             </button>

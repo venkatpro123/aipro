@@ -28,7 +28,7 @@ interface Source {
 // a worker job_type so the scrape_jobs poll can advance the visible state
 // (though stages 0/3/5 are pipeline phases, not single worker jobs).
 const SOURCES: Source[] = [
-  { key: 'identity',       label: 'Resolving company identity',     icon: '🔎', color: '#7c3aed', delay:     0 },
+  { key: 'identity',       label: 'Resolving company identity',     icon: '🔎', color: 'var(--violet)', delay:     0 },
   { key: 'newsExtract',    label: 'Acquiring workforce intelligence', icon: '👥', color: 'var(--color-cyan500-text)', delay:  1500 },
   { key: 'careerPageScrape', label: 'Validating hiring signals',    icon: '📥', color: 'var(--color-amber500-text)', delay:  4000 },
   { key: 'layoffTracker',  label: 'Reconciling live market signals',icon: '📡', color: 'var(--color-red-text)', delay:  7000 },
@@ -164,7 +164,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: '10px', height: '10px', borderRadius: '50%',
-            background: '#00F5FF', boxShadow: '0 0 16px #00F5FF',
+            background: 'var(--cyan)', boxShadow: '0 0 16px var(--cyan)',
             animation: 'lsg-pulse 1.4s ease-in-out infinite',
           }} />
           <span style={{
