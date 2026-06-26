@@ -9314,12 +9314,29 @@ html.light .intel-assembly-node-dot {
 /* Metric card hover border */
 html.light .metric-card:hover { border-color: rgba(17,19,26,0.14); }
 
-/* Profile setup modal text */
-html.light .profile-field-label  { color: #11131a; }
-html.light .profile-field-helper  { color: #717b8c; }
-html.light .profile-hint-text    { color: #717b8c; }
-html.light .profile-step-title   { color: #11131a; }
-html.light .profile-check-row    { color: #4a5365; }
+/* Profile setup modal text + buttons */
+html.light .profile-field-label         { color: #11131a; }
+html.light .profile-field-helper        { color: #717b8c; }
+html.light .profile-hint-text           { color: #717b8c; }
+html.light .profile-step-title          { color: #11131a; }
+html.light .profile-check-row           { color: #4a5365; }
+html.light .profile-reprompt-field-label { color: #717b8c; }
+html.light .profile-modal-subtitle      { color: #4a5365; }
+html.light .profile-btn-back   { color: #4a5365; border-color: rgba(17,19,26,0.16); }
+html.light .profile-btn-skip   { color: #717b8c; }
+html.light .profile-btn-update { color: #11131a; border-color: rgba(17,19,26,0.16); }
+html.light .profile-btn-dismiss { color: #717b8c; }
+
+/* Earth/Audit loader text */
+html.light .earth-loader-company    { color: #717b8c; }
+html.light .earth-loader-stage-text { color: #11131a; }
+html.light .earth-loader-sub        { color: #717b8c; }
+html.light .earth-pipeline-label    { color: rgba(17,19,26,0.25); }
+html.light .earth-loader-limited-body { color: #4a5365; }
+
+/* Intel section titles */
+html.light .intel-section-title    { color: #11131a; }
+html.light .intel-section-subtitle { color: #717b8c; }
 
 /* Go/No-Go box */
 html.light .go-no-go-box { color: #4a5365; }
