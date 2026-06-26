@@ -58,7 +58,7 @@ export const PremiumTabs: React.FC<PremiumTabsProps> = ({
                       borderRadius: "var(--radius-full)",
                       background: "var(--alpha-bg-08)",
                       boxShadow:
-                        "0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.10) inset, 0 0 14px rgba(0,212,224,0.10)",
+                        "0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px var(--alpha-bg-10) inset, 0 0 14px rgba(0,212,224,0.10)",
                       zIndex: 0,
                     }}
                   />

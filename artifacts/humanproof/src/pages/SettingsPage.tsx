@@ -226,7 +226,7 @@ function KeyList({
         <div key={key.id} style={{
           display: 'flex', alignItems: 'center', gap: 12,
           padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10,
-          background: 'rgba(255,255,255,0.02)',
+          background: 'var(--alpha-bg-02)',
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '0.92rem', fontWeight: 600 }}>{key.label}</div>
@@ -344,7 +344,7 @@ function WhiteLabelTab() {
           />
         </Field>
         {config.logoDataUrl && (
-          <div style={{ marginTop: 10, padding: 10, background: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'inline-block' }}>
+          <div style={{ marginTop: 10, padding: 10, background: 'var(--alpha-bg-05)', borderRadius: 8, display: 'inline-block' }}>
             <img src={config.logoDataUrl} alt="Logo preview" style={{ maxHeight: 48, maxWidth: 200 }} />
           </div>
         )}
@@ -447,7 +447,7 @@ const h2: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   padding: '10px 12px',
-  background: 'rgba(255,255,255,0.04)',
+  background: 'var(--alpha-bg-04)',
   border: '1px solid var(--border)',
   borderRadius: 8,
   color: 'var(--text)',

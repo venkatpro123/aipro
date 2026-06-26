@@ -458,7 +458,7 @@ export default function CommunityIntelligencePage() {
                 <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
                   Coverage progress
                 </div>
-                <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: 6, background: 'var(--alpha-bg-08)', borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{
                     height: '100%', borderRadius: 3,
                     width: `${coveragePct}%`,
@@ -530,7 +530,7 @@ export default function CommunityIntelligencePage() {
                     <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{ind.industry}</span>
                     <span style={{ fontWeight: 900, color: getScoreColor(ind.avgScore), fontFamily: 'var(--font-mono)', fontSize: '1rem' }}>{ind.avgScore}</span>
                   </div>
-                  <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ height: 4, background: 'var(--alpha-bg-08)', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
                     <div style={{ height: '100%', width: `${ind.avgScore}%`, background: getScoreColor(ind.avgScore), borderRadius: 2 }} />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-3)' }}>
@@ -625,7 +625,7 @@ export default function CommunityIntelligencePage() {
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-3)' }}>Avg Score</span>
                     <span style={{ fontWeight: 900, color: getScoreColor(signal.avgScore), fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>{signal.avgScore}</span>
                   </div>
-                  <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: 4, background: 'var(--alpha-bg-08)', borderRadius: 2, overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${signal.avgScore}%`, background: getScoreColor(signal.avgScore), borderRadius: 2 }} />
                   </div>
                 </div>

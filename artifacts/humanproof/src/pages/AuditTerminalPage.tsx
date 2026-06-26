@@ -609,7 +609,7 @@ const AuditTerminalPage: React.FC = () => {
                 style={{
                   alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--alpha-bg-12)',
-                  background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)',
+                  background: 'var(--alpha-bg-04)', color: 'var(--text-2)',
                   fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
                   cursor: 'pointer', transition: 'all 0.2s ease',
                 }}
@@ -625,7 +625,7 @@ const AuditTerminalPage: React.FC = () => {
                 style={{
                   alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--alpha-bg-12)',
-                  background: shareCopied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
+                  background: shareCopied ? 'rgba(16,185,129,0.12)' : 'var(--alpha-bg-04)',
                   color: shareCopied ? 'var(--emerald)' : 'var(--text-2)',
                   fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
                   cursor: 'pointer', transition: 'all 0.2s ease',

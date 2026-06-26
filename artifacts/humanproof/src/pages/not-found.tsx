@@ -40,7 +40,7 @@ export default function NotFound() {
             onClick={() => window.history.back()}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
             style={{
-              background: 'rgba(255,255,255,0.06)',
+              background: 'var(--alpha-bg-06)',
               border: '1px solid var(--border-2)',
               color: 'var(--text-2)',
             }}
