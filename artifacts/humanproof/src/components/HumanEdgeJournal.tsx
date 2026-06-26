@@ -736,7 +736,6 @@ export default function HumanEdgeJournal({
             color: "var(--text)",
             fontFamily: "var(--body)",
             fontSize: "0.85rem",
-            outline: "none",
           }}
         />
         <div style={{ display: "flex", gap: 4 }}>
@@ -786,7 +785,6 @@ export default function HumanEdgeJournal({
             color: "var(--text)",
             fontFamily: "var(--body)",
             fontSize: "0.85rem",
-            outline: "none",
             cursor: "pointer",
           }}
         >
@@ -811,7 +809,6 @@ export default function HumanEdgeJournal({
             color: "var(--text)",
             fontFamily: "var(--body)",
             fontSize: "0.85rem",
-            outline: "none",
           }}
         />
       </div>
@@ -1157,7 +1154,6 @@ export default function HumanEdgeJournal({
                     color: "var(--text)",
                     fontFamily: "var(--body)",
                     fontSize: "0.875rem",
-                    outline: "none",
                   }}
                 >
                   {(
@@ -1197,7 +1193,6 @@ export default function HumanEdgeJournal({
                     color: "var(--text)",
                     fontFamily: "var(--body)",
                     fontSize: "0.875rem",
-                    outline: "none",
                   }}
                 />
                 <div
@@ -1243,7 +1238,6 @@ export default function HumanEdgeJournal({
                     color: "var(--text)",
                     fontFamily: "var(--body)",
                     fontSize: "0.875rem",
-                    outline: "none",
                     resize: "vertical",
                     lineHeight: 1.6,
                   }}
@@ -1292,7 +1286,6 @@ export default function HumanEdgeJournal({
                     color: "var(--text)",
                     fontFamily: "var(--body)",
                     fontSize: "0.875rem",
-                    outline: "none",
                   }}
                 />
                 <datalist id="tag-suggestions">
