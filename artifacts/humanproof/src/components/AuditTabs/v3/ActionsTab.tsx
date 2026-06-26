@@ -40,6 +40,7 @@ import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligenceP
 import EmergencyProtocolPanel from '../common/EmergencyProtocolPanel';
 import JobTargetPanel from '../common/JobTargetPanel';
 import MonthlyActionPlan from '../common/MonthlyActionPlan';
+import { SocialProofStrip } from '../common/SocialProofStrip';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -143,6 +144,14 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
                     <p className="text-[10px] italic mt-1" style={{ color: 'var(--alpha-text-35)' }}>
                       {item.evidenceStats}
                     </p>
+                  )}
+                  {/* Social proof — "X users completed this" */}
+                  {idx < 3 && (
+                    <SocialProofStrip
+                      actionPriority={item.priority}
+                      actionCategory={item.layerFocus}
+                      riskTier={item.priority}
+                    />
                   )}
                 </div>
               </div>
