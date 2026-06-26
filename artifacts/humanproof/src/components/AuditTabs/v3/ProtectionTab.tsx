@@ -13,6 +13,7 @@ import { getCareerIntelligence } from '@/data/intelligence';
 import type { CareerIntelligence } from '@/data/intelligence/types';
 import { riskColor } from '../../../lib/riskTokens';
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
+import { VisaRiskPanel } from '../common/VisaRiskPanel';
 
 // Fallback intel for roles with no seeded data — mirrors the same fallback
 // previously used by the now-retired CareerSkillsTab. Only the `skills` field
@@ -144,6 +145,17 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
       {r.userFinancialRunway && (
         <ScrollReveal>
           <UserFinancialRunwayPanel userFinancialRunway={r.userFinancialRunway} />
+        </ScrollReveal>
+      )}
+
+      {/* Visa risk — only displayed when shouldDisplay is true (handled inside panel) */}
+      {r.visaRisk && (
+        <ScrollReveal>
+          <VisaRiskPanel
+            visaRisk={r.visaRisk}
+            countryCode={result.countryKey}
+            tenureYears={result.tenureYears}
+          />
         </ScrollReveal>
       )}
 

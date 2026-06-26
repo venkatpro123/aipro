@@ -36,6 +36,7 @@ import {
 import type { UserProfile } from '../../../services/userProfileService';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePanel';
+import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligencePanel';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -605,6 +606,13 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
       {r.behavioralPersonalization && (
         <ScrollReveal>
           <BehavioralIntelligencePanel data={r.behavioralPersonalization} />
+        </ScrollReveal>
+      )}
+
+      {/* Negotiation Intelligence Panel — leverage rating, email scripts, clauses */}
+      {r.negotiationIntelligence && (
+        <ScrollReveal>
+          <NegotiationIntelligencePanel negotiation={r.negotiationIntelligence} />
         </ScrollReveal>
       )}
 

@@ -34,6 +34,7 @@ import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import { ConfidenceDisclosure } from '../common/ConfidenceDisclosure';
 import { ProgressNarrativeCard } from '../common/ProgressNarrativeCard';
 import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
+import PredictionHorizonPanel from '../common/PredictionHorizonPanel';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
@@ -1014,6 +1015,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
       {/* ── Phase 5/Conversion: Sharpen score prompt — inline profile capture upsell */}
       <SharpenScorePrompt />
+
+      {/* ── Phase 11: Prediction Horizon — 30d/90d/180d risk trajectory */}
+      {r.predictionHorizon && (
+        <ScrollReveal delay={0.02}>
+          <PredictionHorizonPanel predictionHorizon={r.predictionHorizon} currentScore={result.total} />
+        </ScrollReveal>
+      )}
 
       {/* ── Phase 12: Trust System — personal modifier transparency card */}
       {personalModifierPresent && r.personalRiskModifier && (

@@ -33,6 +33,7 @@ import { CompanyTimelineCard } from '../common/CompanyTimelineCard';
 import { PeerComparisonCard } from '../common/PeerComparisonCard';
 import IntelligenceBriefPanel from '../common/IntelligenceBriefPanel';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import CompetitivePositionPanel from '../common/CompetitivePositionPanel';
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
@@ -74,6 +75,13 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
             freshnessTier={(result as any).signalQuality?.freshnessTier}
             companyName={result.companyName}
           />
+        </ScrollReveal>
+      )}
+
+      {/* ── Competitive Position — percentile + 6-dimension radar (Phase 11) */}
+      {r.competitivePosition && (
+        <ScrollReveal>
+          <CompetitivePositionPanel position={r.competitivePosition} />
         </ScrollReveal>
       )}
 
