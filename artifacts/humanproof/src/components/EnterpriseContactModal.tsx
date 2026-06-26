@@ -81,7 +81,7 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
   }
 
   return (
-    <div style={overlayStyle}>
+    <div style={overlayStyle} role="dialog" aria-modal="true" aria-labelledby="enterprise-modal-title">
       <div style={{...cardStyle, maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}}>
         <h2 id="enterprise-modal-title" style={{marginBottom: '24px', fontSize: '20px', color: 'var(--text)'}}>Enterprise Contact</h2>
 

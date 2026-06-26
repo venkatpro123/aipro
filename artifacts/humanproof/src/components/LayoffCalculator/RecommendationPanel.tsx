@@ -40,7 +40,7 @@ export const RecommendationPanel: React.FC<Props> = ({ recommendations }) => {
             <p style={{ color: 'var(--color-slate400-text)', margin: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>
               {rec.description}
             </p>
-            <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#64748b' }}>
+            <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--color-slate500-text)' }}>
               Signal Source: {rec.layerFocus}
             </div>
           </div>

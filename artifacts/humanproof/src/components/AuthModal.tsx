@@ -104,7 +104,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         <button onClick={onClose} style={{
           position: 'absolute', top: '24px', right: '24px',
-          background: 'var(--alpha-bg-04)', border: 'none', color: '#64748b',
+          background: 'var(--alpha-bg-04)', border: 'none', color: 'var(--color-slate500-text)',
           cursor: 'pointer', fontSize: '1rem', width: 28, height: 28, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
         }}>×</button>
@@ -113,7 +113,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <h2 style={{ color: 'var(--text)', marginBottom: '8px', fontFamily: 'var(--heading)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
             {mode === 'forgot' ? 'Protocol Reset' : mode === 'login' ? 'Authenticating' : 'Initialize Node'}
           </h2>
-          <p style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>
+          <p style={{ color: 'var(--color-slate500-text)', fontSize: '0.85rem', fontWeight: 500 }}>
             {mode === 'forgot' ? "Verify your network address to proceed." :
              mode === 'login' ? 'Access your high-fidelity risk profile.' :
              'Join the standard for career irreplaceability.'}
@@ -157,14 +157,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label htmlFor="auth-email" style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Network Identity</label>
+              <label htmlFor="auth-email" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-slate600-text)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Network Identity</label>
               <input id="auth-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} placeholder="USER://EMAIL_ADDR" />
             </div>
 
             {mode !== 'forgot' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label htmlFor="auth-password" style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Access Key</label>
+                  <label htmlFor="auth-password" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-slate600-text)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Access Key</label>
                   {mode === 'login' && (
                     <button type="button" onClick={() => { setMode('forgot'); resetMessages(); }}
                       style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -194,13 +194,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 24, padding: '8px 0' }}>
             {mode !== 'login' && (
               <button type="button" onClick={() => { setMode('login'); resetMessages(); }}
-                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+                style={{ background: 'none', border: 'none', color: 'var(--color-slate500-text)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
                 Sign In
               </button>
             )}
             {mode !== 'signup' && (
               <button type="button" onClick={() => { setMode('signup'); resetMessages(); }}
-                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+                style={{ background: 'none', border: 'none', color: 'var(--color-slate500-text)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
                 Create Node
               </button>
             )}

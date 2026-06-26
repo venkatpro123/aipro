@@ -8928,6 +8928,8 @@ html.light {
   --color-amber-text:   #92400e;   /* 5.5:1 on white */
   --color-emerald-text: #065f46;   /* 7.9:1 on white */
   --color-slate400-text: #475569;   /* slate-600: 5.9:1 on white */
+  --color-slate500-text: #475569;   /* slate-600: 5.9:1 on white */
+  --color-slate600-text: #334155;   /* slate-700: 8.6:1 on white */
   --color-gray400-text:  #4b5563;   /* gray-600: 5.5:1 on white  */
   --color-blue400-text:  #1d4ed8;   /* blue-700: 6.4:1 on white  */
   --color-blue300-text:  #1d4ed8;   /* blue-700: 6.4:1 on white  */
