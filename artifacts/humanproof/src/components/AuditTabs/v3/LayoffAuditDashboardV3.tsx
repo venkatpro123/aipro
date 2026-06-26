@@ -58,6 +58,7 @@ import {
   type ReEngagementTrigger,
 } from '../../../services/reEngagementService';
 import { ActionCelebrationToast } from '../../ActionCelebration/ActionCelebrationToast';
+import { ScoreImprovementCelebration } from '../../AuditReveal/ScoreImprovementCelebration';
 import { useSwipeGesture } from '../../../hooks/useSwipeGesture';
 import { ReturnVisitPanel } from '../common/ReturnVisitPanel';
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
@@ -324,6 +325,8 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
     catch { return null; }
   });
   const [reEngagementDismissed, setReEngagementDismissed] = useState(false);
+  // Phase 18 Delight: score improvement celebration
+  const [scoreCelebration, setScoreCelebration] = useState<{ prev: number; curr: number } | null>(null);
   // Wave 1.4: Risk update banner — fires when breakingNewsBroker injects a new event
   // for the user's current company. Shows a dismissible top banner with a re-analyze CTA.
   const [riskUpdateBanner, setRiskUpdateBanner] = useState<{ headline: string; company: string } | null>(null);
@@ -412,7 +415,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       clearReEngagementState();      // Fresh audit → no immediate re-engagement nudge
       setReEngagementDismissed(true); // Hide any currently-showing nudge
     }
-    // Achievement checks on audit complete
+    // Achievement checks + score improvement celebration
     try {
       const history = getLayoffScoreHistory();
       const prev = history.length >= 2 ? history[history.length - 2] : null;
@@ -421,6 +424,10 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         currentScore: result.total,
         previousScore: prev?.score,
       });
+      // Phase 18: fire confetti celebration when score drops ≥ 3 points (lower = better)
+      if (prev?.score != null && prev.score - result.total >= 3) {
+        setScoreCelebration({ prev: prev.score, curr: result.total });
+      }
     } catch {}
   }, [result]);
 
@@ -854,6 +861,15 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         {/* ── Wave 3.4: Action completion celebration toast ─────────────── */}
         {/* Fixed bottom-right, appears when 'hp.action.milestone' fires.   */}
         <ActionCelebrationToast />
+
+        {/* ── Phase 18 Delight: score improvement confetti ─────────────── */}
+        {scoreCelebration && (
+          <ScoreImprovementCelebration
+            previousScore={scoreCelebration.prev}
+            currentScore={scoreCelebration.curr}
+            onDismiss={() => setScoreCelebration(null)}
+          />
+        )}
 
         {/* ── Phase 17: Career Copilot — contextual guidance panel ──────── */}
         <CareerCopilotButton context={{
