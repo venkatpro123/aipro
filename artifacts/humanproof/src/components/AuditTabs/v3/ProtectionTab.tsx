@@ -15,6 +15,7 @@ import { riskColor } from '../../../lib/riskTokens';
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 import { VisaRiskPanel } from '../common/VisaRiskPanel';
 import CareerConfidencePanel from '../common/CareerConfidencePanel';
+import { CareerHealthDashboard } from '../common/CareerHealthDashboard';
 
 // Fallback intel for roles with no seeded data — mirrors the same fallback
 // previously used by the now-retired CareerSkillsTab. Only the `skills` field
@@ -104,6 +105,17 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Career Health Dashboard — "Protection tab hero" — 5-dimension resilience overview */}
+      <CareerHealthDashboard
+        currentScore={result.total}
+        preparedness={r.preparednessScore}
+        careerResilience={r.careerResilience}
+        skillGapIntelligence={r.skillGapIntelligence}
+        jobMarketLiquidity={r.jobMarketLiquidity}
+        userFinancialRunway={r.userFinancialRunway}
+        careerVelocity={r.careerVelocity}
+      />
+
       {radarDimensions.length >= 3 && (
         <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
       )}

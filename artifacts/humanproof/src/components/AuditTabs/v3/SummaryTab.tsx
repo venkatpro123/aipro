@@ -37,6 +37,7 @@ import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
 import PredictionHorizonPanel from '../common/PredictionHorizonPanel';
 import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
+import { PersonalImpactSimulator } from '../common/PersonalImpactSimulator';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
@@ -1063,6 +1064,17 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
       {/* ── Good News (inline when available) ────────────────────────────── */}
       {opportunityNode && <ScrollReveal delay={0.10}>{opportunityNode}</ScrollReveal>}
+
+      {/* ── Personal Impact Simulator — 3-scenario "do nothing / partial / full" */}
+      <ScrollReveal delay={0.11}>
+        <PersonalImpactSimulator
+          currentScore={score}
+          survivalProbability={r.survivalProbability}
+          scoreTrajectory={r.scoreTrajectory}
+          scoreSensitivity={scoreSensitivity}
+          financialRunwayMonths={financialRunwayMonths}
+        />
+      </ScrollReveal>
 
       {/* ── Phase 12: Inaction Cost — "what happens if I do nothing" (final card) */}
       {hasInactionConsequence && (

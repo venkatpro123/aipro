@@ -34,6 +34,7 @@ import { PeerComparisonCard } from '../common/PeerComparisonCard';
 import IntelligenceBriefPanel from '../common/IntelligenceBriefPanel';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import CompetitivePositionPanel from '../common/CompetitivePositionPanel';
+import { CohortBenchmarkCard } from '../common/CohortBenchmarkCard';
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
@@ -82,6 +83,13 @@ export const IntelligenceTab: React.FC<TabProps> = (props) => {
       {r.competitivePosition && (
         <ScrollReveal>
           <CompetitivePositionPanel position={r.competitivePosition} />
+        </ScrollReveal>
+      )}
+
+      {/* ── Cohort Benchmark — where user stands vs peers (Wave 6.5) */}
+      {r.competitivePosition && (
+        <ScrollReveal>
+          <CohortBenchmarkCard competitivePosition={r.competitivePosition} />
         </ScrollReveal>
       )}
 
