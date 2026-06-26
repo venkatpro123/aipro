@@ -95,22 +95,22 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
         <div className="flex-shrink-0 w-9 h-9 rounded-lg flex flex-col items-center justify-center"
           style={{ background: `${pc}15` }}>
           <span className="text-[11px] font-bold leading-none" style={{ color: pc }}>{action.aiPriorityScore}</span>
-          <span className="text-[10px] text-white/30 leading-none mt-0.5">AI</span>
+          <span className="text-[10px] text-[var(--alpha-text-25)] leading-none mt-0.5">AI</span>
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <span className="text-sm font-medium text-white/85 leading-snug">{action.action}</span>
-            {open ? <ChevronUp className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />
-                   : <ChevronDown className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />}
+            <span className="text-sm font-medium text-[var(--alpha-text-78)] leading-snug">{action.action}</span>
+            {open ? <ChevronUp className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0 mt-0.5" />
+                   : <ChevronDown className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0 mt-0.5" />}
           </div>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: phaseColor.text, background: phaseColor.bg }}>
               {PHASE_LABELS[action.phase]}
             </span>
-            <span className="text-[10px] text-white/35">Wk {action.weekNumber}</span>
-            <span className="text-[10px] text-white/35">{action.timeEstimate}</span>
-            <span className="text-[10px] text-white/35">{effortLabel(action.effort)} effort</span>
+            <span className="text-[10px] text-[var(--alpha-text-30)]">Wk {action.weekNumber}</span>
+            <span className="text-[10px] text-[var(--alpha-text-30)]">{action.timeEstimate}</span>
+            <span className="text-[10px] text-[var(--alpha-text-30)]">{effortLabel(action.effort)} effort</span>
             {action.isBlocking && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
                 style={{ color: '#ef4444', background: 'rgba(239,68,68,0.10)' }}>BLOCKING</span>
@@ -134,8 +134,8 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
                 <ol className="space-y-1.5">
                   {action.subSteps.map((step, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-[10px] font-bold text-white/30 mt-0.5 w-4 flex-shrink-0">{i + 1}.</span>
-                      <span className="text-xs text-white/65 leading-snug">{step}</span>
+                      <span className="text-[10px] font-bold text-[var(--alpha-text-25)] mt-0.5 w-4 flex-shrink-0">{i + 1}.</span>
+                      <span className="text-xs text-[var(--alpha-text-60)] leading-snug">{step}</span>
                     </li>
                   ))}
                 </ol>
@@ -145,11 +145,11 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
               <div className="space-y-1.5">
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(16,185,129,0.06)' }}>
                   <div className="text-[10px] text-green-400/60 uppercase tracking-wide mb-0.5">Expected outcome</div>
-                  <p className="text-xs text-white/65 leading-snug">{action.expectedOutcome}</p>
+                  <p className="text-xs text-[var(--alpha-text-60)] leading-snug">{action.expectedOutcome}</p>
                 </div>
                 <div className="p-2.5 rounded-lg" style={{ background: 'var(--alpha-bg-04)' }}>
-                  <div className="text-[10px] text-white/30 uppercase tracking-wide mb-0.5">Evidence</div>
-                  <p className="text-xs text-white/45 leading-snug">{action.evidence}</p>
+                  <div className="text-[10px] text-[var(--alpha-text-25)] uppercase tracking-wide mb-0.5">Evidence</div>
+                  <p className="text-xs text-[var(--alpha-text-40)] leading-snug">{action.evidence}</p>
                 </div>
               </div>
 
@@ -187,11 +187,11 @@ function WeekCard({ week }: { week: WeekMilestone }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-medium text-white/85">{week.weekLabel}</span>
-            {open ? <ChevronUp className="w-3.5 h-3.5 text-white/25 flex-shrink-0" />
-                   : <ChevronDown className="w-3.5 h-3.5 text-white/25 flex-shrink-0" />}
+            <span className="text-sm font-medium text-[var(--alpha-text-78)]">{week.weekLabel}</span>
+            {open ? <ChevronUp className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0" />
+                   : <ChevronDown className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0" />}
           </div>
-          <p className="text-xs text-white/50 leading-snug mt-0.5">{week.coreObjective}</p>
+          <p className="text-xs text-[var(--alpha-text-45)] leading-snug mt-0.5">{week.coreObjective}</p>
         </div>
       </button>
 
@@ -208,16 +208,16 @@ function WeekCard({ week }: { week: WeekMilestone }) {
               {/* Daily focus priorities */}
               {week.dailyFocusPriorities.length > 0 && (
                 <div>
-                  <div className="text-[10px] text-white/35 uppercase tracking-wide mb-1.5">Daily focus</div>
+                  <div className="text-[10px] text-[var(--alpha-text-30)] uppercase tracking-wide mb-1.5">Daily focus</div>
                   <div className="space-y-1.5">
                     {week.dailyFocusPriorities.map((p, i) => (
                       <div key={i} className="flex items-start gap-2.5 p-2.5 rounded-lg"
                         style={{ background: 'var(--alpha-bg-04)' }}>
-                        <span className="text-[10px] font-bold text-white/30 w-4 flex-shrink-0 mt-0.5">#{p.rank}</span>
+                        <span className="text-[10px] font-bold text-[var(--alpha-text-25)] w-4 flex-shrink-0 mt-0.5">#{p.rank}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-white/70 leading-snug">{p.task}</p>
+                          <p className="text-xs text-[var(--alpha-text-70)] leading-snug">{p.task}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-white/35">{p.timeBlock}</span>
+                            <span className="text-[10px] text-[var(--alpha-text-30)]">{p.timeBlock}</span>
                             <span className="text-[10px] text-green-400/50">✓ {p.successSignal}</span>
                           </div>
                         </div>
@@ -230,13 +230,13 @@ function WeekCard({ week }: { week: WeekMilestone }) {
               {/* End-of-week check */}
               <div className="p-2.5 rounded-lg" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)' }}>
                 <div className="text-[10px] text-green-400/60 uppercase tracking-wide mb-0.5">End-of-week check</div>
-                <p className="text-xs text-white/65 leading-snug">{week.endOfWeekCheck}</p>
+                <p className="text-xs text-[var(--alpha-text-60)] leading-snug">{week.endOfWeekCheck}</p>
               </div>
 
               {/* If behind */}
               <div className="p-2.5 rounded-lg" style={{ background: 'rgba(245,158,11,0.06)' }}>
                 <div className="text-[10px] text-amber-400/60 uppercase tracking-wide mb-0.5">If behind</div>
-                <p className="text-xs text-white/55 leading-snug">{week.ifBehind}</p>
+                <p className="text-xs text-[var(--alpha-text-50)] leading-snug">{week.ifBehind}</p>
               </div>
             </div>
           </motion.div>
@@ -263,11 +263,11 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-white/85">{checkpoint.title}</span>
-            {open ? <ChevronUp className="w-3.5 h-3.5 text-white/25 flex-shrink-0" />
-                   : <ChevronDown className="w-3.5 h-3.5 text-white/25 flex-shrink-0" />}
+            <span className="text-sm font-semibold text-[var(--alpha-text-78)]">{checkpoint.title}</span>
+            {open ? <ChevronUp className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0" />
+                   : <ChevronDown className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0" />}
           </div>
-          <p className="text-xs text-white/50 mt-0.5 leading-snug">{checkpoint.summary}</p>
+          <p className="text-xs text-[var(--alpha-text-45)] mt-0.5 leading-snug">{checkpoint.summary}</p>
         </div>
       </button>
 
@@ -283,16 +283,16 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
             <div className="px-4 pb-4 space-y-3">
               {/* Target metrics */}
               <div>
-                <div className="text-[10px] text-white/35 uppercase tracking-wide mb-2">Target metrics</div>
+                <div className="text-[10px] text-[var(--alpha-text-30)] uppercase tracking-wide mb-2">Target metrics</div>
                 <div className="space-y-2">
                   {checkpoint.targetMetrics.map((m, i) => (
                     <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg"
                       style={{ background: 'var(--alpha-bg-04)' }}>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-white/70">{m.metricName}</div>
-                        <div className="text-[10px] text-white/35 mt-0.5 leading-snug">{m.measureHow}</div>
+                        <div className="text-xs font-medium text-[var(--alpha-text-70)]">{m.metricName}</div>
+                        <div className="text-[10px] text-[var(--alpha-text-30)] mt-0.5 leading-snug">{m.measureHow}</div>
                       </div>
-                      <span className="text-xs font-bold text-white/60 whitespace-nowrap">{m.targetValue}</span>
+                      <span className="text-xs font-bold text-[var(--alpha-text-55)] whitespace-nowrap">{m.targetValue}</span>
                     </div>
                   ))}
                 </div>
@@ -302,15 +302,15 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.12)' }}>
                   <div className="text-[10px] text-green-400/60 uppercase tracking-wide mb-1">If passed</div>
-                  <p className="text-[11px] text-white/65 leading-snug">{checkpoint.ifPassed}</p>
+                  <p className="text-[11px] text-[var(--alpha-text-60)] leading-snug">{checkpoint.ifPassed}</p>
                 </div>
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.12)' }}>
                   <div className="text-[10px] text-amber-400/60 uppercase tracking-wide mb-1">Near miss</div>
-                  <p className="text-[11px] text-white/65 leading-snug">{checkpoint.ifNearMiss}</p>
+                  <p className="text-[11px] text-[var(--alpha-text-60)] leading-snug">{checkpoint.ifNearMiss}</p>
                 </div>
                 <div className="p-2.5 rounded-lg" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.12)' }}>
                   <div className="text-[10px] text-red-400/60 uppercase tracking-wide mb-1">If failed</div>
-                  <p className="text-[11px] text-white/65 leading-snug">{checkpoint.ifFailed}</p>
+                  <p className="text-[11px] text-[var(--alpha-text-60)] leading-snug">{checkpoint.ifFailed}</p>
                 </div>
               </div>
 
@@ -323,7 +323,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
                       <div key={i} className="flex items-start gap-2 p-2 rounded-lg"
                         style={{ background: 'rgba(239,68,68,0.06)' }}>
                         <AlertTriangle className="w-3 h-3 mt-0.5 text-red-400/60 flex-shrink-0" />
-                        <span className="text-xs text-white/60 leading-snug">{a.action}</span>
+                        <span className="text-xs text-[var(--alpha-text-55)] leading-snug">{a.action}</span>
                       </div>
                     ))}
                   </div>
@@ -378,8 +378,8 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
             <Calendar className="w-4 h-4" style={{ color: '#60a5fa' }} />
           </div>
           <div>
-            <div className="text-sm font-semibold text-white/90">{plan.planTitle}</div>
-            <div className="text-xs text-white/40 mt-0.5">{plan.weeklyTimeCommitment}</div>
+            <div className="text-sm font-semibold text-[var(--alpha-text-85)]">{plan.planTitle}</div>
+            <div className="text-xs text-[var(--alpha-text-35)] mt-0.5">{plan.weeklyTimeCommitment}</div>
           </div>
         </div>
         <span className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
@@ -390,7 +390,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
 
       {/* Executive summary */}
       <div className="mx-4 mb-3 p-3.5 rounded-xl" style={{ background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.12)' }}>
-        <p className="text-sm text-white/80 leading-relaxed">{plan.executiveSummary}</p>
+        <p className="text-sm text-[var(--alpha-text-78)] leading-relaxed">{plan.executiveSummary}</p>
       </div>
 
       {/* Personalisation tags */}
@@ -410,19 +410,19 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
         style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)' }}>
         <div className="flex items-center gap-2">
           <TrendingUp className="w-4 h-4 flex-shrink-0" style={{ color: '#10b981' }} />
-          <span className="text-xs text-white/50">Day 90 outlook</span>
+          <span className="text-xs text-[var(--alpha-text-45)]">Day 90 outlook</span>
         </div>
         <span className="text-xs font-semibold text-green-400/90 text-right">{plan.estimatedOutcomeByDay90}</span>
       </div>
 
       {/* Critical path */}
       <div className="mx-4 mb-4 space-y-1.5">
-        <div className="text-[10px] text-white/40 uppercase tracking-wide">Critical path — do NOT skip</div>
+        <div className="text-[10px] text-[var(--alpha-text-35)] uppercase tracking-wide">Critical path — do NOT skip</div>
         <div className="space-y-1">
           {plan.criticalPath.map((item, i) => (
             <div key={i} className="flex items-start gap-2">
               <span className="text-red-400/60 mt-0.5 flex-shrink-0">▸</span>
-              <span className="text-xs text-white/65 leading-snug">{item}</span>
+              <span className="text-xs text-[var(--alpha-text-60)] leading-snug">{item}</span>
             </div>
           ))}
         </div>
@@ -451,7 +451,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
             <motion.div key="quick_wins" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <div className="space-y-2">
                 {plan.quickWins.length === 0 ? (
-                  <p className="text-xs text-white/35 text-center py-4">No quick wins identified for this plan</p>
+                  <p className="text-xs text-[var(--alpha-text-30)] text-center py-4">No quick wins identified for this plan</p>
                 ) : (
                   plan.quickWins.map((action, i) => (
                     <div key={action.id} className="p-3 rounded-xl" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)' }}>
@@ -459,17 +459,17 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
                         <Zap className="w-3.5 h-3.5 mt-0.5 text-green-400/70 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm text-white/80 leading-snug font-medium">{action.action}</span>
+                            <span className="text-sm text-[var(--alpha-text-78)] leading-snug font-medium">{action.action}</span>
                             <span className="text-xs font-bold whitespace-nowrap" style={{ color: priorityColor(action.aiPriorityScore) }}>
                               {action.aiPriorityScore} AI score
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-white/35">{action.timeEstimate}</span>
+                            <span className="text-[10px] text-[var(--alpha-text-30)]">{action.timeEstimate}</span>
                             <span className="text-[10px] text-green-400/50">Wk {action.weekNumber}</span>
                           </div>
                           {action.subSteps[0] && (
-                            <p className="text-xs text-white/45 leading-snug mt-1.5">{action.subSteps[0]}</p>
+                            <p className="text-xs text-[var(--alpha-text-40)] leading-snug mt-1.5">{action.subSteps[0]}</p>
                           )}
                         </div>
                       </div>
@@ -489,7 +489,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
                 {plan.topPriorityActions.length > 6 && (
                   <button
                     onClick={() => setShowAllTopActions(!showAllTopActions)}
-                    className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70 transition-colors mt-2"
+                    className="flex items-center gap-1.5 text-xs text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-70)] transition-colors mt-2"
                   >
                     {showAllTopActions ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     {showAllTopActions ? 'Show fewer' : `Show ${plan.topPriorityActions.length - 6} more actions`}
@@ -550,8 +550,8 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
               </div>
               {plan.planExpiry && (
                 <div className="mt-3 flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-white/25" />
-                  <span className="text-[10px] text-white/30">{plan.planExpiry}</span>
+                  <Clock className="w-3 h-3 text-[var(--alpha-text-20)]" />
+                  <span className="text-[10px] text-[var(--alpha-text-25)]">{plan.planExpiry}</span>
                 </div>
               )}
             </motion.div>

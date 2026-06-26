@@ -60,7 +60,7 @@ function ProbabilityGauge({ probability, label, color }: { probability: number; 
           {pct}%
         </span>
       </div>
-      <span className="text-[11px] text-white/50">{label}</span>
+      <span className="text-[11px] text-[var(--alpha-text-45)]">{label}</span>
     </div>
   );
 }
@@ -86,7 +86,7 @@ function FactorRow({ factor, index }: { factor: SurvivalFactor; index: number })
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-white/80 leading-snug">{factor.label}</span>
+          <span className="text-sm text-[var(--alpha-text-78)] leading-snug">{factor.label}</span>
           {pctImpact > 0 && (
             <span className="text-xs font-semibold whitespace-nowrap"
               style={{ color: isProtective ? '#10b981' : '#ef4444' }}>
@@ -94,7 +94,7 @@ function FactorRow({ factor, index }: { factor: SurvivalFactor; index: number })
             </span>
           )}
         </div>
-        <p className="text-xs text-white/40 leading-snug mt-0.5">{factor.evidence}</p>
+        <p className="text-xs text-[var(--alpha-text-35)] leading-snug mt-0.5">{factor.evidence}</p>
       </div>
     </motion.div>
   );
@@ -125,8 +125,8 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
             }
           </div>
           <div>
-            <div className="text-sm font-semibold text-white/90">Individual Survival Probability</div>
-            <div className="text-xs text-white/45 mt-0.5">Bayesian model · {survival.confidenceNote}</div>
+            <div className="text-sm font-semibold text-[var(--alpha-text-85)]">Individual Survival Probability</div>
+            <div className="text-xs text-[var(--alpha-text-40)] mt-0.5">Bayesian model · {survival.confidenceNote}</div>
           </div>
         </div>
         <UrgencyBadge level={survival.urgencyLevel} />
@@ -134,16 +134,16 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
 
       {/* 3-horizon strip */}
       <div className="px-4 pb-4">
-        <div className="flex items-center justify-around bg-white/[0.04] rounded-xl py-4 px-2 gap-4">
+        <div className="flex items-center justify-around bg-[var(--alpha-bg-04)] rounded-xl py-4 px-2 gap-4">
           <ProbabilityGauge probability={survival.probability3m}  label="3 months" color={getSurvivalColor(survival.probability3m).text} />
-          <div className="h-10 w-px bg-white/10" />
+          <div className="h-10 w-px bg-[var(--alpha-bg-10)]" />
           <ProbabilityGauge probability={survival.probability6m}  label="6 months" color={getSurvivalColor(survival.probability6m).text} />
-          <div className="h-10 w-px bg-white/10" />
+          <div className="h-10 w-px bg-[var(--alpha-bg-10)]" />
           <ProbabilityGauge probability={survival.probability12m} label="12 months" color={colors12m.text} />
         </div>
         <div className="flex items-center gap-1.5 mt-2 px-1">
-          <Info className="w-3 h-3 text-white/30 flex-shrink-0" />
-          <span className="text-[10px] text-white/35">
+          <Info className="w-3 h-3 text-[var(--alpha-text-25)] flex-shrink-0" />
+          <span className="text-[10px] text-[var(--alpha-text-30)]">
             12m CI: {Math.round(survival.confidenceInterval.low * 100)}–{Math.round(survival.confidenceInterval.high * 100)}%
             &nbsp;·&nbsp;Bayesian log-odds model · n=4,200 events
           </span>
@@ -152,12 +152,12 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
 
       {/* Headline */}
       <div className="mx-4 mb-3 p-3 rounded-xl" style={{ background: 'var(--alpha-bg-04)' }}>
-        <p className="text-sm text-white/80 leading-relaxed">{survival.headline}</p>
+        <p className="text-sm text-[var(--alpha-text-78)] leading-relaxed">{survival.headline}</p>
       </div>
 
       {/* Factor decomposition */}
       <div className="px-4 pb-2">
-        <div className="text-xs font-medium text-white/50 uppercase tracking-wide mb-2">What's driving your probability</div>
+        <div className="text-xs font-medium text-[var(--alpha-text-45)] uppercase tracking-wide mb-2">What's driving your probability</div>
         <div className="divide-y divide-white/[0.05]">
           {displayFactors.map((factor, i) => (
             <FactorRow key={factor.id} factor={factor} index={i} />
@@ -165,7 +165,7 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
         </div>
         {allFactors.length > 4 && (
           <button onClick={() => setShowAllFactors(!showAllFactors)}
-            className="flex items-center gap-1 mt-2 text-xs text-white/40 hover:text-white/70 transition-colors">
+            className="flex items-center gap-1 mt-2 text-xs text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-70)] transition-colors">
             {showAllFactors ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {showAllFactors ? 'Show less' : `Show ${allFactors.length - 4} more factors`}
           </button>
@@ -180,13 +180,13 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
             <Zap className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
             <div>
               <div className="text-xs font-semibold text-amber-400/90 mb-1">Highest-impact action</div>
-              <p className="text-sm text-white/80">{survival.topImprovementAction}</p>
+              <p className="text-sm text-[var(--alpha-text-78)]">{survival.topImprovementAction}</p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-white/45">12m probability if you act:</span>
+                <span className="text-xs text-[var(--alpha-text-40)]">12m probability if you act:</span>
                 <span className="text-xs font-bold" style={{ color: '#10b981' }}>
                   {Math.round(survival.probabilityIfActionTaken * 100)}%
                 </span>
-                <span className="text-xs text-white/30">
+                <span className="text-xs text-[var(--alpha-text-25)]">
                   (+{Math.round(survival.inactionDelta * 100)}pts vs. inaction)
                 </span>
               </div>
@@ -198,7 +198,7 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
       {/* Detailed narrative */}
       {survival.detailedNarrative && (
         <div className="px-4 pb-4">
-          <p className="text-xs text-white/40 leading-relaxed">{survival.detailedNarrative}</p>
+          <p className="text-xs text-[var(--alpha-text-35)] leading-relaxed">{survival.detailedNarrative}</p>
         </div>
       )}
     </motion.div>

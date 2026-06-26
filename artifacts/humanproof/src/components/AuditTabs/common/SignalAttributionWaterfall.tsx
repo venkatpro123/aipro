@@ -112,8 +112,8 @@ export function SignalAttributionWaterfall({ result }: Props) {
     <div className="rounded-xl border border-white/8 bg-gray-900/40 p-4 mb-4">
       <div className="flex items-center gap-2 mb-4">
         <GitBranch size={14} className="text-blue-400" />
-        <span className="text-sm font-semibold text-white">Score Attribution Waterfall</span>
-        <span className="text-[11px] text-gray-500">How each signal built your score</span>
+        <span className="text-sm font-semibold text-[var(--text)]">Score Attribution Waterfall</span>
+        <span className="text-[11px] text-[var(--alpha-text-35)]">How each signal built your score</span>
       </div>
 
       <svg

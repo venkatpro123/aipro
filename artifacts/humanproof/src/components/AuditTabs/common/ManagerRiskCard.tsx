@@ -66,7 +66,7 @@ export function ManagerRiskCard({ managerRisk }: Props) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-white">Reporting Chain Risk</span>
+            <span className="text-sm font-semibold text-[var(--text)]">Reporting Chain Risk</span>
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${cfg.badgeClass}`}>
               {cfg.label}
             </span>

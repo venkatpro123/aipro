@@ -398,7 +398,7 @@ const SourceProvenanceTable: React.FC<{
             className="text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--cyan)]/50 outline-none"
           >
             {typeOptions.map((type) => (
-              <option key={type} value={type} className="bg-black text-white">
+              <option key={type} value={type} className="bg-[var(--bg)] text-[var(--text)]">
                 {type === "all" ? "Agnostic Source Type" : `${type} Verification`}
               </option>
             ))}
@@ -1301,7 +1301,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
             function inferred from role
           </span>
         )}
-        <span className="ml-auto text-[10px] text-white/30 uppercase tracking-widest">ESTIMATED</span>
+        <span className="ml-auto text-[10px] text-[var(--alpha-text-25)] uppercase tracking-widest">ESTIMATED</span>
       </div>
 
       <div className="p-4 space-y-3">
@@ -1316,7 +1316,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
           </div>
           <div>
             <div className="data-label mb-1">Announcement → Action</div>
-            <div className="text-sm font-black text-white/80">{lagStr}</div>
+            <div className="text-sm font-black text-[var(--alpha-text-78)]">{lagStr}</div>
             <div className="data-label opacity-50">expected lag</div>
           </div>
           <div>
@@ -1327,7 +1327,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
         </div>
 
         {/* Function narrative */}
-        <p className="text-[10px] text-white/60 leading-relaxed border-l-2 pl-3"
+        <p className="text-[10px] text-[var(--alpha-text-55)] leading-relaxed border-l-2 pl-3"
           style={{ borderColor: colors.border }}>
           {p.functionNarrative}
         </p>
@@ -1343,7 +1343,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
                 {p.protectionFactors.slice(0, 2).map((f, i) => (
                   <li key={i} className="flex items-start gap-1">
                     <span className="text-emerald-400/60 flex-shrink-0">›</span>
-                    <span className="text-[8.5px] text-white/55 leading-tight">{f}</span>
+                    <span className="text-[8.5px] text-[var(--alpha-text-50)] leading-tight">{f}</span>
                   </li>
                 ))}
               </ul>
@@ -1358,7 +1358,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
                 {p.vulnerabilityFactors.slice(0, 2).map((f, i) => (
                   <li key={i} className="flex items-start gap-1">
                     <span className="text-red-400/60 flex-shrink-0">›</span>
-                    <span className="text-[8.5px] text-white/55 leading-tight">{f}</span>
+                    <span className="text-[8.5px] text-[var(--alpha-text-50)] leading-tight">{f}</span>
                   </li>
                 ))}
               </ul>
@@ -1383,14 +1383,14 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
         {/* Priority actions */}
         {p.priorityActions.length > 0 && (
           <div className="border-t pt-2" style={{ borderColor: 'var(--alpha-bg-06)' }}>
-            <div className="text-[10px] font-bold uppercase tracking-wide text-white/40 mb-1.5">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-[var(--alpha-text-40)] mb-1.5">
               Use the {lagStr} window to
             </div>
             <ul className="space-y-1">
               {p.priorityActions.slice(0, 3).map((a, i) => (
                 <li key={i} className="flex items-start gap-1.5">
-                  <span className="text-[10px] font-bold text-white/30 flex-shrink-0 mt-0.5">{i + 1}.</span>
-                  <span className="text-[8.5px] text-white/60 leading-tight">{a}</span>
+                  <span className="text-[10px] font-bold text-[var(--alpha-text-25)] flex-shrink-0 mt-0.5">{i + 1}.</span>
+                  <span className="text-[8.5px] text-[var(--alpha-text-55)] leading-tight">{a}</span>
                 </li>
               ))}
             </ul>
@@ -2041,24 +2041,24 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                 <div className="space-y-1">
-                  <p>Company input: <span className="font-mono text-white/80">{evaluationSnapshot.companyInput}</span></p>
-                  <p>Company resolved: <span className="font-mono text-white/80">{evaluationSnapshot.companyResolved}</span></p>
-                  <p>Company match: <span className="font-mono text-white/80">{evaluationSnapshot.companyMatchType} ({evaluationSnapshot.companyMatchConfidence.toFixed(2)})</span></p>
+                  <p>Company input: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.companyInput}</span></p>
+                  <p>Company resolved: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.companyResolved}</span></p>
+                  <p>Company match: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.companyMatchType} ({evaluationSnapshot.companyMatchConfidence.toFixed(2)})</span></p>
                 </div>
                 <div className="space-y-1">
-                  <p>Role input: <span className="font-mono text-white/80">{evaluationSnapshot.roleInput}</span></p>
-                  <p>Resolved role: <span className="font-mono text-white/80">{evaluationSnapshot.resolvedRoleKey}</span></p>
-                  <p>Resolved source: <span className="font-mono text-white/80">{evaluationSnapshot.resolvedRoleSource}</span></p>
+                  <p>Role input: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.roleInput}</span></p>
+                  <p>Resolved role: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.resolvedRoleKey}</span></p>
+                  <p>Resolved source: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.resolvedRoleSource}</span></p>
                 </div>
                 <div className="space-y-1">
-                  <p>Audit pipeline: <span className="font-mono text-white/80">{evaluationSnapshot.usedAuditPipeline ? "true" : "false"}</span></p>
-                  <p>Signals: <span className="font-mono text-white/80">{evaluationSnapshot.liveSignals} live / {evaluationSnapshot.heuristicSignals} heuristic</span></p>
-                  <p>Confidence: <span className="font-mono text-white/80">{evaluationSnapshot.confidencePercent}%</span></p>
+                  <p>Audit pipeline: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.usedAuditPipeline ? "true" : "false"}</span></p>
+                  <p>Signals: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.liveSignals} live / {evaluationSnapshot.heuristicSignals} heuristic</span></p>
+                  <p>Confidence: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.confidencePercent}%</span></p>
                 </div>
                 <div className="space-y-1">
-                  <p>Degraded classes: <span className="font-mono text-white/80">{evaluationSnapshot.degradedSignalClasses.join(", ") || "none"}</span></p>
-                  <p>Hard failures: <span className="font-mono text-white/80">{evaluationSnapshot.hardFailures.join(", ") || "none"}</span></p>
-                  <p>Fallback tabs: <span className="font-mono text-white/80">{evaluationSnapshot.tabsUsedFallback.join(", ") || "none"}</span></p>
+                  <p>Degraded classes: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.degradedSignalClasses.join(", ") || "none"}</span></p>
+                  <p>Hard failures: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.hardFailures.join(", ") || "none"}</span></p>
+                  <p>Fallback tabs: <span className="font-mono text-[var(--alpha-text-78)]">{evaluationSnapshot.tabsUsedFallback.join(", ") || "none"}</span></p>
                 </div>
               </div>
             </div>
@@ -3202,13 +3202,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     {isLive && (
                       <div className="flex flex-wrap gap-3 text-xs text-[var(--text-secondary)] mb-2">
                         {openings != null && (
-                          <span>Estimated openings: <span className="font-semibold text-white/80">{openings}</span></span>
+                          <span>Estimated openings: <span className="font-semibold text-[var(--alpha-text-78)]">{openings}</span></span>
                         )}
                         {naukriOpenings != null && (
-                          <span>Naukri: <span className="font-semibold text-white/80">{naukriOpenings}</span></span>
+                          <span>Naukri: <span className="font-semibold text-[var(--alpha-text-78)]">{naukriOpenings}</span></span>
                         )}
                         {linkedinOpenings != null && (
-                          <span>LinkedIn: <span className="font-semibold text-white/80">{linkedinOpenings}</span></span>
+                          <span>LinkedIn: <span className="font-semibold text-[var(--alpha-text-78)]">{linkedinOpenings}</span></span>
                         )}
                         {freezeScore != null && (
                           <span>Freeze score: <span className="font-semibold" style={{ color: freezeScore >= 0.75 ? '#ef4444' : freezeScore >= 0.5 ? '#f97316' : '#94a3b8' }}>{(freezeScore * 100).toFixed(0)}%</span></span>

@@ -871,7 +871,7 @@ const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ bu
 
         {/* Visual: protection bar vs US baseline */}
         <div className="space-y-1">
-          <div className="flex justify-between text-[8.5px] text-white/40">
+          <div className="flex justify-between text-[8.5px] text-[var(--alpha-text-40)]">
             <span>At-will baseline (US, 6%)</span>
             <span className="font-mono">{buffer.countryCode} · +{pct}%</span>
           </div>
@@ -883,17 +883,17 @@ const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ bu
             <div className="absolute inset-y-0 rounded-full"
               style={{ left: `${usBarWidth}%`, width: '2px', background: 'var(--alpha-text-35)' }} />
           </div>
-          <div className="flex justify-between text-[10px] text-white/30 font-mono">
+          <div className="flex justify-between text-[10px] text-[var(--alpha-text-25)] font-mono">
             <span>0%</span>
             <span>+{pct}% timeline multiplier ×{buffer.timelineMultiplier.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Key fact */}
-        <div className="flex items-center gap-1.5 text-[8.5px] text-white/50">
+        <div className="flex items-center gap-1.5 text-[8.5px] text-[var(--alpha-text-50)]">
           <span style={{ color: accentColor }}>›</span>
           <span>
-            Employment protection index: <span className="font-mono text-white/70">{buffer.protectionIndex.toFixed(2)}</span>
+            Employment protection index: <span className="font-mono text-[var(--alpha-text-70)]">{buffer.protectionIndex.toFixed(2)}</span>
             {' '}(scale 0.10 at-will → 0.80 France PSE)
           </span>
         </div>
