@@ -240,10 +240,10 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
           background: 'rgba(245,158,11,0.08)',
           border: '1px solid rgba(245,158,11,0.30)',
           borderRadius: '8px', padding: '10px 14px',
-          marginBottom: '12px', fontSize: '10px', lineHeight: '1.6', color: '#fcd34d',
+          marginBottom: '12px', fontSize: '10px', lineHeight: '1.6', color: 'var(--color-amber500-text)',
         }} role="status" aria-live="polite">
           <span style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }}>ℹ</span>
-          <span style={{ color: '#fde68a', opacity: 0.90 }}>{limitedDataBanner}</span>
+          <span style={{ color: 'var(--color-amber-text)', opacity: 0.90 }}>{limitedDataBanner}</span>
         </div>
       )}
 
@@ -370,7 +370,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                 <span style={{
                   display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
-                  background: '#7c3aed', animation: 'pulse-q 1.4s ease-in-out infinite',
+                  background: 'var(--violet)', animation: 'pulse-q 1.4s ease-in-out infinite',
                 }} />
                 <span>Scanning job boards…</span>
               </div>

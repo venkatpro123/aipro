@@ -66,7 +66,7 @@ export const PWAInstallPrompt: React.FC = () => {
               style={{
                 flex: 1,
                 padding: '8px',
-                background: '#00f5ff',
+                background: 'var(--cyan)',
                 border: 'none',
                 borderRadius: '6px',
                 color: '#000',
@@ -105,7 +105,7 @@ export const PWAInstallPrompt: React.FC = () => {
               style={{
                 flex: 1,
                 padding: '8px',
-                background: '#00f5ff',
+                background: 'var(--cyan)',
                 border: 'none',
                 borderRadius: '6px',
                 color: '#000',

@@ -271,19 +271,19 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
   }> = {
     'Critical risk': {
       color: '#fff', gradStart: 'var(--color-red-text)', gradEnd: '#b91c1c',
-      glow: '0 0 32px rgba(239,68,68,0.45)', Icon: Zap, dotColor: '#fca5a5',
+      glow: '0 0 32px rgba(239,68,68,0.45)', Icon: Zap, dotColor: 'var(--color-red300-text)',
     },
     'High risk': {
       color: '#fff', gradStart: 'var(--color-orange-text)', gradEnd: '#c2410c',
-      glow: '0 0 32px rgba(249,115,22,0.40)', Icon: Zap, dotColor: '#fdba74',
+      glow: '0 0 32px rgba(249,115,22,0.40)', Icon: Zap, dotColor: 'var(--color-orange-text)',
     },
     'Moderate risk': {
       color: '#fff', gradStart: 'var(--color-amber500-text)', gradEnd: '#b45309',
-      glow: '0 0 28px rgba(245,158,11,0.35)', Icon: AlertTriangle, dotColor: '#fcd34d',
+      glow: '0 0 28px rgba(245,158,11,0.35)', Icon: AlertTriangle, dotColor: 'var(--color-amber500-text)',
     },
     'Low risk': {
       color: '#fff', gradStart: 'var(--color-emerald-text)', gradEnd: '#047857',
-      glow: '0 0 28px rgba(16,185,129,0.35)', Icon: Shield, dotColor: '#6ee7b7',
+      glow: '0 0 28px rgba(16,185,129,0.35)', Icon: Shield, dotColor: 'var(--color-emerald-text)',
     },
   };
   const { color, gradStart, gradEnd, glow, Icon, dotColor } = config[verdict] ?? config['Moderate risk'];
@@ -922,7 +922,7 @@ const LegalTimelineCard: React.FC<{ legal: LegalTimelineResult }> = ({ legal }) 
           Employment Protection — {legal.flagEmoji} {legal.countryName}
         </span>
         <span className="ml-auto text-[8.5px] px-1.5 py-0.5 rounded font-bold uppercase"
-          style={{ background: 'rgba(99,179,237,0.12)', color: '#63b3ed', border: '1px solid rgba(99,179,237,0.25)' }}>
+          style={{ background: 'rgba(99,179,237,0.12)', color: 'var(--color-blue400-text)', border: '1px solid rgba(99,179,237,0.25)' }}>
           {legal.labeledAs}
         </span>
       </div>

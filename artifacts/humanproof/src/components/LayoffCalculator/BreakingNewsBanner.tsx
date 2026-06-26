@@ -114,7 +114,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 background: 'rgba(249,115,22,0.18)',
                 border: '1px solid rgba(249,115,22,0.30)',
                 fontSize: '0.65rem', fontWeight: 600,
-                color: '#fdba74', fontFamily: 'var(--font-mono)',
+                color: 'var(--color-orange-text)', fontFamily: 'var(--font-mono)',
               }}>
                 <Rss style={{ width: '9px', height: '9px' }} />
                 {feedLabel}
@@ -136,7 +136,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 background: 'rgba(234,179,8,0.15)',
                 border: '1px solid rgba(234,179,8,0.35)',
                 fontSize: '0.65rem', fontWeight: 600,
-                color: '#fde047', fontFamily: 'var(--font-mono)',
+                color: 'var(--color-amber-text)', fontFamily: 'var(--font-mono)',
               }}>
                 {cacheAgeLabel}
               </span>
@@ -146,7 +146,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
           {/* Headline */}
           <p style={{
             fontSize: '0.8rem', fontWeight: 600,
-            color: '#fed7aa',
+            color: 'var(--color-orange-text)',
             lineHeight: 1.4, marginBottom: '6px',
             display: '-webkit-box', WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
@@ -181,7 +181,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 borderRadius: '8px',
                 border: '1px solid rgba(249,115,22,0.50)',
                 background: isRefreshing ? 'rgba(249,115,22,0.08)' : 'rgba(249,115,22,0.18)',
-                color: isRefreshing ? '#fdba74' : 'var(--color-orange-text)',
+                color: 'var(--color-orange-text)',
                 fontSize: '0.72rem', fontWeight: 700,
                 cursor: isRefreshing ? 'not-allowed' : 'pointer',
                 opacity: isRefreshing ? 0.6 : 1,
