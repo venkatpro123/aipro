@@ -26,7 +26,7 @@ export class GlobalErrorBoundary extends React.Component<{ children: React.React
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#020408] text-white flex flex-col items-center justify-center p-8 text-center">
+        <div className="min-h-screen bg-[#020408] text-[var(--text)] flex flex-col items-center justify-center p-8 text-center">
           <h2 className="text-4xl font-black text-red-500 mb-4">SYSTEM_FAILURE</h2>
           <p className="text-slate-400 max-w-lg font-mono text-sm mb-6">
             {this.state.error?.message || "An unexpected system crash was detected. We've logged this anomaly."}

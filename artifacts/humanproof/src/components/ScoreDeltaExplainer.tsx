@@ -56,7 +56,7 @@ const DimensionRow: React.FC<{ dim: DimensionDelta }> = ({ dim }) => {
 
   return (
     <div
-      className="rounded-lg border border-white/5 overflow-hidden cursor-pointer hover:border-white/15 transition-colors"
+      className="rounded-lg border border-[var(--alpha-bg-05)] overflow-hidden cursor-pointer hover:border-[var(--alpha-bg-12)] transition-colors"
       style={{ borderLeft: `3px solid ${color}` }}
       onClick={() => setExpanded(v => !v)}
     >

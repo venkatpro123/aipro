@@ -80,7 +80,7 @@ export const ConflictDisclosurePanel: React.FC<Props> = ({
 
       {/* Detail rows */}
       {expanded && (
-        <div className="border-t border-white/10 divide-y divide-white/5">
+        <div className="border-t border-[var(--alpha-bg-10)] divide-y divide-[var(--alpha-bg-05)]">
           {conflicts.map((c, i) => {
             const color = severityColor[c.severity] ?? "var(--text-2)";
             return (
@@ -111,7 +111,7 @@ export const ConflictDisclosurePanel: React.FC<Props> = ({
                           color:        "var(--text-2)",
                         }}
                       >
-                        <span className="font-semibold text-white/70">{src.source}</span>
+                        <span className="font-semibold text-[var(--alpha-text-70)]">{src.source}</span>
                         {" · "}
                         <span>{src.value.toFixed(2)}</span>
                       </div>

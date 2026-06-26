@@ -318,7 +318,7 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
 
   return (
     <div className="glass-panel-heavy rounded-xl overflow-hidden">
-      <div className="flex items-center gap-3 p-5 border-b border-white/10">
+      <div className="flex items-center gap-3 p-5 border-b border-[var(--alpha-bg-10)]">
         <div className="p-2 rounded-lg bg-blue-500/10">
           <Users className="w-5 h-5 text-blue-400" />
         </div>
@@ -362,17 +362,17 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
           </div>
           <div className="relative h-8">
             {/* Background track */}
-            <div className="absolute inset-y-0 left-0 right-0 bg-white/5 rounded-full" />
+            <div className="absolute inset-y-0 left-0 right-0 bg-[var(--alpha-bg-05)] rounded-full" />
 
             {/* IQR band (p25–p75) */}
             <motion.div
               initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.8 }}
-              className="absolute inset-y-1 rounded-full bg-white/10"
+              className="absolute inset-y-1 rounded-full bg-[var(--alpha-bg-10)]"
               style={{ left: `${toBarPct(p25)}%`, width: `${toBarPct(p75) - toBarPct(p25)}%`, transformOrigin: 'left' }}
             />
 
             {/* Median line */}
-            <div className="absolute inset-y-0 w-0.5 bg-white/30"
+            <div className="absolute inset-y-0 w-0.5 bg-[var(--alpha-bg-12)]"
               style={{ left: `${toBarPct(median)}%`, transform: 'translateX(-50%)' }} />
 
             {/* P10 label */}
@@ -392,7 +392,7 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
               initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5, type: 'spring' }}
               className="absolute inset-y-0 flex flex-col items-center justify-center"
               style={{ left: `${toBarPct(Math.min(MAX_DISPLAY, Math.max(MIN_DISPLAY, score)))}%`, transform: 'translateX(-50%)' }}>
-              <div className="w-3 h-3 rounded-full border-2 border-white/80 z-10" style={{ background: scoreColor, boxShadow: `0 0 8px ${scoreColor}` }} />
+              <div className="w-3 h-3 rounded-full border-2 border-[var(--text)] z-10" style={{ background: scoreColor, boxShadow: `0 0 8px ${scoreColor}` }} />
             </motion.div>
           </div>
 
@@ -409,7 +409,7 @@ export const PeerBenchmarkPanel: React.FC<Props> = ({ roleKey, industryKey, scor
             { label: 'Median', sublabel: 'peer score', value: median, color: 'var(--amber)' },
             { label: 'Bottom 10%', sublabel: 'scored above', value: p90, color: 'var(--red)' },
           ].map(stat => (
-            <div key={stat.label} className="p-3 rounded-xl bg-white/5 border border-white/5">
+            <div key={stat.label} className="p-3 rounded-xl bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-05)]">
               <div className="text-xl font-black" style={{ color: stat.color }}>{stat.value}</div>
               <div className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">{stat.label}</div>
               <div className="text-[9px] text-muted-foreground opacity-60">{stat.sublabel}</div>

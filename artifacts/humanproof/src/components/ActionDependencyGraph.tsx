@@ -193,7 +193,7 @@ const PhaseCard: React.FC<{
               <span className="text-xs font-mono text-muted-foreground">
                 {completedCount}/{items.length}
               </span>
-              <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="w-12 h-1 bg-[var(--alpha-bg-10)] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${completionPct}%`, background: config.color }}
@@ -227,7 +227,7 @@ const PhaseCard: React.FC<{
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3"
+          className="px-4 pb-4 space-y-2 border-t border-[var(--alpha-bg-05)] pt-3"
         >
           {[...items]
             .sort((a, b) => computeROIPerHour(b.item) - computeROIPerHour(a.item))
@@ -245,7 +245,7 @@ const PhaseCard: React.FC<{
                   initial={{ opacity: 0, x: -4 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  className={`p-3 rounded-xl border border-white/5 bg-white/[0.03] ${done ? "opacity-60" : ""}`}
+                  className={`p-3 rounded-xl border border-[var(--alpha-bg-05)] bg-[var(--alpha-bg-04)] ${done ? "opacity-60" : ""}`}
                   style={{ borderLeft: `3px solid ${priorityColor}` }}
                 >
                   <div className="flex items-start gap-3">
