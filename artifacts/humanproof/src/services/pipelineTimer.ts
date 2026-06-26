@@ -275,26 +275,26 @@ export class PipelineTimer implements PipelineTimerInstance {
       `%c⏱ Pipeline Timing — ${r.companyName} — ${r.totalMs}ms total [${r.networkCondition}]`,
       'color: #10b981; font-weight: bold',
     );
-    console.log(`Run ID: ${r.runId}`);
-    console.log(`Network: ${r.networkCondition}`);
-    console.log('');
-    console.log('Step                          Duration   % total   Critical');
-    console.log('─'.repeat(70));
+    if (import.meta.env.DEV) console.log(`Run ID: ${r.runId}`);
+    if (import.meta.env.DEV) console.log(`Network: ${r.networkCondition}`);
+    if (import.meta.env.DEV) console.log('');
+    if (import.meta.env.DEV) console.log('Step                          Duration   % total   Critical');
+    if (import.meta.env.DEV) console.log('─'.repeat(70));
     r.steps.forEach(s => {
       const pct   = r.totalMs > 0 ? Math.round((s.durationMs / r.totalMs) * 100) : 0;
       const label = s.step.padEnd(30);
       const dur   = `${s.durationMs}ms`.padStart(8);
       const chart = bar(s.durationMs, r.totalMs, 20);
       const flag  = s.isCriticalPath ? ' ◄ CRITICAL' : '';
-      console.log(`${label} ${dur}  ${pct.toString().padStart(3)}%  ${chart}${flag}`);
+      if (import.meta.env.DEV) console.log(`${label} ${dur}  ${pct.toString().padStart(3)}%  ${chart}${flag}`);
     });
-    console.log('─'.repeat(70));
-    console.log(`${'TOTAL'.padEnd(30)} ${String(r.totalMs + 'ms').padStart(8)}`);
+    if (import.meta.env.DEV) console.log('─'.repeat(70));
+    if (import.meta.env.DEV) console.log(`${'TOTAL'.padEnd(30)} ${String(r.totalMs + 'ms').padStart(8)}`);
     if (r.slowestStep) {
-      console.log(`\n🐢 Slowest: ${r.slowestStep.step} — ${r.slowestStep.durationMs}ms (${r.slowestStepPct}% of total)`);
+      if (import.meta.env.DEV) console.log(`\n🐢 Slowest: ${r.slowestStep.step} — ${r.slowestStep.durationMs}ms (${r.slowestStepPct}% of total)`);
     }
     if (r.criticalPath.length) {
-      console.log(`🔴 Critical path: ${r.criticalPath.join(' → ')}`);
+      if (import.meta.env.DEV) console.log(`🔴 Critical path: ${r.criticalPath.join(' → ')}`);
     }
     console.groupEnd();
   }
@@ -343,14 +343,14 @@ export class PipelineTimer implements PipelineTimerInstance {
     }
 
     console.group('%c📊 Pipeline Percentiles', 'color: #6366f1; font-weight: bold');
-    console.log(`Based on ${history.length} run(s)`);
-    console.log('Step                          p50      p95      n');
-    console.log('─'.repeat(55));
+    if (import.meta.env.DEV) console.log(`Based on ${history.length} run(s)`);
+    if (import.meta.env.DEV) console.log('Step                          p50      p95      n');
+    if (import.meta.env.DEV) console.log('─'.repeat(55));
     Object.entries(result)
       .sort((a, b) => b[1].p95 - a[1].p95)
       .forEach(([step, v]) => {
         const label = step.padEnd(30);
-        console.log(`${label} ${String(v.p50 + 'ms').padStart(7)}  ${String(v.p95 + 'ms').padStart(7)}  ${v.n}`);
+        if (import.meta.env.DEV) console.log(`${label} ${String(v.p50 + 'ms').padStart(7)}  ${String(v.p95 + 'ms').padStart(7)}  ${v.n}`);
       });
     console.groupEnd();
 

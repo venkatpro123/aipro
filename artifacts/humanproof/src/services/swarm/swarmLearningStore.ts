@@ -181,7 +181,7 @@ const updateWeightsFromOutcome = (pred: PredictionRecord): void => {
     if (avgError > PENALTY_THRESHOLD) {
       // Consistent poor performer — penalise weight
       record.currentWeight = Math.max(0.5, record.currentWeight * 0.5);
-      console.log(`[SwarmLearning] Penalising ${agentId} — avgError: ${avgError.toFixed(2)}`);
+      if (import.meta.env.DEV) console.log(`[SwarmLearning] Penalising ${agentId} — avgError: ${avgError.toFixed(2)}`);
     } else {
       // Reward accurate agent
       const accuracyScore = Math.max(0, 1 - avgError);

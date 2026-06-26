@@ -358,7 +358,7 @@ export const runFullEnsembleAnalysis = async (
       // Retrieve the write timestamp so the UI can show "Cached X minutes ago"
       const { getCacheTimestamp } = await import('../cache/analysisCache');
       const cachedAt = getCacheTimestamp(cacheKey) ?? (cached._cachedAt as number | undefined);
-      console.log("[Ensemble] Cache hit — returning cached result");
+      if (import.meta.env.DEV) console.log("[Ensemble] Cache hit — returning cached result");
 
       // ── Task C: market-specific slot lookup ─────────────────────────────────
       // When a region is provided, check for a cached market-specific slot.
@@ -423,7 +423,7 @@ export const runFullEnsembleAnalysis = async (
     );
     _timer?.mark('swarm_end');
     swarmContext = buildSwarmContext(swarmReport);
-    console.log(
+    if (import.meta.env.DEV) console.log(
       `[Swarm] Score: ${swarmReport.swarmRiskScore}/100 | Confidence: ${swarmReport.swarmConfidence}% | Live agents: ${swarmReport.liveAgentsUsed}`,
     );
   } catch (swarmErr: any) {
@@ -789,7 +789,7 @@ export const runFullEnsembleAnalysis = async (
   if (llmTier === 'C') {
     // Unknown company: scope-frame honestly, skip LLM entirely
     claudeAnalysis = { ...buildTierCNarrative(companyData, roleTitle, engineResult.score), llmTier: 'C' };
-    console.log('[Ensemble] Tier C — unknown company, deterministic scope framing used');
+    if (import.meta.env.DEV) console.log('[Ensemble] Tier C — unknown company, deterministic scope framing used');
 
   } else if (llmTier === 'B') {
     // Known sector company: template narrative, no API cost
@@ -801,7 +801,7 @@ export const runFullEnsembleAnalysis = async (
       ),
       llmTier: 'B',
     };
-    console.log('[Ensemble] Tier B — deterministic template narrative');
+    if (import.meta.env.DEV) console.log('[Ensemble] Tier B — deterministic template narrative');
 
   } else {
     // Tier A: call DeepSeek (primary) / Gemini (fallback) with real signals + priority sequencing
@@ -1193,7 +1193,7 @@ export const runFullEnsembleAnalysis = async (
 
         if (valid) {
           claudeAnalysis = { success: true, llmTier: 'A', ...normalised } as any;
-          console.log(
+          if (import.meta.env.DEV) console.log(
             `[Ensemble] Tier A — Claude narrative accepted (all 6 fields passed min_words).` +
             (deterministicPatternMatch ? ` Pattern: ${deterministicPatternMatch.pattern.patternId} (${Math.round(deterministicPatternMatch.overlapScore * 100)}%)` : ' No pattern matched (< 70% threshold).'),
           );

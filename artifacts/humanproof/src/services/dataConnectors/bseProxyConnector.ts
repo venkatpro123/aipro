@@ -79,7 +79,7 @@ export async function fetchBSEDataViaProxy(companyName: string): Promise<BSEComp
   const scripCode = BSE_SCRIP_CODES[normalized];
 
   if (!scripCode) {
-    console.log(`[BSEProxy] No scrip code for "${companyName}" — skipping`);
+    if (import.meta.env.DEV) console.log(`[BSEProxy] No scrip code for "${companyName}" — skipping`);
     return null;
   }
 

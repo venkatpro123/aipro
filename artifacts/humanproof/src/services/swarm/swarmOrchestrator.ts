@@ -128,12 +128,12 @@ export const runSwarmLayer = async (
   if (!forceRefresh) {
     const cached = getSwarmCache(companyName, roleTitle, department);
     if (cached) {
-      console.log('[Swarm] Cache HIT — skipping 30 agents');
+      if (import.meta.env.DEV) console.log('[Swarm] Cache HIT — skipping 30 agents');
       return cached;
     }
   }
 
-  console.log(`[Swarm] Firing ${AGENT_REGISTRY.length} agents in parallel...`);
+  if (import.meta.env.DEV) console.log(`[Swarm] Firing ${AGENT_REGISTRY.length} agents in parallel...`);
   const startTime = Date.now();
 
   // ── Fire all agents with 6s per-agent timeout — no single agent blocks the swarm ───
@@ -164,7 +164,7 @@ export const runSwarmLayer = async (
     })
     .sort((a, b) => b.ms - a.ms);
   const slowest = agentTimings[0];
-  console.log(
+  if (import.meta.env.DEV) console.log(
     `[Swarm] ${resolved}/${AGENT_REGISTRY.length} agents resolved (${timedOut} timed out, ${rejected} failed) in ${elapsed}ms` +
     (slowest ? ` | slowest: ${slowest.id} ${slowest.ms}ms` : ''),
   );

@@ -299,7 +299,7 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
         && timestamp > 0
         && timestamp <= now + CLOCK_SKEW_TOLERANCE_MS;
       if (isValidTimestamp && now - timestamp < LOCAL_TTL_MS) {
-        console.log('[Cache] HIT localStorage:', key);
+        if (import.meta.env.DEV) console.log('[Cache] HIT localStorage:', key);
         return data;
       }
       // Expired or invalid — proactively evict to keep storage clean
@@ -320,7 +320,7 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
       .single();
 
     if (data && (Date.now() - new Date(data.created_at).getTime()) < REMOTE_TTL_MS) {
-      console.log('[Cache] HIT Supabase:', key);
+      if (import.meta.env.DEV) console.log('[Cache] HIT Supabase:', key);
       // WS12 — promote to localStorage WITHOUT bumping the timestamp.
       // Use the original Supabase created_at so the local TTL ages
       // correctly. The legacy `Date.now()` here was the source of the
@@ -338,7 +338,7 @@ export const getCachedAnalysis = async (key: string): Promise<any | null> => {
     // Supabase unavailable — continue
   }
 
-  console.log('[Cache] MISS:', key);
+  if (import.meta.env.DEV) console.log('[Cache] MISS:', key);
   return null;
 };
 
@@ -413,7 +413,7 @@ export const setCachedAnalysis = async (key: string, value: any): Promise<void> 
     .upsert({ key, data: slim, created_at: new Date().toISOString() }, { onConflict: 'key' })
     .then(({ error }) => {
       if (error) console.warn('[Cache] Supabase upsert failed:', error.message);
-      else console.log('[Cache] Saved to Supabase:', key);
+      else if (import.meta.env.DEV) console.log('[Cache] Saved to Supabase:', key);
     });
 };
 

@@ -34,7 +34,7 @@ export const getSwarmCache = (
     if (!raw) return null;
     const { data, timestamp } = JSON.parse(raw);
     if (Date.now() - timestamp < SWARM_CACHE_TTL_MS) {
-      console.log('[SwarmCache] HIT:', makeKey(company, role, department));
+      if (import.meta.env.DEV) console.log('[SwarmCache] HIT:', makeKey(company, role, department));
       return data as SwarmReport;
     }
     // Expired
@@ -56,7 +56,7 @@ export const setSwarmCache = (
       makeKey(company, role, department),
       JSON.stringify({ data: report, timestamp: Date.now() })
     );
-    console.log('[SwarmCache] SET:', makeKey(company, role, department));
+    if (import.meta.env.DEV) console.log('[SwarmCache] SET:', makeKey(company, role, department));
   } catch {
     // localStorage quota exceeded — skip silently
   }
@@ -78,7 +78,7 @@ export const clearSwarmCache = (
     if (key?.startsWith('swarm_cache::')) keysToDelete.push(key);
   }
   keysToDelete.forEach(k => localStorage.removeItem(k));
-  console.log(`[SwarmCache] Cleared ${keysToDelete.length} entries`);
+  if (import.meta.env.DEV) console.log(`[SwarmCache] Cleared ${keysToDelete.length} entries`);
 };
 
 /**
@@ -112,7 +112,7 @@ export const hydrateSwarmCache = async (
     if (existing) {
       const { timestamp } = JSON.parse(existing);
       if (Date.now() - timestamp < SWARM_CACHE_TTL_MS) {
-        console.log('[SwarmCache] Hydration skipped — localStorage fresh:', cacheKey);
+        if (import.meta.env.DEV) console.log('[SwarmCache] Hydration skipped — localStorage fresh:', cacheKey);
         return;
       }
     }
@@ -138,7 +138,7 @@ export const hydrateSwarmCache = async (
       cacheKey,
       JSON.stringify({ data: report, timestamp: Date.now() }),
     );
-    console.log('[SwarmCache] Hydrated from server warm cache:', cacheKey,
+    if (import.meta.env.DEV) console.log('[SwarmCache] Hydrated from server warm cache:', cacheKey,
       `(confidence=${report.swarmConfidence}%, agents=${report.totalAgentsRun})`);
   } catch {
     // Never surface — cold swarm run is the safe fallback.

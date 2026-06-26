@@ -219,7 +219,7 @@ export const aggregateEnsembleResults = ({
     const rawBlend = parseFloat(getEnsembleWeight());
     const safeWeight = Math.max(0.05, Math.min(0.35, isNaN(rawBlend) ? 0.15 : rawBlend));
     finalScore = Math.round(finalScore * (1 - safeWeight) + swarmScore! * safeWeight);
-    console.log(`[Ensemble] Swarm blend: final=${finalScore} (weight=${safeWeight.toFixed(2)}, swarmConf=${swarmConfidence}%)`);
+    if (import.meta.env.DEV) console.log(`[Ensemble] Swarm blend: final=${finalScore} (weight=${safeWeight.toFixed(2)}, swarmConf=${swarmConfidence}%)`);
   } else if (swarmScore !== undefined) {
     console.warn(
       `[Ensemble] Swarm blend SKIPPED — confidence ${swarmConfidence ?? 0}% < ${SWARM_MIN_CONFIDENCE}% threshold.` +
@@ -237,7 +237,7 @@ export const aggregateEnsembleResults = ({
     // *under*-reported confidence for high-quality deterministic runs and
     // *over*-reported it for the failure case.
     finalConfidence = Math.min(finalConfidence, Math.round(engineConfidence));
-    console.log('[Ensemble] Engine-only result — confidence pinned to engine value');
+    if (import.meta.env.DEV) console.log('[Ensemble] Engine-only result — confidence pinned to engine value');
   } else if (llmScoreCount === 1) {
     // Single LLM + engine — limited consensus
     finalConfidence = Math.min(finalConfidence, 68);

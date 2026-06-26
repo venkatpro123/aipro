@@ -1214,7 +1214,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
               setDataQuality("partial");
               setLiveSignalCount(0);
               setHeuristicSignalCount(7);
-              console.log(`[LayoffCalc] Supabase HIT: "${resolved.name}" (ratio=${matchResult.matchRatio.toFixed(2)}, exact=${matchResult.isExactMatch})`);
+              if (import.meta.env.DEV) console.log(`[LayoffCalc] Supabase HIT: "${resolved.name}" (ratio=${matchResult.matchRatio.toFixed(2)}, exact=${matchResult.isExactMatch})`);
 
               // Surface mismatch warning when the fuzzy-matched name differs from what the user typed.
               // matchRatio 0.50–0.79: different entity, show amber warning.
@@ -1734,7 +1734,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       // If the cloud ensemble fails, we attempt a seamless fallback to the
       // local 2000+ company intelligence database before giving up.
       try {
-        console.log("[AuditPipeline] Ensemble failed, attempting local DB fallback...");
+        if (import.meta.env.DEV) console.log("[AuditPipeline] Ensemble failed, attempting local DB fallback...");
         const fallbackCD = resolveCompanyData(state.companyName || "")
           || createUnknownCompanyFallback(state.companyName || "Unknown", state.roleTitle ?? null, (state as any).industry ?? null);
         const engineOnly = calculateLayoffScore({
