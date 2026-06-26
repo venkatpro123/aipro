@@ -85,6 +85,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       alignItems: 'center', justifyContent: 'center',
       zIndex: 1000, backdropFilter: 'blur(20px)',
     }}
+    role="dialog"
+    aria-modal="true"
+    aria-label="Sign in to HumanProof"
     onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div style={{

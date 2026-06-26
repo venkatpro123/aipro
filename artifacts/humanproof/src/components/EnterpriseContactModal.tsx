@@ -70,7 +70,7 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
 
   if (success) {
     return (
-      <div style={overlayStyle}>
+      <div style={overlayStyle} role="dialog" aria-modal="true" aria-labelledby="enterprise-modal-title">
         <div style={{...cardStyle, maxWidth: '400px', textAlign: 'center'}}>
           <div style={{fontSize: '48px', marginBottom: '16px'}}>✓</div>
           <h2 style={{marginBottom: '12px', color: 'var(--text)'}}>Thanks for reaching out!</h2>
@@ -83,7 +83,7 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
   return (
     <div style={overlayStyle}>
       <div style={{...cardStyle, maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}}>
-        <h2 style={{marginBottom: '24px', fontSize: '20px', color: 'var(--text)'}}>Enterprise Contact</h2>
+        <h2 id="enterprise-modal-title" style={{marginBottom: '24px', fontSize: '20px', color: 'var(--text)'}}>Enterprise Contact</h2>
 
         <form onSubmit={handleSubmit}>
           <Row>
