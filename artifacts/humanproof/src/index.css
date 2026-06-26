@@ -9208,6 +9208,17 @@ html.light [class*="dropdown"], html.light [class*="popover"], html.light [class
 
 /* Score / KPI hero rings keep accent but on light card */
 html.light .score-hero-ring, html.light .score-hero-number, html.light .score-hero-label { color: #11131a; }
+html.light .score-hero-verdict { color: #4a5365; }
+html.light .score-hero-velocity { color: #717b8c; }
+
+/* Primary recommendation card text in light mode */
+html.light .primary-rec-title { color: #11131a; }
+html.light .primary-rec-desc  { color: #4a5365; }
+html.light .rec-badge-effort  { color: #717b8c; background: rgba(17,19,26,0.05); }
+html.light .rec-badge-deadline { color: #717b8c; background: rgba(17,19,26,0.04); }
+
+/* ROI star empty state */
+html.light .roi-star--empty { color: rgba(17,19,26,0.12); }
 
 /* Page wrap bg */
 html.light .page-wrap { background: var(--bg) !important; }
@@ -9292,6 +9303,16 @@ html.light .tab-badge-chip {
   background: rgba(0,150,170,0.08);
   color: #0088a0;
 }
+
+/* AuditLoader progress track + node dots */
+html.light .intel-assembly-track { background: rgba(17,19,26,0.08); }
+html.light .intel-assembly-node-dot {
+  background: rgba(17,19,26,0.12);
+  border-color: rgba(17,19,26,0.16);
+}
+
+/* Metric card hover border */
+html.light .metric-card:hover { border-color: rgba(17,19,26,0.14); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MICRO-INTERACTION POLISH — Global premium hover, focus, and press states
