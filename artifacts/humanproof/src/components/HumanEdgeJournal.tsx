@@ -1084,7 +1084,7 @@ export default function HumanEdgeJournal({
         >
           <div
             style={{
-              background: "#0F0F2A",
+              background: "var(--bg-card)",
               border: "1px solid var(--border2)",
               borderRadius: 16,
               padding: 32,

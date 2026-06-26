@@ -696,7 +696,7 @@ export default function UpskillingRoadmap({
             top: 24,
             right: 24,
             zIndex: 1000,
-            background: "#1a2a1a",
+            background: "var(--bg-card)",
             border: "1px solid var(--emerald)",
             borderRadius: 10,
             padding: "12px 20px",

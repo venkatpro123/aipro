@@ -689,7 +689,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                         animation: i === sorted.length - 1 ? 'pulse-live 2s ease-in-out infinite' : 'none',
                         zIndex: 2, position: 'relative',
                       }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text)' }} />
                       </div>
 
                       {/* Event chip */}

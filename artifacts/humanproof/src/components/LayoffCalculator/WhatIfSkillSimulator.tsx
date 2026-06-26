@@ -164,14 +164,14 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                 outline: "none",
               }}
             >
-              <option value="" style={{ background: "#0a0f19" }}>
+              <option value="" style={{ background: "var(--bg-card)" }}>
                 — Pick a skill —
               </option>
               {safeSkills.map((s) => (
                 <option
                   key={s.name}
                   value={s.name}
-                  style={{ background: "#0a0f19" }}
+                  style={{ background: "var(--bg-card)" }}
                 >
                   {s.name}
                 </option>
