@@ -118,13 +118,13 @@ function RoleTable({ title, rows, colorClass, showImprovement = false }: {
 
   return (
     <div className="glass-panel rounded-xl overflow-hidden mb-4">
-      <div className="px-5 py-3 border-b border-white/8">
+      <div className="px-5 py-3 border-b border-[var(--alpha-bg-08)]">
         <span className={`text-xs font-black uppercase tracking-widest ${colorClass}`}>{title}</span>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/5">
+            <tr className="border-b border-[var(--alpha-bg-05)]">
               <th className="px-4 py-2 text-left text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Role</th>
               <th className="px-4 py-2 text-left text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Industry</th>
               <th className="px-4 py-2 text-center text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Score</th>
@@ -136,7 +136,7 @@ function RoleTable({ title, rows, colorClass, showImprovement = false }: {
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+              <tr key={i} className="border-b border-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-02)] transition-colors">
                 <td className="px-4 py-3 font-mono text-sm text-text-1">{formatRole(r.role_key)}</td>
                 <td className="px-4 py-3 text-muted-foreground text-xs">{r.industry}</td>
                 <td className="px-4 py-3 text-center"><ScoreBadge score={r.avg_score} /></td>
@@ -257,7 +257,7 @@ export default function IntelligenceReportPage() {
               <div className="flex flex-wrap gap-2">
                 {allYearMonths.map(ym => (
                   <Link key={ym} to={`/intelligence/report/${ym}`}
-                    className="text-xs font-mono px-2 py-1 rounded bg-white/5 border border-white/10 text-cyan-400 hover:bg-white/10 transition-colors">
+                    className="text-xs font-mono px-2 py-1 rounded bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] text-cyan-400 hover:bg-[var(--alpha-bg-10)] transition-colors">
                     {ym}
                   </Link>
                 ))}
@@ -286,7 +286,7 @@ export default function IntelligenceReportPage() {
                 className={`text-[10px] font-mono px-2 py-1 rounded border transition-colors ${
                   ym === payload.year_month
                     ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
-                    : 'bg-white/5 border-white/10 text-muted-foreground hover:bg-white/10'
+                    : 'bg-[var(--alpha-bg-05)] border-[var(--alpha-bg-10)] text-muted-foreground hover:bg-[var(--alpha-bg-10)]'
                 }`}>
                 {ym}
               </Link>
@@ -311,7 +311,7 @@ export default function IntelligenceReportPage() {
             </div>
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm hover:bg-white/10 transition-colors text-muted-foreground"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] text-sm hover:bg-[var(--alpha-bg-10)] transition-colors text-muted-foreground"
             >
               <Share2 className="w-4 h-4" />
               Share
@@ -354,7 +354,7 @@ export default function IntelligenceReportPage() {
         {/* Company watch */}
         {payload.company_changes.length > 0 && (
           <div className="glass-panel rounded-xl overflow-hidden mb-4">
-            <div className="px-5 py-3 border-b border-white/8">
+            <div className="px-5 py-3 border-b border-[var(--alpha-bg-08)]">
               <span className="text-xs font-black uppercase tracking-widest text-amber-400">
                 Company Watch — Elevated Risk Signals
               </span>
@@ -404,7 +404,7 @@ export default function IntelligenceReportPage() {
         {/* Prediction updates */}
         {payload.prediction_updates.length > 0 && (
           <div className="glass-panel rounded-xl overflow-hidden mb-4">
-            <div className="px-5 py-3 border-b border-white/8">
+            <div className="px-5 py-3 border-b border-[var(--alpha-bg-08)]">
               <span className="text-xs font-black uppercase tracking-widest text-blue-400">
                 Prediction Ledger — New Outcomes This Month
               </span>
@@ -412,7 +412,7 @@ export default function IntelligenceReportPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-white/5">
+                  <tr className="border-b border-[var(--alpha-bg-05)]">
                     <th className="px-4 py-2 text-left text-muted-foreground uppercase tracking-wider font-bold">Company · Role</th>
                     <th className="px-4 py-2 text-center text-muted-foreground uppercase tracking-wider font-bold">Model Score</th>
                     <th className="px-4 py-2 text-center text-muted-foreground uppercase tracking-wider font-bold">Outcome</th>
@@ -421,7 +421,7 @@ export default function IntelligenceReportPage() {
                 </thead>
                 <tbody>
                   {payload.prediction_updates.map((p, i) => (
-                    <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
+                    <tr key={i} className="border-b border-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-02)]">
                       <td className="px-4 py-2.5 font-mono text-text-2">{p.company_role}</td>
                       <td className="px-4 py-2.5 text-center"><ScoreBadge score={Math.round(p.swarm_score)} /></td>
                       <td className="px-4 py-2.5 text-center">
@@ -454,7 +454,7 @@ export default function IntelligenceReportPage() {
         </div>
 
         {/* Footer metadata */}
-        <div className="border-t border-white/8 pt-5 pb-10 text-xs text-muted-foreground leading-relaxed">
+        <div className="border-t border-[var(--alpha-bg-08)] pt-5 pb-10 text-xs text-muted-foreground leading-relaxed">
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <span>Generated: {new Date(report?.generated_at ?? '').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
             {report?.sent_at && <span>Emailed to: {report.email_count ?? 0} subscribers</span>}
