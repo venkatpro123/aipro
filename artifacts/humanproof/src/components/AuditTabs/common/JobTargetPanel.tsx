@@ -34,7 +34,7 @@ function MatchScoreBadge({ score }: { score: number }) {
 function UrgencyBadge({ urgency }: { urgency: JobTargetingResult['searchUrgency'] }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
     start_today:      { label: 'Start today',   color: 'var(--color-red400-text)', bg: 'rgba(239,68,68,0.10)' },
-    start_this_week:  { label: 'This week',     color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+    start_this_week:  { label: 'This week',     color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
     start_this_month: { label: 'This month',    color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.10)' },
     steady_monitoring:{ label: 'Monitoring',    color: 'var(--color-violet500-text)', bg: 'rgba(139,92,246,0.10)' },
   };

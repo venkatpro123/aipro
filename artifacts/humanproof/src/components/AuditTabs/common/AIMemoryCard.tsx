@@ -72,8 +72,8 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
             style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.22)' }}
           >
-            <CheckSquare className="w-3 h-3 flex-shrink-0" style={{ color: '#10b981' }} />
-            <span className="text-[11px] font-bold" style={{ color: '#10b981' }}>{completedActionCount}</span>
+            <CheckSquare className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-emerald500-text)' }} />
+            <span className="text-[11px] font-bold" style={{ color: 'var(--color-emerald500-text)' }}>{completedActionCount}</span>
             <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>
               action{completedActionCount !== 1 ? 's' : ''} done
             </span>
@@ -95,7 +95,7 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
             </span>
             <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>streak</span>
             {streakInfo!.isAtRisk && (
-              <span className="text-[9px] font-bold" style={{ color: '#f59e0b' }}>at risk</span>
+              <span className="text-[9px] font-bold" style={{ color: 'var(--color-amber500-text)' }}>at risk</span>
             )}
           </div>
         )}

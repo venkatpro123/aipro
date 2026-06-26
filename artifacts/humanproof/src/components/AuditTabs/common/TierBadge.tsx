@@ -20,11 +20,11 @@ interface TierBadgeProps {
 }
 
 const TIER_META: Record<number, { color: string; tip: string }> = {
-  1: { color: '#dc2626', tip: 'Mission-critical — always surfaced first' },
-  2: { color: '#f97316', tip: 'Important — surfaced once Tier 1 is settled' },
-  3: { color: '#f59e0b', tip: 'Advanced — explore when you want depth' },
-  4: { color: '#22d3ee', tip: 'Transparency — sources & confidence' },
-  5: { color: '#94a3b8', tip: 'Technical — pipeline diagnostics' },
+  1: { color: 'var(--color-red600-text)', tip: 'Mission-critical — always surfaced first' },
+  2: { color: 'var(--color-orange500-text)', tip: 'Important — surfaced once Tier 1 is settled' },
+  3: { color: 'var(--color-amber500-text)', tip: 'Advanced — explore when you want depth' },
+  4: { color: 'var(--color-cyan-text)', tip: 'Transparency — sources & confidence' },
+  5: { color: 'var(--color-slate400-text)', tip: 'Technical — pipeline diagnostics' },
 };
 
 export const TierBadge: React.FC<TierBadgeProps> = ({ tier, label }) => {

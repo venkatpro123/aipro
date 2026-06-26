@@ -105,7 +105,7 @@ const TAB_CONFIG: TabConfigV4[] = [
     Icon: Zap,
     getBadge: (r) => {
       const critical = (r.recommendations ?? []).filter(rec => rec.priority === 'Critical').length;
-      return critical > 0 ? { text: `${critical}!`, color: '#dc2626' } : null;
+      return critical > 0 ? { text: `${critical}!`, color: 'var(--color-red600-text)' } : null;
     },
   },
   {
@@ -115,7 +115,7 @@ const TAB_CONFIG: TabConfigV4[] = [
     Icon: Compass,
     getBadge: (r) => {
       const live = r.signalQuality?.liveSignals ?? 0;
-      return live > 0 ? { text: `${live}`, color: '#10b981' } : null;
+      return live > 0 ? { text: `${live}`, color: 'var(--color-emerald500-text)' } : null;
     },
   },
 ];
@@ -539,14 +539,14 @@ export const LayoffAuditDashboardV4: React.FC<Props> = (props) => {
           <div className="px-4 pt-3 sm:px-0">
             <div className="rounded-xl flex items-start gap-3 px-3 py-2.5" style={{ background: 'rgba(34,211,238,0.06)', border: '1px solid rgba(34,211,238,0.18)' }}>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>{reEngagementTrigger.headline}</p>
+                <p className="text-[10px] font-bold" style={{ color: 'var(--color-cyan-text)' }}>{reEngagementTrigger.headline}</p>
                 <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>{reEngagementTrigger.subtext}</p>
               </div>
               {props.onRecalculate && (
                 <button
                   onClick={() => { setReEngagementDismissed(true); clearReEngagementState(); props.onRecalculate?.(); }}
                   className="flex-shrink-0 text-[10px] font-bold px-2 py-1 rounded-lg transition-all hover:scale-[1.03]"
-                  style={{ background: 'rgba(34,211,238,0.14)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.28)' }}
+                  style={{ background: 'rgba(34,211,238,0.14)', color: 'var(--color-cyan-text)', border: '1px solid rgba(34,211,238,0.28)' }}
                 >
                   {reEngagementTrigger.ctaLabel}
                 </button>

@@ -351,12 +351,12 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
             className="flex items-start gap-2 mt-2.5 rounded-lg px-3 py-2"
             style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.30)' }}
           >
-            <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#ef4444' }} />
+            <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-red400-text)' }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                 <span
                   className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded"
-                  style={{ background: 'rgba(220,38,38,0.15)', color: '#ef4444', border: '1px solid rgba(220,38,38,0.30)' }}
+                  style={{ background: 'rgba(220,38,38,0.15)', color: 'var(--color-red400-text)', border: '1px solid rgba(220,38,38,0.30)' }}
                 >
                   NOT RECOMMENDED FOR YOUR FINANCIAL PROFILE
                 </span>
@@ -400,7 +400,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                 {/* Success indicators */}
                 <div className="mb-3">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <CheckCircle2 className="w-3 h-3" style={{ color: '#10b981' }} />
+                    <CheckCircle2 className="w-3 h-3" style={{ color: 'var(--color-emerald500-text)' }} />
                     <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
                       SUCCESS LOOKS LIKE
                     </span>
@@ -417,7 +417,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
                 {/* Key risks */}
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <XCircle className="w-3 h-3" style={{ color: '#f97316' }} />
+                    <XCircle className="w-3 h-3" style={{ color: 'var(--color-orange500-text)' }} />
                     <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
                       KEY RISKS
                     </span>

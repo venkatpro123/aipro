@@ -198,7 +198,7 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
 
             {/* Optional note */}
             {sc.note && (
-              <p className="text-[9px] font-bold" style={{ color: '#f59e0b' }}>⚠ {sc.note}</p>
+              <p className="text-[9px] font-bold" style={{ color: 'var(--color-amber500-text)' }}>⚠ {sc.note}</p>
             )}
           </motion.div>
         ))}

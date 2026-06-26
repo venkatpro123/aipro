@@ -86,10 +86,10 @@ const RING_CIRC = 2 * Math.PI * RING_R;
 
 // Wave 6.3: Trend direction arrow rendered at 6-o'clock position inside the ring.
 const TREND_ARROW: Record<string, { sym: string; color: string }> = {
-  accelerating_risk: { sym: '↑', color: '#dc2626' },
-  deteriorating:     { sym: '↑', color: '#f97316' },
+  accelerating_risk: { sym: '↑', color: 'var(--color-red600-text)' },
+  deteriorating:     { sym: '↑', color: 'var(--color-orange500-text)' },
   stable:            { sym: '→', color: 'var(--alpha-text-35)' },
-  improving:         { sym: '↓', color: '#10b981' },
+  improving:         { sym: '↓', color: 'var(--color-emerald500-text)' },
 };
 
 interface DensityStat { value: number; suffix?: string; label: string }
@@ -322,8 +322,8 @@ const ScoreRangeHero: React.FC<{
           border: '1px solid rgba(251,191,36,0.35)',
         }}
       >
-        <AlertOctagon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
-        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: '#fbbf24' }}>
+        <AlertOctagon className="w-3.5 h-3.5" style={{ color: 'var(--color-amber-text)' }} />
+        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: 'var(--color-amber-text)' }}>
           We're Not Fully Sure Yet
         </span>
       </div>
@@ -552,9 +552,9 @@ export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }
                     (high = raises risk, low = holds it down), so labels like
                     "Experience Protection" aren't read with the wrong polarity. */}
                 {d.score >= 50 ? (
-                  <span style={{ fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.05em', color: '#f97316' }}>↑ RAISES RISK</span>
+                  <span style={{ fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.05em', color: 'var(--color-orange500-text)' }}>↑ RAISES RISK</span>
                 ) : d.score < 35 ? (
-                  <span style={{ fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.05em', color: '#10b981' }}>↓ HOLDS IT DOWN</span>
+                  <span style={{ fontSize: '0.5rem', fontWeight: 800, letterSpacing: '0.05em', color: 'var(--color-emerald500-text)' }}>↓ HOLDS IT DOWN</span>
                 ) : null}
               </div>
               <span className="driver-card-score" style={{ color: riskColor(d.score) }}>
@@ -882,7 +882,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
                   try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
                 }}
                 className="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
-                style={{ background: 'rgba(220,38,38,0.20)', color: '#fca5a5', border: '1px solid rgba(220,38,38,0.35)' }}
+                style={{ background: 'rgba(220,38,38,0.20)', color: 'var(--color-red300-text)', border: '1px solid rgba(220,38,38,0.35)' }}
               >
                 Open Action Plan →
               </button>

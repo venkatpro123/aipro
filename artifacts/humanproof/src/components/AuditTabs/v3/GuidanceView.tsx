@@ -277,7 +277,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
               padding: '20px',
             }}
           >
-            <p style={{ fontSize: '18px', fontWeight: 800, color: '#ef4444', margin: 0, lineHeight: 1.3 }}>
+            <p style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-red400-text)', margin: 0, lineHeight: 1.3 }}>
               {urgency === 'CRITICAL' ? 'This is critical.' : 'This needs your attention now.'}
             </p>
             {synthesis?.singleBiggestRisk && (
@@ -297,7 +297,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                 <div key={i}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
                     <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--alpha-text-92)', margin: 0 }}>{driver.label}</p>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#dc2626' }}>{driver.score}/100</span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-red600-text)' }}>{driver.score}/100</span>
                   </div>
                   <div style={{ height: '3px', background: 'var(--alpha-bg-08)', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${driver.score}%`, background: riskColor(driver.score), borderRadius: '2px', transition: 'width 0.8s ease' }} />
@@ -332,7 +332,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                 gap: '10px',
               }}
             >
-              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#dc2626', margin: 0 }}>
+              <p style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-red600-text)', margin: 0 }}>
                 YOUR MOVE{topAction.timeHorizon ? ` — ${topAction.timeHorizon}` : ''}
               </p>
               <p style={{ fontSize: '16px', fontWeight: 800, color: 'var(--alpha-text-92)', margin: 0, lineHeight: 1.3 }}>
@@ -345,7 +345,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                 <span style={{ fontSize: '10px', fontWeight: 700, color: '#dc262699', padding: '2px 8px', background: 'rgba(220,38,38,0.12)', borderRadius: '20px' }}>
                   {URGENCY_LABEL[topAction.urgencyLevel] ?? 'Critical urgency'}
                 </span>
-                <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 700 }}>Open emergency plan →</span>
+                <span style={{ fontSize: '12px', color: 'var(--color-red600-text)', fontWeight: 700 }}>Open emergency plan →</span>
               </div>
             </button>
           </Section>
@@ -369,7 +369,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'center', width: '100%', display: 'block' }}
         >
           <span style={{ fontSize: '12px', color: 'var(--alpha-text-35)' }}>Open full emergency plan </span>
-          <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>→</span>
+          <span style={{ fontSize: '12px', color: 'var(--color-red600-text)', fontWeight: 600 }}>→</span>
         </button>
 
       </div>
@@ -534,7 +534,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                       <span style={{
                         fontSize: '10px',
                         fontWeight: 700,
-                        color: '#10b981',
+                        color: 'var(--color-emerald500-text)',
                         padding: '1px 6px',
                         background: 'rgba(16,185,129,0.12)',
                         borderRadius: '10px',
@@ -599,7 +599,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         <span style={{ fontSize: '12px', color: 'var(--alpha-text-30)' }}>
           Want the full picture?{' '}
         </span>
-        <span style={{ fontSize: '12px', color: '#22d3ee', fontWeight: 600 }}>See full analysis →</span>
+        <span style={{ fontSize: '12px', color: 'var(--color-cyan-text)', fontWeight: 600 }}>See full analysis →</span>
       </motion.button>
 
     </div>

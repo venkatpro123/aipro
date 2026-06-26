@@ -80,11 +80,11 @@ const IntelligenceBriefBlock: React.FC<{
   const [expanded, setExpanded] = useState(false);
 
   const uc = {
-    CRITICAL: { color: '#dc2626', bg: 'rgba(220,38,38,0.10)', border: 'rgba(220,38,38,0.30)' },
-    HIGH:     { color: '#f97316', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' },
-    MODERATE: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
-    LOW:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
-  }[urgency] ?? { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' };
+    CRITICAL: { color: 'var(--color-red600-text)', bg: 'rgba(220,38,38,0.10)', border: 'rgba(220,38,38,0.30)' },
+    HIGH:     { color: 'var(--color-orange500-text)', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' },
+    MODERATE: { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
+    LOW:      { color: 'var(--color-emerald500-text)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' },
+  }[urgency] ?? { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' };
 
   // Gate 1 (hard): heuristic tier — no live data, brief would be sector-generic prose.
   if (freshnessierTier === 'heuristic') {
@@ -119,7 +119,7 @@ const IntelligenceBriefBlock: React.FC<{
             </span>
           </div>
           {interimSummary && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: '#22d3ee', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: 'var(--color-cyan-text)', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
               SIGNAL SUMMARY
             </span>
           )}
@@ -325,8 +325,8 @@ const MiniGaugeRange: React.FC<{
         className="flex items-center gap-1 px-1.5 py-0.5 rounded"
         style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)' }}
       >
-        <AlertOctagon className="w-2.5 h-2.5" style={{ color: '#fbbf24' }} />
-        <span className="text-[10px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
+        <AlertOctagon className="w-2.5 h-2.5" style={{ color: 'var(--color-amber-text)' }} />
+        <span className="text-[10px] font-bold" style={{ color: 'var(--color-amber-text)' }}>RANGE</span>
       </div>
       <p className="text-[11px] font-bold text-center" style={{ color: 'var(--alpha-text-85)' }}>{label}</p>
       <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>{sublabel}</p>
@@ -355,20 +355,20 @@ const DualGaugePanel: React.FC<{
   // prepared they were. Now 6 distinct verdicts cover the full grid.
   const combo = (() => {
     if (riskScore >= 75 && (pScore ?? 0) < 40)
-      return { label: 'Critical Gap',    color: '#dc2626', desc: 'High risk + very low readiness — immediate action this week required' };
+      return { label: 'Critical Gap',    color: 'var(--color-red600-text)', desc: 'High risk + very low readiness — immediate action this week required' };
     if (riskScore >= 65 && (pScore ?? 0) < 50)
-      return { label: 'High Risk / Low Readiness', color: '#dc2626', desc: 'Elevated risk but limited preparation buffer — prioritise readiness actions now' };
+      return { label: 'High Risk / Low Readiness', color: 'var(--color-red600-text)', desc: 'Elevated risk but limited preparation buffer — prioritise readiness actions now' };
     if (riskScore >= 65 && (pScore ?? 0) >= 50)
-      return { label: 'High Risk / Prepared', color: '#f97316', desc: 'Significant risk but your preparation assets give you options — activate them' };
+      return { label: 'High Risk / Prepared', color: 'var(--color-orange500-text)', desc: 'Significant risk but your preparation assets give you options — activate them' };
     if (riskScore >= 45 && (pScore ?? 0) < 45)
-      return { label: 'Needs Attention', color: '#f59e0b', desc: 'Moderate risk and low readiness — close the readiness gap before risk escalates' };
+      return { label: 'Needs Attention', color: 'var(--color-amber500-text)', desc: 'Moderate risk and low readiness — close the readiness gap before risk escalates' };
     if (riskScore >= 45 && (pScore ?? 0) >= 65)
-      return { label: 'Risk Offset',     color: '#22d3ee', desc: 'Moderate risk but high readiness offsets it — maintain your preparation edge' };
+      return { label: 'Risk Offset',     color: 'var(--color-cyan-text)', desc: 'Moderate risk but high readiness offsets it — maintain your preparation edge' };
     if (riskScore < 45 && (pScore ?? 0) >= 65)
-      return { label: 'Well Positioned', color: '#10b981', desc: 'Low risk + high readiness — leverage this window to grow' };
+      return { label: 'Well Positioned', color: 'var(--color-emerald500-text)', desc: 'Low risk + high readiness — leverage this window to grow' };
     if (riskScore < 35)
-      return { label: 'Low Risk',        color: '#10b981', desc: 'Risk is low — continue monitoring and building career capital' };
-    return { label: 'Monitor',           color: '#f59e0b', desc: 'Moderate risk — keep readiness high as a precaution' };
+      return { label: 'Low Risk',        color: 'var(--color-emerald500-text)', desc: 'Risk is low — continue monitoring and building career capital' };
+    return { label: 'Monitor',           color: 'var(--color-amber500-text)', desc: 'Moderate risk — keep readiness high as a precaution' };
   })();
 
   return (
@@ -627,7 +627,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
               className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
               style={{
                 background: 'rgba(245,158,11,0.10)',
-                color: '#f59e0b',
+                color: 'var(--color-amber500-text)',
                 border: '1px solid rgba(245,158,11,0.28)',
                 fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',

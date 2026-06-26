@@ -101,7 +101,7 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />
+              <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--color-amber500-text)' }} />
               <p className="text-[9px] font-black tracking-widest" style={{ color: 'rgba(16,185,129,0.80)' }}>
                 PROGRESS DETECTED
               </p>

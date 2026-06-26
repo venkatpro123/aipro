@@ -65,14 +65,14 @@ function computeVerdict(result: HybridResult): VerdictMeta {
 
   // No data? Surface honestly.
   if (stock == null && revYoy == null && fundingStage == null && monthsSinceRaise == null && !secMaterial) {
-    return { label: 'Awaiting Data', color: '#64748b', rationale: 'Financial signals not yet available — score uses sector-level estimates until live data arrives.', ring: 0 };
+    return { label: 'Awaiting Data', color: 'var(--color-slate500-text)', rationale: 'Financial signals not yet available — score uses sector-level estimates until live data arrives.', ring: 0 };
   }
 
   const ring = Math.min(100, score || 5);
-  if (score >= 50)  return { label: 'Distressed', color: '#dc2626', rationale: reasons.join(' · ') || 'Multiple financial distress signals.', ring };
-  if (score >= 25)  return { label: 'Weak',       color: '#f97316', rationale: reasons.join(' · ') || 'Mixed signals — caution.', ring };
-  if (score >= 10)  return { label: 'Mixed',      color: '#f59e0b', rationale: reasons.join(' · ') || 'Some softening, mostly OK.', ring };
-  return              { label: 'Healthy',     color: '#10b981', rationale: reasons.length ? reasons.join(' · ') : 'Financial signals nominal.', ring };
+  if (score >= 50)  return { label: 'Distressed', color: 'var(--color-red600-text)', rationale: reasons.join(' · ') || 'Multiple financial distress signals.', ring };
+  if (score >= 25)  return { label: 'Weak',       color: 'var(--color-orange500-text)', rationale: reasons.join(' · ') || 'Mixed signals — caution.', ring };
+  if (score >= 10)  return { label: 'Mixed',      color: 'var(--color-amber500-text)', rationale: reasons.join(' · ') || 'Some softening, mostly OK.', ring };
+  return              { label: 'Healthy',     color: 'var(--color-emerald500-text)', rationale: reasons.length ? reasons.join(' · ') : 'Financial signals nominal.', ring };
 }
 
 const Ring: React.FC<{ pct: number; color: string; size?: number }> = ({ pct, color, size = 56 }) => {

@@ -32,10 +32,10 @@ interface SimStat {
 }
 
 function weeksTierLabel(weeks: number): { label: string; color: string } {
-  if (weeks <= 6)  return { label: 'Strong demand', color: '#10b981' };
-  if (weeks <= 12) return { label: 'Moderate',      color: '#f59e0b' };
-  if (weeks <= 20) return { label: 'Slow market',   color: '#f97316' };
-  return                   { label: 'Challenging',  color: '#dc2626' };
+  if (weeks <= 6)  return { label: 'Strong demand', color: 'var(--color-emerald500-text)' };
+  if (weeks <= 12) return { label: 'Moderate',      color: 'var(--color-amber500-text)' };
+  if (weeks <= 20) return { label: 'Slow market',   color: 'var(--color-orange500-text)' };
+  return                   { label: 'Challenging',  color: 'var(--color-red600-text)' };
 }
 
 export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps> = ({
@@ -107,7 +107,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
       label: 'Best Escape Path',
       value: pivotRole.length > 22 ? pivotRole.slice(0, 20) + '…' : pivotRole,
       sub: matchPct != null ? `${Math.round(matchPct)}% role fit` : 'Strongest adjacent role',
-      color: '#22d3ee',
+      color: 'var(--color-cyan-text)',
     });
   }
 
@@ -138,7 +138,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
         className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
-        <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
+        <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-cyan-text)' }} />
         <div>
           <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
             If Disruption Hits Tomorrow

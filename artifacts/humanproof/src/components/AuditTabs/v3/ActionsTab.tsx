@@ -45,10 +45,10 @@ import { SocialProofStrip } from '../common/SocialProofStrip';
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
-  Critical: { color: '#dc2626', bg: 'rgba(220,38,38,0.12)', icon: AlertTriangle },
-  High:     { color: '#f97316', bg: 'rgba(249,115,22,0.10)', icon: Zap },
-  Medium:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', icon: Clock },
-  Low:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', icon: TrendingDown },
+  Critical: { color: 'var(--color-red600-text)', bg: 'rgba(220,38,38,0.12)', icon: AlertTriangle },
+  High:     { color: 'var(--color-orange500-text)', bg: 'rgba(249,115,22,0.10)', icon: Zap },
+  Medium:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', icon: Clock },
+  Low:      { color: 'var(--color-emerald500-text)', bg: 'rgba(16,185,129,0.08)', icon: TrendingDown },
 };
 
 const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
@@ -75,7 +75,7 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
         </div>
         {criticalCount > 0 && (
           <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(220,38,38,0.20)', color: '#dc2626' }}>
+            style={{ background: 'rgba(220,38,38,0.20)', color: 'var(--color-red600-text)' }}>
             {criticalCount} CRITICAL
           </span>
         )}
@@ -216,13 +216,13 @@ const EmergencyCallout: React.FC<{
           className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
           style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.30)' }}
         >
-          <ShieldAlert className="w-4 h-4" style={{ color: '#fca5a5' }} />
+          <ShieldAlert className="w-4 h-4" style={{ color: 'var(--color-red300-text)' }} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span
               className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
-              style={{ background: 'rgba(220,38,38,0.18)', color: '#fca5a5' }}
+              style={{ background: 'rgba(220,38,38,0.18)', color: 'var(--color-red300-text)' }}
             >
               {riskLabel(score)} RISK · {score}/100
             </span>
@@ -260,7 +260,7 @@ const EmergencyCallout: React.FC<{
               className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(220,38,38,0.20)' }}
             >
-              <Zap className="w-3 h-3" style={{ color: '#fca5a5' }} />
+              <Zap className="w-3 h-3" style={{ color: 'var(--color-red300-text)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-bold leading-tight" style={{ color: 'var(--alpha-text-92)' }}>
@@ -399,12 +399,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(220,38,38,0.18)', border: '1px solid rgba(220,38,38,0.35)' }}
             >
-              <Siren className="w-5 h-5" style={{ color: '#fca5a5' }} />
+              <Siren className="w-5 h-5" style={{ color: 'var(--color-red300-text)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <span
                 className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
-                style={{ background: 'rgba(220,38,38,0.22)', color: '#dc2626' }}
+                style={{ background: 'rgba(220,38,38,0.22)', color: 'var(--color-red600-text)' }}
               >
                 IMPORTANT UPDATE
               </span>
@@ -426,7 +426,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
                   AFFECTED
                 </p>
-                <p className="text-[13px] font-black" style={{ color: '#fca5a5' }}>
+                <p className="text-[13px] font-black" style={{ color: 'var(--color-red300-text)' }}>
                   {warnAffected.toLocaleString()} employees
                 </p>
               </div>
@@ -439,7 +439,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
                 <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(220,38,38,0.70)' }}>
                   COUNTDOWN
                 </p>
-                <p className="text-[13px] font-black flex items-center gap-1" style={{ color: '#fca5a5' }}>
+                <p className="text-[13px] font-black flex items-center gap-1" style={{ color: 'var(--color-red300-text)' }}>
                   <Timer className="w-3.5 h-3.5 flex-shrink-0" />
                   {warnDaysLeft} days
                 </p>
@@ -462,7 +462,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               <span style={{ color: 'var(--alpha-text-92)', fontWeight: 600 }}>This is official, not a guess.</span>
               {' '}Companies must tell employees at least 60 days before layoffs happen.
             </p>
-            <p className="text-[11px] leading-relaxed font-semibold" style={{ color: '#fca5a5' }}>
+            <p className="text-[11px] leading-relaxed font-semibold" style={{ color: 'var(--color-red300-text)' }}>
               What to do now: Update your résumé today. Reach out to your contacts this week. Don't wait for your own notice.
             </p>
           </div>
@@ -489,13 +489,13 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(245,158,11,0.15)' }}
             >
-              <AlertTriangle className="w-4 h-4" style={{ color: '#fbbf24' }} />
+              <AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-amber-text)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <span
                   className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
-                  style={{ background: 'rgba(245,158,11,0.20)', color: '#f59e0b' }}
+                  style={{ background: 'rgba(245,158,11,0.20)', color: 'var(--color-amber500-text)' }}
                 >
                   THINGS TO WATCH
                 </span>
@@ -663,7 +663,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               border: '1px solid rgba(34, 211, 238, 0.20)',
             }}
           >
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: '#22d3ee' }}>
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-cyan-text)' }}>
               Tailored to your situation
             </div>
             <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
@@ -681,9 +681,9 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               border: '1px solid rgba(245, 158, 11, 0.25)',
             }}
           >
-            <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+            <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
             <div className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
-              <span style={{ color: '#f59e0b', fontWeight: 600 }}>General advice.</span>{' '}
+              <span style={{ color: 'var(--color-amber500-text)', fontWeight: 600 }}>General advice.</span>{' '}
               We don't have specific info for your exact role yet, so the actions below are general advice
               for tech and professional roles. They're still matched to your experience level and risk score,
               but specific certifications, pay, and companies to target may differ for your role.

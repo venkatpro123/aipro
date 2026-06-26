@@ -26,11 +26,11 @@ const PILLAR_PROVENANCE_FIELD: Record<string, string> = {
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const READINESS_CONFIG = {
-  READY:          { color: '#10b981', label: 'Ready',           bg: 'rgba(16,185,129,0.12)'  },
-  MOSTLY_READY:   { color: '#22d3ee', label: 'Mostly Ready',    bg: 'rgba(34,211,238,0.12)'  },
-  PARTIAL:        { color: '#f59e0b', label: 'Partially Ready', bg: 'rgba(245,158,11,0.12)'  },
-  UNDERPREPARED:  { color: '#f97316', label: 'Underprepared',   bg: 'rgba(249,115,22,0.12)'  },
-  NOT_READY:      { color: '#dc2626', label: 'Not Ready',       bg: 'rgba(220,38,38,0.12)'   },
+  READY:          { color: 'var(--color-emerald500-text)', label: 'Ready',           bg: 'rgba(16,185,129,0.12)'  },
+  MOSTLY_READY:   { color: 'var(--color-cyan-text)', label: 'Mostly Ready',    bg: 'rgba(34,211,238,0.12)'  },
+  PARTIAL:        { color: 'var(--color-amber500-text)', label: 'Partially Ready', bg: 'rgba(245,158,11,0.12)'  },
+  UNDERPREPARED:  { color: 'var(--color-orange500-text)', label: 'Underprepared',   bg: 'rgba(249,115,22,0.12)'  },
+  NOT_READY:      { color: 'var(--color-red600-text)', label: 'Not Ready',       bg: 'rgba(220,38,38,0.12)'   },
 } as const;
 
 const STATUS_COLORS = {
@@ -138,7 +138,7 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                     className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded"
                     style={{
                       background: 'rgba(245,158,11,0.15)',
-                      color: '#f59e0b',
+                      color: 'var(--color-amber500-text)',
                       border: '1px solid rgba(245,158,11,0.30)',
                     }}
                     title={`Heuristic: ${(pillar.heuristicInputs ?? []).join(', ') || 'industry priors'}`}
@@ -354,8 +354,8 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
           style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.20)' }}
         >
           <div className="flex items-center gap-1.5 mb-2">
-            <AlertCircle className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
-            <p className="text-[10px] font-bold tracking-wider" style={{ color: '#f97316' }}>
+            <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--color-orange500-text)' }} />
+            <p className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--color-orange500-text)' }}>
               TOP GAPS TO CLOSE
             </p>
           </div>
@@ -374,8 +374,8 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
           style={{ background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.20)' }}
         >
           <div className="flex items-center gap-1.5 mb-2">
-            <TrendingUp className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
-            <p className="text-[10px] font-bold tracking-wider" style={{ color: '#22d3ee' }}>
+            <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
+            <p className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--color-cyan-text)' }}>
               QUICK WINS — RAISE SCORE 10+ PTS IN 30 DAYS
             </p>
           </div>

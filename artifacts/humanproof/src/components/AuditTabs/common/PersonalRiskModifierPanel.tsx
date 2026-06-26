@@ -44,9 +44,9 @@ const VisaUrgencyChip: React.FC<{
       }}
       aria-label={`Visa urgency: ${statusLabel} status increases effective urgency by ${pct}%`}
     >
-      <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f97316' }} />
+      <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-orange500-text)' }} />
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: '#f97316' }}>
+        <p className="text-[11px] font-semibold leading-tight mb-0.5" style={{ color: 'var(--color-orange500-text)' }}>
           Your {statusLabel} status increases effective urgency by {pct}%.
         </p>
         <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
@@ -59,7 +59,7 @@ const VisaUrgencyChip: React.FC<{
         className="flex-shrink-0 text-right"
         aria-label={`${pct}% urgency increase`}
       >
-        <span className="text-[13px] font-black" style={{ color: '#f97316' }}>
+        <span className="text-[13px] font-black" style={{ color: 'var(--color-orange500-text)' }}>
           +{pct}%
         </span>
         <p className="text-[10px] font-mono" style={{ color: 'var(--alpha-text-30)' }}>
@@ -102,7 +102,7 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
         >
           <div className="px-3 pb-3 space-y-2">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--color-slate400-text)' }} />
               <span className="text-[12px]" style={{ color: 'var(--alpha-text-70)' }}>
                 No personal adjustment applied (|delta| &lt; 0.5 pt)
               </span>

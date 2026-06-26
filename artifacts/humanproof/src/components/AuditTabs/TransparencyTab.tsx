@@ -835,7 +835,7 @@ const EffectiveWeightsPanel: React.FC<{
                       <span className="font-medium">{name}</span>
                       {isL1Estimated && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
+                          style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.3)' }}>
                           ESTIMATED
                         </span>
                       )}
@@ -895,19 +895,19 @@ const EffectiveWeightsPanel: React.FC<{
                       <span className="font-medium">{d8Label}</span>
                       {d8WeightRedistributed && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
+                          style={{ background: 'rgba(100,116,139,0.2)', color: 'var(--color-slate400-text)', border: '1px solid rgba(100,116,139,0.3)' }}>
                           →D1/D2/D3
                         </span>
                       )}
                       {!d8IsActive && !d8WeightRedistributed && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(100,116,139,0.2)', color: '#94a3b8', border: '1px solid rgba(100,116,139,0.3)' }}>
+                          style={{ background: 'rgba(100,116,139,0.2)', color: 'var(--color-slate400-text)', border: '1px solid rgba(100,116,139,0.3)' }}>
                           LOCKED
                         </span>
                       )}
                       {d8IsActive && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>
+                          style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald500-text)', border: '1px solid rgba(16,185,129,0.3)' }}>
                           {d8FlagActive ? 'LOGISTIC' : 'HEURISTIC'}
                         </span>
                       )}
@@ -1730,8 +1730,8 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
             style={isConformal
-              ? { background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }
-              : { background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
+              ? { background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald500-text)', border: '1px solid rgba(16,185,129,0.25)' }
+              : { background: 'rgba(245,158,11,0.12)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.25)' }
             }
           >
             {isConformal ? 'CONFORMAL' : 'HEURISTIC FALLBACK'}
@@ -1754,9 +1754,9 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           className="flex items-start gap-2 rounded-lg px-3 py-2.5 mb-3"
           style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.30)' }}
         >
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-amber500-text)' }} />
           <div>
-            <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#fbbf24' }}>
+            <p className="text-[11px] font-semibold mb-0.5" style={{ color: 'var(--color-amber-text)' }}>
               Pooled CI — cohort data insufficient
             </p>
             <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
@@ -1777,7 +1777,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           className="flex items-start gap-2 rounded-lg px-3 py-2.5 mb-3"
           style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.22)' }}
         >
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-amber500-text)' }} />
           <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
             Insufficient calibration data across all cohorts (fewer than 80 confirmed outcomes).
             This is a heuristic width estimate — not an empirically validated coverage guarantee.
@@ -2260,7 +2260,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       </div>
                       <span className="text-orange-400/60 text-xs">→</span>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                        style={{ background: 'rgba(251,146,60,0.18)', border: '1px solid rgba(251,146,60,0.40)', color: '#f97316' }}>
+                        style={{ background: 'rgba(251,146,60,0.18)', border: '1px solid rgba(251,146,60,0.40)', color: 'var(--color-orange500-text)' }}>
                         Structural cap
                         <span className="text-base font-bold text-orange-200">{capPct}%</span>
                       </div>
@@ -2358,14 +2358,14 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                             </h4>
                             <span
                               className="text-[10px] font-black px-2 py-0.5 rounded"
-                              style={{ background: 'rgba(239,68,68,0.18)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)' }}
+                              style={{ background: 'rgba(239,68,68,0.18)', color: 'var(--color-red400-text)', border: '1px solid rgba(239,68,68,0.35)' }}
                             >
                               FLOOR-ADJUSTED · NOT FORMULA-DERIVED
                             </span>
                             {floorVal != null && (
                               <span
                                 className="text-[10px] font-mono font-bold px-2 py-0.5 rounded"
-                                style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.25)' }}
+                                style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--color-red300-text)', border: '1px solid rgba(239,68,68,0.25)' }}
                               >
                                 min {floorVal}
                               </span>
@@ -2546,7 +2546,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {stage === 3 && (
                         <span
                           className="text-[10px] font-black px-2 py-0.5 rounded"
-                          style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
+                          style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--color-red400-text)', border: '1px solid rgba(239,68,68,0.25)' }}
                         >
                           EMERGENCY PROTOCOL ACTIVE
                         </span>
@@ -3123,10 +3123,10 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             const hasDelta = delta !== 0;
 
             const TREND_META: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
-              frozen:   { label: 'Frozen',   color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)',   icon: <Zap className="w-4 h-4" style={{ color: '#ef4444' }} /> },
-              declining:{ label: 'Declining', color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.30)', icon: <TrendingDown className="w-4 h-4" style={{ color: '#f97316' }} /> },
-              stable:   { label: 'Stable',   color: '#94a3b8', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)', icon: <Minus className="w-4 h-4" style={{ color: '#94a3b8' }} /> },
-              growing:  { label: 'Growing',  color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.28)',  icon: <TrendingUp className="w-4 h-4" style={{ color: '#10b981' }} /> },
+              frozen:   { label: 'Frozen',   color: 'var(--color-red400-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)',   icon: <Zap className="w-4 h-4" style={{ color: 'var(--color-red400-text)' }} /> },
+              declining:{ label: 'Declining', color: 'var(--color-orange500-text)', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.30)', icon: <TrendingDown className="w-4 h-4" style={{ color: 'var(--color-orange500-text)' }} /> },
+              stable:   { label: 'Stable',   color: 'var(--color-slate400-text)', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)', icon: <Minus className="w-4 h-4" style={{ color: 'var(--color-slate400-text)' }} /> },
+              growing:  { label: 'Growing',  color: 'var(--color-emerald500-text)', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.28)',  icon: <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-emerald500-text)' }} /> },
             };
             const meta = TREND_META[postingTrend] ?? TREND_META['stable'];
 
@@ -3146,14 +3146,14 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {isLive ? (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}
+                          style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald500-text)' }}
                         >
                           LIVE
                         </span>
                       ) : (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(148,163,184,0.15)', color: '#94a3b8' }}
+                          style={{ background: 'rgba(148,163,184,0.15)', color: 'var(--color-slate400-text)' }}
                         >
                           HEURISTIC
                         </span>
@@ -3161,7 +3161,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {hiringMarket && (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}
+                          style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--color-violet-text)', border: '1px solid rgba(167,139,250,0.25)' }}
                           title={`Job-board connectors routed to the ${hiringMarket} hiring market`}
                         >
                           {hiringMarket.toUpperCase()} market
@@ -3604,13 +3604,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
               <div className="flex items-center justify-between gap-3 mb-3">
                 <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Bayesian Credible Interval</span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.25)' }}>
+                  style={{ background: 'rgba(59,130,246,0.15)', color: 'var(--color-blue400-text)', border: '1px solid rgba(59,130,246,0.25)' }}>
                   TIER {(result as any).bayesianCI.dataQualityTier} · σ={((result as any).bayesianCI.sigma).toFixed(1)}pts
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-                  <div className="text-sm font-bold" style={{ color: '#60a5fa' }}>
+                  <div className="text-sm font-bold" style={{ color: 'var(--color-blue400-text)' }}>
                     {(result as any).bayesianCI.ci80_low}–{(result as any).bayesianCI.ci80_high}
                   </div>
                   <div className="text-[10px] opacity-45 mt-0.5">80% Credible Interval</div>

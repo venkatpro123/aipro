@@ -580,7 +580,7 @@ export const OracleInsightsPanel: React.FC<Props> = ({
               }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>⚠️</span>
-                  <p style={{ margin: 0, color: '#fca5a5', fontSize: '0.86rem', lineHeight: 1.7 }}>
+                  <p style={{ margin: 0, color: 'var(--color-red300-text)', fontSize: '0.86rem', lineHeight: 1.7 }}>
                     {intelligence.inactionScenario}
                   </p>
                 </div>

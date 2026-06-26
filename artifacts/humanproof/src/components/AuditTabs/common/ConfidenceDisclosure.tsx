@@ -86,7 +86,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
   if (freshnessTier === 'heuristic') {
     caveats.push({
       icon: AlertTriangle,
-      color: '#f59e0b',
+      color: 'var(--color-amber500-text)',
       text: 'No live data this run — the analysis draws on historical sector averages.',
     });
   } else if (freshnessTier === 'stale') {
@@ -100,7 +100,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
   if (lowDataWarning) {
     caveats.push({
       icon: Info,
-      color: '#f59e0b',
+      color: 'var(--color-amber500-text)',
       text: `${lowDataWarning.missingCount} important signal${lowDataWarning.missingCount > 1 ? 's' : ''} couldn't be confirmed — the score is held to a ${Math.round(lowDataWarning.capAt * 100)}% confidence cap until they're in.`,
     });
   }
@@ -120,7 +120,7 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
   }
 
   if (calibrationLimitationReason) {
-    caveats.push({ icon: Info, color: '#f59e0b', text: calibrationLimitationReason });
+    caveats.push({ icon: Info, color: 'var(--color-amber500-text)', text: calibrationLimitationReason });
   }
 
   const severe = hardFailures.length > 0 || freshnessTier === 'heuristic';

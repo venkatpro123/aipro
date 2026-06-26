@@ -214,7 +214,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                     </span>
                     {m.isSafetyReached && (
                       <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded"
-                        style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}>
+                        style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald500-text)', border: '1px solid rgba(16,185,129,0.30)' }}>
                         <CheckCircle2 className="w-2.5 h-2.5" />MODERATE
                       </span>
                     )}
@@ -237,9 +237,9 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 <div className="flex-1 pb-2 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-35)' }}>Wk {totalWeeks}*</span>
-                    <span className="text-[11px] font-black" style={{ color: '#10b981' }}>{SAFE_THRESHOLD}</span>
+                    <span className="text-[11px] font-black" style={{ color: 'var(--color-emerald500-text)' }}>{SAFE_THRESHOLD}</span>
                     <span className="text-[10px] font-black px-1.5 py-0.5 rounded"
-                      style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+                      style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald500-text)', border: '1px solid rgba(16,185,129,0.25)' }}>
                       PROJECTED
                     </span>
                   </div>
@@ -259,9 +259,9 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
           className="mx-3 mb-3 rounded-xl flex items-start gap-2 px-3 py-2"
           style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)' }}
         >
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f97316' }} />
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-orange500-text)' }} />
           <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
-            <span className="font-semibold" style={{ color: '#f97316' }}>Runway alert: </span>
+            <span className="font-semibold" style={{ color: 'var(--color-orange500-text)' }}>Runway alert: </span>
             Your {financialRunwayMonths}mo financial runway may expire before you reach safety (est. {totalWeeks} weeks). Escalate search intensity now.
           </p>
         </div>

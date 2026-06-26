@@ -245,10 +245,10 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
   // the analysis is based on historical baselines rather than live data.
   const freshnessTier = result.unifiedFreshness?.tier;
   const freshnessDisclosure = freshnessTier === 'heuristic'
-    ? { icon: AlertTriangle, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
+    ? { icon: AlertTriangle, color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
         text: 'We don\'t have current data for this company yet — this is based on general industry trends.' }
     : freshnessTier === 'stale'
-    ? { icon: Clock, color: '#94a3b8', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)',
+    ? { icon: Clock, color: 'var(--color-slate400-text)', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)',
         text: 'We have some current data, but not all of it.' }
     : null;
 
@@ -329,7 +329,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ background: 'rgba(0,212,224,0.10)' }}
               >
-                <Building2 className="w-3 h-3" style={{ color: '#22d3ee' }} />
+                <Building2 className="w-3 h-3" style={{ color: 'var(--color-cyan-text)' }} />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
@@ -350,7 +350,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ background: 'rgba(139,92,246,0.12)' }}
               >
-                <Briefcase className="w-3 h-3" style={{ color: '#a78bfa' }} />
+                <Briefcase className="w-3 h-3" style={{ color: 'var(--color-violet-text)' }} />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
@@ -371,7 +371,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ background: 'rgba(16,185,129,0.10)' }}
               >
-                <Hash className="w-3 h-3" style={{ color: '#10b981' }} />
+                <Hash className="w-3 h-3" style={{ color: 'var(--color-emerald500-text)' }} />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
@@ -384,7 +384,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                   {identity.headcountSource === 'live' && (
                     <span
                       className="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                      style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}
+                      style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald500-text)', border: '1px solid rgba(16,185,129,0.25)' }}
                     >
                       LIVE
                     </span>

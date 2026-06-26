@@ -61,15 +61,15 @@ function computeVerdict(result: HybridResult): VerdictMeta {
   else if (glassdoorTrend === 'falling')  { score += 6;  reasons.push('Glassdoor softening'); }
 
   if (score === 0 && !warnActive && layoffRounds === 0 && !headcountDelta && !hiringTrend) {
-    return { label: 'Awaiting Data', color: '#64748b', rationale: 'Workforce signals not yet available — no layoff history or headcount changes surfaced for this company.', ring: 0 };
+    return { label: 'Awaiting Data', color: 'var(--color-slate500-text)', rationale: 'Workforce signals not yet available — no layoff history or headcount changes surfaced for this company.', ring: 0 };
   }
 
   // The clamp keeps the ring readable; the verdict label expands the meaning.
   const ring = Math.min(100, score);
-  if (score >= 60)  return { label: 'Critical',    color: '#dc2626', rationale: reasons.join(' · ') || 'Multiple distress signals stacked.', ring };
-  if (score >= 35)  return { label: 'Distressed',  color: '#f97316', rationale: reasons.join(' · ') || 'Several softening signals.', ring };
-  if (score >= 15)  return { label: 'Softening',   color: '#f59e0b', rationale: reasons.join(' · ') || 'Early-warning signals only.', ring };
-  return              { label: 'Stable',      color: '#10b981', rationale: reasons.length ? reasons.join(' · ') : 'No distress signals detected.', ring };
+  if (score >= 60)  return { label: 'Critical',    color: 'var(--color-red600-text)', rationale: reasons.join(' · ') || 'Multiple distress signals stacked.', ring };
+  if (score >= 35)  return { label: 'Distressed',  color: 'var(--color-orange500-text)', rationale: reasons.join(' · ') || 'Several softening signals.', ring };
+  if (score >= 15)  return { label: 'Softening',   color: 'var(--color-amber500-text)', rationale: reasons.join(' · ') || 'Early-warning signals only.', ring };
+  return              { label: 'Stable',      color: 'var(--color-emerald500-text)', rationale: reasons.length ? reasons.join(' · ') : 'No distress signals detected.', ring };
 }
 
 // ── Inline mini-chip ─────────────────────────────────────────────────────────
