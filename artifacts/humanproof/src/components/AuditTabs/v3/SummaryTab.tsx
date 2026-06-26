@@ -990,6 +990,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       </ScrollReveal>
 
+      {/* ── Phase 12: Trust System — personal modifier transparency card */}
+      {personalModifierPresent && r.personalRiskModifier && (
+        <ScrollReveal delay={0.03}>
+          <PersonalRiskModifierPanel modifier={r.personalRiskModifier} />
+        </ScrollReveal>
+      )}
+
       {/* ── Phase 9/18: Achievement Gallery — Career Title ladder + badges */}
       <ScrollReveal delay={0.04}><AchievementGallery /></ScrollReveal>
 
