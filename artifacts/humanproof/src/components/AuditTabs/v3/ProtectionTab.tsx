@@ -16,6 +16,9 @@ import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 import { VisaRiskPanel } from '../common/VisaRiskPanel';
 import CareerConfidencePanel from '../common/CareerConfidencePanel';
 import { CareerHealthDashboard } from '../common/CareerHealthDashboard';
+import SkillFusionPanel from '../common/SkillFusionPanel';
+import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
+import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
 
 // Fallback intel for roles with no seeded data — mirrors the same fallback
 // previously used by the now-retired CareerSkillsTab. Only the `skills` field
@@ -128,6 +131,19 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
 
       {skillGap      && <ScrollReveal><SkillGapIntelligencePanel skillGapIntelligence={skillGap} /></ScrollReveal>}
       {skillPortfolio && <ScrollReveal><SkillPortfolioPanel portfolio={skillPortfolio} /></ScrollReveal>}
+
+      {/* Skill Fusion — AI+human skill combination analysis */}
+      {r.skillFusion && (
+        <ScrollReveal><SkillFusionPanel fusion={r.skillFusion} /></ScrollReveal>
+      )}
+
+      {/* Tech Stack Obsolescence — risk assessment for declared tech skills */}
+      {r.techStackObsolescence && (
+        <ScrollReveal><TechObsolescencePanel techStackObsolescence={r.techStackObsolescence} /></ScrollReveal>
+      )}
+
+      {/* Role Market Demand — supply/demand analysis for user's role */}
+      <ScrollReveal><RoleMarketDemandPanel roleMarketDemand={r.roleMarketDemand} /></ScrollReveal>
       {intel && <ScrollReveal><AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} /></ScrollReveal>}
       {/* Skill dependency graph — derived from safe/at-risk skills */}
       {(() => {
