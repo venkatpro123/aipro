@@ -95,7 +95,7 @@ const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => 
       </span>
       <span
         className="px-2 py-0.5 rounded text-[10px] font-black"
-        style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8', border: '1px solid rgba(148,163,184,0.28)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}
+        style={{ background: 'rgba(148,163,184,0.10)', color: 'var(--color-slate400-text)', border: '1px solid rgba(148,163,184,0.28)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em' }}
       >
         NO LIVE DATA
       </span>
@@ -105,7 +105,7 @@ const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => 
         className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
         style={{ background: 'rgba(148,163,184,0.08)', border: '1px solid rgba(148,163,184,0.20)' }}
       >
-        <Database className="w-3.5 h-3.5" style={{ color: '#94a3b8' }} />
+        <Database className="w-3.5 h-3.5" style={{ color: 'var(--color-slate400-text)' }} />
       </div>
       <div className="flex-1">
         <p className="text-[12px] font-semibold mb-1.5" style={{ color: 'var(--alpha-text-70)' }}>
@@ -334,7 +334,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
                   style={{
                     fontSize: '8px', fontFamily: 'var(--font-mono)', fontWeight: 700,
                     padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.06em',
-                    background: 'rgba(107,114,128,0.10)', color: '#9ca3af',
+                    background: 'rgba(107,114,128,0.10)', color: 'var(--color-gray400-text)',
                     border: '1px solid rgba(107,114,128,0.22)', cursor: 'help',
                   }}
                 >

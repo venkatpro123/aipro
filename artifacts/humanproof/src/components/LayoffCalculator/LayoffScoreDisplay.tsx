@@ -1035,7 +1035,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             padding: "10px 14px",
             marginBottom: "20px",
             fontSize: "0.82rem",
-            color: "#93c5fd",
+            color: 'var(--color-blue300-text)',
             display: "flex",
             alignItems: "center",
             gap: "8px",

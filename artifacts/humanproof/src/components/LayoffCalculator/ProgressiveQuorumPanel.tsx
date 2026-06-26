@@ -269,7 +269,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
             <div style={{ fontSize: '10px', color: 'var(--alpha-text-35)', lineHeight: '1.6' }}>
               No public financial disclosures available.
               {cd && !cd.isPublic && (
-                <span style={{ display: 'block', marginTop: '4px', color: '#94a3b8' }}>
+                <span style={{ display: 'block', marginTop: '4px', color: 'var(--color-slate400-text)' }}>
                   Private company — L1 scored at neutral baseline.
                 </span>
               )}
@@ -320,7 +320,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
           {layoff === 'unavailable' && (
             <div style={{ fontSize: '10px', color: 'var(--alpha-text-35)', lineHeight: '1.6' }}>
               No layoff history data available for this company.
-              <span style={{ display: 'block', marginTop: '4px', color: '#94a3b8' }}>
+              <span style={{ display: 'block', marginTop: '4px', color: 'var(--color-slate400-text)' }}>
                 L2 scored at neutral baseline.
               </span>
             </div>

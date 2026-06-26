@@ -904,7 +904,7 @@ export default function PredictionLedgerPage() {
                       </span>
                       <span style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>{pred.region}</span>
                       {pred.isRetroactive && (
-                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(107,114,128,0.15)', color: '#9ca3af', border: '1px solid rgba(107,114,128,0.3)' }}>
+                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(107,114,128,0.15)', color: 'var(--color-gray400-text)', border: '1px solid rgba(107,114,128,0.3)' }}>
                           RETROACTIVE
                         </span>
                       )}
@@ -1014,7 +1014,7 @@ export default function PredictionLedgerPage() {
 
                 {/* Retroactive disclaimer banner */}
                 {pred.isRetroactive && (
-                  <div style={{ padding: '8px 18px', background: 'rgba(107,114,128,0.06)', borderTop: '1px solid var(--border)', fontSize: '0.7rem', color: '#9ca3af' }}>
+                  <div style={{ padding: '8px 18px', background: 'rgba(107,114,128,0.06)', borderTop: '1px solid var(--border)', fontSize: '0.7rem', color: 'var(--color-gray400-text)' }}>
                     <span style={{ fontStyle: 'italic' }}>
                       ⚠ Retroactive calibration entry — NOT counted in accuracy rate.
                     </span>

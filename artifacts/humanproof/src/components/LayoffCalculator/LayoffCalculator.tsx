@@ -2031,7 +2031,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       {revealActive && state.scoreResult && (
         <AuditRevealScreen
           score={(state.scoreResult as any).total ?? 0}
-          tier={(state.scoreResult as any).tier ?? { label: 'Unknown', color: '#94a3b8' }}
+          tier={(state.scoreResult as any).tier ?? { label: 'Unknown', color: 'var(--color-slate400-text)' }}
           companyName={state.companyName ?? 'Your Company'}
           liveSignalCount={(state.scoreResult as any).signalQuality?.liveSignals ?? 0}
           confidencePercent={(state.scoreResult as any).confidencePercent ?? 0}

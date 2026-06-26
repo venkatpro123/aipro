@@ -1059,7 +1059,7 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: strin
   Critical: { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.20)',  label: 'CRITICAL' },
   High:     { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.06)', border: 'rgba(249,115,22,0.18)', label: 'HIGH' },
   Medium:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.05)', border: 'rgba(245,158,11,0.16)', label: 'MEDIUM' },
-  Low:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.04)',border: 'rgba(148,163,184,0.14)',label: 'LOW' },
+  Low:      { color: 'var(--color-slate400-text)', bg: 'rgba(148,163,184,0.04)',border: 'rgba(148,163,184,0.14)',label: 'LOW' },
 };
 
 // Phase-based visual mapping — left border class + time horizon labels

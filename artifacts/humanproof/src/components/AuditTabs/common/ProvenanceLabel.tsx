@@ -60,7 +60,7 @@ const CONFIG: Record<ProvenanceKind, {
   },
   modeled: {
     label: 'MODELED',
-    color: '#60a5fa',
+    color: 'var(--color-blue400-text)',
     bg: 'rgba(96,165,250,0.10)',
     border: 'rgba(96,165,250,0.25)',
     title: 'Computed by HumanProof\'s scoring formula from measured inputs. The model has been calibrated against historical outcomes.',

@@ -268,7 +268,7 @@ const CityCard: React.FC<{
         )}
         {opp.roleData.remoteAdoptionRate > 0.60 && (
           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(148,163,184,0.10)', color: '#94a3b8' }}>
+            style={{ background: 'rgba(148,163,184,0.10)', color: 'var(--color-slate400-text)' }}>
             {Math.round(opp.roleData.remoteAdoptionRate * 100)}% remote
           </span>
         )}
@@ -482,7 +482,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
               <p className="text-[10px] font-black" style={{ color: 'var(--color-emerald-text)' }}>
                 REMOTE-FIRST ADVANTAGE
               </p>
-              <span className="text-[9px] px-1 rounded" style={{ background: 'rgba(148,163,184,0.14)', color: '#94a3b8' }}>
+              <span className="text-[9px] px-1 rounded" style={{ background: 'rgba(148,163,184,0.14)', color: 'var(--color-slate400-text)' }}>
                 ESTIMATED
               </span>
             </div>
@@ -647,7 +647,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                         YOUR MARKET — {cityMarketIntelligence.cityName.toUpperCase()}
                       </p>
                       <span className="text-[9px] px-1 rounded"
-                        style={{ background: 'rgba(148,163,184,0.14)', color: '#94a3b8' }}>
+                        style={{ background: 'rgba(148,163,184,0.14)', color: 'var(--color-slate400-text)' }}>
                         ESTIMATED
                       </span>
                     </div>

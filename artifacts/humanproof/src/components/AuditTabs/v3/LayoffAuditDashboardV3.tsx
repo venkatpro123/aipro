@@ -889,7 +889,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         {revealActive && (
           <AuditRevealScreen
             score={result.total}
-            tier={result.tier ?? { label: 'Unknown', color: '#94a3b8' }}
+            tier={result.tier ?? { label: 'Unknown', color: 'var(--color-slate400-text)' }}
             companyName={result.companyName ?? 'Your Company'}
             liveSignalCount={result.signalQuality?.liveSignals ?? 0}
             confidencePercent={result.confidencePercent ?? 0}

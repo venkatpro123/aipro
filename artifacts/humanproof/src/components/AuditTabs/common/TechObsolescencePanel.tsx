@@ -30,7 +30,7 @@ interface Props {
 
 const TREND_CONFIG = {
   rising:    { color: 'var(--color-emerald-text)', icon: '↑', label: 'Growing'   },
-  stable:    { color: '#94a3b8', icon: '→', label: 'Stable'    },
+  stable:    { color: 'var(--color-slate400-text)', icon: '→', label: 'Stable'    },
   declining: { color: 'var(--color-orange-text)', icon: '↓', label: 'Declining' },
   collapsing:{ color: '#dc2626', icon: '↓↓','label': 'Collapsing' },
 };

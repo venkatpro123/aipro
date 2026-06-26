@@ -37,7 +37,7 @@ export const RecommendationPanel: React.FC<Props> = ({ recommendations }) => {
                 {rec.priority} Priority
               </span>
             </div>
-            <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>
+            <p style={{ color: 'var(--color-slate400-text)', margin: 0, fontSize: '0.95rem', lineHeight: 1.5 }}>
               {rec.description}
             </p>
             <div style={{ marginTop: '12px', fontSize: '0.8rem', color: '#64748b' }}>

@@ -37,7 +37,7 @@ function TrendBadge({ trend }: { trend: SkillCombo['demandTrend'] }) {
   const config: Record<string, { label: string; color: string }> = {
     exploding:  { label: '↑↑ Exploding', color: 'var(--color-emerald-text)' },
     growing:    { label: '↑ Growing',    color: '#3b82f6' },
-    stable:     { label: '→ Stable',     color: '#60a5fa' },
+    stable:     { label: '→ Stable',     color: 'var(--color-blue400-text)' },
     saturating: { label: '↓ Saturating', color: 'var(--color-amber500-text)' },
   };
   const c = config[trend] ?? config.stable;

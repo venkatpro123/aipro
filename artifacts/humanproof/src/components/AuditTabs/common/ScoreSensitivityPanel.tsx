@@ -41,7 +41,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
   lever, currentScore, rank,
 }) => {
   const [open, setOpen] = useState(rank === 0); // first row open by default
-  const feasCfg = FEASIBILITY_CONFIG[lever.feasibility] ?? { label: lever.actionTimeframe, color: '#94a3b8' };
+  const feasCfg = FEASIBILITY_CONFIG[lever.feasibility] ?? { label: lever.actionTimeframe, color: 'var(--color-slate400-text)' };
   const confColor = CONFIDENCE_COLOR[lever.confidenceInEstimate] ?? '#94a3b8';
   const projected = fmt(currentScore - lever.scoreDropIfImproved);
 

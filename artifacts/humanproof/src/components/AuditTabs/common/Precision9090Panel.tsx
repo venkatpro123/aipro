@@ -375,7 +375,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ background: 'rgba(96,165,250,0.15)' }}>
-            <Calendar className="w-4 h-4" style={{ color: '#60a5fa' }} />
+            <Calendar className="w-4 h-4" style={{ color: 'var(--color-blue400-text)' }} />
           </div>
           <div>
             <div className="text-sm font-semibold text-[var(--alpha-text-85)]">{plan.planTitle}</div>
@@ -436,7 +436,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
             onClick={() => setActiveTab(tab.key)}
             className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap"
             style={activeTab === tab.key
-              ? { background: 'rgba(96,165,250,0.20)', color: '#60a5fa' }
+              ? { background: 'rgba(96,165,250,0.20)', color: 'var(--color-blue400-text)' }
               : { color: 'var(--alpha-text-45)' }}
           >
             {tab.label}
