@@ -87,13 +87,13 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
 
         <form onSubmit={handleSubmit}>
           <Row>
-            <Field label="Full Name"><input type="text" placeholder="John Doe" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} style={inputStyle} /></Field>
-            <Field label="Email"><input type="email" placeholder="john@company.com" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} style={inputStyle} /></Field>
+            <Field label="Full Name *"><input type="text" placeholder="John Doe" required value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} style={inputStyle} autoComplete="name" /></Field>
+            <Field label="Email *"><input type="email" placeholder="john@company.com" required value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} style={inputStyle} autoComplete="email" /></Field>
           </Row>
 
           <Row>
-            <Field label="Company"><input type="text" placeholder="Acme Corp" value={formData.company || ''} onChange={(e) => setFormData({...formData, company: e.target.value})} style={inputStyle} /></Field>
-            <Field label="Job Role"><input type="text" placeholder="Head of HR" value={formData.role || ''} onChange={(e) => setFormData({...formData, role: e.target.value})} style={inputStyle} /></Field>
+            <Field label="Company *"><input type="text" placeholder="Acme Corp" required value={formData.company || ''} onChange={(e) => setFormData({...formData, company: e.target.value})} style={inputStyle} autoComplete="organization" /></Field>
+            <Field label="Job Role"><input type="text" placeholder="Head of HR" value={formData.role || ''} onChange={(e) => setFormData({...formData, role: e.target.value})} style={inputStyle} autoComplete="organization-title" /></Field>
           </Row>
 
           <Row>
