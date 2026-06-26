@@ -1010,6 +1010,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
       {/* ── Good News (inline when available) ────────────────────────────── */}
       {opportunityNode && <ScrollReveal delay={0.10}>{opportunityNode}</ScrollReveal>}
+
+      {/* ── Phase 12: Inaction Cost — "what happens if I do nothing" (final card) */}
+      {hasInactionConsequence && (
+        <ScrollReveal delay={0.12}>
+          <InactionCostCard consequence={inactionConsequenceRaw} />
+        </ScrollReveal>
+      )}
     </div>
   );
 };
