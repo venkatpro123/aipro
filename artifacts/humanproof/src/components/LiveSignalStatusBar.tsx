@@ -18,7 +18,7 @@ export const LiveSignalStatusBar: React.FC<Props> = ({ status }) => {
         return 'bg-red-500/10 border-red-500/20 text-red-400';
       case 'gray':
       default:
-        return 'bg-neutral-800/50 border-neutral-700 text-neutral-400';
+        return 'bg-[var(--alpha-bg-06)] border-[var(--alpha-bg-10)] text-[var(--alpha-text-40)]';
     }
   };
 
@@ -69,7 +69,7 @@ export const LiveSignalStatusBar: React.FC<Props> = ({ status }) => {
           </div>
         )}
         
-        <div className="flex items-center bg-black/20 rounded-md px-2.5 py-1 border border-white/5 whitespace-nowrap">
+        <div className="flex items-center rounded-md px-2.5 py-1 whitespace-nowrap" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
           <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: `var(--color-${status.statusColor}-500, currentColor)` }} />
           <span className="text-xs font-semibold">{status.confidenceNote}</span>
         </div>
