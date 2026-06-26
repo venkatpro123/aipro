@@ -452,6 +452,5 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 8,
   color: 'var(--text)',
   fontSize: '0.9rem',
-  outline: 'none',
   fontFamily: 'inherit',
 };

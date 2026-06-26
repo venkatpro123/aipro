@@ -691,7 +691,6 @@ export default function SkillRiskCalculator({
               color: "var(--text)",
               fontFamily: "var(--body)",
               fontSize: "1rem",
-              outline: "none",
               transition: "border 0.2s",
             }}
           />

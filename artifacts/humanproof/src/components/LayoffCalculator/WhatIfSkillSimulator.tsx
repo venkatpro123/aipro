@@ -161,7 +161,6 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                 color: "#e5e7eb",
                 fontSize: "0.9rem",
                 cursor: "pointer",
-                outline: "none",
               }}
             >
               <option value="" style={{ background: "var(--bg-card)" }}>

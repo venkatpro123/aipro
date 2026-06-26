@@ -197,7 +197,6 @@ function TeamSwitcher({
             color: 'var(--text)',
             padding: '8px 12px',
             fontSize: '0.9rem',
-            outline: 'none',
           }}
         />
         <button className="btn-teal" onClick={onCreate} style={{ padding: '8px 16px', fontSize: '0.88rem' }}>
@@ -465,5 +464,4 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 8,
   color: 'var(--text)',
   fontSize: '0.88rem',
-  outline: 'none',
 };
