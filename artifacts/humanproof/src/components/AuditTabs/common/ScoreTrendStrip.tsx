@@ -31,7 +31,7 @@ export interface ScoreTrendStripProps {
 const DIRECTION_CONFIG = {
   accelerating_risk: {
     Icon: TrendingUp,
-    color: '#dc2626',
+    color: 'var(--color-red600-text)',
     bgColor: 'rgba(220,38,38,0.08)',
     borderColor: 'rgba(220,38,38,0.20)',
     label: 'Risk accelerating',

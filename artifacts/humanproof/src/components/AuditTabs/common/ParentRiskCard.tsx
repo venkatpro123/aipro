@@ -37,7 +37,7 @@ export interface ParentRiskCardProps {
 }
 
 const RISK_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  high:       { color: '#dc2626', bg: 'rgba(220,38,38,0.07)',  border: 'rgba(220,38,38,0.22)',  label: 'High propagation risk' },
+  high:       { color: 'var(--color-red600-text)', bg: 'rgba(220,38,38,0.07)',  border: 'rgba(220,38,38,0.22)',  label: 'High propagation risk' },
   elevated:   { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.07)', border: 'rgba(249,115,22,0.22)', label: 'Elevated propagation risk' },
   moderate:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.20)', label: 'Moderate propagation risk' },
   low:        { color: 'var(--color-cyan-text)', bg: 'rgba(34,211,238,0.05)', border: 'rgba(34,211,238,0.18)', label: 'Low propagation risk' },

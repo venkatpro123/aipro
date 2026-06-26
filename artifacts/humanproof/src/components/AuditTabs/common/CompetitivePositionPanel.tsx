@@ -44,14 +44,14 @@ const DIMENSION_ICONS: Record<string, React.ReactNode> = {
 
 const STATUS_CONFIG: Record<CompetitiveDimension['status'], { color: string; label: string }> = {
   ahead:        { color: 'var(--color-emerald-text)', label: 'Ahead'         },
-  competitive:  { color: '#3b82f6', label: 'Competitive'   },
+  competitive:  { color: 'var(--color-blue500-text)', label: 'Competitive'   },
   gap:          { color: 'var(--color-amber500-text)', label: 'Gap'           },
   critical_gap: { color: 'var(--color-red-text)', label: 'Critical Gap'  },
 };
 
 const CATEGORY_CONFIG: Record<string, { color: string; label: string }> = {
   top_tier:     { color: 'var(--color-emerald-text)', label: 'Top Tier'     },
-  competitive:  { color: '#3b82f6', label: 'Competitive'  },
+  competitive:  { color: 'var(--color-blue500-text)', label: 'Competitive'  },
   average:      { color: 'var(--color-amber500-text)', label: 'Average'      },
   below_average:{ color: 'var(--color-orange-text)', label: 'Below Average' },
   critical:     { color: 'var(--color-red-text)', label: 'Critical'     },

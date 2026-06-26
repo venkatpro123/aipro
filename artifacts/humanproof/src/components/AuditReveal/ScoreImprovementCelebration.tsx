@@ -97,7 +97,7 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
             className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: 'rgba(16,185,129,0.20)', border: '1px solid rgba(16,185,129,0.40)' }}
           >
-            <TrendingDown className="w-5 h-5" style={{ color: '#10b981' }} />
+            <TrendingDown className="w-5 h-5" style={{ color: 'var(--color-emerald500-text)' }} />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -126,9 +126,9 @@ export const ScoreImprovementCelebration: React.FC<Props> = ({
             </p>
             <p className="text-[8px]" style={{ color: 'var(--alpha-text-25)' }}>before</p>
           </div>
-          <ArrowRight className="w-4 h-4" style={{ color: '#10b981' }} />
+          <ArrowRight className="w-4 h-4" style={{ color: 'var(--color-emerald500-text)' }} />
           <div className="text-center">
-            <p className="text-[28px] font-black" style={{ color: '#10b981' }}>
+            <p className="text-[28px] font-black" style={{ color: 'var(--color-emerald500-text)' }}>
               {currentScore}
             </p>
             <p className="text-[8px]" style={{ color: 'rgba(16,185,129,0.70)' }}>now</p>

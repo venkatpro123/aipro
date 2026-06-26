@@ -29,7 +29,7 @@ function UrgencyBadge({ level }: { level: PrecisionSurvivalResult['urgencyLevel'
     CRITICAL: { label: 'CRITICAL',  color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)' },
     HIGH:     { label: 'HIGH RISK', color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
     ELEVATED: { label: 'ELEVATED',  color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
-    MODERATE: { label: 'MODERATE',  color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
+    MODERATE: { label: 'MODERATE',  color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.10)' },
     LOW:      { label: 'LOW RISK',  color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.10)' },
   };
   const c = config[level] ?? config.MODERATE;

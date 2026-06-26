@@ -14,7 +14,7 @@ const EARNINGS_CONFIG: Record<EarningsSurpriseCategory, { label: string; color: 
   massive_miss:    { label: 'Massive Miss',    color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)'   },
   significant_miss:{ label: 'Significant Miss',color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
   slight_miss:     { label: 'Slight Miss',     color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.12)' },
-  in_line:         { label: 'In Line',         color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
+  in_line:         { label: 'In Line',         color: 'var(--color-gray500-text)', bg: 'rgba(107,114,128,0.12)' },
   slight_beat:     { label: 'Slight Beat',     color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.12)' },
   beat:            { label: 'Beat',            color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.14)' },
 };
@@ -25,12 +25,12 @@ const ANALYST_CONFIG: Record<AnalystConsensus, { label: string; color: string; b
   hold:        { label: 'Hold',        color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)'  },
   underperform:{ label: 'Underperform',color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
   sell:        { label: 'Sell',        color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)'   },
-  not_rated:   { label: 'Not Rated',   color: '#6b7280', bg: 'rgba(107,114,128,0.10)'},
+  not_rated:   { label: 'Not Rated',   color: 'var(--color-gray500-text)', bg: 'rgba(107,114,128,0.10)'},
 };
 
 const COHORT_CONFIG = {
   DISTRESS:   { label: 'DISTRESS',   color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.28)'   },
-  EFFICIENCY: { label: 'EFFICIENCY', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.24)'  },
+  EFFICIENCY: { label: 'EFFICIENCY', color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.24)'  },
   WAVE:       { label: 'WAVE',       color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.24)'  },
 };
 
@@ -107,7 +107,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
                 ? <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />
                 : financialSignals.priceTargetChangePct < 0
                   ? <TrendingDown className="w-3 h-3" style={{ color: 'var(--color-red-text)' }} />
-                  : <Minus className="w-3 h-3" style={{ color: '#6b7280' }} />
+                  : <Minus className="w-3 h-3" style={{ color: 'var(--color-gray500-text)' }} />
               }
               <span className="text-[11px] font-bold" style={{
                 color: financialSignals.priceTargetChangePct > 0 ? 'var(--color-emerald-text)'

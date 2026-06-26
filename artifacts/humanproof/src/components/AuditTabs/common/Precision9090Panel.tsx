@@ -41,7 +41,7 @@ const URGENCY_CONFIG: Record<string, { label: string; color: string; bg: string 
   crisis:     { label: 'CRISIS',     color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)' },
   elevated:   { label: 'ELEVATED',   color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
   standard:   { label: 'STANDARD',   color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
-  monitoring: { label: 'MONITORING', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
+  monitoring: { label: 'MONITORING', color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.10)' },
 };
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {

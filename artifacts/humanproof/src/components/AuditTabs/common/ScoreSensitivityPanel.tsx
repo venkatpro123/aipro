@@ -189,7 +189,7 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
           className="rounded-xl p-3"
           style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.18)' }}
         >
-          <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: '#8b5cf6' }}>
+          <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--color-violet500-text)' }}>
             SYNERGY COMBOS
           </p>
           <div className="space-y-2">
@@ -199,7 +199,7 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
                   <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-70)' }}>
                     {combo.levers[0]} + {combo.levers[1]}
                   </span>
-                  <span className="text-[10px] font-black" style={{ color: '#8b5cf6' }}>
+                  <span className="text-[10px] font-black" style={{ color: 'var(--color-violet500-text)' }}>
                     −{combo.combinedDrop} pts
                     {combo.synergyBonus > 0 && (
                       <span className="text-[10px] ml-1" style={{ color: 'rgba(139,92,246,0.65)' }}>

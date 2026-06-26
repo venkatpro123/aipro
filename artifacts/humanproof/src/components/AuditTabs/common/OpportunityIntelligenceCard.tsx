@@ -167,13 +167,13 @@ export const OpportunityIntelligenceCard: React.FC<Props> = (props) => {
         className="flex items-center gap-2 px-4 pt-3 pb-2"
         style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
-        <Star className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
+        <Star className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-emerald500-text)' }} />
         <p className="text-[10px] font-black tracking-[0.14em] flex-1" style={{ color: 'var(--alpha-text-35)' }}>
           GOOD NEWS
         </p>
         <span
           className="text-[10px] font-black px-2 py-0.5 rounded"
-          style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}
+          style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald500-text)', border: '1px solid rgba(16,185,129,0.25)' }}
         >
           ACT NOW
         </span>

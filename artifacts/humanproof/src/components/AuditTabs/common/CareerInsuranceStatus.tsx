@@ -59,7 +59,7 @@ const STATUS_CONFIG = {
   STRONG:   { color: 'var(--color-emerald-text)', label: 'Strong',   barAlpha: '0.85' },
   ADEQUATE: { color: 'var(--color-amber500-text)', label: 'Adequate', barAlpha: '0.70' },
   WEAK:     { color: 'var(--color-orange-text)', label: 'Weak',     barAlpha: '0.70' },
-  CRITICAL: { color: '#dc2626', label: 'Critical', barAlpha: '0.85' },
+  CRITICAL: { color: 'var(--color-red600-text)', label: 'Critical', barAlpha: '0.85' },
 };
 
 function pillarIcon(name: string): string {
@@ -74,7 +74,7 @@ function insuranceGrade(score: number): { label: string; color: string; sub: str
   if (score >= 65) return { label: 'MOSTLY INSURED',  color: 'var(--color-cyan-text)', sub: 'Solid foundation — close the gaps below' };
   if (score >= 45) return { label: 'PARTIAL',         color: 'var(--color-amber500-text)', sub: 'Moderate protection — 2-3 pillars need work' };
   if (score >= 25) return { label: 'UNDERINSURED',    color: 'var(--color-orange-text)', sub: 'Significant gaps — start with the weakest pillar' };
-  return          { label: 'UNPROTECTED',    color: '#dc2626', sub: 'Immediate resilience building required' };
+  return          { label: 'UNPROTECTED',    color: 'var(--color-red600-text)', sub: 'Immediate resilience building required' };
 }
 
 // ── Pillar Row ────────────────────────────────────────────────────────────────

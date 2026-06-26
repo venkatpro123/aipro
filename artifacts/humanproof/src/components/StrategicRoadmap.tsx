@@ -305,7 +305,7 @@ const PhaseCard = ({
                   {action.tool && (
                     <div style={{ marginTop: 6 }}>
                       <span style={{
-                        background: 'rgba(139,92,246,0.12)', color: '#8b5cf6',
+                        background: 'rgba(139,92,246,0.12)', color: 'var(--color-violet500-text)',
                         borderRadius: 4, padding: '1px 7px', fontSize: '0.68rem', fontWeight: 700,
                         fontFamily: 'var(--font-mono, monospace)',
                       }}>🔧 {action.tool}</span>
@@ -426,12 +426,12 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
                   {
                     step: 'AI Skill Audit (Week 1)',
                     desc: 'List every task you perform. Mark each as: Automatable, Augmented, or Human-only. This is your personal risk map.',
-                    color: '#3b82f6',
+                    color: 'var(--color-blue500-text)',
                   },
                   {
                     step: 'Build One AI-Native Skill (Month 1-2)',
                     desc: 'Pick the single AI tool most relevant to your domain. Commit 30 mins/day until you are measurably in the top 10% of your team in that specific tool.',
-                    color: '#8b5cf6',
+                    color: 'var(--color-violet500-text)',
                   },
                   {
                     step: 'Pivot Positioning (Month 3-6)',

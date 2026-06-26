@@ -20,7 +20,7 @@ const TIER_COLORS: Record<string, { text: string; bg: string; border: string }> 
 
 const TREND_ICON = {
   SURGING:  <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />,
-  GROWING:  <TrendingUp className="w-3 h-3" style={{ color: '#3b82f6' }} />,
+  GROWING:  <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-blue500-text)' }} />,
   STABLE:   <Zap className="w-3 h-3" style={{ color: 'var(--color-amber500-text)' }} />,
   DECLINING: <TrendingDown className="w-3 h-3" style={{ color: 'var(--color-orange-text)' }} />,
   OBSOLETE:  <AlertCircle className="w-3 h-3" style={{ color: 'var(--color-red-text)' }} />,

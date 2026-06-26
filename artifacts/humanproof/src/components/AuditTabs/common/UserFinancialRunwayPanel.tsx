@@ -17,7 +17,7 @@ const SITUATION_CONFIG: Record<Exclude<RunwaySituation, 'unknown'>, {
   critical:    { label: 'CRITICAL',    color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.09)',    border: 'rgba(239,68,68,0.24)'    },
   tight:       { label: 'TIGHT',       color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)',   border: 'rgba(249,115,22,0.22)'   },
   moderate:    { label: 'MODERATE',    color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.22)'   },
-  comfortable: { label: 'COMFORTABLE', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)',   border: 'rgba(59,130,246,0.22)'   },
+  comfortable: { label: 'COMFORTABLE', color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.08)',   border: 'rgba(59,130,246,0.22)'   },
   secure:      { label: 'SECURE',      color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.07)',   border: 'rgba(16,185,129,0.20)'   },
 };
 

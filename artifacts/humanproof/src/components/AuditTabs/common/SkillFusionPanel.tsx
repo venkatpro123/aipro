@@ -21,7 +21,7 @@ function ScarcityBadge({ level }: { level: SkillCombo['candidateScarcity'] }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
     extreme:     { label: 'Extreme Scarcity', color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.10)'  },
     high:        { label: 'High Demand',      color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
-    moderate:    { label: 'Moderate',         color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
+    moderate:    { label: 'Moderate',         color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.10)' },
     competitive: { label: 'Competitive',      color: 'var(--alpha-text-35)', bg: 'var(--alpha-bg-06)' },
   };
   const c = config[level] ?? config.competitive;
@@ -36,7 +36,7 @@ function ScarcityBadge({ level }: { level: SkillCombo['candidateScarcity'] }) {
 function TrendBadge({ trend }: { trend: SkillCombo['demandTrend'] }) {
   const config: Record<string, { label: string; color: string }> = {
     exploding:  { label: '↑↑ Exploding', color: 'var(--color-emerald-text)' },
-    growing:    { label: '↑ Growing',    color: '#3b82f6' },
+    growing:    { label: '↑ Growing',    color: 'var(--color-blue500-text)' },
     stable:     { label: '→ Stable',     color: 'var(--color-blue400-text)' },
     saturating: { label: '↓ Saturating', color: 'var(--color-amber500-text)' },
   };

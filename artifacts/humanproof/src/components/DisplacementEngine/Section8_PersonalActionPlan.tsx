@@ -12,7 +12,7 @@ interface Props {
 const HORIZON_STYLES: Record<string, { color: string; bg: string; border: string; icon: string }> = {
   '30d':              { color: 'var(--color-cyan-text)', bg: 'rgba(34,211,238,0.07)',  border: 'rgba(34,211,238,0.22)',  icon: '◈' },
   '90d':              { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.22)', icon: '◉' },
-  '12mo':             { color: '#8b5cf6', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.22)', icon: '⬡' },
+  '12mo':             { color: 'var(--color-violet500-text)', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.22)', icon: '⬡' },
   'before_threshold': { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.22)',  icon: '⬢' },
 };
 

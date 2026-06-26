@@ -43,7 +43,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
         <div className="flex items-center gap-1.5">
           {maRisk.peOwnershipRisk && (
             <span className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded-full"
-              style={{ background: 'rgba(220,38,38,0.20)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.35)' }}>
+              style={{ background: 'rgba(220,38,38,0.20)', color: 'var(--color-red600-text)', border: '1px solid rgba(220,38,38,0.35)' }}>
               PE-OWNED
             </span>
           )}

@@ -15,7 +15,7 @@ const TIER_CONFIG = {
   HIGH:     { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)'  },
   MODERATE: { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)'  },
   LOW:      { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)'  },
-  NONE:     { color: '#6b7280', bg: 'rgba(107,114,128,0.05)', border: 'rgba(107,114,128,0.14)' },
+  NONE:     { color: 'var(--color-gray500-text)', bg: 'rgba(107,114,128,0.05)', border: 'rgba(107,114,128,0.14)' },
 };
 
 const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelProps> = ({ executiveDeparturePattern }) => {

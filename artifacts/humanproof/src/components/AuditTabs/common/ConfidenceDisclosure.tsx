@@ -108,14 +108,14 @@ export const ConfidenceDisclosure: React.FC<ConfidenceDisclosureProps> = ({
   if (conflictCount > 0) {
     caveats.push({
       icon: AlertTriangle,
-      color: '#f97316',
+      color: 'var(--color-orange500-text)',
       text: `${conflictCount} signal${conflictCount > 1 ? 's' : ''} pointed different directions — we widened the range rather than pick a side.`,
     });
   }
 
   if (hardFailures.length > 0) {
     for (const f of hardFailures) {
-      caveats.push({ icon: AlertTriangle, color: '#dc2626', text: f });
+      caveats.push({ icon: AlertTriangle, color: 'var(--color-red600-text)', text: f });
     }
   }
 

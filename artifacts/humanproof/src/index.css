@@ -8936,6 +8936,14 @@ html.light {
   --color-red-text:      #b91c1c;   /* 5.8:1 on white */
   --color-orange-text:   #9a3412;   /* 5.7:1 on white */
   --color-amber500-text: #92400e;   /* 5.5:1 on white */
+  --color-emerald500-text: #065f46; /* 7.9:1 on white */
+  --color-red600-text:  #991b1b;    /* 7.1:1 on white */
+  --color-red400-text:  #b91c1c;    /* 5.8:1 on white */
+  --color-orange500-text: #9a3412;  /* 5.7:1 on white */
+  --color-violet500-text: #5b21b6;  /* 6.8:1 on white */
+  --color-blue500-text: #1d4ed8;    /* 6.4:1 on white */
+  --color-gray500-text: #374151;    /* gray-700: 10.7:1 on white */
+  --color-red300-text:  #b91c1c;    /* 5.8:1 on white */
 
   /* Accent — deeper teal reads premium + accessible on light */
   --cyan:        #0096aa;

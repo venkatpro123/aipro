@@ -246,7 +246,7 @@ function KeyList({
               onClick={() => onRevoke(key.id)}
               style={{
                 background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)',
-                color: '#fca5a5', padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
+                color: 'var(--color-red300-text)', padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
                 fontSize: '0.78rem',
               }}
             >Revoke</button>

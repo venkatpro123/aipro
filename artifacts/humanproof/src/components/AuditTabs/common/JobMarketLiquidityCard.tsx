@@ -91,7 +91,7 @@ const FRICTION_CONFIG = {
   low:      { label: 'EASY ACCESS',       color: 'var(--color-emerald-text)', desc: 'Strong market — quick transitions possible' },
   moderate: { label: 'MODERATE FRICTION', color: 'var(--color-amber500-text)', desc: 'Typical job search timeline applies'        },
   high:     { label: 'TIGHT MARKET',      color: 'var(--color-orange-text)', desc: 'Longer timeline — start positioning now'   },
-  very_high:{ label: 'VERY TIGHT',        color: '#dc2626', desc: 'Difficult market — hedge with internal moves'},
+  very_high:{ label: 'VERY TIGHT',        color: 'var(--color-red600-text)', desc: 'Difficult market — hedge with internal moves'},
 };
 
 // ── Location-based opportunity model ─────────────────────────────────────────

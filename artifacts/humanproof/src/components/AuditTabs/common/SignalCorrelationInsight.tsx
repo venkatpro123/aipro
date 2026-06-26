@@ -100,7 +100,7 @@ function ResolutionIcon({ resolution }: { resolution: ContradictionRecord['resol
     case 'weight_both_equally':    return <Scale className={cls} style={{ color: 'var(--color-amber500-text)' }} />;
     case 'flagged':
     case 'defer_to_temporal':      return <Zap className={cls} style={{ color: 'var(--color-amber500-text)' }} />;
-    default:                       return <Scale className={cls} style={{ color: '#6b7280' }} />;
+    default:                       return <Scale className={cls} style={{ color: 'var(--color-gray500-text)' }} />;
   }
 }
 

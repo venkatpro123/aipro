@@ -569,8 +569,8 @@ const ALL_PREDICTIONS = [...PREDICTIONS, ...VALIDATED_RETROACTIVE];
 const STATUS_CONFIG: Record<PredictionStatus, { color: string; bg: string; label: string; Icon: typeof CheckCircle }> = {
   confirmed: { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.1)', label: '✓ Confirmed', Icon: CheckCircle },
   pending:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.1)',  label: '⏳ Pending',   Icon: Clock },
-  monitoring:{ color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', label: '👁 Monitoring', Icon: Shield },
-  refuted:   { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', label: '✗ Refuted',  Icon: AlertTriangle },
+  monitoring:{ color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.1)', label: '👁 Monitoring', Icon: Shield },
+  refuted:   { color: 'var(--color-gray500-text)', bg: 'rgba(107,114,128,0.1)', label: '✗ Refuted',  Icon: AlertTriangle },
 };
 
 const STAGE_COLORS: Record<RiskStage, string> = {
@@ -776,7 +776,7 @@ export default function PredictionLedgerPage() {
                 label: 'Pre-event (no timestamp)',
                 count: provCounts.preEventNoTs,
                 pct:   provPct(provCounts.preEventNoTs),
-                color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', icon: '◎',
+                color: 'var(--color-blue500-text)', bg: 'rgba(59,130,246,0.1)', icon: '◎',
                 desc:  'Marked pre-event but signalTimestamp not yet added — needs timestamp to meet the new validation standard',
               }] : []),
               {

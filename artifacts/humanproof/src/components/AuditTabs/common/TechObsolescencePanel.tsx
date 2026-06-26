@@ -32,14 +32,14 @@ const TREND_CONFIG = {
   rising:    { color: 'var(--color-emerald-text)', icon: '↑', label: 'Growing'   },
   stable:    { color: 'var(--color-slate400-text)', icon: '→', label: 'Stable'    },
   declining: { color: 'var(--color-orange-text)', icon: '↓', label: 'Declining' },
-  collapsing:{ color: '#dc2626', icon: '↓↓','label': 'Collapsing' },
+  collapsing:{ color: 'var(--color-red600-text)', icon: '↓↓','label': 'Collapsing' },
 };
 
 const HEALTH_CONFIG = {
   current:  { color: 'var(--color-emerald-text)', label: 'CURRENT STACK',  desc: 'Your tech stack is in good shape' },
   aging:    { color: 'var(--color-amber500-text)', label: 'AGING STACK',    desc: '1–2 technologies need modernization' },
   at_risk:  { color: 'var(--color-orange-text)', label: 'AT RISK',        desc: 'Multiple technologies are declining' },
-  critical: { color: '#dc2626', label: 'CRITICAL',       desc: 'Core tech is becoming obsolete' },
+  critical: { color: 'var(--color-red600-text)', label: 'CRITICAL',       desc: 'Core tech is becoming obsolete' },
 };
 
 export const TechObsolescencePanel: React.FC<Props> = ({ techStackObsolescence }) => {

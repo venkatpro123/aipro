@@ -113,7 +113,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
             onClick={handleClearRequest}
             aria-label="Clear history"
             style={{
-              background: 'none', border: 'none', color: '#6b7280',
+              background: 'none', border: 'none', color: 'var(--color-gray500-text)',
               fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline',
             }}
           >
@@ -169,7 +169,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                     {d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · {entry.companyName}
                   </div>
                   {entry.roleTitle && (
-                    <div style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: '2px' }}>
+                    <div style={{ color: 'var(--color-gray500-text)', fontSize: '0.75rem', marginTop: '2px' }}>
                       {entry.roleTitle} {entry.department ? `(${entry.department})` : ''}
                     </div>
                   )}
@@ -194,7 +194,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                   borderTop: '1px solid var(--alpha-bg-06)',
                   background: 'var(--alpha-bg-04)',
                 }}>
-                  <p style={{ color: '#6b7280', fontSize: '0.75rem', margin: '0 0 8px' }}>
+                  <p style={{ color: 'var(--color-gray500-text)', fontSize: '0.75rem', margin: '0 0 8px' }}>
                     Was this prediction accurate? (helps us improve)
                   </p>
                   <div style={{ display: 'flex', gap: '8px' }}>

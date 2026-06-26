@@ -49,7 +49,7 @@ const CATEGORY_CONFIG = {
   competitive:  { color: 'var(--color-cyan-text)', label: 'COMPETITIVE' },
   average:      { color: 'var(--color-amber500-text)', label: 'AVERAGE' },
   below_average:{ color: 'var(--color-orange-text)', label: 'BELOW AVERAGE' },
-  critical:     { color: '#dc2626', label: 'NEEDS WORK' },
+  critical:     { color: 'var(--color-red600-text)', label: 'NEEDS WORK' },
 };
 
 function percentileInterpretation(p: number): string {

@@ -14,9 +14,9 @@ const URGENCY_CONFIG = (daysUntil: number | null): { label: string; color: strin
   if (daysUntil === null || daysUntil > 60)
     return { label: 'FILED', color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' };
   if (daysUntil <= 0)
-    return { label: 'IMMINENT', color: '#dc2626', bg: 'rgba(220,38,38,0.14)', border: 'rgba(220,38,38,0.36)' };
+    return { label: 'IMMINENT', color: 'var(--color-red600-text)', bg: 'rgba(220,38,38,0.14)', border: 'rgba(220,38,38,0.36)' };
   if (daysUntil <= 14)
-    return { label: 'IMMINENT', color: '#dc2626', bg: 'rgba(220,38,38,0.14)', border: 'rgba(220,38,38,0.36)' };
+    return { label: 'IMMINENT', color: 'var(--color-red600-text)', bg: 'rgba(220,38,38,0.14)', border: 'rgba(220,38,38,0.36)' };
   if (daysUntil <= 30)
     return { label: 'VERY_SOON', color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' };
   return { label: 'UPCOMING', color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' };

@@ -2051,7 +2051,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                       background: '#dc2626', boxShadow: '0 0 8px #dc2626',
                       flexShrink: 0, animation: 'pulse-live 1.8s ease-in-out infinite',
                     }} />
-                    <span className="text-xs font-black tracking-widest uppercase" style={{ color: '#dc2626', fontFamily: 'var(--font-mono)' }}>
+                    <span className="text-xs font-black tracking-widest uppercase" style={{ color: 'var(--color-red600-text)', fontFamily: 'var(--font-mono)' }}>
                       ⚡ PHASE 0 — EMERGENCY
                     </span>
                     <span className="text-[10px] text-muted-foreground ml-1">
