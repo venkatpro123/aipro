@@ -37,6 +37,8 @@ import type { UserProfile } from '../../../services/userProfileService';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePanel';
 import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligencePanel';
+import EmergencyProtocolPanel from '../common/EmergencyProtocolPanel';
+import JobTargetPanel from '../common/JobTargetPanel';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -525,6 +527,13 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         />
       )}
 
+      {/* Emergency Protocol Panel — 72-hour crisis checklist (only in emergency mode) */}
+      {adaptation.mode === 'emergency' && r.emergencyResponse && (
+        <ScrollReveal>
+          <EmergencyProtocolPanel emergency={r.emergencyResponse} />
+        </ScrollReveal>
+      )}
+
       {/* Equity Alert (P2 — important but below primary action flow) */}
       {showEquityAlert && (
         <motion.div
@@ -613,6 +622,13 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
       {r.negotiationIntelligence && (
         <ScrollReveal>
           <NegotiationIntelligencePanel negotiation={r.negotiationIntelligence} />
+        </ScrollReveal>
+      )}
+
+      {/* Job Target Panel — specific company targets from jobTargetingEngine */}
+      {r.jobTargeting && (
+        <ScrollReveal>
+          <JobTargetPanel targeting={r.jobTargeting} />
         </ScrollReveal>
       )}
 

@@ -14,6 +14,7 @@ import type { CareerIntelligence } from '@/data/intelligence/types';
 import { riskColor } from '../../../lib/riskTokens';
 import UserFinancialRunwayPanel from '../common/UserFinancialRunwayPanel';
 import { VisaRiskPanel } from '../common/VisaRiskPanel';
+import CareerConfidencePanel from '../common/CareerConfidencePanel';
 
 // Fallback intel for roles with no seeded data — mirrors the same fallback
 // previously used by the now-retired CareerSkillsTab. Only the `skills` field
@@ -106,6 +107,13 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
       {radarDimensions.length >= 3 && (
         <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
       )}
+      {/* Career confidence — 5-pillar readiness before skills breakdown */}
+      {r.careerConfidence && (
+        <ScrollReveal>
+          <CareerConfidencePanel confidence={r.careerConfidence} />
+        </ScrollReveal>
+      )}
+
       {skillGap      && <ScrollReveal><SkillGapIntelligencePanel skillGapIntelligence={skillGap} /></ScrollReveal>}
       {skillPortfolio && <ScrollReveal><SkillPortfolioPanel portfolio={skillPortfolio} /></ScrollReveal>}
       {intel && <ScrollReveal><AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} /></ScrollReveal>}
