@@ -232,7 +232,7 @@ export const TimeToSafetyStrip: React.FC<Props> = ({
                 <div className="flex flex-col items-center ml-[-6px]" style={{ width: 12 }}>
                   <div className="w-0.5 min-h-[16px]" style={{ background: 'rgba(16,185,129,0.30)' }} />
                   <div className="w-2.5 h-2.5 rounded-full border-2"
-                    style={{ borderColor: '#10b981', background: 'transparent' }} />
+                    style={{ borderColor: 'var(--color-emerald500-text)', background: 'transparent' }} />
                 </div>
                 <div className="flex-1 pb-2 min-w-0">
                   <div className="flex items-baseline gap-2">

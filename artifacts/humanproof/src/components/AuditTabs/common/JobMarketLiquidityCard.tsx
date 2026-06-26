@@ -704,7 +704,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                   <div className="rounded-xl px-3 py-3 mb-3 flex items-center gap-2"
                     style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)' }}>
                     <div className="w-4 h-4 rounded-full border-2 animate-spin flex-shrink-0"
-                      style={{ borderColor: '#22d3ee', borderTopColor: 'transparent' }} />
+                      style={{ borderColor: 'var(--color-cyan-text)', borderTopColor: 'transparent' }} />
                     <p className="text-[11px]" style={{ color: 'var(--alpha-text-55)' }}>
                       Detecting your location…
                     </p>

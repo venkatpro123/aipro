@@ -240,7 +240,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                     recommended runway
                   </p>
                   <p className="text-[10px] mt-1" style={{ color: 'var(--alpha-text-35)' }}>
-                    Tax reserve: <span className="font-bold text-[#f59e0b]">{fp.taxReservePct}%</span> of each invoice
+                    Tax reserve: <span className="font-bold text-[var(--color-amber500-text)]">{fp.taxReservePct}%</span> of each invoice
                   </p>
                   {fp.runwayGapMonths != null && fp.runwayGapMonths > 0 && (
                     <p className="text-[10px] mt-1 font-bold" style={{ color: 'var(--color-orange-text)' }}>

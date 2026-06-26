@@ -1008,7 +1008,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
         <div
           style={{
             background: "rgba(245,158,11,0.1)",
-            border: "1px solid #f59e0b",
+            border: "1px solid var(--color-amber500-text)",
             borderRadius: "8px",
             padding: "12px 16px",
             marginBottom: "20px",
@@ -1050,7 +1050,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
         <div
           style={{
             background: "rgba(239,68,68,0.1)",
-            border: "1px solid #ef4444",
+            border: "1px solid var(--color-red400-text)",
             borderRadius: "8px",
             padding: "16px",
             marginBottom: "24px",
@@ -1081,7 +1081,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
         <div
           style={{
             background: "rgba(245,158,11,0.1)",
-            border: "1px solid #f59e0b",
+            border: "1px solid var(--color-amber500-text)",
             borderRadius: "8px",
             padding: "12px 16px",
             marginBottom: "24px",

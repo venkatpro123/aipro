@@ -90,7 +90,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
               onClick={handleClearConfirm}
               aria-label="Confirm clear history"
               style={{
-                background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444',
+                background: 'rgba(239,68,68,0.15)', border: '1px solid var(--color-red400-text)',
                 color: 'var(--color-red-text)', padding: '4px 10px', borderRadius: '4px',
                 cursor: 'pointer', fontSize: '0.8rem',
               }}

@@ -322,7 +322,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
                 width: '100%',
                 background: 'rgba(220,38,38,0.15)',
                 border: '1px solid rgba(220,38,38,0.38)',
-                borderLeft: '3px solid #dc2626',
+                borderLeft: '3px solid var(--color-red600-text)',
                 borderRadius: '16px',
                 padding: '20px',
                 textAlign: 'left',

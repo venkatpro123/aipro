@@ -148,7 +148,7 @@ const ObsoleteSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => 
           <div style={{
             marginTop: 12, padding: '10px 12px',
             background: 'rgba(239,68,68,0.08)', borderRadius: 8,
-            borderLeft: '3px solid #ef4444',
+            borderLeft: '3px solid var(--color-red400-text)',
           }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
               <strong style={{ color: 'var(--color-red-text)' }}>Adaptation Strategy:</strong>{' '}
@@ -206,7 +206,7 @@ const AtRiskSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => {
           <div style={{
             marginTop: 12, padding: '10px 12px',
             background: 'rgba(245,158,11,0.08)', borderRadius: 8,
-            borderLeft: '3px solid #f59e0b',
+            borderLeft: '3px solid var(--color-amber500-text)',
           }}>
             <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
               <Lightbulb size={13} color='var(--color-amber500-text)' style={{ flexShrink: 0, marginTop: 2 }} />

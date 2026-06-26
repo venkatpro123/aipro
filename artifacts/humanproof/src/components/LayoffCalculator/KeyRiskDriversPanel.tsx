@@ -469,7 +469,7 @@ const OutlierAlert: React.FC<{
     <div style={{
       background:   'rgba(245,158,11,0.06)',
       border:       '1px solid rgba(245,158,11,0.25)',
-      borderLeft:   '3px solid #f59e0b',
+      borderLeft:   '3px solid var(--color-amber500-text)',
       borderRadius: '10px',
       padding:      '14px 16px',
       marginBottom: '16px',
