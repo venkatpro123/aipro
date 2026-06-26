@@ -84,7 +84,7 @@ const GateContent: React.FC<{
     <h3 style={{ color: 'var(--text)', fontSize: '1.25rem', fontWeight: 700, margin: '0 0 8px' }}>
       🔒 {gate.gateTitle}
     </h3>
-    <p style={{ color: '#9ba5b4', fontSize: '0.95rem', margin: '0 0 20px', maxWidth: '440px' }}>
+    <p style={{ color: 'var(--color-gray-custom-text)', fontSize: '0.95rem', margin: '0 0 20px', maxWidth: '440px' }}>
       {gate.gateSubtitle}
     </p>
     <button

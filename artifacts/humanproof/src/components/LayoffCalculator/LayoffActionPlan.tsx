@@ -133,7 +133,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
               <span
                 style={{
                   fontSize: '0.8rem',
-                  color: '#9ba5b4',
+                  color: 'var(--color-gray-custom-text)',
                   background: 'var(--alpha-bg-08)',
                   padding: '4px 8px',
                   borderRadius: '4px',
@@ -143,7 +143,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
                 {action.timeToComplete}
               </span>
             </div>
-            <p style={{ margin: 0, color: '#d1d5db', fontSize: '0.9rem', lineHeight: 1.6 }}>
+            <p style={{ margin: 0, color: 'var(--color-gray300-text)', fontSize: '0.9rem', lineHeight: 1.6 }}>
               {action.body}
             </p>
             {action.link && onSwitchTab && (

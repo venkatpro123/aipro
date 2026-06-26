@@ -68,20 +68,20 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
       <h3 style={{ color: 'var(--color-cyan-text)', marginTop: 0, marginBottom: '8px', fontSize: '1.2rem' }}>
         What-If Scenario Simulator
       </h3>
-      <p style={{ color: '#9ba5b4', fontSize: '0.9rem', marginBottom: '24px' }}>
+      <p style={{ color: 'var(--color-gray-custom-text)', fontSize: '0.9rem', marginBottom: '24px' }}>
         See how career changes would affect your current {currentScore}% layoff risk.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <label style={{ width: '140px', color: '#d1d5db', fontSize: '0.9rem' }}>Department:</label>
+          <label style={{ width: '140px', color: 'var(--color-gray300-text)', fontSize: '0.9rem' }}>Department:</label>
           <select value={department} onChange={e => setDepartment(e.target.value)} style={selectStyle}>
             {departments.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <label style={{ width: '140px', color: '#d1d5db', fontSize: '0.9rem' }}>Performance:</label>
+          <label style={{ width: '140px', color: 'var(--color-gray300-text)', fontSize: '0.9rem' }}>Performance:</label>
           <select value={performanceTier} onChange={e => setPerformanceTier(e.target.value as any)} style={selectStyle}>
             <option value="top">Top performer</option>
             <option value="average">Meeting expectations</option>
@@ -91,7 +91,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <label style={{ width: '140px', color: '#d1d5db', fontSize: '0.9rem' }}>Recent Review:</label>
+          <label style={{ width: '140px', color: 'var(--color-gray300-text)', fontSize: '0.9rem' }}>Recent Review:</label>
           <select value={hasRecentPromotion ? 'yes' : 'no'} onChange={e => setHasRecentPromotion(e.target.value === 'yes')} style={selectStyle}>
             <option value="no">No promotion</option>
             <option value="yes">Got promoted</option>
@@ -120,7 +120,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
           style={{
             background: 'none',
             border: 'none',
-            color: '#9ba5b4',
+            color: 'var(--color-gray-custom-text)',
             cursor: 'pointer',
             fontSize: '0.9rem',
             textDecoration: 'underline'
@@ -141,7 +141,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
         <h4 style={{ margin: '0 0 8px', color: 'var(--text)', fontSize: '1.1rem' }}>
             New Scenario Risk: <span style={{ color: getTierHex(scenarioResult.tier.color) }}>{scenarioResult.score}%</span>
           </h4>
-          <div style={{ color: '#d1d5db', fontSize: '0.95rem' }}>
+          <div style={{ color: 'var(--color-gray300-text)', fontSize: '0.95rem' }}>
             {diff > 0 && <span>That's an <strong>increase of {diff} points</strong>. {scenarioResult.tier.advice}</span>}
             {diff < 0 && <span>That's a <strong>decrease of {Math.abs(diff)} points</strong>. Good move!</span>}
             {diff === 0 && <span>No change to your overall risk score.</span>}

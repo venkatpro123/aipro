@@ -85,7 +85,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
 
         {confirmClear ? (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span style={{ color: '#9ba5b4', fontSize: '0.8rem' }}>Clear all?</span>
+            <span style={{ color: 'var(--color-gray-custom-text)', fontSize: '0.8rem' }}>Clear all?</span>
             <button
               onClick={handleClearConfirm}
               aria-label="Confirm clear history"
@@ -102,7 +102,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
               aria-label="Cancel clear history"
               style={{
                 background: 'none', border: 'none',
-                color: '#9ba5b4', cursor: 'pointer', fontSize: '0.8rem',
+                color: 'var(--color-gray-custom-text)', cursor: 'pointer', fontSize: '0.8rem',
               }}
             >
               Cancel
@@ -165,7 +165,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                       </span>
                     )}
                   </div>
-                  <div style={{ color: '#9ba5b4', fontSize: '0.85rem', marginTop: '2px' }}>
+                  <div style={{ color: 'var(--color-gray-custom-text)', fontSize: '0.85rem', marginTop: '2px' }}>
                     {d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} · {entry.companyName}
                   </div>
                   {entry.roleTitle && (

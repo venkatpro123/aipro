@@ -2112,7 +2112,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                         Filing Regime Signal Quality
                       </h4>
                       <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
-                        style={{ background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.25)' }}>
+                        style={{ background: 'rgba(139,92,246,0.15)', color: 'var(--color-violet300-text)', border: '1px solid rgba(139,92,246,0.25)' }}>
                         ESTIMATED
                       </span>
                     </div>
@@ -2181,7 +2181,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                         Scraper Timeout — DB Quality Floor Applied
                       </h4>
                       <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
-                        style={{ background: 'rgba(244,63,94,0.15)', color: '#fda4af', border: '1px solid rgba(244,63,94,0.25)' }}>
+                        style={{ background: 'rgba(244,63,94,0.15)', color: 'var(--color-rose300-text)', border: '1px solid rgba(244,63,94,0.25)' }}>
                         Tier {tier}
                       </span>
                     </div>
@@ -2195,7 +2195,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     </p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                        style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.25)', color: '#fda4af' }}>
+                        style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.25)', color: 'var(--color-rose300-text)' }}>
                         DB Tier {tier}
                         <span className="text-base font-bold text-rose-300 ml-1">{floorPct}%</span>
                       </div>
@@ -2919,7 +2919,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                         Hyperscaler AI Efficiency Proxy Applied
                       </h4>
                       <span className="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase"
-                        style={{ background: 'rgba(139,92,246,0.15)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.25)' }}>
+                        style={{ background: 'rgba(139,92,246,0.15)', color: 'var(--color-violet300-text)', border: '1px solid rgba(139,92,246,0.25)' }}>
                         ESTIMATED
                       </span>
                     </div>

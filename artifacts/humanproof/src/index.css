@@ -8943,6 +8943,12 @@ html.light {
   --color-violet500-text: #5b21b6;  /* 6.8:1 on white */
   --color-blue500-text: #1d4ed8;    /* 6.4:1 on white */
   --color-gray500-text: #374151;    /* gray-700: 10.7:1 on white */
+  --color-gray300-text: #4b5563;    /* gray-600: 5.5:1 on white  */
+  --color-gray-custom-text: #475569;/* slate-600: 5.9:1 on white */
+  --color-cyan500-text: #0e7490;    /* cyan-700: 4.5:1 on white  */
+  --color-pink500-text: #be185d;    /* pink-700: 5.3:1 on white  */
+  --color-violet300-text: #5b21b6;  /* violet-800: 6.8:1 on white*/
+  --color-rose300-text: #be123c;    /* rose-700: 5.5:1 on white  */
   --color-red300-text:  #b91c1c;    /* 5.8:1 on white */
 
   /* Accent — deeper teal reads premium + accessible on light */

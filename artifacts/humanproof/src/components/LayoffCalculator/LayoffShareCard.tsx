@@ -77,9 +77,9 @@ export const LayoffShareCard: React.FC<Props> = ({ score, tier, companyName, rol
           </div>
 
           <div style={{ color: '#9a9a9a', fontSize: '15px', lineHeight: 1.6 }}>
-            <div><strong style={{ color: '#d1d5db' }}>Role:</strong> {roleTitle}</div>
-            <div><strong style={{ color: '#d1d5db' }}>Company:</strong> {companyName}</div>
-            <div><strong style={{ color: '#d1d5db' }}>Risk tier:</strong> <span style={{ color: getTierHex(tier.color) }}>{tier.label}</span></div>
+            <div><strong style={{ color: 'var(--color-gray300-text)' }}>Role:</strong> {roleTitle}</div>
+            <div><strong style={{ color: 'var(--color-gray300-text)' }}>Company:</strong> {companyName}</div>
+            <div><strong style={{ color: 'var(--color-gray300-text)' }}>Risk tier:</strong> <span style={{ color: getTierHex(tier.color) }}>{tier.label}</span></div>
           </div>
 
           <div style={{ marginTop: '32px', color: '#555', fontSize: '12px' }}>
@@ -104,7 +104,7 @@ export const LayoffShareCard: React.FC<Props> = ({ score, tier, companyName, rol
           </button>
           <button 
             onClick={onClose}
-            style={{ flex: '1 1 100%', padding: '10px', background: 'transparent', color: '#9ba5b4', border: 'none', cursor: 'pointer', marginTop: '8px' }}
+            style={{ flex: '1 1 100%', padding: '10px', background: 'transparent', color: 'var(--color-gray-custom-text)', border: 'none', cursor: 'pointer', marginTop: '8px' }}
           >
             Close
           </button>

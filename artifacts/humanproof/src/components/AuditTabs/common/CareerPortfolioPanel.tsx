@@ -26,8 +26,8 @@ const DIMENSIONS = [
   { key: 'L2', label: 'Layoff History',  color: 'var(--color-orange-text)' },
   { key: 'L3', label: 'Role Displacement', color: 'var(--color-amber500-text)' },
   { key: 'L5', label: 'Employee Protection', color: 'var(--color-violet500-text)' },
-  { key: 'D6', label: 'AI Agent Risk', color: '#06b6d4' },
-  { key: 'D7', label: 'Co. Health Risk', color: '#ec4899' },
+  { key: 'D6', label: 'AI Agent Risk', color: 'var(--color-cyan500-text)' },
+  { key: 'D7', label: 'Co. Health Risk', color: 'var(--color-pink500-text)' },
   { key: 'D8', label: 'AI Efficiency Risk', color: 'var(--color-blue500-text)' },
 ];
 

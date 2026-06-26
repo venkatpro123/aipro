@@ -29,7 +29,7 @@ interface Source {
 // (though stages 0/3/5 are pipeline phases, not single worker jobs).
 const SOURCES: Source[] = [
   { key: 'identity',       label: 'Resolving company identity',     icon: '🔎', color: '#7c3aed', delay:     0 },
-  { key: 'newsExtract',    label: 'Acquiring workforce intelligence', icon: '👥', color: '#06b6d4', delay:  1500 },
+  { key: 'newsExtract',    label: 'Acquiring workforce intelligence', icon: '👥', color: 'var(--color-cyan500-text)', delay:  1500 },
   { key: 'careerPageScrape', label: 'Validating hiring signals',    icon: '📥', color: 'var(--color-amber500-text)', delay:  4000 },
   { key: 'layoffTracker',  label: 'Reconciling live market signals',icon: '📡', color: 'var(--color-red-text)', delay:  7000 },
   { key: 'secEdgarPoll',   label: 'Cross-validating layoffs',       icon: '⚖️', color: 'var(--color-emerald-text)', delay: 11000 },

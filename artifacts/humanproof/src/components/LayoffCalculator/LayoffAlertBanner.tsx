@@ -51,7 +51,7 @@ export const LayoffAlertBanner: React.FC = () => {
         <p style={{ margin: '0 0 4px', color: 'var(--text)', fontWeight: 600 }}>
           Your layoff risk {isWorse ? 'increased' : 'decreased'} by {Math.abs(drift.drift)} points since {formatDate(drift.fromDate)}
         </p>
-        <p style={{ margin: '0 0 12px', color: '#d1d5db', fontSize: '0.9rem' }}>
+        <p style={{ margin: '0 0 12px', color: 'var(--color-gray300-text)', fontSize: '0.9rem' }}>
           {isWorse
             ? `${drift.from}% → ${drift.to}% — market conditions or company signals have changed. See what's driving this.`
             : `${drift.from}% → ${drift.to}% — conditions improved. Keep building your safety net.`

@@ -174,7 +174,7 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
                 className="font-mono font-bold px-1.5 py-0.5 rounded"
                 style={{
                   background: 'rgba(244,63,94,0.15)',
-                  color: '#fda4af',
+                  color: 'var(--color-rose300-text)',
                   border: '1px solid rgba(244,63,94,0.30)',
                 }}
               >

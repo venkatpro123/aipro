@@ -30,8 +30,8 @@ const LAYER_CONTRIBUTIONS: Array<{
   { key: 'L2', label: 'Layoff History',            shortLabel: 'L2 History',   color: 'var(--color-orange-text)' },
   { key: 'L3', label: 'Role Displacement',         shortLabel: 'L3 Role',      color: 'var(--color-amber500-text)' },
   { key: 'L5', label: 'Employee Protection',       shortLabel: 'L5 Employee',  color: 'var(--color-emerald-text)', protects: true },
-  { key: 'D6', label: 'AI Agent Coverage',         shortLabel: 'D6 AI Agent',  color: '#06b6d4' },
-  { key: 'D7', label: 'Company Risk Composite',    shortLabel: 'D7 Co.Risk',   color: '#ec4899' },
+  { key: 'D6', label: 'AI Agent Coverage',         shortLabel: 'D6 AI Agent',  color: 'var(--color-cyan500-text)' },
+  { key: 'D7', label: 'Company Risk Composite',    shortLabel: 'D7 Co.Risk',   color: 'var(--color-pink500-text)' },
 ];
 
 const DISPLAY_WEIGHTS: Record<string, number> = {
