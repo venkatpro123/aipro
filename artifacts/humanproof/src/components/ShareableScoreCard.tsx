@@ -111,7 +111,7 @@ export default function ShareableScoreCard() {
               onChange={e => setName(e.target.value)}
               onBlur={handleSaveName}
               placeholder="Your name"
-              style={{ width: '100%', background: 'var(--alpha-bg-06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem', outline: 'none' }}
+              style={{ width: '100%', background: 'var(--alpha-bg-06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem' }}
             />
           </div>
           <div>
@@ -121,7 +121,7 @@ export default function ShareableScoreCard() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Your role"
-              style={{ width: '100%', background: 'var(--alpha-bg-06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem', outline: 'none' }}
+              style={{ width: '100%', background: 'var(--alpha-bg-06)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.875rem' }}
             />
           </div>
         </div>

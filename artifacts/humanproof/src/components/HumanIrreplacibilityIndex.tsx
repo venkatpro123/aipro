@@ -614,7 +614,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
           onChange={(e) => setAdaptiveText(e.target.value)}
           placeholder="Describe your reasoning and how you would handle this situation..."
           style={{
-            width: '100%', minHeight: 180, background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, color: 'var(--text)', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical', outline: 'none'
+            width: '100%', minHeight: 180, background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, color: 'var(--text)', fontSize: '0.95rem', fontFamily: 'inherit', resize: 'vertical'
           }}
         />
       ) : (

@@ -52,7 +52,6 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
     borderRadius: '6px',
     color: 'var(--text)',
     fontSize: '0.9rem',
-    outline: 'none',
   };
 
   return (
