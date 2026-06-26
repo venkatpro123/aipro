@@ -54,7 +54,7 @@ export class TabErrorBoundary extends React.Component<Props, State> {
               <p className="text-[13px] font-bold text-red-400">
                 {this.props.tabLabel} tab encountered an error
               </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[11px] text-[var(--alpha-text-35)] mt-0.5">
                 Other tabs are unaffected and fully functional.
               </p>
             </div>

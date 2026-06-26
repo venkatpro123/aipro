@@ -625,7 +625,7 @@ const CalibrationFreshnessPanel: React.FC<{
                     Live · {holdoutValidation.holdoutN} events
                   </span>
                 ) : (
-                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-500/15 text-slate-400 border border-slate-500/20">
+                  <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-[var(--alpha-bg-02)] text-[var(--alpha-text-45)] border border-[var(--alpha-bg-02)]">
                     Bootstrap fallback
                   </span>
                 )}
@@ -789,7 +789,7 @@ const EffectiveWeightsPanel: React.FC<{
       {/* BUG-02 — D8 redistributed banner: shown when D8 is flag-gated off and its
           0.09 weight has been redistributed ⅓ each to D1/D2/D3. */}
       {d8WeightRedistributed && (
-        <div className="px-4 py-2 text-[10px] bg-slate-500/10 border-b border-slate-500/20 text-slate-400/80 leading-relaxed">
+        <div className="px-4 py-2 text-[10px] bg-[var(--alpha-bg-01)] border-b border-[var(--alpha-bg-02)] text-[var(--alpha-text-45)]/80 leading-relaxed">
           <span className="font-bold uppercase tracking-widest mr-1">D8 flag-gated — weight redistributed:</span>
           D8 (AI efficiency restructuring, 9%) is currently flag-gated. Its 0.09 weight is
           redistributed equally to D1/D2/D3
@@ -803,7 +803,7 @@ const EffectiveWeightsPanel: React.FC<{
       )}
       {/* Fallback banner when D8 inactive but redistribution prop not yet wired (legacy). */}
       {!d8IsActive && !d8WeightRedistributed && (
-        <div className="px-4 py-2 text-[10px] bg-slate-500/10 border-b border-slate-500/20 text-slate-400/80 leading-relaxed">
+        <div className="px-4 py-2 text-[10px] bg-[var(--alpha-bg-01)] border-b border-[var(--alpha-bg-02)] text-[var(--alpha-text-45)]/80 leading-relaxed">
           <span className="font-bold uppercase tracking-widest mr-1">D8 weight slot inactive (9%):</span>
           The AI efficiency restructuring dimension (0.09 formula weight) contributes 0 this audit.
           The hyperscaler proxy (+12 pts) compensates only for named hyperscalers with very-high AI investment.
@@ -952,8 +952,8 @@ const EffectiveWeightsPanel: React.FC<{
           Amber rows deviate &gt;3 pts from the raw formula weight — these are the layers where calibration has most changed the score composition.
           D6 (AI Agent, 4%) and D7 (Company Health, 7%) are always active and omitted for brevity.
         </p>
-        <p className="text-slate-400/70">
-          <span className="font-semibold text-slate-300/80">Country context</span> is encoded inside Role Exposure (D1, 18%) via
+        <p className="text-[var(--alpha-text-45)]/70">
+          <span className="font-semibold text-[var(--alpha-text-55)]/80">Country context</span> is encoded inside Role Exposure (D1, 18%) via
           jurisdiction-specific AI deployment rates (e.g. Germany QA = 0.844×, Singapore = 0.940×) and inside Company Health (L1, 16%)
           via PPP-adjusted financial thresholds — not as a separate formula dimension.
         </p>
@@ -3269,7 +3269,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   <p className="text-xs font-semibold text-amber-300 mb-1">
                     {uncalibratedCount} of {totalConstantCount || '42+'} scoring constants are unvalidated estimates
                   </p>
-                  <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
+                  <p className="text-[11px] text-[var(--alpha-text-45)] leading-relaxed mb-2">
                     These constants carry <span className="text-amber-400 font-medium">uncalibrated_placeholder</span> provenance —
                     they are developer estimates that have not yet been validated through logistic regression on outcome data.
                     Any score component that depends on them is labeled <span className="font-mono text-amber-300">(estimate)</span> in the UI.
@@ -3280,7 +3280,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   </p>
                   {uncalibratedKeys.length > 0 && (
                     <details className="group">
-                      <summary className="text-[10px] text-slate-500 cursor-pointer hover:text-slate-300 transition-colors list-none flex items-center gap-1">
+                      <summary className="text-[10px] text-[var(--alpha-text-35)] cursor-pointer hover:text-[var(--alpha-text-55)] transition-colors list-none flex items-center gap-1">
                         <span className="group-open:hidden">▶</span>
                         <span className="hidden group-open:inline">▼</span>
                         {uncalibratedKeys.length} unvalidated constant{uncalibratedKeys.length !== 1 ? 's' : ''}
@@ -3295,7 +3295,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                     </details>
                   )}
                   {provenanceSummary && (
-                    <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
+                    <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-[var(--alpha-text-35)]">
                       <span><span className="text-emerald-400 font-medium">{provenanceSummary.regressionCount}</span> regression</span>
                       <span><span className="text-sky-400 font-medium">{provenanceSummary.gridSearchCount}</span> grid-search</span>
                       <span><span className="text-violet-400 font-medium">{provenanceSummary.manualSeedCount}</span> expert estimate</span>
@@ -3482,13 +3482,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
 
         {/* v40.0: Per-signal decay weights — shows how each signal's age reduces its scoring weight */}
         {result.signalDecayWeights && (
-          <div className="mt-6 rounded-xl border border-slate-700/50 bg-slate-800/40 p-5">
+          <div className="mt-6 rounded-xl border border-[var(--alpha-bg-08)] bg-[var(--alpha-bg-08)] p-5">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="w-4 h-4 text-amber-400" />
-              <h4 className="text-sm font-semibold text-slate-200">Signal Freshness Decay</h4>
-              <span className="ml-auto text-xs text-slate-500">weight × age → effective formula contribution</span>
+              <h4 className="text-sm font-semibold text-[var(--alpha-text-70)]">Signal Freshness Decay</h4>
+              <span className="ml-auto text-xs text-[var(--alpha-text-35)]">weight × age → effective formula contribution</span>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-[var(--alpha-text-45)] mb-4">
               Each signal type has an empirically derived half-life. A breaking news layoff announcement
               decays to 50% predictive weight in 3 days. Revenue figures decay in 90 days.
               Decayed weights are renormalised so the formula budget stays at 100%.
@@ -3509,21 +3509,21 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                 const w = result.signalDecayWeights![key];
                 const pct = Math.round(w * 100);
                 return (
-                  <div key={key} className="rounded-lg bg-slate-900/50 border border-slate-700/30 p-3">
-                    <div className="text-xs text-slate-400 mb-1 truncate">{label}</div>
+                  <div key={key} className="rounded-lg bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-04)] p-3">
+                    <div className="text-xs text-[var(--alpha-text-45)] mb-1 truncate">{label}</div>
                     <div className={`text-lg font-bold tabular-nums ${color}`}>{pct}%</div>
-                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-700/60 overflow-hidden">
+                    <div className="mt-1.5 h-1.5 rounded-full bg-[var(--alpha-bg-06)] overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${pct >= 70 ? 'bg-emerald-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <div className="text-[10px] text-slate-600 mt-1">t½ {halfLife}</div>
+                    <div className="text-[10px] text-[var(--alpha-text-25)] mt-1">t½ {halfLife}</div>
                   </div>
                 );
               })}
             </div>
-            <p className="text-[11px] text-slate-600 mt-3">
+            <p className="text-[11px] text-[var(--alpha-text-25)] mt-3">
               Formula: weight = max(floor, e^(−ln2/t½ × age)). Floors: breaking news 10%, stock 15%, hiring 15%, layoff history 25%, revenue 30%, sector 20%, exec departure 20%.
             </p>
           </div>

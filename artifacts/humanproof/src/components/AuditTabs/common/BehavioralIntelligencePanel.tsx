@@ -311,7 +311,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
                         <span className={`text-[10px] px-1 py-0.5 rounded capitalize ${
                           gap.severity === 'critical' ? 'bg-red-500/15 text-red-400' :
                           gap.severity === 'moderate' ? 'bg-amber-500/15 text-amber-400' :
-                          'bg-slate-500/15 text-slate-400'
+                          'bg-[var(--alpha-bg-02)] text-[var(--alpha-text-45)]'
                         }`}>
                           {gap.severity}
                         </span>
