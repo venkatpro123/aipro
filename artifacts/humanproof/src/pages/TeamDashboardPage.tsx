@@ -164,7 +164,7 @@ function TeamSwitcher({
             gap: 8,
             padding: '6px 10px 6px 14px',
             borderRadius: 999,
-            background: t.id === activeId ? 'rgba(0,245,255,0.15)' : 'rgba(255,255,255,0.05)',
+            background: t.id === activeId ? 'rgba(0,245,255,0.15)' : 'var(--alpha-bg-05)',
             border: `1px solid ${t.id === activeId ? 'rgba(0,245,255,0.45)' : 'var(--border)'}`,
             cursor: 'pointer',
           }}
@@ -191,7 +191,7 @@ function TeamSwitcher({
           placeholder="New team name"
           style={{
             flex: 1,
-            background: 'rgba(255,255,255,0.05)',
+            background: 'var(--alpha-bg-05)',
             border: '1px solid var(--border)',
             borderRadius: 8,
             color: 'var(--text)',
@@ -262,7 +262,7 @@ function TierDistributionCard({ aggregates }: { aggregates: ReturnType<typeof co
                   <span style={{ color: TIER_COLORS[tier], fontWeight: 700 }}>{TIER_LABELS[tier]}</span>
                   <span style={{ color: 'var(--text-2)' }}>{count} · {pct.toFixed(0)}%</span>
                 </div>
-                <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3 }}>
+                <div style={{ height: 6, background: 'var(--alpha-bg-06)', borderRadius: 3 }}>
                   <div style={{
                     width: `${pct}%`, height: '100%', borderRadius: 3, background: TIER_COLORS[tier],
                     transition: 'width 300ms ease',
@@ -431,7 +431,7 @@ function MemberRow({ member, compact }: { member: TeamMember; compact?: boolean 
         </span>
         <span style={{
           fontSize: '0.72rem', padding: '2px 8px', borderRadius: 999,
-          background: 'rgba(255,255,255,0.05)', color: TIER_COLORS[member.tier], fontWeight: 700,
+          background: 'var(--alpha-bg-05)', color: TIER_COLORS[member.tier], fontWeight: 700,
         }}>
           {TIER_LABELS[member.tier]}
         </span>
@@ -460,7 +460,7 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 10px',
-  background: 'rgba(255,255,255,0.04)',
+  background: 'var(--alpha-bg-04)',
   border: '1px solid var(--border)',
   borderRadius: 8,
   color: 'var(--text)',

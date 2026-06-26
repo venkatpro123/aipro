@@ -391,7 +391,7 @@ const AuditTerminalPage: React.FC = () => {
 
       {/* ── Input Form ─────────────────────────────────────────────────────── */}
       <div style={{
-        background: 'rgba(255,255,255,0.02)',
+        background: 'var(--alpha-bg-02)',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-xl)',
         padding: 'clamp(16px, 4vw, 32px)',
@@ -505,7 +505,7 @@ const AuditTerminalPage: React.FC = () => {
               alignItems: 'center',
               gap: '16px',
               padding: 'clamp(16px, 4vw, 32px)',
-              background: 'rgba(255,255,255,0.02)',
+              background: 'var(--alpha-bg-02)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-xl)',
               marginBottom: '16px',
@@ -521,7 +521,7 @@ const AuditTerminalPage: React.FC = () => {
                 style={{ position: 'relative', flexShrink: 0, width: 'clamp(90px,22vw,120px)', height: 'clamp(90px,22vw,120px)' }}
               >
                 <svg width="100%" height="100%" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--alpha-bg-05)" strokeWidth="8" />
                   <circle
                     cx="60" cy="60" r="52" fill="none" stroke={scoreColor} strokeWidth="8"
                     strokeLinecap="round"
@@ -566,7 +566,7 @@ const AuditTerminalPage: React.FC = () => {
                       background: `${cColor}10`, border: `1px solid ${cColor}28`,
                     }}>
                       {/* Mini confidence bar */}
-                      <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', flexShrink: 0 }}>
+                      <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--alpha-bg-08)', overflow: 'hidden', flexShrink: 0 }}>
                         <div style={{ height: '100%', width: `${pct}%`, background: cColor, borderRadius: 2, transition: 'width 0.6s ease', boxShadow: `0 0 5px ${cColor}88` }} />
                       </div>
                       <div>
@@ -608,7 +608,7 @@ const AuditTerminalPage: React.FC = () => {
                 title="Clear results and run a new analysis"
                 style={{
                   alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)',
+                  padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--alpha-bg-12)',
                   background: 'rgba(255,255,255,0.04)', color: 'var(--text-2)',
                   fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
                   cursor: 'pointer', transition: 'all 0.2s ease',
@@ -624,7 +624,7 @@ const AuditTerminalPage: React.FC = () => {
                 title="Copy result summary + permalink"
                 style={{
                   alignSelf: 'flex-start', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.12)',
+                  padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--alpha-bg-12)',
                   background: shareCopied ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
                   color: shareCopied ? 'var(--emerald)' : 'var(--text-2)',
                   fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em',
@@ -648,7 +648,7 @@ const AuditTerminalPage: React.FC = () => {
                 aria-controls="what-if-panel"
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '14px 20px', background: 'rgba(255,255,255,0.02)',
+                  padding: '14px 20px', background: 'var(--alpha-bg-02)',
                   border: 'none', cursor: 'pointer', color: 'var(--text-2)',
                 }}
               >
@@ -665,7 +665,7 @@ const AuditTerminalPage: React.FC = () => {
               </button>
 
               {showWhatIf && (
-                <div id="what-if-panel" style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                <div id="what-if-panel" style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'var(--alpha-bg-01)' }}>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'flex-end' }}>
                     {/* Experience pill buttons */}
                     <div style={{ flex: '1 1 200px' }}>
@@ -680,7 +680,7 @@ const AuditTerminalPage: React.FC = () => {
                             style={{
                               padding: '5px 10px', borderRadius: '5px', border: 'none', cursor: 'pointer',
                               fontSize: '0.72rem', fontFamily: 'var(--font-mono)', fontWeight: 700,
-                              background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'rgba(255,255,255,0.05)',
+                              background: wiExperience === lvl.key ? 'rgba(0,245,255,0.18)' : 'var(--alpha-bg-05)',
                               color: wiExperience === lvl.key ? 'var(--cyan)' : 'var(--text-3)',
                               outline: wiExperience === lvl.key ? '1px solid var(--cyan)' : 'none',
                               transition: 'all 0.15s',
@@ -723,7 +723,7 @@ const AuditTerminalPage: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <div style={{ padding: '12px', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.1)', color: 'var(--text-3)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
+                        <div style={{ padding: '12px', borderRadius: '10px', border: '1px dashed var(--alpha-bg-10)', color: 'var(--text-3)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)' }}>
                           Adjust sliders<br />to compare
                         </div>
                       )}
@@ -776,8 +776,8 @@ const AuditTerminalPage: React.FC = () => {
                   onClick={() => setActiveTab(tab.key)}
                   style={{
                     padding: '10px 16px', minHeight: '44px', borderRadius: '8px', border: 'none',
-                    background: activeTab === tab.key ? scoreColor : 'rgba(255,255,255,0.05)',
-                    color: activeTab === tab.key ? '#000' : 'rgba(255,255,255,0.5)',
+                    background: activeTab === tab.key ? scoreColor : 'var(--alpha-bg-05)',
+                    color: activeTab === tab.key ? '#000' : 'var(--alpha-text-50)',
                     fontWeight: 700, fontSize: '0.73rem', fontFamily: 'var(--font-mono)',
                     letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s ease',
                     display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
@@ -790,7 +790,7 @@ const AuditTerminalPage: React.FC = () => {
             </div>
 
             {/* Tab content panel */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 'clamp(12px, 3vw, 24px)' }}>
+            <div style={{ background: 'var(--alpha-bg-02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 'clamp(12px, 3vw, 24px)' }}>
 
               {/* TAB 1: RISK INTEL — Current Risk + Capability Threshold + Early Warning */}
               {activeTab === 'risk-intel' && (
@@ -798,14 +798,14 @@ const AuditTerminalPage: React.FC = () => {
                   <Section1_CurrentRisk result={result} />
                   {agenticResult && (
                     <>
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                      <div style={{ borderTop: '1px solid var(--alpha-bg-07)', paddingTop: 28 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
                           Your Skill Safety Floor
                         </div>
                         <Section3_CapabilityThreshold threshold={agenticResult.capabilityThreshold} />
                       </div>
-                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                      <div style={{ borderTop: '1px solid var(--alpha-bg-07)', paddingTop: 28 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
                           Early Warning Signals
                         </div>
                         <Section7_EarlyWarningSignals waveStatusDetail={agenticResult.waveStatusDetail} />
@@ -819,8 +819,8 @@ const AuditTerminalPage: React.FC = () => {
               {activeTab === 'wave-analysis' && agenticResult && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
                   <Section2_AgenticWaveExposure waveScore={agenticResult.waveScore} />
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                  <div style={{ borderTop: '1px solid var(--alpha-bg-07)', paddingTop: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
                       Task-Level AI Exposure
                     </div>
                     <Section4_TaskExposure tasks={agenticResult.taskExposure} />
@@ -832,8 +832,8 @@ const AuditTerminalPage: React.FC = () => {
               {activeTab === 'career-defense' && agenticResult && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
                   <Section5_SurvivalFactors factors={agenticResult.survivalFactors} />
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                  <div style={{ borderTop: '1px solid var(--alpha-bg-07)', paddingTop: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
                       Future Role Evolution Path
                     </div>
                     <Section6_FutureRoleEvolution steps={agenticResult.futureRoleEvolution} />
@@ -845,8 +845,8 @@ const AuditTerminalPage: React.FC = () => {
               {activeTab === 'action-plan' && agenticResult && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
                   <Section8_PersonalActionPlan actionPlan={agenticResult.actionPlan} />
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 28 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
+                  <div style={{ borderTop: '1px solid var(--alpha-bg-07)', paddingTop: 28 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 16 }}>
                       Your Situation In Context
                     </div>
                     <Section9_PsychologicalFraming frame={agenticResult.psychFrame} />

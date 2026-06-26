@@ -367,9 +367,9 @@ export default function HomePage() {
                     <stop offset="100%" stopColor="#10b981" stopOpacity=".1"/>
                   </linearGradient>
                 </defs>
-                <line x1="40" y1="30" x2="40" y2="240" stroke="rgba(255,255,255,.06)" strokeWidth="1"/>
-                <line x1="40" y1="240" x2="360" y2="240" stroke="rgba(255,255,255,.06)" strokeWidth="1"/>
-                {[180,130,80].map(y=><line key={y} x1="40" y1={y} x2="360" y2={y} stroke="rgba(255,255,255,.04)" strokeWidth="1" strokeDasharray="4 3"/>)}
+                <line x1="40" y1="30" x2="40" y2="240" stroke="var(--alpha-bg-06)" strokeWidth="1"/>
+                <line x1="40" y1="240" x2="360" y2="240" stroke="var(--alpha-bg-06)" strokeWidth="1"/>
+                {[180,130,80].map(y=><line key={y} x1="40" y1={y} x2="360" y2={y} stroke="var(--alpha-bg-04)" strokeWidth="1" strokeDasharray="4 3"/>)}
                 <path d="M80,80 L160,116 L240,140 L320,162 L320,240 L80,240 Z" fill="url(#rdg)"/>
                 <path d="M80,80 L160,116 L240,140 L320,162" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray:400,animation:"hp-linedraw 2s ease forwards" }}/>
                 {[{cx:80,cy:80,fill:"#ef4444",label:"68",ly:70},{cx:160,cy:116,fill:"#f59e0b",label:"55",ly:106},{cx:240,cy:140,fill:"#f59e0b",label:"46",ly:130},{cx:320,cy:162,fill:"#10b981",label:"38",ly:152}].map(p=>(
@@ -379,9 +379,9 @@ export default function HomePage() {
                   </g>
                 ))}
                 {["BASELINE","ACTION 1","ACTION 2","ACTION 3"].map((t,i)=>(
-                  <text key={t} x={80+i*80} y="258" textAnchor="middle" fontSize="7" fill="rgba(255,255,255,.2)" fontFamily="JetBrains Mono,monospace">{t}</text>
+                  <text key={t} x={80+i*80} y="258" textAnchor="middle" fontSize="7" fill="var(--alpha-text-20)" fontFamily="JetBrains Mono,monospace">{t}</text>
                 ))}
-                <text x="200" y="22" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,.3)" fontFamily="JetBrains Mono,monospace">RISK REDUCTION JOURNEY</text>
+                <text x="200" y="22" textAnchor="middle" fontSize="9" fill="var(--alpha-text-30)" fontFamily="JetBrains Mono,monospace">RISK REDUCTION JOURNEY</text>
                 <rect x="250" y="30" width="100" height="30" rx="6" fill="rgba(16,185,129,.1)" stroke="rgba(16,185,129,.2)" strokeWidth=".5"/>
                 <text x="300" y="44" textAnchor="middle" fontSize="8" fill="rgba(16,185,129,.8)" fontFamily="JetBrains Mono,monospace">↓ 30 POINTS</text>
                 <text x="300" y="55" textAnchor="middle" fontSize="7" fill="rgba(16,185,129,.5)" fontFamily="JetBrains Mono,monospace">TOTAL REDUCTION</text>

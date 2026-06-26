@@ -242,8 +242,8 @@ function AppNav({
                   gap: 8,
                   padding: "4px 12px 4px 4px",
                   borderRadius: "var(--radius-full)",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.09)",
+                  background: "var(--alpha-bg-04)",
+                  border: "1px solid var(--alpha-bg-08)",
                 }}>
                   <div style={{
                     width: 26,
@@ -457,7 +457,7 @@ function AppFooter() {
         {/* Top divider with gradient */}
         <div style={{
           height: 1,
-          background: "linear-gradient(90deg, transparent, rgba(0,212,224,0.2) 30%, rgba(255,255,255,0.06) 50%, rgba(0,212,224,0.2) 70%, transparent)",
+          background: "linear-gradient(90deg, transparent, rgba(0,212,224,0.2) 30%, var(--alpha-bg-06) 50%, rgba(0,212,224,0.2) 70%, transparent)",
           marginBottom: 56,
         }} />
 
@@ -580,7 +580,7 @@ function AppFooter() {
 
         {/* Bottom bar */}
         <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderTop: "1px solid var(--alpha-bg-06)",
           paddingTop: 24,
           display: "flex",
           justifyContent: "space-between",

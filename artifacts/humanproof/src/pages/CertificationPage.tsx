@@ -965,7 +965,7 @@ export default function CertificationPage() {
                 {overallProgress}%
               </span>
             </div>
-            <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: 6, background: 'var(--alpha-bg-06)', borderRadius: 3, overflow: 'hidden' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${overallProgress}%` }}
@@ -1022,7 +1022,7 @@ export default function CertificationPage() {
                     {a.questions} questions · Pass threshold: {a.passing}/{a.questions} ({Math.round(a.passing / a.questions * 100)}%)
                   </div>
                   <button
-                    style={{ width: '100%', padding: '8px', background: isPassed ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isPassed ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 8, cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: isPassed ? 'var(--emerald)' : 'var(--text-2)' }}>
+                    style={{ width: '100%', padding: '8px', background: isPassed ? 'rgba(16,185,129,0.1)' : 'var(--alpha-bg-05)', border: `1px solid ${isPassed ? 'rgba(16,185,129,0.25)' : 'var(--alpha-bg-10)'}`, borderRadius: 8, cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: isPassed ? 'var(--emerald)' : 'var(--text-2)' }}>
                     {isPassed ? '✓ Passed' : 'Take Assessment'}
                   </button>
                 </div>
@@ -1048,7 +1048,7 @@ export default function CertificationPage() {
                 placeholder="Tell your transition story: what specifically did you change? What skills did you build? What was the measurable outcome (new role, salary change, reduced displacement risk)?"
                 value={storyText}
                 onChange={e => setStoryText(e.target.value)}
-                style={{ width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', fontSize: '0.875rem', resize: 'vertical', lineHeight: 1.7 }}
+                style={{ width: '100%', padding: '12px 14px', background: 'var(--alpha-bg-04)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)', fontSize: '0.875rem', resize: 'vertical', lineHeight: 1.7 }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                 <span style={{ fontSize: '0.78rem', color: storyText.length >= 300 ? 'var(--emerald)' : 'var(--amber)' }}>
@@ -1057,7 +1057,7 @@ export default function CertificationPage() {
                 <button
                   disabled={storyText.trim().split(/\s+/).length < 300 || storySubmitting}
                   onClick={handleStorySubmit}
-                  style={{ padding: '8px 20px', borderRadius: 8, background: storyText.trim().split(/\s+/).length >= 300 ? 'var(--cyan)' : 'rgba(255,255,255,0.05)', color: storyText.trim().split(/\s+/).length >= 300 ? '#000' : 'var(--text-3)', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', border: 'none' }}>
+                  style={{ padding: '8px 20px', borderRadius: 8, background: storyText.trim().split(/\s+/).length >= 300 ? 'var(--cyan)' : 'var(--alpha-bg-05)', color: storyText.trim().split(/\s+/).length >= 300 ? '#000' : 'var(--text-3)', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', border: 'none' }}>
                   {storySubmitting ? 'Submitting...' : 'Submit for Review'}
                 </button>
               </div>
@@ -1088,7 +1088,7 @@ export default function CertificationPage() {
                 <button style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', background: 'rgba(10,102,194,0.15)', border: '1px solid rgba(10,102,194,0.3)', borderRadius: 8, color: '#0a66c2', fontWeight: 700, cursor: 'pointer' }}>
                   <Share2 size={14} /> Share on LinkedIn
                 </button>
-                <button style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-2)', fontWeight: 700, cursor: 'pointer' }}>
+                <button style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', background: 'var(--alpha-bg-05)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-2)', fontWeight: 700, cursor: 'pointer' }}>
                   <ExternalLink size={14} /> View Public Badge
                 </button>
               </div>
