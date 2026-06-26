@@ -359,7 +359,7 @@ export default function IntelligenceReportPage() {
                 Company Watch — Elevated Risk Signals
               </span>
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[var(--alpha-bg-05)]">
               {payload.company_changes.map((c, i) => (
                 <div key={i} className="px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
                   <div>

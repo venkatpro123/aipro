@@ -5484,6 +5484,15 @@ number-flow,
     -webkit-backdrop-filter: none !important;
     background-color: oklch(0.13 0.012 260) !important;
   }
+  html.light .glass-panel,
+  html.light .glass-panel-heavy,
+  html.light .glass-enhanced,
+  html.light .nav-inner,
+  html.light .mobile-bottom-nav,
+  html.light .more-sheet,
+  html.light .dashboard-tabs-strip {
+    background-color: #ffffff !important;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -9078,6 +9087,18 @@ html.light .glass-critical, html.light .glass-muted, html.light .glass {
 html.light .surface-1 { background: #ffffff; box-shadow: var(--shadow-sm); }
 html.light .surface-2 { background: #fafbfc; box-shadow: var(--shadow-md); border-color: rgba(17,19,26,0.06); }
 html.light .surface-3 { background: #f6f8fa; box-shadow: var(--shadow-lg); border-color: rgba(17,19,26,0.05); }
+
+/* glass-panel + glass-panel-heavy: override dark hardcoded backgrounds */
+html.light .glass-panel {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(17,19,26,0.09);
+  box-shadow: 0 8px 32px -8px rgba(17,19,26,0.12), inset 0 1px 0 rgba(255,255,255,0.80);
+}
+html.light .glass-panel-heavy {
+  background: rgba(255,255,255,0.94);
+  border-color: rgba(17,19,26,0.10);
+  box-shadow: 0 12px 40px -10px rgba(17,19,26,0.14);
+}
 
 /* Tinted glass cards keep a subtle tint for semantic meaning */
 html.light .glass-critical { background: #fef5f5; border-color: rgba(220,38,38,0.18); }
