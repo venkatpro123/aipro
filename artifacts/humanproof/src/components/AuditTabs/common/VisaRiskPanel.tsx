@@ -69,12 +69,12 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
           </div>
 
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-sm font-semibold text-white">Visa / Work Authorization Risk</span>
+            <span className="text-sm font-semibold text-[var(--text)]">Visa / Work Authorization Risk</span>
             <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium border ${cfg.badgeClass} border-current/20`}>
               {cfg.label} Risk
             </span>
             {visaRisk.gracePeriodDays > 0 && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--alpha-bg-08)] text-[var(--alpha-text-45)]">
                 {visaRisk.gracePeriodDays}-day grace period
               </span>
             )}
@@ -82,11 +82,11 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
 
           {/* Dependency bar */}
           <div className="mb-3">
-            <div className="flex justify-between text-[11px] text-gray-400 mb-1">
+            <div className="flex justify-between text-[11px] text-[var(--alpha-text-45)] mb-1">
               <span>Employer dependency</span>
               <span>{visaRisk.dependencyScore}/100</span>
             </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-[var(--alpha-bg-08)] rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${visaRisk.dependencyScore}%` }}
@@ -106,7 +106,7 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
               {visaRisk.keyRisks.map((risk, i) => (
                 <div key={i} className="flex items-start gap-1.5">
                   <span className="text-red-400 text-[11px] mt-0.5">⚠</span>
-                  <span className="text-[11px] text-gray-300">{risk}</span>
+                  <span className="text-[11px] text-[var(--alpha-text-60)]">{risk}</span>
                 </div>
               ))}
             </div>
@@ -114,12 +114,12 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
 
           {/* Immediate actions */}
           {visaRisk.immediateActions.length > 0 && (
-            <div className="pt-2 border-t border-white/5 space-y-1">
-              <span className="text-[11px] font-medium text-gray-400">Immediate actions:</span>
+            <div className="pt-2 border-t border-[var(--alpha-bg-06)] space-y-1">
+              <span className="text-[11px] font-medium text-[var(--alpha-text-45)]">Immediate actions:</span>
               {visaRisk.immediateActions.map((action, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <span className="text-blue-400 text-[10px] mt-0.5">▶</span>
-                  <span className="text-[11px] text-gray-300">{action}</span>
+                  <span className="text-[11px] text-[var(--alpha-text-60)]">{action}</span>
                 </div>
               ))}
             </div>
@@ -127,7 +127,7 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
 
           {/* Available options — escape paths / transition programs */}
           {visaRisk.availableOptions && visaRisk.availableOptions.length > 0 && (
-            <div className="pt-2 border-t border-white/5 mt-2 space-y-1">
+            <div className="pt-2 border-t border-[var(--alpha-bg-06)] mt-2 space-y-1">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Lightbulb size={11} className="text-teal-400 shrink-0" aria-hidden="true" />
                 <span className="text-[11px] font-medium text-teal-300">Options available to you:</span>
@@ -149,7 +149,7 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
           )}
 
           {gratuity && gratuity.effectiveBufferMonths > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/5">
+            <div className="mt-3 pt-3 border-t border-[var(--alpha-bg-06)]">
               <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/20">
                 <div className="p-1.5 rounded-md bg-emerald-500/10 shrink-0">
                   <DollarSign size={12} className="text-emerald-400" aria-hidden="true" />
@@ -180,7 +180,7 @@ export function VisaRiskPanel({ visaRisk, countryCode, tenureYears }: Props) {
           )}
 
           {gratuity && gratuity.effectiveBufferMonths === 0 && tenureYears != null && tenureYears > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/5">
+            <div className="mt-3 pt-3 border-t border-[var(--alpha-bg-06)]">
               <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-950/10 border border-amber-500/15">
                 <Scale size={11} className="text-amber-400/70 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-[10px] text-amber-200/70 leading-relaxed m-0">

@@ -35,10 +35,10 @@ function UrgencyHeader({ mode, totalMonths }: { mode: MonthlyActionPlanResult['u
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-white/60 flex-shrink-0" />
+        <Icon className="w-4 h-4 text-[var(--alpha-text-55)] flex-shrink-0" />
         <div>
-          <div className="text-sm font-semibold text-white/90">{c.label}</div>
-          <div className="text-xs text-white/45">{totalMonths}-month action calendar</div>
+          <div className="text-sm font-semibold text-[var(--alpha-text-85)]">{c.label}</div>
+          <div className="text-xs text-[var(--alpha-text-40)]">{totalMonths}-month action calendar</div>
         </div>
       </div>
       <span className={c.badgeClass}>{mode.toUpperCase()}</span>
@@ -76,22 +76,22 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-2 mb-0.5">
                 {action.isBlocking && <Lock className="w-3 h-3 mt-0.5 flex-shrink-0 text-red-400/70" />}
-                <span className="text-sm font-medium text-white/85 leading-snug">{action.action}</span>
+                <span className="text-sm font-medium text-[var(--alpha-text-78)] leading-snug">{action.action}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/35">{action.deadline}</span>
-                <span className="text-[10px] text-white/20">·</span>
+                <span className="text-[10px] text-[var(--alpha-text-30)]">{action.deadline}</span>
+                <span className="text-[10px] text-[var(--alpha-text-15)]">·</span>
                 <div className="flex items-center gap-0.5">
-                  <Clock className="w-2.5 h-2.5 text-white/25" />
-                  <span className="text-[10px] text-white/35">{action.timeInvestment}</span>
+                  <Clock className="w-2.5 h-2.5 text-[var(--alpha-text-20)]" />
+                  <span className="text-[10px] text-[var(--alpha-text-30)]">{action.timeInvestment}</span>
                 </div>
-                <span className="text-[10px] text-white/20">·</span>
+                <span className="text-[10px] text-[var(--alpha-text-15)]">·</span>
                 <ROIStars rating={action.roiRating} />
               </div>
             </div>
             {expanded
-              ? <ChevronUp className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />
-              : <ChevronDown className="w-3.5 h-3.5 text-white/25 flex-shrink-0 mt-0.5" />}
+              ? <ChevronUp className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0 mt-0.5" />
+              : <ChevronDown className="w-3.5 h-3.5 text-[var(--alpha-text-20)] flex-shrink-0 mt-0.5" />}
           </button>
 
           <AnimatePresence>
@@ -107,8 +107,8 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
                     <div className="space-y-1">
                       {action.subActions.map((sub, i) => (
                         <div key={i} className="flex items-start gap-1.5">
-                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0 text-white/25" />
-                          <span className="text-xs text-white/60">{sub}</span>
+                          <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0 text-[var(--alpha-text-20)]" />
+                          <span className="text-xs text-[var(--alpha-text-55)]">{sub}</span>
                         </div>
                       ))}
                     </div>
@@ -117,7 +117,7 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
                   {action.whyNow && (
                     <div className="why-now-box">
                       <Zap className="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-400/60" />
-                      <p className="text-xs text-white/55 leading-relaxed">
+                      <p className="text-xs text-[var(--alpha-text-50)] leading-relaxed">
                         <span className="text-amber-400/70 font-medium">Why now: </span>{action.whyNow}
                       </p>
                     </div>
@@ -126,19 +126,19 @@ function WeekRow({ action, index, isLast }: { action: WeeklyAction; index: numbe
                   {action.expectedOutcome && (
                     <div className="flex items-start gap-1.5">
                       <CheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0 text-emerald-400/50" />
-                      <p className="text-xs text-white/50 leading-relaxed">
+                      <p className="text-xs text-[var(--alpha-text-45)] leading-relaxed">
                         <span className="text-emerald-400/60 font-medium">Expected: </span>{action.expectedOutcome}
                       </p>
                     </div>
                   )}
 
                   {action.evidence && (
-                    <p className="text-[11px] text-white/30 italic leading-relaxed">{action.evidence}</p>
+                    <p className="text-[11px] text-[var(--alpha-text-25)] italic leading-relaxed">{action.evidence}</p>
                   )}
 
                   {action.unlocks && action.unlocks.length > 0 && (
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] text-white/30">Unlocks:</span>
+                      <span className="text-[10px] text-[var(--alpha-text-25)]">Unlocks:</span>
                       {action.unlocks.map(u => (
                         <span key={u} className="unlock-tag">{u}</span>
                       ))}
@@ -169,13 +169,13 @@ function MonthSection({
             M{month.month}
           </div>
           <div>
-            <div className="text-sm font-medium text-white/85">{month.theme}</div>
-            <div className="text-xs text-white/35">{month.weeklyActions.length} weekly actions</div>
+            <div className="text-sm font-medium text-[var(--alpha-text-78)]">{month.theme}</div>
+            <div className="text-xs text-[var(--alpha-text-30)]">{month.weeklyActions.length} weekly actions</div>
           </div>
         </div>
         {isActive
-          ? <ChevronUp className="w-4 h-4 text-white/30" />
-          : <ChevronDown className="w-4 h-4 text-white/30" />}
+          ? <ChevronUp className="w-4 h-4 text-[var(--alpha-text-25)]" />
+          : <ChevronDown className="w-4 h-4 text-[var(--alpha-text-25)]" />}
       </button>
 
       <AnimatePresence>
@@ -189,10 +189,10 @@ function MonthSection({
             <div className="pt-3 pb-1 pl-4">
               {month.milestoneGoal && (
                 <div className="mb-3">
-                  <div className="text-xs font-medium text-white/35 uppercase tracking-wide mb-1.5">Month goal</div>
+                  <div className="text-xs font-medium text-[var(--alpha-text-30)] uppercase tracking-wide mb-1.5">Month goal</div>
                   <div className="flex items-center gap-1.5">
                     <CheckCircle className="w-3 h-3 text-emerald-400/40" />
-                    <span className="text-xs text-white/60">{month.milestoneGoal}</span>
+                    <span className="text-xs text-[var(--alpha-text-55)]">{month.milestoneGoal}</span>
                   </div>
                 </div>
               )}
@@ -236,25 +236,25 @@ const MonthlyActionPlan: React.FC<MonthlyActionPlanProps> = ({ plan, className =
         <UrgencyHeader mode={plan.urgencyMode} totalMonths={plan.months.length} />
 
         {plan.planSummary && (
-          <p className="mt-2.5 text-xs text-white/50 leading-relaxed">{plan.planSummary}</p>
+          <p className="mt-2.5 text-xs text-[var(--alpha-text-45)] leading-relaxed">{plan.planSummary}</p>
         )}
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/[0.06]">
           <div className="text-center">
-            <div className="text-base font-bold text-white/85">{totalActions}</div>
-            <div className="text-[10px] text-white/35">total actions</div>
+            <div className="text-base font-bold text-[var(--alpha-text-78)]">{totalActions}</div>
+            <div className="text-[10px] text-[var(--alpha-text-30)]">total actions</div>
           </div>
           <div className="text-center">
-            <div className="text-base font-bold text-white/85">{totalBlocking}</div>
-            <div className="text-[10px] text-white/35">critical gates</div>
+            <div className="text-base font-bold text-[var(--alpha-text-78)]">{totalBlocking}</div>
+            <div className="text-[10px] text-[var(--alpha-text-30)]">critical gates</div>
           </div>
           <div className="text-center">
-            <div className="text-base font-bold text-white/85">{plan.quickWins.length}</div>
-            <div className="text-[10px] text-white/35">quick wins</div>
+            <div className="text-base font-bold text-[var(--alpha-text-78)]">{plan.quickWins.length}</div>
+            <div className="text-[10px] text-[var(--alpha-text-30)]">quick wins</div>
           </div>
           <div className="text-center">
             <div className="text-sm font-semibold text-blue-400">{plan.estimatedJobSearchDuration}</div>
-            <div className="text-[10px] text-white/35">est. timeline</div>
+            <div className="text-[10px] text-[var(--alpha-text-30)]">est. timeline</div>
           </div>
         </div>
       </div>
@@ -272,20 +272,20 @@ const MonthlyActionPlan: React.FC<MonthlyActionPlanProps> = ({ plan, className =
 
       {plan.criticalPath && plan.criticalPath.length > 0 && (
         <div className="mt-4 pt-3 border-t border-white/[0.06]">
-          <div className="text-xs font-medium text-white/30 uppercase tracking-wide mb-1.5">
+          <div className="text-xs font-medium text-[var(--alpha-text-25)] uppercase tracking-wide mb-1.5">
             Critical path (must-dos)
           </div>
           {plan.criticalPath.map((item, i) => (
             <div key={i} className="flex items-start gap-1.5 mb-1">
               <Lock className="w-3 h-3 mt-0.5 flex-shrink-0 text-red-400/40" />
-              <span className="text-xs text-white/40">{item}</span>
+              <span className="text-xs text-[var(--alpha-text-35)]">{item}</span>
             </div>
           ))}
         </div>
       )}
 
       {plan.planExpiry && (
-        <div className="mt-2 text-[10px] text-white/25">
+        <div className="mt-2 text-[10px] text-[var(--alpha-text-20)]">
           Re-audit recommended: {plan.planExpiry}
         </div>
       )}

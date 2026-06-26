@@ -78,8 +78,8 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
               {(target.displayName[0] ?? '?').toUpperCase()}
             </div>
             <div>
-              <div className="font-semibold text-white/90 text-sm">{target.displayName}</div>
-              <div className="text-xs text-white/40">{target.industry} · {target.companyStage}</div>
+              <div className="font-semibold text-[var(--alpha-text-85)] text-sm">{target.displayName}</div>
+              <div className="text-xs text-[var(--alpha-text-40)]">{target.industry} · {target.companyStage}</div>
             </div>
           </div>
           <MatchScoreBadge score={target.matchScore} />
@@ -90,7 +90,7 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
           {target.matchReasons.map((reason, i) => (
             <div key={i} className="flex items-start gap-1.5">
               <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: accentColor }} />
-              <span className="text-xs text-white/65">{reason}</span>
+              <span className="text-xs text-[var(--alpha-text-60)]">{reason}</span>
             </div>
           ))}
         </div>
@@ -98,16 +98,16 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
         {/* Stats row */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1">
-            <Timer className="w-3 h-3 text-white/30" />
-            <span className="text-xs text-white/50">{target.averageTimeToOffer} avg offer</span>
+            <Timer className="w-3 h-3 text-[var(--alpha-text-25)]" />
+            <span className="text-xs text-[var(--alpha-text-50)]">{target.averageTimeToOffer} avg offer</span>
           </div>
           <div className="flex items-center gap-1">
-            <Users className="w-3 h-3 text-white/30" />
-            <span className="text-xs text-white/50">{target.employeeCount} employees</span>
+            <Users className="w-3 h-3 text-[var(--alpha-text-25)]" />
+            <span className="text-xs text-[var(--alpha-text-50)]">{target.employeeCount} employees</span>
           </div>
           <div className="flex items-center gap-1">
-            <Building2 className="w-3 h-3 text-white/30" />
-            <span className="text-xs text-white/50">{target.remotePolicy.replace(/_/g, ' ')}</span>
+            <Building2 className="w-3 h-3 text-[var(--alpha-text-25)]" />
+            <span className="text-xs text-[var(--alpha-text-50)]">{target.remotePolicy.replace(/_/g, ' ')}</span>
           </div>
         </div>
 
@@ -116,14 +116,14 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
           style={{ background: `${accentColor}0D`, border: `1px solid ${accentColor}25` }}>
           <div className="flex items-start gap-1.5">
             <Target className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: accentColor }} />
-            <p className="text-xs text-white/80">{target.channelRationale}</p>
+            <p className="text-xs text-[var(--alpha-text-78)]">{target.channelRationale}</p>
           </div>
         </div>
 
         {/* Expand button */}
         {(target.linkedinApproachTemplate || target.interviewFocusAreas.length > 0) && (
           <button onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 mt-2.5 text-xs text-white/35 hover:text-white/60 transition-colors">
+            className="flex items-center gap-1 mt-2.5 text-xs text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-55)] transition-colors">
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {expanded ? 'Hide outreach tools' : 'Show outreach template + interview focus'}
           </button>
@@ -144,16 +144,16 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
               {target.linkedinApproachTemplate && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-medium text-white/50 uppercase tracking-wide">LinkedIn Outreach Template</span>
+                    <span className="text-xs font-medium text-[var(--alpha-text-50)] uppercase tracking-wide">LinkedIn Outreach Template</span>
                     <button onClick={copyTemplate}
-                      className="flex items-center gap-1 text-[10px] text-white/35 hover:text-white/60 transition-colors">
+                      className="flex items-center gap-1 text-[10px] text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-55)] transition-colors">
                       {copied
                         ? <><CheckCheck className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">Copied!</span></>
                         : <><Copy className="w-3 h-3" /><span>Copy</span></>
                       }
                     </button>
                   </div>
-                  <div className="text-xs text-white/65 leading-relaxed whitespace-pre-wrap rounded-lg p-2.5"
+                  <div className="text-xs text-[var(--alpha-text-60)] leading-relaxed whitespace-pre-wrap rounded-lg p-2.5"
                     style={{ background: 'var(--alpha-bg-04)', fontFamily: 'monospace' }}>
                     {target.linkedinApproachTemplate}
                   </div>
@@ -162,12 +162,12 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
 
               {target.interviewFocusAreas.length > 0 && (
                 <div>
-                  <span className="text-xs font-medium text-white/50 uppercase tracking-wide">Interview Focus</span>
+                  <span className="text-xs font-medium text-[var(--alpha-text-50)] uppercase tracking-wide">Interview Focus</span>
                   <ul className="mt-1.5 space-y-1">
                     {target.interviewFocusAreas.map((item, i) => (
                       <li key={i} className="flex items-start gap-1.5">
-                        <TrendingUp className="w-3 h-3 mt-0.5 flex-shrink-0 text-white/30" />
-                        <span className="text-xs text-white/60">{item}</span>
+                        <TrendingUp className="w-3 h-3 mt-0.5 flex-shrink-0 text-[var(--alpha-text-25)]" />
+                        <span className="text-xs text-[var(--alpha-text-55)]">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -178,7 +178,7 @@ function CompanyTargetCard({ target, index }: { target: JobTarget; index: number
                 <div>
                   <span className="text-xs font-medium text-amber-400/60 uppercase tracking-wide">Verify before applying</span>
                   {target.cautions.map((c, i) => (
-                    <p key={i} className="text-xs text-white/45 mt-1">· {c}</p>
+                    <p key={i} className="text-xs text-[var(--alpha-text-45)] mt-1">· {c}</p>
                   ))}
                 </div>
               )}
@@ -208,8 +208,8 @@ const JobTargetPanel: React.FC<JobTargetPanelProps> = ({ targeting, className = 
               <Target className="w-4 h-4 text-blue-400" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white/90">Targeted Job Search</div>
-              <div className="text-xs text-white/45">Specific companies matched to your profile</div>
+              <div className="text-sm font-semibold text-[var(--alpha-text-85)]">Targeted Job Search</div>
+              <div className="text-xs text-[var(--alpha-text-45)]">Specific companies matched to your profile</div>
             </div>
           </div>
           <UrgencyBadge urgency={targeting.searchUrgency} />
@@ -217,27 +217,27 @@ const JobTargetPanel: React.FC<JobTargetPanelProps> = ({ targeting, className = 
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-white/30" />
-            <span className="text-xs text-white/60">
-              Est. search: <span className="text-white/80 font-medium">{targeting.estimatedSearchDuration}</span>
+            <Clock className="w-3.5 h-3.5 text-[var(--alpha-text-25)]" />
+            <span className="text-xs text-[var(--alpha-text-55)]">
+              Est. search: <span className="text-[var(--alpha-text-78)] font-medium">{targeting.estimatedSearchDuration}</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-white/30" />
-            <span className="text-xs text-white/60">
-              <span className="text-white/80 font-medium">{targeting.targets.length}</span> target companies
+            <Building2 className="w-3.5 h-3.5 text-[var(--alpha-text-25)]" />
+            <span className="text-xs text-[var(--alpha-text-55)]">
+              <span className="text-[var(--alpha-text-78)] font-medium">{targeting.targets.length}</span> target companies
             </span>
           </div>
         </div>
 
         {targeting.strategyRecommendation && (
-          <p className="mt-2.5 text-xs text-white/65 leading-relaxed border-t border-white/[0.07] pt-2.5">
+          <p className="mt-2.5 text-xs text-[var(--alpha-text-60)] leading-relaxed border-t border-white/[0.07] pt-2.5">
             {targeting.strategyRecommendation}
           </p>
         )}
 
         {targeting.marketSummary && (
-          <p className="mt-1.5 text-xs text-white/40 leading-relaxed italic">{targeting.marketSummary}</p>
+          <p className="mt-1.5 text-xs text-[var(--alpha-text-40)] leading-relaxed italic">{targeting.marketSummary}</p>
         )}
       </motion.div>
 
@@ -266,7 +266,7 @@ const JobTargetPanel: React.FC<JobTargetPanelProps> = ({ targeting, className = 
                 {targeting.avoidList.length} companies to avoid (layoff wave contagion)
               </span>
             </div>
-            {showAvoidList ? <ChevronUp className="w-4 h-4 text-white/30" /> : <ChevronDown className="w-4 h-4 text-white/30" />}
+            {showAvoidList ? <ChevronUp className="w-4 h-4 text-[var(--alpha-text-25)]" /> : <ChevronDown className="w-4 h-4 text-[var(--alpha-text-25)]" />}
           </button>
 
           <AnimatePresence>
@@ -278,7 +278,7 @@ const JobTargetPanel: React.FC<JobTargetPanelProps> = ({ targeting, className = 
                 className="overflow-hidden"
               >
                 <div className="px-4 pb-3">
-                  <p className="text-xs text-white/45 mb-2 leading-relaxed">
+                  <p className="text-xs text-[var(--alpha-text-45)] mb-2 leading-relaxed">
                     These companies are in the same layoff wave as your current employer — compounded risk if you join them now.
                   </p>
                   <div className="flex flex-wrap gap-1.5">

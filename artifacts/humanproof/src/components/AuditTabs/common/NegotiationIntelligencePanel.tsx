@@ -80,7 +80,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
 
   return (
     <div
-      className="rounded-lg overflow-hidden border border-white/8"
+      className="rounded-lg overflow-hidden border border-[var(--alpha-bg-08)]"
       style={{ background: 'var(--alpha-bg-04)' }}
     >
       {/* Email header row */}
@@ -124,12 +124,12 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
               {/* Subject line */}
               <div className="flex items-center gap-2 mb-1.5 pt-1">
                 <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Subject:</span>
-                <span className="text-[11px] text-gray-200 font-medium">{email.subject}</span>
+                <span className="text-[11px] text-[var(--alpha-text-78)] font-medium">{email.subject}</span>
               </div>
 
               {/* Body — pre-formatted, monospace for easy scanning */}
               <pre
-                className="text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap font-sans rounded-lg p-3 mb-2.5"
+                className="text-[11px] leading-relaxed text-[var(--alpha-text-60)] whitespace-pre-wrap font-sans rounded-lg p-3 mb-2.5"
                 style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid var(--alpha-bg-06)' }}
               >
                 {email.body}
@@ -180,7 +180,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
         <NegotiationIllustration size={36} className="flex-shrink-0 opacity-80" />
         <div className="flex items-center gap-2 flex-wrap">
           <Scale size={14} className="text-blue-400" />
-          <span className="text-sm font-semibold text-white">Negotiation Intelligence</span>
+          <span className="text-sm font-semibold text-[var(--text)]">Negotiation Intelligence</span>
           <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${cfg.badge}`}>
             {cfg.label}
           </span>
@@ -189,11 +189,11 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
 
       {/* Leverage bar */}
       <div className="mb-3">
-        <div className="flex justify-between text-[11px] text-gray-400 mb-1">
+        <div className="flex justify-between text-[11px] text-[var(--alpha-text-45)] mb-1">
           <span>Leverage score</span>
           <span>{negotiation.leverageScore}/100</span>
         </div>
-        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-[var(--alpha-bg-08)] rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${negotiation.leverageScore}%` }}
@@ -206,27 +206,27 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
 
       {/* Tactic + ask */}
       <div className="p-3 rounded-lg bg-white/4 mb-3">
-        <div className="text-[11px] font-medium text-gray-400 mb-1">{negotiation.recommendedTactic}</div>
-        <div className="text-xs text-gray-200">{negotiation.specificAsk}</div>
+        <div className="text-[11px] font-medium text-[var(--alpha-text-45)] mb-1">{negotiation.recommendedTactic}</div>
+        <div className="text-xs text-[var(--alpha-text-78)]">{negotiation.specificAsk}</div>
       </div>
 
       {/* BATNA + timing */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-        <div className="p-2 rounded-lg bg-white/3 border border-white/5">
-          <div className="text-[10px] text-gray-500 mb-0.5">Outside Option (BATNA)</div>
-          <div className="text-[11px] text-gray-300">{negotiation.batnaStrength}</div>
+        <div className="p-2 rounded-lg bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-06)]">
+          <div className="text-[10px] text-[var(--alpha-text-35)] mb-0.5">Outside Option (BATNA)</div>
+          <div className="text-[11px] text-[var(--alpha-text-60)]">{negotiation.batnaStrength}</div>
         </div>
-        <div className="p-2 rounded-lg bg-white/3 border border-white/5">
-          <div className="text-[10px] text-gray-500 mb-0.5">Timing Window</div>
-          <div className="text-[11px] text-gray-300 line-clamp-3">{negotiation.timingWindow}</div>
+        <div className="p-2 rounded-lg bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-06)]">
+          <div className="text-[10px] text-[var(--alpha-text-35)] mb-0.5">Timing Window</div>
+          <div className="text-[11px] text-[var(--alpha-text-60)] line-clamp-3">{negotiation.timingWindow}</div>
         </div>
       </div>
 
       {/* Copy-pasteable email scripts */}
       {hasEmailScripts && (
-        <div className="border-t border-white/5 pt-3 mb-3">
+        <div className="border-t border-[var(--alpha-bg-06)] pt-3 mb-3">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[11px] font-semibold text-gray-300">
+            <span className="text-[11px] font-semibold text-[var(--alpha-text-60)]">
               Ready-to-send email scripts
             </span>
             <span className="text-[10px] text-muted-foreground">
@@ -243,11 +243,11 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
 
       {/* Risks + red lines — collapsible */}
       {(negotiation.risksToNegotiating.length > 0 || negotiation.redLines.length > 0) && (
-        <div className="border-t border-white/5 pt-3 mt-1">
+        <div className="border-t border-[var(--alpha-bg-06)] pt-3 mt-1">
           <button
             type="button"
             onClick={() => setShowRisks(!showRisks)}
-            className="w-full flex items-center justify-between text-[11px] text-gray-400 hover:text-gray-200 transition-colors"
+            className="w-full flex items-center justify-between text-[11px] text-[var(--alpha-text-45)] hover:text-[var(--alpha-text-78)] transition-colors"
           >
             <span>Risks &amp; red lines</span>
             {showRisks ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -263,13 +263,13 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
                 {negotiation.risksToNegotiating.map((risk, i) => (
                   <div key={i} className="flex items-start gap-1.5">
                     <span className="text-amber-400 text-[10px] mt-0.5">⚠</span>
-                    <span className="text-[11px] text-gray-300">{risk}</span>
+                    <span className="text-[11px] text-[var(--alpha-text-60)]">{risk}</span>
                   </div>
                 ))}
                 {negotiation.redLines.map((line, i) => (
                   <div key={`rl-${i}`} className="flex items-start gap-1.5">
                     <span className="text-red-400 text-[10px] mt-0.5">✗</span>
-                    <span className="text-[11px] text-gray-300">{line}</span>
+                    <span className="text-[11px] text-[var(--alpha-text-60)]">{line}</span>
                   </div>
                 ))}
               </motion.div>
