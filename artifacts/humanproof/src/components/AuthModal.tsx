@@ -109,7 +109,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         {/* Top Glow Bar */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--cyan), transparent)', opacity: 0.5 }} />
 
-        <button onClick={onClose} style={{
+        <button onClick={onClose} aria-label="Close" style={{
           position: 'absolute', top: '24px', right: '24px',
           background: 'var(--alpha-bg-04)', border: 'none', color: 'var(--color-slate500-text)',
           cursor: 'pointer', fontSize: '1rem', width: 28, height: 28, borderRadius: '50%',

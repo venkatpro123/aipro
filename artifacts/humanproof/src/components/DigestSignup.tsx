@@ -52,9 +52,9 @@ export default function DigestSignup({ onClose, embedded = false }: DigestSignup
     <div
       style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 150, maxWidth: 360, width: 'calc(100vw - 48px)' }}
     >
-      <div style={{ background: '#0F0F2A', border: '1px solid var(--border2)', borderRadius: 16, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border2)', borderRadius: 16, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
         {onClose && (
-          <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '1.1rem' }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '1.1rem' }}>×</button>
         )}
         <SignupCard email={email} setEmail={setEmail} status={status} msg={msg} onSubscribe={handleSubscribe} jobTitle={jobTitle} alreadySubscribed={alreadySubscribed} />
       </div>
