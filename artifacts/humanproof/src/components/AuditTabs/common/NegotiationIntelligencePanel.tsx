@@ -87,7 +87,7 @@ const EmailScriptCard: React.FC<{ email: NegotiationEmailScript; index: number }
       <button
         type="button"
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-white/4 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-[var(--alpha-bg-04)] transition-colors"
       >
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex-shrink-0">
           {email.label}
@@ -205,7 +205,7 @@ export function NegotiationIntelligencePanel({ negotiation }: Props) {
       </div>
 
       {/* Tactic + ask */}
-      <div className="p-3 rounded-lg bg-white/4 mb-3">
+      <div className="p-3 rounded-lg bg-[var(--alpha-bg-04)] mb-3">
         <div className="text-[11px] font-medium text-[var(--alpha-text-45)] mb-1">{negotiation.recommendedTactic}</div>
         <div className="text-xs text-[var(--alpha-text-78)]">{negotiation.specificAsk}</div>
       </div>

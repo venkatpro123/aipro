@@ -29,7 +29,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
       open={defaultOpen}
     >
       <summary
-        className="cursor-pointer px-[var(--space-5)] py-[var(--space-4)] bg-white/5 hover:bg-white/10 transition-all select-none"
+        className="cursor-pointer px-[var(--space-5)] py-[var(--space-4)] bg-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-10)] transition-all select-none"
         style={{
           listStyle: "none",
           display: "flex",

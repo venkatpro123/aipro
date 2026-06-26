@@ -257,7 +257,7 @@ export const Stage3EmergencyProtocol: React.FC<Props> = ({
 
         {/* Progress */}
         <div className="mt-4 flex items-center gap-3">
-          <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-[var(--alpha-bg-05)] rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
@@ -273,7 +273,7 @@ export const Stage3EmergencyProtocol: React.FC<Props> = ({
       </div>
 
       {/* Week cards */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-[var(--alpha-bg-05)]">
         {weeks.map((week) => {
           const isExpanded = expandedWeek === week.week;
           const weekCompleted = week.actions.filter(a => completed[a.id]).length;
@@ -285,7 +285,7 @@ export const Stage3EmergencyProtocol: React.FC<Props> = ({
             <div key={week.week}>
               <button
                 onClick={() => setExpandedWeek(isExpanded ? null : week.week)}
-                className="w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-4 hover:bg-[var(--alpha-bg-05)] transition-colors text-left"
               >
                 <div
                   className="p-2 rounded-lg flex-shrink-0"
@@ -323,7 +323,7 @@ export const Stage3EmergencyProtocol: React.FC<Props> = ({
                       <button
                         key={action.id}
                         onClick={() => toggleAction(action.id)}
-                        className="w-full flex items-start gap-3 p-3 rounded-xl text-left hover:bg-white/5 transition-colors"
+                        className="w-full flex items-start gap-3 p-3 rounded-xl text-left hover:bg-[var(--alpha-bg-05)] transition-colors"
                         style={{ borderLeft: action.critical ? `3px solid ${week.color}` : "3px solid transparent" }}
                       >
                         {completed[action.id]

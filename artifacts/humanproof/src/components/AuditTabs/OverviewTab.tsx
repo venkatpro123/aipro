@@ -547,7 +547,7 @@ const QuickActionsRow: React.FC<{
       <div className="space-y-2">
         {actions.map((a, i) => (
           <motion.div key={i} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + i * 0.08 }}
-            className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-[var(--alpha-bg-05)] hover:bg-white/10 transition-colors">
+            className="flex items-start gap-3 p-3 rounded-xl bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-10)] transition-colors">
             <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: uColor[a.urgency] }} />
             <span className="text-xs text-muted-foreground leading-relaxed flex-1">{a.text}</span>
             <span className="text-[10px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
@@ -1188,7 +1188,7 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
               <button
                 type="button"
                 onClick={() => setExpanded(isOpen ? null : path.id)}
-                className="w-full text-left p-3 flex items-start gap-3 hover:bg-white/[0.03] transition-colors"
+                className="w-full text-left p-3 flex items-start gap-3 hover:bg-[var(--alpha-bg-04)] transition-colors"
               >
                 <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black mt-0.5"
                   style={{ background: `${scoreColor}20`, color: scoreColor, border: `1px solid ${scoreColor}30` }}>
@@ -1310,7 +1310,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
               : lever.feasibility === 'short_term' ? '#f59e0b'
               : '#64748b';
             return (
-              <div key={lever.dimension} className="rounded-lg border border-[var(--alpha-bg-06)] p-2.5 bg-white/[0.01]">
+              <div key={lever.dimension} className="rounded-lg border border-[var(--alpha-bg-06)] p-2.5 bg-[var(--alpha-bg-01)]">
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-black font-mono px-1 py-0.5 rounded"
@@ -1329,7 +1329,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
                   </div>
                 </div>
                 {/* Impact bar */}
-                <div className="h-1 bg-white/5 rounded-full overflow-hidden mb-2">
+                <div className="h-1 bg-[var(--alpha-bg-05)] rounded-full overflow-hidden mb-2">
                   <div className="h-full rounded-full" style={{ width: `${barWidth}%`, background: idx === 0 ? scoreColor : `${scoreColor}60` }} />
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-relaxed">{lever.fastestAction}</p>
@@ -1344,7 +1344,7 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
             { label: '2 levers', score: sensitivity.bestTwoLeverScore },
             { label: '3 levers', score: sensitivity.bestThreeLeverScore },
           ].map(item => (
-            <div key={item.label} className="text-center rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2">
+            <div key={item.label} className="text-center rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2">
               <div className="text-xs font-bold" style={{ color: getScoreColor(item.score) }}>{item.score}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">{item.label}</div>
             </div>
@@ -1458,11 +1458,11 @@ const SurvivalProbabilityPanel: React.FC<{ result: HybridResult }> = ({ result }
             { label: '6-Month', value: pct6m },
             { label: '12-Month', value: pct12m },
           ].map((item, i) => (
-            <div key={i} className="rounded-lg bg-white/[0.03] border border-[var(--alpha-bg-06)] p-2.5 text-center">
+            <div key={i} className="rounded-lg bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-06)] p-2.5 text-center">
               <div className="text-xl font-black tracking-tight" style={{ color }}>{item.value}%</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">{item.label} probability</div>
               {/* Mini progress bar */}
-              <div className="mt-2 h-1 rounded-full bg-white/[0.08] overflow-hidden">
+              <div className="mt-2 h-1 rounded-full bg-[var(--alpha-bg-08)] overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${item.value}%` }}
@@ -1478,18 +1478,18 @@ const SurvivalProbabilityPanel: React.FC<{ result: HybridResult }> = ({ result }
         <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{sp.probabilityNarrative}</p>
 
         <div className="flex flex-wrap gap-2 text-[10px]">
-          <span className="px-2 py-1 rounded bg-white/[0.04] border border-[var(--alpha-bg-07)]">
+          <span className="px-2 py-1 rounded bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-07)]">
             <span className="text-muted-foreground">Framed as:</span>{' '}
             <span className="font-semibold text-foreground">{sp.framedAs1InX}</span>
           </span>
-          <span className="px-2 py-1 rounded bg-white/[0.04] border border-[var(--alpha-bg-07)]">
+          <span className="px-2 py-1 rounded bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-07)]">
             <span className="text-muted-foreground">Risk vs. workforce:</span>{' '}
             {sp.workforceRiskPercentile >= 60
               ? <span className="font-semibold" style={{ color }}>Top {100 - sp.workforceRiskPercentile}% most at-risk</span>
               : <span className="font-semibold text-emerald-400">Below-average risk ({sp.workforceRiskPercentile}th pct)</span>
             }
           </span>
-          <span className="px-2 py-1 rounded bg-white/[0.04] border border-[var(--alpha-bg-07)]">
+          <span className="px-2 py-1 rounded bg-[var(--alpha-bg-04)] border border-[var(--alpha-bg-07)]">
             <span className="text-muted-foreground">If no action (12m):</span>{' '}
             <span className="font-semibold text-red-400">{Math.round(sp.inactionProbability12m * 100)}%</span>
           </span>
@@ -1556,7 +1556,7 @@ const SignalContradictionPanel: React.FC<{ result: HybridResult }> = ({ result }
             {report.contradictions.map((c: any, i: number) => {
               const sc = severityColors[c.severity] ?? '#94a3b8';
               return (
-                <div key={i} className="rounded-lg border border-[var(--alpha-bg-07)] p-3 bg-white/[0.02]">
+                <div key={i} className="rounded-lg border border-[var(--alpha-bg-07)] p-3 bg-[var(--alpha-bg-02)]">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded"
                       style={{ background: `${sc}15`, color: sc, border: `1px solid ${sc}25` }}>
@@ -1700,7 +1700,7 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
             return (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-[10px] w-28 flex-shrink-0 text-muted-foreground truncate">{p.name}</span>
-                <div className="flex-1 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+                <div className="flex-1 h-1.5 rounded-full bg-[var(--alpha-bg-08)] overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${p.score}%` }}
@@ -1719,12 +1719,12 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
 
         {/* Key insight row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2">
             <div className="text-[10px] text-red-400/70 uppercase tracking-wider mb-1">Weakest Pillar</div>
             <div className="text-[10px] font-bold text-foreground">{resilience.criticalWeakness.name}</div>
             <div className="text-[10px] text-muted-foreground leading-snug line-clamp-2">{resilience.criticalWeakness.topAction}</div>
           </div>
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2">
             <div className="text-[10px] text-emerald-400/70 uppercase tracking-wider mb-1">Strongest Pillar</div>
             <div className="text-[10px] font-bold text-foreground">{resilience.keyStrength.name}</div>
             <div className="text-[10px] text-muted-foreground leading-snug line-clamp-2">{resilience.keyStrength.insight}</div>
@@ -1744,7 +1744,7 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
           <div className="mt-3 space-y-1.5">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Top 3 Resilience Actions</div>
             {resilience.resilienceImprovementPlan.map((action: string, i: number) => (
-              <div key={i} className="flex gap-2 items-start text-[10px] text-muted-foreground leading-snug p-2 rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)]">
+              <div key={i} className="flex gap-2 items-start text-[10px] text-muted-foreground leading-snug p-2 rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)]">
                 <span className="flex-shrink-0 font-black" style={{ color }}>{i + 1}</span>
                 {action}
               </div>
@@ -1827,19 +1827,19 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
 
         {/* Key metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2 text-center">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
             <div className="text-xs font-bold" style={{ color: optimalColor }}>
               {et.optimalDepartureWindow.compositeScore}/100
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">Optimal window score</div>
           </div>
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2 text-center">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
             <div className="text-xs font-bold text-amber-400">
               {et.unvestedIfImmediateExit > 0 ? `$${(et.unvestedIfImmediateExit / 1000).toFixed(0)}K` : 'N/A'}
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">Unvested if exit now</div>
           </div>
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2 text-center">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
             <div className="text-xs font-bold" style={{ color: '#10b981' }}>
               {et.unvestedAtOptimalExit > 0 ? `$${(et.unvestedAtOptimalExit / 1000).toFixed(0)}K` : 'N/A'}
             </div>
@@ -1857,7 +1857,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         </button>
 
         {expanded && (
-          <div className="mt-3 p-3 rounded-lg border border-[var(--alpha-bg-07)] bg-white/[0.02]">
+          <div className="mt-3 p-3 rounded-lg border border-[var(--alpha-bg-07)] bg-[var(--alpha-bg-02)]">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Staying Risk Penalty</div>
             <p className="text-[10px] text-muted-foreground leading-relaxed">{et.stayingRiskPenalty}</p>
             {et.worstDepartureMonths.length > 0 && (
@@ -1960,17 +1960,17 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
 
         <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">{runway.keyInsight}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2 text-center">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
             <div className="text-xs font-bold" style={{ color }}>{runway.safeSearchMonths}mo</div>
             <div className="text-[10px] text-muted-foreground mt-0.5">Safe search window</div>
           </div>
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2 text-center">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
             <div className="text-xs font-bold capitalize" style={{ color: runway.salaryNegotiationLeverage === 'high' ? 'var(--emerald)' : runway.salaryNegotiationLeverage === 'medium' ? 'var(--amber)' : 'var(--red)' }}>
               {runway.salaryNegotiationLeverage}
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">Negotiating leverage</div>
           </div>
-          <div className="rounded-lg bg-white/[0.02] border border-[var(--alpha-bg-05)] p-2 text-center">
+          <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
             <div className="text-[10px] font-bold leading-tight" style={{ color }}>{runway.strategyLabel}</div>
             <div className="text-[10px] text-muted-foreground mt-0.5">Recommended strategy</div>
           </div>
@@ -1983,7 +1983,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
       <button
         type="button"
         onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center justify-between px-4 py-2.5 border-t border-[var(--alpha-bg-06)] hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 border-t border-[var(--alpha-bg-06)] hover:bg-[var(--alpha-bg-02)] transition-colors"
       >
         <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
           {expanded ? 'Hide' : 'Show'} optimal move sequence ({runway.optimalSequence.length} steps)
@@ -1998,7 +1998,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
               : step.priority === 'should_do' ? 'var(--amber)'
               : 'var(--text-3)';
             return (
-              <div key={step.step} className="flex gap-2.5 items-start rounded-lg border border-[var(--alpha-bg-06)] p-2.5 bg-white/[0.01]">
+              <div key={step.step} className="flex gap-2.5 items-start rounded-lg border border-[var(--alpha-bg-06)] p-2.5 bg-[var(--alpha-bg-01)]">
                 <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black mt-0.5"
                   style={{ background: `${color}20`, color, border: `1px solid ${color}30` }}>
                   {step.step}
@@ -2369,7 +2369,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           /* Minimum data quality threshold: CI > 50 pts or confidence < 20%.
              A number in this range would span 5 tiers and give false precision.
              Show an explicit "insufficient data" state rather than a misleading score. */
-          <div className="mt-6 rounded-xl border border-[var(--alpha-bg-12)] bg-white/3 p-6 text-center">
+          <div className="mt-6 rounded-xl border border-[var(--alpha-bg-12)] bg-[var(--alpha-bg-04)] p-6 text-center">
             <div className="text-4xl mb-3 opacity-30">—</div>
             <div className="text-sm font-bold mb-2">Insufficient data for a reliable score</div>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-md mx-auto">
@@ -2549,7 +2549,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         )}
 
         {/* Peer Percentile Panel */}
-        <div className="mt-4 rounded-xl border border-[var(--alpha-bg-10)] bg-white/3 p-4">
+        <div className="mt-4 rounded-xl border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-04)] p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
               Peer Benchmark
@@ -2567,7 +2567,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </div>
           </div>
           {/* Percentile bar */}
-          <div className="relative h-3 bg-white/5 rounded-full overflow-hidden mb-3">
+          <div className="relative h-3 bg-[var(--alpha-bg-05)] rounded-full overflow-hidden mb-3">
             {/* Distribution shading: green 0-33, amber 33-66, red 66-100 */}
             <div className="absolute inset-y-0 left-0 w-1/3 bg-emerald-500/20 rounded-l-full" />
             <div className="absolute inset-y-0 left-1/3 w-1/3 bg-amber-500/20" />
@@ -2648,7 +2648,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div
                   id="inaction-methodology-note"
                   role="note"
-                  className="mt-2 mb-2 rounded-lg border border-[var(--alpha-bg-10)] bg-white/[0.04] p-3 text-[11px] leading-relaxed text-muted-foreground"
+                  className="mt-2 mb-2 rounded-lg border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-04)] p-3 text-[11px] leading-relaxed text-muted-foreground"
                 >
                   <p className="font-semibold text-[var(--text-2)] mb-1.5 text-xs">
                     How this estimate is calculated:
@@ -2874,10 +2874,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             </p>
           ) : (
             <div className="flex gap-3">
-              <button onClick={() => handleFeedback('correct')} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--alpha-bg-10)] bg-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-colors text-xs font-semibold">
+              <button onClick={() => handleFeedback('correct')} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-05)] hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-colors text-xs font-semibold">
                 <ThumbsUp className="w-3.5 h-3.5" /> Yes, accurate
               </button>
-              <button onClick={() => handleFeedback('incorrect')} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--alpha-bg-10)] bg-white/5 hover:bg-red-500/10 hover:border-red-500/30 transition-colors text-xs font-semibold">
+              <button onClick={() => handleFeedback('incorrect')} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-05)] hover:bg-red-500/10 hover:border-red-500/30 transition-colors text-xs font-semibold">
                 <ThumbsDown className="w-3.5 h-3.5" /> Off the mark
               </button>
             </div>

@@ -89,7 +89,7 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 px-3.5 py-3 hover:bg-white/[0.02] transition-colors text-left"
+        className="w-full flex items-start gap-3 px-3.5 py-3 hover:bg-[var(--alpha-bg-02)] transition-colors text-left"
       >
         {/* Priority score badge */}
         <div className="flex-shrink-0 w-9 h-9 rounded-lg flex flex-col items-center justify-center"
@@ -179,7 +179,7 @@ function WeekCard({ week }: { week: WeekMilestone }) {
     <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${phaseColor.border}` }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 px-3.5 py-3 hover:bg-white/[0.02] transition-colors text-left"
+        className="w-full flex items-start gap-3 px-3.5 py-3 hover:bg-[var(--alpha-bg-02)] transition-colors text-left"
       >
         <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
           style={{ background: phaseColor.bg }}>
@@ -256,7 +256,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: PhaseCheckpoint }) {
     <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${phaseColor.border}`, background: phaseColor.bg }}>
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 px-4 py-3.5 hover:bg-white/[0.02] transition-colors text-left"
+        className="w-full flex items-start gap-3 px-4 py-3.5 hover:bg-[var(--alpha-bg-02)] transition-colors text-left"
       >
         <div className="flex-shrink-0">
           <div className="text-xl font-black" style={{ color: phaseColor.text }}>D{checkpoint.checkpointDay}</div>

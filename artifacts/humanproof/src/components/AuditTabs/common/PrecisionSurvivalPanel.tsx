@@ -158,7 +158,7 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
       {/* Factor decomposition */}
       <div className="px-4 pb-2">
         <div className="text-xs font-medium text-[var(--alpha-text-45)] uppercase tracking-wide mb-2">What's driving your probability</div>
-        <div className="divide-y divide-white/[0.05]">
+        <div className="divide-y divide-[var(--alpha-bg-05)]">
           {displayFactors.map((factor, i) => (
             <FactorRow key={factor.id} factor={factor} index={i} />
           ))}

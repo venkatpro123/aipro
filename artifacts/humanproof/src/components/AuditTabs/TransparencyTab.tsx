@@ -127,7 +127,7 @@ const DataQualityDashboard: React.FC<{
            avgFreshness <= 90 ? "🔴 Stale data — confidence reduced. Scores may lag market reality by months." :
            "🔴 Critical staleness — data is over 90 days old. Score treats missing signals as neutral, which may understate real risk."}
         </div>
-        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+        <div className="w-full bg-[var(--alpha-bg-05)] h-1 rounded-full overflow-hidden">
           <motion.div
             className={`h-full ${avgFreshness <= 7 ? "bg-[var(--emerald)]" : avgFreshness <= 30 ? "bg-[var(--amber)]" : "bg-[var(--red)]"}`}
             initial={{ width: 0 }}
@@ -156,7 +156,7 @@ const DataQualityDashboard: React.FC<{
               ? "Partial coverage — mix of fresh and static signals"
               : "⚠ Heuristic-dominant — live APIs unavailable; score uses industry baselines and DB snapshots"}
         </div>
-        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+        <div className="w-full bg-[var(--alpha-bg-05)] h-1 rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-[var(--cyan)]"
             initial={{ width: 0 }}
@@ -178,7 +178,7 @@ const DataQualityDashboard: React.FC<{
         <div className="text-[11px] text-muted-foreground mb-[var(--space-3)] leading-relaxed">
           {signalQuality.conflictingSignals.length === 0 ? "All signal sources converged — highest consensus confidence" : `${signalQuality.conflictingSignals.length} conflict(s) resolved via weighted arbitration. See Conflict Log below.`}
         </div>
-        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+        <div className="w-full bg-[var(--alpha-bg-05)] h-1 rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-[var(--red)]"
             initial={{ width: 0 }}
@@ -247,7 +247,7 @@ const ConflictResolutionLog: React.FC<ConflictResolutionLogProps> = ({
                 <div className="label-xs text-muted-foreground mb-2">Divergent Vectors</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {conflict.conflictingSources.map((src) => (
-                    <div key={src.source} className="bg-white/5 p-2 rounded flex justify-between items-center">
+                    <div key={src.source} className="bg-[var(--alpha-bg-05)] p-2 rounded flex justify-between items-center">
                       <span className="text-[10px] font-medium opacity-60 italic">{src.source}</span>
                       <span className="text-[10px] font-mono font-bold tracking-tighter">{src.value}</span>
                     </div>
@@ -305,15 +305,15 @@ const AuditTrail: React.FC<{ events: AuditEvent[] }> = ({ events }) => {
       <div className="overflow-x-auto -mx-0">
         <table className="w-full min-w-[480px]">
           <thead>
-            <tr className="bg-white/5 border-b border-[var(--alpha-bg-10)]">
+            <tr className="bg-[var(--alpha-bg-05)] border-b border-[var(--alpha-bg-10)]">
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Event Marker</th>
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Operation</th>
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Result</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[var(--alpha-bg-05)]">
             {events.map((event, index) => (
-              <tr key={index} className="hover:bg-white/5 transition-colors">
+              <tr key={index} className="hover:bg-[var(--alpha-bg-05)] transition-colors">
                 <td className="py-3 px-4 font-mono text-[10px] opacity-60">
                   {new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </td>
@@ -348,7 +348,7 @@ const getSeverityColorClass = (severity: string) => {
     case "critical": return "bg-rose-500/20 text-rose-500 border border-rose-500/30";
     case "high": return "bg-rose-500/10 text-rose-500 border border-rose-500/20";
     case "medium": return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
-    default: return "bg-white/10 text-muted-foreground border border-[var(--alpha-bg-10)]";
+    default: return "bg-[var(--alpha-bg-10)] text-muted-foreground border border-[var(--alpha-bg-10)]";
   }
 };
 
@@ -395,7 +395,7 @@ const SourceProvenanceTable: React.FC<{
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs bg-white/5 border border-[var(--alpha-bg-10)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--cyan)]/50 outline-none"
+            className="text-xs bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--cyan)]/50 outline-none"
           >
             {typeOptions.map((type) => (
               <option key={type} value={type} className="bg-[var(--bg)] text-[var(--text)]">
@@ -418,7 +418,7 @@ const SourceProvenanceTable: React.FC<{
           </thead>
           <tbody>
             {filteredSources.map((source, index) => (
-              <tr key={index} className="group hover:bg-white/5 transition-colors border-b border-[var(--alpha-bg-05)] last:border-0">
+              <tr key={index} className="group hover:bg-[var(--alpha-bg-05)] transition-colors border-b border-[var(--alpha-bg-05)] last:border-0">
                 <td className="py-4 px-4">
                   <div className="font-bold text-sm tracking-tight">{source.name}</div>
                   <div className="text-[10px] text-muted-foreground line-clamp-1 opacity-60 mt-0.5">{source.description}</div>
@@ -504,7 +504,7 @@ const CalibrationFreshnessPanel: React.FC<{
       )}
 
       {/* Calibration metrics panel */}
-      <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-white/[0.03] overflow-hidden">
+      <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-04)] overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--alpha-bg-08)] flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-amber-400" />
           <span className="text-xs font-black uppercase tracking-widest text-amber-400">
@@ -526,7 +526,7 @@ const CalibrationFreshnessPanel: React.FC<{
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-x divide-white/8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 divide-x divide-[var(--alpha-bg-08)]">
           {[
             {
               label: 'Calibration date',
@@ -574,7 +574,7 @@ const CalibrationFreshnessPanel: React.FC<{
         </div>
 
         {/* AUC interpretation and honest calibration coverage */}
-        <div className="px-4 py-3 border-t border-[var(--alpha-bg-08)] bg-white/[0.015] space-y-2">
+        <div className="px-4 py-3 border-t border-[var(--alpha-bg-08)] bg-[var(--alpha-bg-02)] space-y-2">
           <p className="text-[10px] text-muted-foreground leading-relaxed">
             AUC-ROC 0.81 was measured on {CALIBRATION_META.holdout_n ?? 40} held-out events (confidence interval ≈ ±0.10 at 95%).
             Training data is predominantly US public technology companies from layoffs.fyi — predictions for Indian IT, healthcare, manufacturing, and private companies have no empirical validation.
@@ -614,7 +614,7 @@ const CalibrationFreshnessPanel: React.FC<{
             )}
 
             {/* Formula accuracy row */}
-            <div className="px-4 py-3 bg-white/[0.015]">
+            <div className="px-4 py-3 bg-[var(--alpha-bg-02)]">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400/80">
@@ -812,7 +812,7 @@ const EffectiveWeightsPanel: React.FC<{
       <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-[11px]">
           <thead>
-            <tr className="bg-white/5 border-b border-[var(--alpha-bg-10)]">
+            <tr className="bg-[var(--alpha-bg-05)] border-b border-[var(--alpha-bg-10)]">
               <th className="text-left py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Layer</th>
               <th className="text-right py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Formula&nbsp;Wt</th>
               <th className="text-right py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Global Cal</th>
@@ -822,13 +822,13 @@ const EffectiveWeightsPanel: React.FC<{
               <th className="text-right py-2.5 px-4 label-xs text-cyan-400/70 opacity-80 uppercase">Eff&nbsp;Share</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[var(--alpha-bg-05)]">
             {rows.map(({ layer, name, fw, gc, sm, eff }) => {
               const effShare    = eff / totalEff;
               const driftFromFw = Math.abs(effShare - fw) > 0.03;
               const isL1Estimated = layer === 'L1' && l1EstimatedFromSector;
               return (
-                <tr key={layer} className="hover:bg-white/5 transition-colors">
+                <tr key={layer} className="hover:bg-[var(--alpha-bg-05)] transition-colors">
                   <td className="py-2.5 px-4">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">{layer}</span>
@@ -856,7 +856,7 @@ const EffectiveWeightsPanel: React.FC<{
                   )}
                   <td className="py-2.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <div className="w-16 bg-white/5 rounded-full h-1 overflow-hidden">
+                      <div className="w-16 bg-[var(--alpha-bg-05)] rounded-full h-1 overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -888,7 +888,7 @@ const EffectiveWeightsPanel: React.FC<{
                 ? 'AI Efficiency (redistributed)'
                 : 'AI Efficiency (inactive)';
               return (
-                <tr className={`hover:bg-white/5 transition-colors ${!d8IsActive ? 'opacity-40' : ''}`}>
+                <tr className={`hover:bg-[var(--alpha-bg-05)] transition-colors ${!d8IsActive ? 'opacity-40' : ''}`}>
                   <td className="py-2.5 px-4">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[10px] text-muted-foreground opacity-60 w-6">D8</span>
@@ -924,7 +924,7 @@ const EffectiveWeightsPanel: React.FC<{
                   )}
                   <td className="py-2.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <div className="w-16 bg-white/5 rounded-full h-1 overflow-hidden">
+                      <div className="w-16 bg-[var(--alpha-bg-05)] rounded-full h-1 overflow-hidden">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -1090,7 +1090,7 @@ const MethodologyExplainer: React.FC = () => {
   return (
     <div className="methodology-explainer space-y-[var(--space-4)]">
       {sections.map((section, index) => (
-        <div key={index} className="bg-white/5 border border-[var(--alpha-bg-05)] rounded-lg p-[var(--space-4)] hover:bg-white/10 transition-colors">
+        <div key={index} className="bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-05)] rounded-lg p-[var(--space-4)] hover:bg-[var(--alpha-bg-10)] transition-colors">
           <div className="flex gap-[var(--space-3)]">
             <div className="flex-shrink-0 mt-1">{section.icon}</div>
             <div className="w-full">
@@ -1212,7 +1212,7 @@ const DimensionCalibrationPanel: React.FC = () => {
 
       {/* Per-dimension table */}
       <div className="rounded-xl border border-[var(--alpha-bg-08)] overflow-hidden">
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground bg-white/[0.02] px-4 py-2 border-b border-[var(--alpha-bg-08)]">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground bg-[var(--alpha-bg-02)] px-4 py-2 border-b border-[var(--alpha-bg-08)]">
           <span className="pr-4">Dimension</span>
           <span>Signal Quality</span>
           <span className="px-3">Weight</span>
@@ -1221,7 +1221,7 @@ const DimensionCalibrationPanel: React.FC = () => {
         {report.dimensionResults.map((dim) => {
           const c = statusColor(dim);
           return (
-            <div key={dim.dimension} className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-0 px-4 py-3 border-b border-[var(--alpha-bg-05)] hover:bg-white/[0.02] transition-colors">
+            <div key={dim.dimension} className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-0 px-4 py-3 border-b border-[var(--alpha-bg-05)] hover:bg-[var(--alpha-bg-02)] transition-colors">
               <div className="pr-4 min-w-[160px]">
                 <p className="text-xs font-bold text-foreground/90">{dim.dimension.replace(/_/g, ' ')}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -1229,7 +1229,7 @@ const DimensionCalibrationPanel: React.FC = () => {
                 </p>
               </div>
               <div className="pr-4">
-                <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden mt-1.5">
+                <div className="w-full bg-[var(--alpha-bg-05)] h-1.5 rounded-full overflow-hidden mt-1.5">
                   <div
                     className={`h-full rounded-full ${dim.calibrationStatus === 'regression_derived' ? 'bg-emerald-500' : dim.calibrationStatus === 'pseudo_validated' ? 'bg-amber-400' : 'bg-red-400'}`}
                     style={{ width: `${Math.round(dim.patternAgreementScore * 100)}%` }}
@@ -3354,7 +3354,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground opacity-60 font-semibold">
                     Applied multiplier
                   </span>
-                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/5 border border-[var(--alpha-bg-10)]">
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)]">
                     {srAdj.key}
                   </span>
                   <span
@@ -3709,7 +3709,7 @@ const ActionCoveragePanel: React.FC = () => {
       : '✗ Below threshold';
 
   return (
-    <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-white/[0.03] overflow-hidden">
+    <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-04)] overflow-hidden">
       {/* Header row */}
       <div className="px-4 py-3 border-b border-[var(--alpha-bg-08)] flex items-center gap-2">
         <BarChart className="w-4 h-4 text-cyan-400" />
@@ -3746,7 +3746,7 @@ const ActionCoveragePanel: React.FC = () => {
 
           {/* Mini coverage bar */}
           <div className="flex-1 min-w-0 mb-4">
-            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+            <div className="h-2 bg-[var(--alpha-bg-05)] rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
                 style={{ width: `${r.coveragePct}%`, background: statusColor }}
@@ -3767,7 +3767,7 @@ const ActionCoveragePanel: React.FC = () => {
             { label: 'Roles with specific', value: r.specificRoles.toString(),          sub: `${r.coveredPrefixes.length} prefixes covered` },
             { label: 'Generic fallback',    value: r.genericRoles.toString(),           sub: `${100 - r.coveragePct}% of corpus` },
           ].map(s => (
-            <div key={s.label} className="bg-white/[0.03] rounded-lg p-3">
+            <div key={s.label} className="bg-[var(--alpha-bg-04)] rounded-lg p-3">
               <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1 font-bold">{s.label}</div>
               <div className="font-black font-mono text-lg text-text-1">{s.value}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</div>

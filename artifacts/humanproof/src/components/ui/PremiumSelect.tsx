@@ -75,11 +75,11 @@ const PremiumSelect = ({
               {groups ? (
                 Object.entries(groups).map(([groupName, groupOptions]) => (
                   <SelectPrimitive.Group key={groupName}>
-                    <SelectPrimitive.Label className="px-[var(--space-4)] py-[var(--space-2)] text-[10px] font-black uppercase text-white/20 tracking-[0.2em]">{groupName}</SelectPrimitive.Label>
+                    <SelectPrimitive.Label className="px-[var(--space-4)] py-[var(--space-2)] text-[10px] font-black uppercase text-[var(--text)]/20 tracking-[0.2em]">{groupName}</SelectPrimitive.Label>
                     {groupOptions.map((opt) => (
                       <SelectItem key={opt.key} value={opt.key} option={opt} />
                     ))}
-                    <SelectPrimitive.Separator className="h-px bg-white/5 my-[var(--space-2)]" />
+                    <SelectPrimitive.Separator className="h-px bg-[var(--alpha-bg-05)] my-[var(--space-2)]" />
                   </SelectPrimitive.Group>
                 ))
               ) : (

@@ -102,7 +102,7 @@ export const FirstAuditWelcome: React.FC<Props> = ({
           {/* Dismiss */}
           <button
             onClick={handleDismiss}
-            className="absolute top-2 right-2 p-1 rounded-md hover:bg-white/5 transition-colors"
+            className="absolute top-2 right-2 p-1 rounded-md hover:bg-[var(--alpha-bg-05)] transition-colors"
             aria-label="Dismiss welcome"
           >
             <X className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-45)' }} />

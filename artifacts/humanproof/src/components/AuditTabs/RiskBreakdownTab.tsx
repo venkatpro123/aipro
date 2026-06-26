@@ -517,7 +517,7 @@ const ScoreConfidenceInterval: React.FC<{
             <Info size={12} />
           </button>
         </div>
-        <div className="px-[var(--space-2)] py-1 bg-white/5 rounded text-[10px] font-mono text-muted-foreground">
+        <div className="px-[var(--space-2)] py-1 bg-[var(--alpha-bg-05)] rounded text-[10px] font-mono text-muted-foreground">
           {confidencePercent}% CONFIDENCE
         </div>
       </div>
@@ -544,7 +544,7 @@ const ScoreConfidenceInterval: React.FC<{
       )}
 
       <div className="h-12 relative flex items-center mb-6 px-1">
-        <div className="w-full bg-white/5 h-1.5 rounded-full relative">
+        <div className="w-full bg-[var(--alpha-bg-05)] h-1.5 rounded-full relative">
           <motion.div
             className="absolute h-full rounded-full"
             initial={{ opacity: 0, scaleX: 0 }}
@@ -566,7 +566,7 @@ const ScoreConfidenceInterval: React.FC<{
             style={{ left: `${score}%`, top: "-12px", transform: "translateX(-50%)" }}
           >
             <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_#fff] mb-1" />
-            <div className="w-[2px] h-full bg-white/80" />
+            <div className="w-[2px] h-full bg-[var(--alpha-bg-08)]0" />
             <div className="mt-2 font-black text-xs" style={{ color }}>{score}%</div>
           </motion.div>
         </div>

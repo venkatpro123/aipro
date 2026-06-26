@@ -78,8 +78,8 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
   const isStaticFallback = score < 0.1;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-white/90">
+    <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-[var(--alpha-bg-04)] p-4 space-y-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]/90">
         <Clock className="w-4 h-4 text-blue-400" />
         Data Freshness
       </div>
@@ -87,10 +87,10 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
       {/* Score bar */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-white/60">Live Signal Coverage</span>
+          <span className="text-[var(--text)]/60">Live Signal Coverage</span>
           <span className={`font-semibold ${color}`}>{pct}% — {label}</span>
         </div>
-        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-2 rounded-full bg-[var(--alpha-bg-10)] overflow-hidden">
           <div
             className={`h-full rounded-full transition-all ${
               score >= 0.7 ? "bg-emerald-400" :
@@ -105,7 +105,7 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
 
       {/* Signal count breakdown */}
       {totalCount > 0 && (
-        <div className="flex gap-4 text-xs text-white/60">
+        <div className="flex gap-4 text-xs text-[var(--text)]/60">
           <div className="flex items-center gap-1.5">
             <Wifi className="w-3.5 h-3.5 text-emerald-400" />
             <span>{liveCount} live signal{liveCount !== 1 ? "s" : ""}</span>
@@ -119,8 +119,8 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
 
       {/* Last updated */}
       {lastUpdated && (
-        <div className="text-xs text-white/50">
-          Last fetched: <span className="text-white/70">{ageLabel(lastUpdated)}</span>
+        <div className="text-xs text-[var(--text)]/50">
+          Last fetched: <span className="text-[var(--text)]/70">{ageLabel(lastUpdated)}</span>
         </div>
       )}
 
@@ -169,7 +169,7 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
           </div>
           {liveUnavailableFloor != null && dbReliabilityTier != null ? (
             <div className="flex items-center gap-2 flex-wrap pl-5 text-xs">
-              <span className="text-white/40">Confidence anchored to:</span>
+              <span className="text-[var(--text)]/40">Confidence anchored to:</span>
               <span
                 className="font-mono font-bold px-1.5 py-0.5 rounded"
                 style={{
@@ -180,7 +180,7 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
               >
                 DB Tier {dbReliabilityTier} floor — {Math.round(liveUnavailableFloor * 100)}%
               </span>
-              <span className="text-white/35 leading-tight">
+              <span className="text-[var(--text)]/35 leading-tight">
                 This reflects database record completeness, not signals collected today.
               </span>
             </div>

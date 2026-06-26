@@ -56,7 +56,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <span className="text-sm font-medium">{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
-              className="ml-2 hover:bg-white/10 rounded-full p-1 transition-colors"
+              className="ml-2 hover:bg-[var(--alpha-bg-10)] rounded-full p-1 transition-colors"
             >
               <X className="w-4 h-4 opacity-50 hover:opacity-100" />
             </button>

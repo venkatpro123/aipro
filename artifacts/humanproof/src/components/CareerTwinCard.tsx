@@ -459,7 +459,7 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
         )}
 
         {/* Twin rows */}
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-[var(--alpha-bg-05)]">
           {twins.map((match, i) => {
             const { twin, similarityPct, matchReasons, isDifferentMarket, isGeographicFallback } = match;
             const twinMarket = getMarketLabel(twin.fromCountry);
