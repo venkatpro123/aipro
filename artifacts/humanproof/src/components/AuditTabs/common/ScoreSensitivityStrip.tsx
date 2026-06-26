@@ -53,7 +53,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <Zap className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
+        <Zap className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
         <span className="text-[10px] font-bold tracking-widest" style={{ color: '#22d3ee99' }}>
           HIGHEST-LEVERAGE MOVES
         </span>
@@ -81,8 +81,8 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-50)' }}>{current}</span>
-                    <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
-                    <span className="text-[11px] font-black" style={{ color: '#22d3ee' }}>{projected}</span>
+                    <ArrowRight className="w-2.5 h-2.5" style={{ color: 'var(--color-cyan-text)' }} />
+                    <span className="text-[11px] font-black" style={{ color: 'var(--color-cyan-text)' }}>{projected}</span>
                     <span className="text-[10px]" style={{ color: 'rgba(34,211,238,0.60)' }}>
                       −{lever.scoreDropIfImproved}
                     </span>
@@ -111,8 +111,8 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
         </span>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-50)' }}>{current}</span>
-          <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
-          <span className="text-base font-black" style={{ color: '#22d3ee' }}>
+          <ArrowRight className="w-2.5 h-2.5" style={{ color: 'var(--color-cyan-text)' }} />
+          <span className="text-base font-black" style={{ color: 'var(--color-cyan-text)' }}>
             {topLevers.length >= 2 ? projectedTwo : projectedSingle}
           </span>
         </div>
@@ -129,7 +129,7 @@ export const ScoreSensitivityStrip: React.FC<Props> = ({ scoreSensitivity }) => 
       <button
         onClick={navigateToIntel}
         className="flex items-center gap-1.5 text-[10px] font-semibold"
-        style={{ color: '#22d3ee' }}
+        style={{ color: 'var(--color-cyan-text)' }}
       >
         <span>See full score simulation in Deep Intel</span>
         <ArrowRight className="w-3 h-3" />

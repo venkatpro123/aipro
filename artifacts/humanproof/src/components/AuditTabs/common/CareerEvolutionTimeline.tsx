@@ -213,7 +213,7 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
                         <span
                           key={skill}
                           className="text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
-                          style={{ background: 'rgba(124,58,237,0.12)', color: '#a78bfa', border: '1px solid rgba(124,58,237,0.20)' }}
+                          style={{ background: 'rgba(124,58,237,0.12)', color: 'var(--color-violet-text)', border: '1px solid rgba(124,58,237,0.20)' }}
                         >
                           +{skill}
                         </span>

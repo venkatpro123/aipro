@@ -156,7 +156,7 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
               {/* Personalisation tag */}
               {action.personalisationTag && (
                 <div className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
-                  style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.10)' }}>
+                  style={{ color: 'var(--color-violet-text)', background: 'rgba(167,139,250,0.10)' }}>
                   <span>Personalised:</span>
                   <span className="font-medium">{action.personalisationTag.replace(/_/g, ' ')}</span>
                 </div>
@@ -398,7 +398,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
         <div className="mx-4 mb-3 flex flex-wrap gap-1.5">
           {plan.planPersonalisationTags.map((tag, i) => (
             <span key={i} className="text-[10px] px-2 py-0.5 rounded-full"
-              style={{ color: '#a78bfa', background: 'rgba(167,139,250,0.10)' }}>
+              style={{ color: 'var(--color-violet-text)', background: 'rgba(167,139,250,0.10)' }}>
               {tag.replace(/_/g, ' ')}
             </span>
           ))}

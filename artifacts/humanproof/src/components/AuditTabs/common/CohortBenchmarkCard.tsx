@@ -46,7 +46,7 @@ interface Props {
 
 const CATEGORY_CONFIG = {
   top_tier:     { color: '#10b981', label: 'TOP TIER' },
-  competitive:  { color: '#22d3ee', label: 'COMPETITIVE' },
+  competitive:  { color: 'var(--color-cyan-text)', label: 'COMPETITIVE' },
   average:      { color: '#f59e0b', label: 'AVERAGE' },
   below_average:{ color: '#f97316', label: 'BELOW AVERAGE' },
   critical:     { color: '#dc2626', label: 'NEEDS WORK' },
@@ -158,7 +158,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
           className="flex items-start gap-1.5 rounded-lg px-2.5 py-2 mb-2"
           style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.12)' }}
         >
-          <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#22d3ee' }}>↳</span>
+          <span className="text-[10px] font-black flex-shrink-0" style={{ color: 'var(--color-cyan-text)' }}>↳</span>
           <div>
             <p className="text-[10px] italic" style={{ color: 'rgba(34,211,238,0.75)' }}>
               {topGapAction}
@@ -242,7 +242,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
                     }`}>
                       {step.effort}
                     </span>
-                    <span className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>
+                    <span className="text-[10px] font-bold" style={{ color: 'var(--color-cyan-text)' }}>
                       +{step.percentileGain}%ile
                     </span>
                   </div>

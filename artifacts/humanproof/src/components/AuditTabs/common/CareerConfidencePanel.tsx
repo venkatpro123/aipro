@@ -12,7 +12,7 @@ interface CareerConfidencePanelProps {
 
 const TIER_STYLE: Record<string, { color: string; bg: string; border: string; icon: React.ReactNode }> = {
   READY:        { color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)', icon: <CheckCircle className="w-4 h-4" style={{ color: '#10b981' }} /> },
-  MOSTLY_READY: { color: '#00d4e0', bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.22)',  icon: <CheckCircle className="w-4 h-4" style={{ color: '#00d4e0' }} /> },
+  MOSTLY_READY: { color: 'var(--color-cyan-text)', bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.22)',  icon: <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-cyan-text)' }} /> },
   PREPARING:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)', icon: <Clock className="w-4 h-4" style={{ color: '#f59e0b' }} /> },
   UNREADY:      { color: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.25)', icon: <AlertCircle className="w-4 h-4" style={{ color: '#f97316' }} /> },
   VULNERABLE:   { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)',  icon: <XCircle className="w-4 h-4" style={{ color: '#ef4444' }} /> },

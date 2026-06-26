@@ -107,7 +107,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
       label: 'Best Escape Path',
       value: pivotRole.length > 22 ? pivotRole.slice(0, 20) + '…' : pivotRole,
       sub: matchPct != null ? `${Math.round(matchPct)}% role fit` : 'Strongest adjacent role',
-      color: '#22d3ee',
+      color: 'var(--color-cyan-text)',
     });
   }
 
@@ -138,7 +138,7 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
         className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
-        <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
+        <Shield className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-cyan-text)' }} />
         <div>
           <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
             If Disruption Hits Tomorrow

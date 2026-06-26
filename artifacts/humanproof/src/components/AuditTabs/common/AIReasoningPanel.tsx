@@ -39,9 +39,9 @@ interface Props {
 
 const EVIDENCE_CONFIG = {
   live:       { color: '#10b981', label: 'Live data'   },
-  regulatory: { color: '#22d3ee', label: 'Filed data'  },
+  regulatory: { color: 'var(--color-cyan-text)', label: 'Filed data'  },
   heuristic:  { color: '#f59e0b', label: 'Estimated'   },
-  derived:    { color: '#a78bfa', label: 'Derived'      },
+  derived:    { color: 'var(--color-violet-text)', label: 'Derived'      },
 };
 
 function scoreColor(score: number): string {
@@ -130,7 +130,7 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
             {dim.reasoning}
           </p>
           <div className="flex items-start gap-1.5">
-            <span className="text-[10px] font-black flex-shrink-0 mt-0.5" style={{ color: '#22d3ee' }}>→</span>
+            <span className="text-[10px] font-black flex-shrink-0 mt-0.5" style={{ color: 'var(--color-cyan-text)' }}>→</span>
             <p className="text-[10px] italic leading-snug" style={{ color: 'rgba(34,211,238,0.72)' }}>
               {dim.conclusion}
             </p>

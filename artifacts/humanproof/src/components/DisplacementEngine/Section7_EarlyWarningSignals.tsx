@@ -10,7 +10,7 @@ interface Props {
 
 const WAVE_STAGES: { key: WaveStatus; label: string; color: string; shortDesc: string }[] = [
   { key: 'EARLY',        label: 'EARLY',        color: '#10b981', shortDesc: 'Limited deployment' },
-  { key: 'BUILDING',     label: 'BUILDING',     color: '#22d3ee', shortDesc: 'Tools emerging' },
+  { key: 'BUILDING',     label: 'BUILDING',     color: 'var(--color-cyan-text)', shortDesc: 'Tools emerging' },
   { key: 'ACCELERATING', label: 'ACCELERATING', color: '#f59e0b', shortDesc: 'Rapid adoption' },
   { key: 'INFLECTION',   label: 'INFLECTION',   color: '#f97316', shortDesc: 'Restructuring begins' },
   { key: 'ACTIVE',       label: 'ACTIVE',       color: '#ef4444', shortDesc: 'Threshold crossed' },

@@ -109,7 +109,7 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
           className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
           style={{ background: 'rgba(0,212,224,0.15)' }}
         >
-          <User className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
+          <User className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[12px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>

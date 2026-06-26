@@ -599,7 +599,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         <span style={{ fontSize: '12px', color: 'var(--alpha-text-30)' }}>
           Want the full picture?{' '}
         </span>
-        <span style={{ fontSize: '12px', color: '#00d4e0', fontWeight: 600 }}>See full analysis →</span>
+        <span style={{ fontSize: '12px', color: 'var(--color-cyan-text)', fontWeight: 600 }}>See full analysis →</span>
       </motion.button>
 
     </div>

@@ -18,7 +18,7 @@ const ActionHook: React.FC<{ text: string }> = ({ text }) => (
     className="mt-2 flex items-start gap-1.5 rounded-lg px-3 py-2"
     style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.15)' }}
   >
-    <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#22d3ee' }}>↳</span>
+    <span className="text-[10px] font-black flex-shrink-0" style={{ color: 'var(--color-cyan-text)' }}>↳</span>
     <p className="text-[10px] leading-snug italic" style={{ color: 'rgba(34,211,238,0.80)' }}>{text}</p>
   </div>
 );

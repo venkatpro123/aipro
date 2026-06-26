@@ -65,7 +65,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
       maxWidth: '600px',
       margin: '40px auto 0'
     }}>
-      <h3 style={{ color: '#00F5FF', marginTop: 0, marginBottom: '8px', fontSize: '1.2rem' }}>
+      <h3 style={{ color: 'var(--color-cyan-text)', marginTop: 0, marginBottom: '8px', fontSize: '1.2rem' }}>
         What-If Scenario Simulator
       </h3>
       <p style={{ color: '#9ba5b4', fontSize: '0.9rem', marginBottom: '24px' }}>

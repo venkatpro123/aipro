@@ -835,7 +835,7 @@ const EffectiveWeightsPanel: React.FC<{
                       <span className="font-medium">{name}</span>
                       {isL1Estimated && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
+                          style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.3)' }}>
                           ESTIMATED
                         </span>
                       )}
@@ -907,7 +907,7 @@ const EffectiveWeightsPanel: React.FC<{
                       )}
                       {d8IsActive && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>
+                          style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.3)' }}>
                           {d8FlagActive ? 'LOGISTIC' : 'HEURISTIC'}
                         </span>
                       )}
@@ -1730,8 +1730,8 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
             style={isConformal
-              ? { background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }
-              : { background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
+              ? { background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.25)' }
+              : { background: 'rgba(245,158,11,0.12)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.25)' }
             }
           >
             {isConformal ? 'CONFORMAL' : 'HEURISTIC FALLBACK'}
@@ -1756,7 +1756,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
         >
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
           <div>
-            <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#fbbf24' }}>
+            <p className="text-[11px] font-semibold mb-0.5" style={{ color: 'var(--color-amber-text)' }}>
               Pooled CI — cohort data insufficient
             </p>
             <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
@@ -3146,7 +3146,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {isLive ? (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399' }}
+                          style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)' }}
                         >
                           LIVE
                         </span>
@@ -3161,7 +3161,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {hiringMarket && (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}
+                          style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--color-violet-text)', border: '1px solid rgba(167,139,250,0.25)' }}
                           title={`Job-board connectors routed to the ${hiringMarket} hiring market`}
                         >
                           {hiringMarket.toUpperCase()} market

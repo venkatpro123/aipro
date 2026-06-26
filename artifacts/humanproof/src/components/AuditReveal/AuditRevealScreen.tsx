@@ -185,7 +185,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
                   <div key={sub} className="flex flex-col items-center gap-1">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center"
                       style={{ background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.22)' }}>
-                      <Icon className="w-4 h-4" style={{ color: '#22d3ee' }} />
+                      <Icon className="w-4 h-4" style={{ color: 'var(--color-cyan-text)' }} />
                     </div>
                     <span className="text-[15px] font-black" style={{ color: 'var(--alpha-text-85)' }}>{label}</span>
                     <span className="text-[9px]" style={{ color: 'var(--alpha-text-35)' }}>{sub}</span>
@@ -260,7 +260,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
                 className="flex items-center gap-2 text-[12px] font-bold px-5 py-2.5 rounded-2xl"
                 style={{
                   background: 'linear-gradient(135deg, rgba(34,211,238,0.18), rgba(34,211,238,0.08))',
-                  color: '#22d3ee',
+                  color: 'var(--color-cyan-text)',
                   border: '1px solid rgba(34,211,238,0.35)',
                 }}
               >

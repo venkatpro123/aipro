@@ -489,7 +489,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'rgba(245,158,11,0.15)' }}
             >
-              <AlertTriangle className="w-4 h-4" style={{ color: '#fbbf24' }} />
+              <AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-amber-text)' }} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -663,7 +663,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
               border: '1px solid rgba(34, 211, 238, 0.20)',
             }}
           >
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: '#22d3ee' }}>
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-cyan-text)' }}>
               Tailored to your situation
             </div>
             <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>

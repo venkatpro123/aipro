@@ -168,7 +168,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                 {suppressStageLabel && report.stage && (
                   <span
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                    style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }}
+                    style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.25)' }}
                   >
                     PRECISION: {precisionData?.stagePrecisionLabel ?? 'UNKNOWN'}
                   </span>

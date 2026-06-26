@@ -144,7 +144,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
         <div className="flex items-center justify-between px-5 pt-5 pb-3"
           style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
           <div>
-            <p className="text-[13px] font-black tracking-tight" style={{ color: '#00d4e0' }}>
+            <p className="text-[13px] font-black tracking-tight" style={{ color: 'var(--color-cyan-text)' }}>
               Share your transition
             </p>
             <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>
@@ -375,7 +375,7 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
             type="button"
             onClick={() => setShowSubmitForm(true)}
             className="mt-1 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-90"
-            style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.28)' }}
+            style={{ background: 'rgba(0,212,224,0.12)', color: 'var(--color-cyan-text)', border: '1px solid rgba(0,212,224,0.28)' }}
           >
             <Send className="w-3 h-3" />
             Share your transition
@@ -526,7 +526,7 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
                 {/* Cross-market context note — Bug 2 fix: proper template literal */}
                 {showContextWarning && (
                   <div className="mt-2 text-[10px] leading-relaxed rounded px-2 py-1.5"
-                    style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', color: '#fbbf24' }}>
+                    style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', color: 'var(--color-amber-text)' }}>
                     ⚠ {twinMarket} market context — location-specific steps (events, platforms, hiring norms)
                     may not apply in {userCountry === 'global' ? 'your region' : userCountry}.
                     Focus on the transferable parts: credentials, portfolio, and skill signals.
@@ -561,7 +561,7 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
             className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all hover:opacity-90"
             style={{
               background: 'rgba(0,212,224,0.12)',
-              color: '#00d4e0',
+              color: 'var(--color-cyan-text)',
               border: '1px solid rgba(0,212,224,0.28)',
             }}
           >

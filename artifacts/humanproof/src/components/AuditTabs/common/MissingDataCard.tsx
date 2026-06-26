@@ -243,7 +243,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
                           <button
                             onClick={() => handleActionClick(item)}
                             className="text-[10px] font-bold mt-0.5 transition-opacity hover:opacity-80"
-                            style={{ color: '#22d3ee' }}
+                            style={{ color: 'var(--color-cyan-text)' }}
                           >
                             → {item.userAction}
                           </button>

@@ -71,7 +71,7 @@ function pillarIcon(name: string): string {
 
 function insuranceGrade(score: number): { label: string; color: string; sub: string } {
   if (score >= 85) return { label: 'FULLY INSURED',   color: '#10b981', sub: 'Top 15% for career protection' };
-  if (score >= 65) return { label: 'MOSTLY INSURED',  color: '#22d3ee', sub: 'Solid foundation — close the gaps below' };
+  if (score >= 65) return { label: 'MOSTLY INSURED',  color: 'var(--color-cyan-text)', sub: 'Solid foundation — close the gaps below' };
   if (score >= 45) return { label: 'PARTIAL',         color: '#f59e0b', sub: 'Moderate protection — 2-3 pillars need work' };
   if (score >= 25) return { label: 'UNDERINSURED',    color: '#f97316', sub: 'Significant gaps — start with the weakest pillar' };
   return          { label: 'UNPROTECTED',    color: '#dc2626', sub: 'Immediate resilience building required' };

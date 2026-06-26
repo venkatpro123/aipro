@@ -75,7 +75,7 @@ export const FirstAuditWelcomeModal: React.FC<Props> = ({
       icon:  Brain,
       label: 'Tailored to your role',
       sub:   profileSub,
-      color: '#22d3ee',
+      color: 'var(--color-cyan-text)',
     },
     {
       icon:  Radio,

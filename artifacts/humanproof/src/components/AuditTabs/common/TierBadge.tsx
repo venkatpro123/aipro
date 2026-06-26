@@ -23,7 +23,7 @@ const TIER_META: Record<number, { color: string; tip: string }> = {
   1: { color: '#dc2626', tip: 'Mission-critical — always surfaced first' },
   2: { color: '#f97316', tip: 'Important — surfaced once Tier 1 is settled' },
   3: { color: '#f59e0b', tip: 'Advanced — explore when you want depth' },
-  4: { color: '#22d3ee', tip: 'Transparency — sources & confidence' },
+  4: { color: 'var(--color-cyan-text)', tip: 'Transparency — sources & confidence' },
   5: { color: '#94a3b8', tip: 'Technical — pipeline diagnostics' },
 };
 

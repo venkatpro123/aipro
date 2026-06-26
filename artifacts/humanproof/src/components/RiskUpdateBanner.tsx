@@ -48,7 +48,7 @@ export const RiskUpdateBanner: React.FC<Props> = ({
         <div className="px-4 py-3 flex items-center gap-3">
           {/* Live indicator */}
           <div className="relative flex-shrink-0">
-            <Radio className="w-4 h-4" style={{ color: '#22d3ee' }} />
+            <Radio className="w-4 h-4" style={{ color: 'var(--color-cyan-text)' }} />
             {pulse && (
               <motion.div
                 className="absolute inset-0 rounded-full"
@@ -76,7 +76,7 @@ export const RiskUpdateBanner: React.FC<Props> = ({
             className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-xl flex-shrink-0 transition-all hover:scale-[1.03]"
             style={{
               background: 'rgba(34,211,238,0.18)',
-              color: '#22d3ee',
+              color: 'var(--color-cyan-text)',
               border: '1px solid rgba(34,211,238,0.35)',
               opacity: isReanalyzing ? 0.6 : 1,
             }}

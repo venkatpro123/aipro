@@ -53,7 +53,7 @@ const CONFIG: Record<ProvenanceKind, {
 }> = {
   measured: {
     label: 'MEASURED',
-    color: '#34d399',
+    color: 'var(--color-emerald-text)',
     bg: 'rgba(52,211,153,0.10)',
     border: 'rgba(52,211,153,0.28)',
     title: 'Directly observed from a live or verified source (stock price, SEC filing, WARN notice, etc.)',
@@ -67,7 +67,7 @@ const CONFIG: Record<ProvenanceKind, {
   },
   estimated: {
     label: 'ESTIMATED',
-    color: '#fbbf24',
+    color: 'var(--color-amber-text)',
     bg: 'rgba(251,191,36,0.10)',
     border: 'rgba(251,191,36,0.28)',
     title: 'Sector or cohort baseline — not a live observation for this specific company or role. Treat with appropriate uncertainty.',

@@ -21,7 +21,7 @@ const EARNINGS_CONFIG: Record<EarningsSurpriseCategory, { label: string; color: 
 
 const ANALYST_CONFIG: Record<AnalystConsensus, { label: string; color: string; bg: string }> = {
   strong_buy:  { label: 'Strong Buy',  color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
-  buy:         { label: 'Buy',         color: '#34d399', bg: 'rgba(52,211,153,0.10)'  },
+  buy:         { label: 'Buy',         color: 'var(--color-emerald-text)', bg: 'rgba(52,211,153,0.10)'  },
   hold:        { label: 'Hold',        color: '#f59e0b', bg: 'rgba(245,158,11,0.10)'  },
   underperform:{ label: 'Underperform',color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
   sell:        { label: 'Sell',        color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },

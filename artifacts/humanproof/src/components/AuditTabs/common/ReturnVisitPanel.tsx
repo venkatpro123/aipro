@@ -81,7 +81,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       items.push({
         icon: Globe,
         text: `${marketChanges.length} market change${marketChanges.length > 1 ? 's' : ''} since last visit`,
-        color: '#22d3ee',
+        color: 'var(--color-cyan-text)',
       });
     }
 

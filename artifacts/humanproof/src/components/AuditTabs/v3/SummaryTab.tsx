@@ -322,8 +322,8 @@ const ScoreRangeHero: React.FC<{
           border: '1px solid rgba(251,191,36,0.35)',
         }}
       >
-        <AlertOctagon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
-        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: '#fbbf24' }}>
+        <AlertOctagon className="w-3.5 h-3.5" style={{ color: 'var(--color-amber-text)' }} />
+        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: 'var(--color-amber-text)' }}>
           We're Not Fully Sure Yet
         </span>
       </div>

@@ -148,7 +148,7 @@ const LowConfidenceBrief: React.FC<{
         </span>
         <span
           className="px-2 py-0.5 rounded text-[10px] font-black"
-          style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
+          style={{ background: 'rgba(251,191,36,0.12)', color: 'var(--color-amber-text)', border: '1px solid rgba(251,191,36,0.30)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}
         >
           LOW CONFIDENCE
         </span>
@@ -322,7 +322,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
                   style={{
                     fontSize: '8px', fontFamily: 'var(--font-mono)', fontWeight: 700,
                     padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.06em',
-                    background: 'rgba(16,185,129,0.10)', color: '#34d399',
+                    background: 'rgba(16,185,129,0.10)', color: 'var(--color-emerald-text)',
                     border: '1px solid rgba(16,185,129,0.22)', cursor: 'help',
                   }}
                 >

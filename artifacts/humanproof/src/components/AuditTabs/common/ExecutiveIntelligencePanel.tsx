@@ -136,7 +136,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
           className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center"
           style={{ background: 'rgba(139,92,246,0.14)' }}
         >
-          <Briefcase className="w-4 h-4" style={{ color: '#a78bfa' }} />
+          <Briefcase className="w-4 h-4" style={{ color: 'var(--color-violet-text)' }} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
@@ -145,7 +145,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
             </p>
             <span
               className="text-[7px] font-black px-1.5 py-0.5 rounded"
-              style={{ background: 'rgba(139,92,246,0.16)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.30)' }}
+              style={{ background: 'rgba(139,92,246,0.16)', color: 'var(--color-violet-text)', border: '1px solid rgba(139,92,246,0.30)' }}
             >
               {tierLabel}
             </span>
@@ -210,7 +210,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                   style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <SectionTitle icon={Scale} label="Severance range" color="#22d3ee" />
-                  <p className="text-[18px] font-black" style={{ color: '#22d3ee' }}>
+                  <p className="text-[18px] font-black" style={{ color: 'var(--color-cyan-text)' }}>
                     {sv.estimatedUsdRange}
                   </p>
                   <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>

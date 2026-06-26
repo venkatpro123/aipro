@@ -33,7 +33,7 @@ export const InactionCostCard: React.FC<InactionCostCardProps> = ({ consequence 
     >
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <AlertTriangle size={13} style={{ color: '#fbbf24', flexShrink: 0 }} />
+        <AlertTriangle size={13} style={{ color: 'var(--color-amber-text)', flexShrink: 0 }} />
         <span
           style={{
             fontSize: '0.58rem',
@@ -41,7 +41,7 @@ export const InactionCostCard: React.FC<InactionCostCardProps> = ({ consequence 
             fontWeight: 800,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#fbbf24',
+            color: 'var(--color-amber-text)',
           }}
         >
           ⚠ The cost of waiting
@@ -69,7 +69,7 @@ export const InactionCostCard: React.FC<InactionCostCardProps> = ({ consequence 
           lineHeight: 1.4,
         }}
       >
-        Open the <strong style={{ color: '#fbbf24', fontWeight: 700 }}>Act Now</strong> tab to start your 7-day action sequence.
+        Open the <strong style={{ color: 'var(--color-amber-text)', fontWeight: 700 }}>Act Now</strong> tab to start your 7-day action sequence.
       </p>
     </motion.div>
   );

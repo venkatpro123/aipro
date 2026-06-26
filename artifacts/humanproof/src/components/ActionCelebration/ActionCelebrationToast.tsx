@@ -120,9 +120,9 @@ export const ActionCelebrationToast: React.FC = () => {
               }}
             >
               {toast.type === 'phase'
-                ? <Star className="w-3.5 h-3.5" style={{ color: '#a78bfa' }} />
+                ? <Star className="w-3.5 h-3.5" style={{ color: 'var(--color-violet-text)' }} />
                 : toast.type === 'milestone'
-                ? <Zap className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
+                ? <Zap className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
                 : <Check className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
               }
             </div>
@@ -131,7 +131,7 @@ export const ActionCelebrationToast: React.FC = () => {
             <div className="flex-1 min-w-0">
               {toast.type === 'phase' ? (
                 <>
-                  <p className="text-[11px] font-black leading-tight" style={{ color: '#a78bfa' }}>
+                  <p className="text-[11px] font-black leading-tight" style={{ color: 'var(--color-violet-text)' }}>
                     Phase {toast.phaseNum} complete!
                   </p>
                   {toast.nextPhase && (
@@ -142,7 +142,7 @@ export const ActionCelebrationToast: React.FC = () => {
                 </>
               ) : toast.type === 'milestone' ? (
                 <>
-                  <p className="text-[11px] font-black leading-tight" style={{ color: '#22d3ee' }}>
+                  <p className="text-[11px] font-black leading-tight" style={{ color: 'var(--color-cyan-text)' }}>
                     {toast.count} actions complete!
                   </p>
                   <p className="text-[9px] mt-0.5 leading-snug" style={{ color: 'var(--alpha-text-50)' }}>

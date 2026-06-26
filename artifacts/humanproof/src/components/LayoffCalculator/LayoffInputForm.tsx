@@ -599,7 +599,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                               <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{res.name}</p>
                               <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>
                                 {res.industry}
-                                {(res as any).fromSupabase && <span style={{ color: '#22d3ee' }}> · DB</span>}
+                                {(res as any).fromSupabase && <span style={{ color: 'var(--color-cyan-text)' }}> · DB</span>}
                                 {isPartial && <span style={{ color: '#f59e0b' }}> · partial</span>}
                               </p>
                             </div>

@@ -49,8 +49,8 @@ const trajectoryConfig: Record<string, { color: string; icon: React.ReactNode; b
   ascending:  { color: '#10b981', icon: <TrendingUp className="w-4 h-4" />, badge: 'ASCENDING' },
   plateauing: { color: '#f59e0b', icon: <AlertTriangle className="w-4 h-4" />, badge: 'PLATEAUING' },
   declining:  { color: '#ef4444', icon: <AlertTriangle className="w-4 h-4" />, badge: 'DECLINING' },
-  resetting:  { color: '#a78bfa', icon: <Compass className="w-4 h-4" />, badge: 'RESETTING' },
-  early:      { color: '#22d3ee', icon: <TrendingUp className="w-4 h-4" />, badge: 'EARLY CAREER' },
+  resetting:  { color: 'var(--color-violet-text)', icon: <Compass className="w-4 h-4" />, badge: 'RESETTING' },
+  early:      { color: 'var(--color-cyan-text)', icon: <TrendingUp className="w-4 h-4" />, badge: 'EARLY CAREER' },
 };
 
 const TrajectorySection: React.FC<{ data: BehavioralPersonalizationResult['careerTrajectory'] }> = ({ data }) => {
@@ -527,11 +527,11 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
       <div className="flex items-center gap-2 mb-2">
         <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
           style={{ background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.25)' }}>
-          <Building2 className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
+          <Building2 className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
         </div>
         <div>
           <p style={SECTION_LABEL}>COMPANY TRANSITION</p>
-          <span className="text-[10px] font-bold" style={{ color: '#22d3ee' }}>{dynamicLabel}</span>
+          <span className="text-[10px] font-bold" style={{ color: 'var(--color-cyan-text)' }}>{dynamicLabel}</span>
         </div>
       </div>
 

@@ -40,7 +40,7 @@ function scoreColor(score: number): string {
 
 function confidenceLabel(conf: number): { text: string; color: string } {
   if (conf >= 0.80) return { text: 'HIGH', color: '#10b981' };
-  if (conf >= 0.65) return { text: 'MOD',  color: '#00d4e0' };
+  if (conf >= 0.65) return { text: 'MOD',  color: 'var(--color-cyan-text)' };
   if (conf >= 0.50) return { text: 'LOW',  color: '#f59e0b' };
   return { text: 'WEAK', color: '#f97316' };
 }

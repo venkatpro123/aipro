@@ -164,11 +164,11 @@ export const CareerCopilotButton: React.FC<{ context: CopilotContext }> = ({ con
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}>
                 <div className="flex items-center gap-2">
-                  <Sparkles size={16} style={{ color: '#00d4e0' }} />
+                  <Sparkles size={16} style={{ color: 'var(--color-cyan-text)' }} />
                   <span className="text-[13px] font-bold" style={{ color: 'var(--text)' }}>
                     Career Copilot
                   </span>
-                  <span className="text-[9px] font-black tracking-[0.12em] uppercase px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0' }}>
+                  <span className="text-[9px] font-black tracking-[0.12em] uppercase px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.12)', color: 'var(--color-cyan-text)' }}>
                     BETA
                   </span>
                 </div>

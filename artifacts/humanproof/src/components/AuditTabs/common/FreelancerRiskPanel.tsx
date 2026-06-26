@@ -228,12 +228,12 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                   style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
                 >
                   <div className="flex items-center gap-1.5 mb-2">
-                    <DollarSign className="w-3 h-3" style={{ color: '#22d3ee' }} />
+                    <DollarSign className="w-3 h-3" style={{ color: 'var(--color-cyan-text)' }} />
                     <p className="text-[10px] font-black tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
                       FINANCES
                     </p>
                   </div>
-                  <p className="text-[16px] font-black" style={{ color: '#22d3ee' }}>
+                  <p className="text-[16px] font-black" style={{ color: 'var(--color-cyan-text)' }}>
                     {fp.recommendedRunwayMonths}mo
                   </p>
                   <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
@@ -254,7 +254,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
               {pd.channels.length > 0 && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <TrendingUp className="w-3 h-3" style={{ color: '#818cf8' }} />
+                    <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-indigo-text)' }} />
                     <p className="text-[10px] font-black tracking-widest" style={{ color: 'var(--alpha-text-35)' }}>
                       PIPELINE CHANNELS TO ACTIVATE
                     </p>

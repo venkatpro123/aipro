@@ -498,7 +498,7 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
         <div className="flex items-center gap-1.5">
           <div
             className="text-[11px] font-black px-2.5 py-1 rounded-xl"
-            style={{ background: 'rgba(34,211,238,0.10)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.22)' }}
+            style={{ background: 'rgba(34,211,238,0.10)', color: 'var(--color-cyan-text)', border: '1px solid rgba(34,211,238,0.22)' }}
           >
             {totalCompleted} / {actions.length}
           </div>

@@ -15,9 +15,9 @@ interface ModelCalibrationPanelProps {
 
 const TRUST_COLORS: Record<string, { color: string; bg: string; border: string }> = {
   HIGH:                { color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' },
-  MODERATE:            { color: '#00d4e0', bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.22)' },
+  MODERATE:            { color: 'var(--color-cyan-text)', bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.22)' },
   BUILDING:            { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
-  RESEARCH_GROUNDED:   { color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.25)' },
+  RESEARCH_GROUNDED:   { color: 'var(--color-violet-text)', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.25)' },
 };
 
 const TIER_ACCURACY_COLOR = (acc: number) =>

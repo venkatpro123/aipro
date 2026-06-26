@@ -24,7 +24,7 @@ interface Props {
 
 const FEASIBILITY_CONFIG: Record<string, { label: string; color: string }> = {
   immediate:   { label: 'This week',   color: '#10b981' },
-  short_term:  { label: 'This month',  color: '#22d3ee' },
+  short_term:  { label: 'This month',  color: 'var(--color-cyan-text)' },
   medium_term: { label: '1–3 months',  color: '#f59e0b' },
   long_term:   { label: '3–6 months',  color: '#f97316' },
 };
@@ -86,7 +86,7 @@ const LeverRow: React.FC<{ lever: SensitivityLever; currentScore: number; rank: 
         {/* Score delta */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <span className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-45)' }}>{fmt(currentScore)}</span>
-          <ArrowRight className="w-3 h-3" style={{ color: '#22d3ee' }} />
+          <ArrowRight className="w-3 h-3" style={{ color: 'var(--color-cyan-text)' }} />
           <span className="text-[13px] font-black" style={{ color: rank === 0 ? '#22d3ee' : 'var(--alpha-text-70)' }}>
             {projected}
           </span>
@@ -167,8 +167,8 @@ export const ScoreSensitivityPanel: React.FC<Props> = ({ scoreSensitivity, liveS
               </p>
               <div className="flex items-center justify-center gap-1 mb-0.5">
                 <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>{fmt(currentScore)}</span>
-                <ArrowRight className="w-2.5 h-2.5" style={{ color: '#22d3ee' }} />
-                <span className="text-base font-black" style={{ color: '#22d3ee' }}>{score}</span>
+                <ArrowRight className="w-2.5 h-2.5" style={{ color: 'var(--color-cyan-text)' }} />
+                <span className="text-base font-black" style={{ color: 'var(--color-cyan-text)' }}>{score}</span>
               </div>
               <p className="text-[10px]" style={{ color: 'rgba(34,211,238,0.60)' }}>−{drop} pts</p>
             </div>

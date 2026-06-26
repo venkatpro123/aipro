@@ -177,8 +177,8 @@ export const ScoreTrendStrip: React.FC<ScoreTrendStripProps> = ({
             gap: 2,
           }}
         >
-          <AlertTriangle size={10} style={{ color: '#fbbf24' }} />
-          <span style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: '#fbbf24', whiteSpace: 'nowrap' }}>
+          <AlertTriangle size={10} style={{ color: 'var(--color-amber-text)' }} />
+          <span style={{ fontSize: '0.6rem', fontFamily: 'var(--font-mono)', color: 'var(--color-amber-text)', whiteSpace: 'nowrap' }}>
             act by {critDateLabel}
           </span>
         </div>

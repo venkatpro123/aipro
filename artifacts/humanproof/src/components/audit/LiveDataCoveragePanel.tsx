@@ -32,8 +32,8 @@ const SIGNAL_LABELS: Record<string, string> = {
 };
 
 const SOURCE_CONFIG: Record<SignalRow['source'], { color: string; label: string; bg: string }> = {
-  live:     { color: '#22d3ee', label: 'LIVE',     bg: 'rgba(34,211,238,0.08)' },
-  db:       { color: '#818cf8', label: 'DATABASE', bg: 'rgba(129,140,248,0.08)' },
+  live:     { color: 'var(--color-cyan-text)', label: 'LIVE',     bg: 'rgba(34,211,238,0.08)' },
+  db:       { color: 'var(--color-indigo-text)', label: 'DATABASE', bg: 'rgba(129,140,248,0.08)' },
   static:   { color: '#f97316', label: 'STATIC',   bg: 'rgba(249,115,22,0.08)' },
   degraded: { color: '#f59e0b', label: 'DEGRADED', bg: 'rgba(245,158,11,0.08)' },
 };
@@ -171,9 +171,9 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
         border: '1px solid var(--border)',
       }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          <span style={{ color: '#22d3ee' }}>●</span> Live = scraped from external APIs this session
+          <span style={{ color: 'var(--color-cyan-text)' }}>●</span> Live = scraped from external APIs this session
           {'  '}
-          <span style={{ color: '#818cf8' }}>●</span> Database = Supabase company_intelligence row
+          <span style={{ color: 'var(--color-indigo-text)' }}>●</span> Database = Supabase company_intelligence row
           {'  '}
           <span style={{ color: '#f97316' }}>●</span> Static = hardcoded baseline (pre-seeded)
         </div>

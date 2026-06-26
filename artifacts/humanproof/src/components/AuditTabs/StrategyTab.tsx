@@ -283,7 +283,7 @@ const OfferModal: React.FC<{
       >
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-base font-bold" style={{ color: '#00d4e0' }}>Offer Evaluation</h3>
+            <h3 className="text-base font-bold" style={{ color: 'var(--color-cyan-text)' }}>Offer Evaluation</h3>
             <p className="text-xs mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>Score any job offer against your risk profile</p>
           </div>
           <button onClick={onClose} className="text-xs px-3 py-1.5 rounded-lg"
@@ -476,7 +476,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'summary' } })); } catch { /* SSR */ }
           }}
           className="mt-1 text-xs font-bold px-3 py-1.5 rounded-lg transition-opacity hover:opacity-90"
-          style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0', border: '1px solid rgba(0,212,224,0.28)' }}
+          style={{ background: 'rgba(0,212,224,0.12)', color: 'var(--color-cyan-text)', border: '1px solid rgba(0,212,224,0.28)' }}
         >
           Complete Your Profile →
         </button>
@@ -593,8 +593,8 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-xl p-4" style={{ background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.18)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <Star className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
-            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#00d4e0' }}>DO THIS FIRST</span>
+            <Star className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--color-cyan-text)' }}>DO THIS FIRST</span>
           </div>
           <p className="text-sm font-semibold mb-1" style={{ color: 'var(--alpha-text-92)' }}>
             {synthesis.topPriorityAction?.title}
@@ -635,7 +635,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{
             background: 'rgba(0,212,224,0.12)', border: '1px solid rgba(0,212,224,0.25)',
           }}>
-            <DollarSign className="w-4 h-4" style={{ color: '#00d4e0' }} />
+            <DollarSign className="w-4 h-4" style={{ color: 'var(--color-cyan-text)' }} />
           </div>
           <div className="text-left">
             <p className="text-sm font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Evaluate a Job Offer</p>
@@ -694,15 +694,15 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         <div className="rounded-2xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4" style={{ color: '#a78bfa' }} />
+              <Brain className="w-4 h-4" style={{ color: 'var(--color-violet-text)' }} />
               <span className="text-xs font-semibold" style={{ color: 'var(--alpha-text-85)' }}>Job Search Readiness</span>
             </div>
             <div className="flex items-center gap-2">
               {typeof confidence.compositeScore === 'number' && (
-                <span className="text-sm font-black" style={{ color: '#a78bfa' }}>{confidence.compositeScore}<span className="text-[10px] opacity-50">/100</span></span>
+                <span className="text-sm font-black" style={{ color: 'var(--color-violet-text)' }}>{confidence.compositeScore}<span className="text-[10px] opacity-50">/100</span></span>
               )}
               <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
-                background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)',
+                background: 'rgba(167,139,250,0.12)', color: 'var(--color-violet-text)', border: '1px solid rgba(167,139,250,0.25)',
               }}>
                 {toTitleCase(confidence.confidenceTier)}
               </span>

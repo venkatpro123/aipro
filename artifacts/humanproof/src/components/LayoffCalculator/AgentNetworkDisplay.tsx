@@ -267,7 +267,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
             NETWORK
           </div>
           <div
-            style={{ color: "#a78bfa", fontSize: "1.4rem", fontWeight: 700 }}
+            style={{ color: 'var(--color-violet-text)', fontSize: "1.4rem", fontWeight: 700 }}
           >
             3000+
           </div>

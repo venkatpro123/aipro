@@ -86,7 +86,7 @@ const EmptyPrompt: React.FC = () => (
         background: 'rgba(0,212,224,0.12)',
         border: '1px solid rgba(0,212,224,0.30)',
         borderRadius: '10px',
-        color: '#00d4e0',
+        color: 'var(--color-cyan-text)',
         fontSize: '11px',
         fontWeight: 700,
         padding: '8px 20px',

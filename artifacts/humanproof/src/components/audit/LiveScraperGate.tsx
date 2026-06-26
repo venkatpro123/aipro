@@ -33,7 +33,7 @@ const SOURCES: Source[] = [
   { key: 'careerPageScrape', label: 'Validating hiring signals',    icon: '📥', color: '#f59e0b', delay:  4000 },
   { key: 'layoffTracker',  label: 'Reconciling live market signals',icon: '📡', color: '#ef4444', delay:  7000 },
   { key: 'secEdgarPoll',   label: 'Cross-validating layoffs',       icon: '⚖️', color: '#10b981', delay: 11000 },
-  { key: 'finalize',       label: 'Finalizing confidence model',    icon: '✓',  color: '#34d399', delay: 18000 },
+  { key: 'finalize',       label: 'Finalizing confidence model',    icon: '✓',  color: 'var(--color-emerald-text)', delay: 18000 },
 ];
 
 type SourceState = 'pending' | 'loading' | 'done';
@@ -168,7 +168,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
             animation: 'lsg-pulse 1.4s ease-in-out infinite',
           }} />
           <span style={{
-            color: '#00F5FF', fontSize: '0.68rem', fontWeight: 700,
+            color: 'var(--color-cyan-text)', fontSize: '0.68rem', fontWeight: 700,
             letterSpacing: '2px', textTransform: 'uppercase',
           }}>
             LIVE INTELLIGENCE FETCH
@@ -282,7 +282,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
           <span style={{ color: 'var(--alpha-text-35)', letterSpacing: '1px' }}>
             LIVE EVIDENCE ACQUIRED
           </span>
-          <span style={{ color: '#00F5FF', fontWeight: 600 }}>
+          <span style={{ color: 'var(--color-cyan-text)', fontWeight: 600 }}>
             {Math.round(progress)}%
           </span>
         </div>

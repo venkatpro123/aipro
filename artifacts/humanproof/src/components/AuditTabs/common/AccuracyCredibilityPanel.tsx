@@ -119,7 +119,7 @@ const MODE_COPY = {
   },
   live_developing: {
     badge: 'DEVELOPING',
-    color: '#22d3ee',
+    color: 'var(--color-cyan-text)',
     body: 'Outcome data is being collected. Current weights use the 2026-01 regression anchor. Directional accuracy is ~70%+ for high-risk tiers.',
   },
   bootstrap: {
@@ -160,7 +160,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
         className="flex items-center gap-2.5 px-4 pt-3 pb-2.5"
         style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
-        <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#22d3ee' }} />
+        <Target className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-cyan-text)' }} />
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
             HOW ACCURATE ARE WE?
@@ -270,7 +270,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
                 <div className="flex-shrink-0 mt-0.5">
                   {isPositive
                     ? <CheckCircle className="w-3 h-3" style={{ color: '#10b981' }} />
-                    : <AlertCircle className="w-3 h-3" style={{ color: '#22d3ee' }} />
+                    : <AlertCircle className="w-3 h-3" style={{ color: 'var(--color-cyan-text)' }} />
                   }
                 </div>
                 <div className="flex-1 min-w-0">

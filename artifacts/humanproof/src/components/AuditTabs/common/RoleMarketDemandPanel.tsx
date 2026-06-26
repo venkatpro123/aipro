@@ -13,7 +13,7 @@ interface RoleMarketDemandPanelProps {
 
 const DEMAND_TREND_CONFIG: Record<DemandTrend, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   surging:  { label: 'Surging',  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: <TrendingUp className="w-3 h-3" /> },
-  rising:   { label: 'Rising',   color: '#34d399', bg: 'rgba(52,211,153,0.10)',  icon: <TrendingUp className="w-3 h-3" /> },
+  rising:   { label: 'Rising',   color: 'var(--color-emerald-text)', bg: 'rgba(52,211,153,0.10)',  icon: <TrendingUp className="w-3 h-3" /> },
   stable:   { label: 'Stable',   color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  icon: <Minus className="w-3 h-3" />      },
   declining:{ label: 'Declining',color: '#f97316', bg: 'rgba(249,115,22,0.10)',  icon: <TrendingDown className="w-3 h-3" /> },
   falling:  { label: 'Falling',  color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   icon: <TrendingDown className="w-3 h-3" /> },

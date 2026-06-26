@@ -139,7 +139,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
             background: 'rgba(0,212,224,0.12)', border: '1px solid rgba(0,212,224,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Shield style={{ width: 22, height: 22, color: '#00d4e0' }} />
+            <Shield style={{ width: 22, height: 22, color: 'var(--color-cyan-text)' }} />
           </div>
           <div>
             <h2 id="gdpr-modal-title" style={{ color: 'var(--text)', fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
@@ -269,7 +269,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
                 style={{
                   background: 'rgba(0,212,224,0.10)', border: '1px solid rgba(0,212,224,0.25)',
                   borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
-                  color: '#00d4e0', fontSize: 10, display: 'flex', alignItems: 'center', gap: 5,
+                  color: 'var(--color-cyan-text)', fontSize: 10, display: 'flex', alignItems: 'center', gap: 5,
                 }}
               >
                 <Download size={11} />

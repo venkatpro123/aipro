@@ -49,7 +49,7 @@ export interface SafePivotRolesCardProps {
 
 const STRENGTH_CONFIG = {
   strong:   { color: '#10b981', label: 'Strong match', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.22)' },
-  moderate: { color: '#22d3ee', label: 'Moderate match', bg: 'rgba(34,211,238,0.07)', border: 'rgba(34,211,238,0.20)' },
+  moderate: { color: 'var(--color-cyan-text)', label: 'Moderate match', bg: 'rgba(34,211,238,0.07)', border: 'rgba(34,211,238,0.20)' },
   weak:     { color: '#f59e0b', label: 'Stretch pivot', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)' },
 };
 
@@ -121,7 +121,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {i === 0 && (
-                      <span title="Best ROI pivot" style={{ display: 'inline-flex', flexShrink: 0 }}><Star size={10} style={{ color: '#fbbf24' }} /></span>
+                      <span title="Best ROI pivot" style={{ display: 'inline-flex', flexShrink: 0 }}><Star size={10} style={{ color: 'var(--color-amber-text)' }} /></span>
                     )}
                     <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--alpha-text-85)', lineHeight: 1.3 }}>
                       {role.targetRoleLabel}

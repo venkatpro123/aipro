@@ -147,7 +147,7 @@ export default function ShareableScoreCard() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
           <div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#00F5FF', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-cyan-text)', letterSpacing: '0.05em' }}>
               Human<span style={{ color: '#00FF9F' }}>Proof</span>
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-35)', marginTop: 2 }}>AI Displacement Intelligence</div>
@@ -182,7 +182,7 @@ export default function ShareableScoreCard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: '#FF4757' }}>
             <span>●</span> <span>At-risk skills: {riskyCount || '—'}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#00F5FF' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-cyan-text)' }}>
             <span>●</span> <span>Top strength: {topSafe}</span>
           </div>
         </div>

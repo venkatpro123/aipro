@@ -27,7 +27,7 @@ const PILLAR_PROVENANCE_FIELD: Record<string, string> = {
 
 const READINESS_CONFIG = {
   READY:          { color: '#10b981', label: 'Ready',           bg: 'rgba(16,185,129,0.12)'  },
-  MOSTLY_READY:   { color: '#22d3ee', label: 'Mostly Ready',    bg: 'rgba(34,211,238,0.12)'  },
+  MOSTLY_READY:   { color: 'var(--color-cyan-text)', label: 'Mostly Ready',    bg: 'rgba(34,211,238,0.12)'  },
   PARTIAL:        { color: '#f59e0b', label: 'Partially Ready', bg: 'rgba(245,158,11,0.12)'  },
   UNDERPREPARED:  { color: '#f97316', label: 'Underprepared',   bg: 'rgba(249,115,22,0.12)'  },
   NOT_READY:      { color: '#dc2626', label: 'Not Ready',       bg: 'rgba(220,38,38,0.12)'   },
@@ -374,8 +374,8 @@ const PreparednessScorePanel: React.FC<PreparednessScorePanelProps> = ({ prepare
           style={{ background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.20)' }}
         >
           <div className="flex items-center gap-1.5 mb-2">
-            <TrendingUp className="w-3.5 h-3.5" style={{ color: '#00d4e0' }} />
-            <p className="text-[10px] font-bold tracking-wider" style={{ color: '#00d4e0' }}>
+            <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
+            <p className="text-[10px] font-bold tracking-wider" style={{ color: 'var(--color-cyan-text)' }}>
               QUICK WINS — RAISE SCORE 10+ PTS IN 30 DAYS
             </p>
           </div>

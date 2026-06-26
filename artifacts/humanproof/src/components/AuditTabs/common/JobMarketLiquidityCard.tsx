@@ -237,7 +237,7 @@ const CityCard: React.FC<{
           </span>
           {isHighlighted && (
             <span className="text-[9px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
-              style={{ background: 'rgba(0,212,224,0.18)', color: '#00d4e0' }}>
+              style={{ background: 'rgba(0,212,224,0.18)', color: 'var(--color-cyan-text)' }}>
               YOU
             </span>
           )}
@@ -442,7 +442,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             className="flex items-start gap-1.5 rounded-lg px-2.5 py-2"
             style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.12)' }}
           >
-            <span className="text-[10px] font-black flex-shrink-0" style={{ color: '#22d3ee' }}>↳</span>
+            <span className="text-[10px] font-black flex-shrink-0" style={{ color: 'var(--color-cyan-text)' }}>↳</span>
             <p className="text-[10px] leading-snug italic" style={{ color: 'rgba(34,211,238,0.70)' }}>
               If laid off tomorrow, you have {weeksLowerBound} weeks before job search pressure becomes acute.
             </p>
@@ -609,13 +609,13 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
           onClick={() => setShowLocation(l => !l)}
           style={{ cursor: 'pointer', background: 'none', border: 'none' }}
         >
-          <MapPin style={{ width: 12, height: 12, color: '#22d3ee', flexShrink: 0 }} />
+          <MapPin style={{ width: 12, height: 12, color: 'var(--color-cyan-text)', flexShrink: 0 }} />
           <span className="text-[10px] font-bold tracking-[0.10em]" style={{ color: 'var(--alpha-text-45)' }}>
             LOCATION-BASED SUGGESTIONS
           </span>
           {cityMarketIntelligence?.cityName && (
             <span className="text-[10px] px-1.5 py-0.5 rounded ml-1"
-              style={{ background: 'rgba(0,212,224,0.12)', color: '#00d4e0' }}>
+              style={{ background: 'rgba(0,212,224,0.12)', color: 'var(--color-cyan-text)' }}>
               {cityMarketIntelligence.cityName}
             </span>
           )}
@@ -643,7 +643,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                   <div className="rounded-xl px-3 py-2.5 mb-3"
                     style={{ background: 'rgba(0,212,224,0.05)', border: '1px solid rgba(0,212,224,0.18)' }}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[10px] font-black" style={{ color: '#22d3ee' }}>
+                      <p className="text-[10px] font-black" style={{ color: 'var(--color-cyan-text)' }}>
                         YOUR MARKET — {cityMarketIntelligence.cityName.toUpperCase()}
                       </p>
                       <span className="text-[9px] px-1 rounded"
@@ -679,7 +679,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                 {!cityMarketIntelligence && geo.status === 'idle' && (
                   <div className="rounded-xl px-3 py-2.5 mb-3 flex items-start gap-2"
                     style={{ background: 'rgba(34,211,238,0.05)', border: '1px solid rgba(34,211,238,0.18)' }}>
-                    <Navigation style={{ width: 14, height: 14, color: '#22d3ee', flexShrink: 0, marginTop: 1 }} />
+                    <Navigation style={{ width: 14, height: 14, color: 'var(--color-cyan-text)', flexShrink: 0, marginTop: 1 }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-semibold mb-1" style={{ color: 'var(--alpha-text-85)' }}>
                         Get personalized city rankings
@@ -692,7 +692,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                         type="button"
                         onClick={requestLocation}
                         className="text-[10px] font-bold px-3 py-1.5 rounded-lg"
-                        style={{ background: 'rgba(34,211,238,0.15)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.30)', cursor: 'pointer' }}
+                        style={{ background: 'rgba(34,211,238,0.15)', color: 'var(--color-cyan-text)', border: '1px solid rgba(34,211,238,0.30)', cursor: 'pointer' }}
                       >
                         Detect my location →
                       </button>
@@ -721,7 +721,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                       type="button"
                       onClick={() => { try { window.dispatchEvent(new CustomEvent('hp.profile.open', { detail: { step: 'core' } })); } catch { /* SSR */ } }}
                       className="mt-1.5 text-[10px] font-bold"
-                      style={{ color: '#22d3ee', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      style={{ color: 'var(--color-cyan-text)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
                       Set city in profile →
                     </button>
@@ -730,7 +730,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
 
                 {geo.status === 'resolved' && (
                   <div className="flex items-center gap-2 mb-2.5">
-                    <Navigation style={{ width: 10, height: 10, color: '#22d3ee' }} />
+                    <Navigation style={{ width: 10, height: 10, color: 'var(--color-cyan-text)' }} />
                     <p className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
                       {geo.source === 'browser' ? `Detected: ${geo.city}` : `From profile: ${geo.city}`}
                       {!detectedCityProfile && ' · No US city profile available'}
@@ -740,7 +740,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                         type="button"
                         onClick={requestLocation}
                         className="text-[10px] font-bold"
-                        style={{ color: '#22d3ee', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                        style={{ color: 'var(--color-cyan-text)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                       >
                         Use browser location
                       </button>
