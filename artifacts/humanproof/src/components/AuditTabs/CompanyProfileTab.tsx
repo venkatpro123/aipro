@@ -368,15 +368,15 @@ const HiringPulseCard: React.FC<{ signal: HiringPulseSignal; companyName: string
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-3)]">
-        <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+        <div className="p-3 bg-[var(--alpha-bg-05)] rounded-lg border border-[var(--alpha-bg-05)]">
           <div className="flex items-center gap-1.5">{freezeBadge.icon}<span className="label-xs text-muted-foreground">Hiring Freeze Score</span></div>
           <div className={`text-base font-black tracking-tight mt-1 ${freezeBadge.color}`}>{freezeBadge.label}</div>
         </div>
-        <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+        <div className="p-3 bg-[var(--alpha-bg-05)] rounded-lg border border-[var(--alpha-bg-05)]">
           <div className="flex items-center gap-1.5">{trendIcon}<span className="label-xs text-muted-foreground">Posting Trend ({signal.roleTitle})</span></div>
           <div className="text-base font-black tracking-tight mt-1 capitalize">{signal.postingTrend ?? "unknown"}</div>
         </div>
-        <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+        <div className="p-3 bg-[var(--alpha-bg-05)] rounded-lg border border-[var(--alpha-bg-05)]">
           <div className="flex items-center gap-1.5"><Hash className="w-4 h-4 text-cyan-400" /><span className="label-xs text-muted-foreground">Open Roles (live count)</span></div>
           <div className="text-base font-black tracking-tight mt-1">
             {signal.estimatedOpenings != null ? signal.estimatedOpenings.toLocaleString() : <span className="text-muted-foreground">— (live API not active)</span>}
@@ -514,7 +514,7 @@ const FinancialHealthDossier: React.FC<{
 
   return (
     <div className="glass-panel-heavy shadow-xl" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-      <div className="flex items-center gap-2 px-6 py-4 border-b border-white/[0.07]">
+      <div className="flex items-center gap-2 px-6 py-4 border-b border-[var(--alpha-bg-07)]">
         <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(0,212,224,0.10)', color: 'var(--cyan)' }}>
           <BarChart4 className="w-4 h-4" />
         </div>
@@ -626,7 +626,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
   return (
     <div className="glass-panel-heavy shadow-xl" style={{ borderRadius: '16px', overflow: 'hidden' }}>
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.07]">
+      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-[var(--alpha-bg-07)]">
         <Calendar className="w-4 h-4 text-muted-foreground" />
         <h4 className="data-label" style={{ color: 'var(--text-2)', letterSpacing: '0.14em' }}>
           LAYOFF HISTORY
@@ -787,7 +787,7 @@ const IndustryBenchmarkCard: React.FC<{
             const isSignificant = Math.abs(normalizedDelta) > 0.1;
 
             return (
-              <div key={i} className="bg-white/5 rounded-lg p-3 border border-white/5">
+              <div key={i} className="bg-[var(--alpha-bg-05)] rounded-lg p-3 border border-[var(--alpha-bg-05)]">
                 <div className="text-xs text-muted-foreground mb-1">{bm.metric}</div>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-baseline gap-2">
@@ -806,8 +806,8 @@ const IndustryBenchmarkCard: React.FC<{
                     </span>
                   )}
                 </div>
-                <div className="h-1.5 bg-white/5 rounded-full relative overflow-visible">
-                  <div className="absolute h-full w-0.5 bg-white/20" style={{ left: "50%" }} />
+                <div className="h-1.5 bg-[var(--alpha-bg-05)] rounded-full relative overflow-visible">
+                  <div className="absolute h-full w-0.5 bg-[var(--alpha-bg-12)]" style={{ left: "50%" }} />
                   <div
                     className="absolute w-3 h-3 rounded-full border-2 border-[var(--bg)] -top-[3px]"
                     style={{
@@ -868,7 +868,7 @@ const DepartmentNewsPanel: React.FC<{ news: NewsItem[]; department: string; comp
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="p-3 bg-white/5 rounded-xl border border-white/5"
+              className="p-3 bg-[var(--alpha-bg-05)] rounded-xl border border-[var(--alpha-bg-05)]"
               style={{ borderLeft: `3px solid ${getSentimentColor(item.sentiment)}` }}
             >
               <div className="flex justify-between items-start mb-2 gap-2">
@@ -958,7 +958,7 @@ const LiveSignalFeed: React.FC<{ signals: SignalEvent[] }> = ({ signals }) => {
             initial={{ opacity: 0, x: -4 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.04 }}
-            className="p-2.5 bg-white/5 rounded-lg text-xs flex items-start gap-2.5 border border-white/5"
+            className="p-2.5 bg-[var(--alpha-bg-05)] rounded-lg text-xs flex items-start gap-2.5 border border-[var(--alpha-bg-05)]"
           >
             <div
               className="p-1.5 rounded-full mt-0.5 flex-shrink-0"

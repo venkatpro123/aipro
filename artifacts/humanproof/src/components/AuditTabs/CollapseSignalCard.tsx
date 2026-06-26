@@ -277,7 +277,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
 
         {/* v4.0: Department-level cut probability breakdown */}
         {report.stage && report.stage >= 2 && report.departmentRisks && report.departmentRisks.length > 0 && (
-          <div className="mt-3 p-3 rounded-lg bg-white/5 border border-white/8">
+          <div className="mt-3 p-3 rounded-lg bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-08)]">
             <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
               Department Risk Distribution
             </div>
@@ -295,7 +295,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                     >
                       {dept.isUserDepartment ? '→ ' : ''}{dept.department}
                     </span>
-                    <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-[var(--alpha-bg-05)] rounded-full overflow-hidden">
                       <div style={{ width: `${dept.freezeScore}%`, height: '100%', background: barColor, borderRadius: 'inherit' }} />
                     </div>
                     <span className="text-[10px] font-mono font-bold" style={{ color: barColor, width: 32, textAlign: 'right' }}>
@@ -338,7 +338,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden border-t border-white/10"
+            className="overflow-hidden border-t border-[var(--alpha-bg-10)]"
           >
             <div className="p-5 space-y-2">
               <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
@@ -349,7 +349,7 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
                   key={i}
                   className={`flex items-start gap-3 p-3 rounded-lg text-xs ${
                     sig.detected
-                      ? "bg-white/5 border border-white/10"
+                      ? "bg-[var(--alpha-bg-05)] border border-[var(--alpha-bg-10)]"
                       : "opacity-40"
                   }`}
                 >

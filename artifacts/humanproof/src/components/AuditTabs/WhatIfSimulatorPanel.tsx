@@ -105,7 +105,8 @@ export function WhatIfSimulatorPanel({ result }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-white/8 bg-gray-900/40 p-4 mb-4"
+      className="rounded-xl p-4 mb-4"
+      style={{ border: '1px solid var(--alpha-bg-08)', background: 'var(--alpha-bg-04)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
@@ -127,7 +128,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
       </div>
 
       {/* Score comparison */}
-      <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-gray-800/40">
+      <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-[var(--alpha-bg-06)]">
         <div className="text-center">
           <div className="text-[10px] text-gray-500 mb-1">CURRENT</div>
           <SimulatedScoreRing score={result.total} color={TIER_COLORS[result.tier.color] ?? '#f97316'} />
@@ -188,8 +189,8 @@ export function WhatIfSimulatorPanel({ result }: Props) {
 
       {/* Data freshness warning */}
       {simResult.dataFreshnessWarning && (
-        <div className="mb-3 px-3 py-2 rounded-lg bg-gray-800/50 border border-gray-600/20">
-          <p className="text-[11px] text-gray-400">{simResult.dataFreshnessWarning}</p>
+        <div className="mb-3 px-3 py-2 rounded-lg" style={{ background: 'var(--alpha-bg-06)', border: '1px solid var(--alpha-bg-10)' }}>
+          <p className="text-[11px]" style={{ color: 'var(--alpha-text-45)' }}>{simResult.dataFreshnessWarning}</p>
         </div>
       )}
 
@@ -218,7 +219,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
                   <span className="text-[10px] text-gray-500">{val}%</span>
                 </div>
               </div>
-              <div className="relative h-1.5 bg-gray-800 rounded-full">
+              <div className="relative h-1.5 bg-[var(--alpha-bg-08)] rounded-full">
                 <div
                   className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-purple-500 to-emerald-500 transition-all duration-150"
                   style={{ width: `${val}%` }}
