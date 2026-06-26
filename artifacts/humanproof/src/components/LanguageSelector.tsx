@@ -40,7 +40,7 @@ export const LanguageSelector: React.FC = () => {
           top: '100%',
           right: 0,
           marginTop: '8px',
-          background: '#0b1020',
+          background: 'var(--bg-card)',
           border: '1px solid #333',
           borderRadius: '6px',
           minWidth: '140px',

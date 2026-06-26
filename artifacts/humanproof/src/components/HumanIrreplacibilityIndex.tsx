@@ -460,7 +460,7 @@ export default function HumanIrreplacibilityIndex({ onNavigate }: { onNavigate?:
                 fill="var(--emerald)"
                 fillOpacity={0.15}
               />
-              <Tooltip contentStyle={{ background: '#111128', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)' }} />
+              <Tooltip contentStyle={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)' }} />
             </RadarChart>
           </ResponsiveContainer>
         </div>

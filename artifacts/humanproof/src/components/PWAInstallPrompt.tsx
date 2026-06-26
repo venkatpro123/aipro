@@ -49,7 +49,7 @@ export const PWAInstallPrompt: React.FC = () => {
       bottom: 'calc(var(--toast-bottom, 20px))',
       right: '20px',
       maxWidth: '320px',
-      background: '#0b1020',
+      background: 'var(--bg-card)',
       border: '1px solid #00f5ff',
       borderRadius: '12px',
       padding: '16px',
@@ -59,7 +59,7 @@ export const PWAInstallPrompt: React.FC = () => {
       {showUpdate ? (
         <>
           <h3 style={{margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600'}}>Update Available</h3>
-          <p style={{margin: '0 0 12px 0', fontSize: '13px', color: '#999'}}>A new version of HumanProof is ready!</p>
+          <p style={{margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-2)'}}>A new version of HumanProof is ready!</p>
           <div style={{display: 'flex', gap: '8px'}}>
             <button
               onClick={handleUpdateNow}
@@ -83,7 +83,7 @@ export const PWAInstallPrompt: React.FC = () => {
                 flex: 1,
                 padding: '8px',
                 background: 'transparent',
-                border: '1px solid #333',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 color: 'var(--text)',
                 fontSize: '13px',
@@ -98,7 +98,7 @@ export const PWAInstallPrompt: React.FC = () => {
       ) : (
         <>
           <h3 style={{margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600'}}>Install App</h3>
-          <p style={{margin: '0 0 12px 0', fontSize: '13px', color: '#999'}}>Get offline access and native app feel.</p>
+          <p style={{margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-2)'}}>Get offline access and native app feel.</p>
           <div style={{display: 'flex', gap: '8px'}}>
             <button
               onClick={handleInstall}
@@ -122,7 +122,7 @@ export const PWAInstallPrompt: React.FC = () => {
                 flex: 1,
                 padding: '8px',
                 background: 'transparent',
-                border: '1px solid #333',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 color: 'var(--text)',
                 fontSize: '13px',

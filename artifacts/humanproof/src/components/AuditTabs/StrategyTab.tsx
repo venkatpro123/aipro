@@ -278,7 +278,7 @@ const OfferModal: React.FC<{
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         className="w-full max-w-lg rounded-2xl p-6 overflow-y-auto max-h-[90vh]"
-        style={{ background: '#0f1117', border: '1px solid rgba(0,212,224,0.2)' }}
+        style={{ background: 'var(--bg-raised)', border: '1px solid rgba(0,212,224,0.2)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">

@@ -88,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div style={{
-        background: '#020408',
+        background: 'var(--bg-deep, #020408)',
         border: '1px solid var(--alpha-bg-08)',
         borderRadius: '32px', padding: '48px', width: '100%',
         maxWidth: '440px', position: 'relative',

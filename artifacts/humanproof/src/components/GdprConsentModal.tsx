@@ -334,7 +334,7 @@ const OVERLAY: React.CSSProperties = {
 
 const PANEL: React.CSSProperties = {
   width: '100%', maxWidth: 480,
-  background: '#0d1320',
+  background: 'var(--bg-card)',
   border: '1px solid var(--alpha-bg-08)',
   borderRadius: 20,
   padding: '28px 24px 24px',

@@ -46,7 +46,7 @@ export default function DisplacementForecast({ onNavigate }: { onNavigate?: (tab
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div style={{ background: '#111128', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px' }}>
+      <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px' }}>
         <div style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', color: 'var(--text2)', marginBottom: 6 }}>{label}</div>
         {payload.map((p: any) => (
           <div key={p.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
