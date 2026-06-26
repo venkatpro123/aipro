@@ -32,6 +32,8 @@ import type { PreparednessResult } from '../../../services/preparednessScoreEngi
 import { FirstAuditTour } from '../common/FirstAuditTour';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import { ConfidenceDisclosure } from '../common/ConfidenceDisclosure';
+import { ProgressNarrativeCard } from '../common/ProgressNarrativeCard';
+import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
@@ -1006,6 +1008,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
         />
       </ScrollReveal>
+
+      {/* ── Phase 18/Retention: Progress narrative — "since last visit" emotional beat */}
+      <ProgressNarrativeCard scoreDelta={r.scoreDelta} streakInfo={streakInfo} />
+
+      {/* ── Phase 5/Conversion: Sharpen score prompt — inline profile capture upsell */}
+      <SharpenScorePrompt />
 
       {/* ── Phase 12: Trust System — personal modifier transparency card */}
       {personalModifierPresent && r.personalRiskModifier && (
