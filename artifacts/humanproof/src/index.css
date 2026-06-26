@@ -9314,6 +9314,17 @@ html.light .intel-assembly-node-dot {
 /* Metric card hover border */
 html.light .metric-card:hover { border-color: rgba(17,19,26,0.14); }
 
+/* Profile setup modal text */
+html.light .profile-field-label  { color: #11131a; }
+html.light .profile-field-helper  { color: #717b8c; }
+html.light .profile-hint-text    { color: #717b8c; }
+html.light .profile-step-title   { color: #11131a; }
+html.light .profile-check-row    { color: #4a5365; }
+
+/* Go/No-Go box */
+html.light .go-no-go-box { color: #4a5365; }
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MICRO-INTERACTION POLISH — Global premium hover, focus, and press states
    ═══════════════════════════════════════════════════════════════════════════ */
