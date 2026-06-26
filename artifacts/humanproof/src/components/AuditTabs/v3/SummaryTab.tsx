@@ -38,6 +38,7 @@ import PredictionHorizonPanel from '../common/PredictionHorizonPanel';
 import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
 import { PersonalImpactSimulator } from '../common/PersonalImpactSimulator';
+import { CareerPortfolioPanel } from '../common/CareerPortfolioPanel';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
@@ -1061,6 +1062,11 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <ScrollReveal delay={0.08}><TopDriversStrip drivers={topDrivers} /></ScrollReveal>
+
+      {/* ── Risk concentration donut — where risk is concentrated vs diversified */}
+      <ScrollReveal delay={0.09}>
+        <CareerPortfolioPanel result={result} />
+      </ScrollReveal>
 
       {/* ── Good News (inline when available) ────────────────────────────── */}
       {opportunityNode && <ScrollReveal delay={0.10}>{opportunityNode}</ScrollReveal>}

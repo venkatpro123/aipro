@@ -19,6 +19,7 @@ import { CareerHealthDashboard } from '../common/CareerHealthDashboard';
 import SkillFusionPanel from '../common/SkillFusionPanel';
 import RoleMarketDemandPanel from '../common/RoleMarketDemandPanel';
 import { TechObsolescencePanel } from '../common/TechObsolescencePanel';
+import { CareerResilienceSimulator } from '../common/CareerResilienceSimulator';
 
 // Fallback intel for roles with no seeded data — mirrors the same fallback
 // previously used by the now-retired CareerSkillsTab. Only the `skills` field
@@ -118,6 +119,18 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
         userFinancialRunway={r.userFinancialRunway}
         careerVelocity={r.careerVelocity}
       />
+
+      {/* "If laid off tomorrow" scenario — weeks to reemployment, salary, escape path */}
+      <ScrollReveal>
+        <CareerResilienceSimulator
+          currentScore={result.total}
+          currentRoleLabel={currentRoleLabel}
+          jobMarketLiquidity={r.jobMarketLiquidity}
+          careerResilience={r.careerResilience}
+          roleAdjacency={r.roleAdjacency}
+          userFinancialRunway={r.userFinancialRunway}
+        />
+      </ScrollReveal>
 
       {radarDimensions.length >= 3 && (
         <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
