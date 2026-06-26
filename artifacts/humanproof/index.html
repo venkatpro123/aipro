@@ -55,6 +55,8 @@
         } catch (e) {}
         var isLight = document.documentElement.classList.contains('light');
         document.documentElement.style.background = isLight ? '#f6f7f9' : '#090c14';
+        var tc = document.querySelector('meta[name="theme-color"]');
+        if (tc) tc.setAttribute('content', isLight ? '#f6f7f9' : '#090c14');
       })();
     </script>
   </head>
@@ -81,9 +83,11 @@
         var t = setTimeout(function () {
           var boot = document.getElementById('hs-boot');
           if (!boot) return; // React mounted — nothing to do
+          var isLt = document.documentElement.classList.contains('light');
+          var txtColor = isLt ? 'rgba(17,19,26,0.7)' : 'rgba(255,255,255,0.6)';
           boot.innerHTML =
             '<div style="text-align:center;padding:32px;max-width:400px;">' +
-            '<p style="font-size:0.9rem;color:rgba(17,19,26,0.7);margin:0 0 16px">Failed to load. Check your internet connection or try a hard refresh.</p>' +
+            '<p style="font-size:0.9rem;color:' + txtColor + ';margin:0 0 16px">Failed to load. Check your internet connection or try a hard refresh.</p>' +
             '<button onclick="location.reload(true)" style="background:#0096aa;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:0.875rem;font-weight:600">Refresh</button>' +
             '</div>';
         }, 12000);

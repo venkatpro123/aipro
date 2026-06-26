@@ -1,7 +1,7 @@
 {
   "name": "HumanProof AI Risk Assessment",
   "short_name": "HumanProof",
-  "description": "AI job displacement intelligence platform",
+  "description": "Career risk intelligence platform — real-time company, role, and market monitoring with predictive layoff risk alerts",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
