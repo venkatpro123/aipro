@@ -112,7 +112,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
         padding: '24px',
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#fff', fontSize: '1.2rem' }}>
+      <h3 style={{ marginTop: 0, marginBottom: '20px', color: 'var(--text)', fontSize: '1.2rem' }}>
         ⚡ Immediate Action Plan
       </h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -127,7 +127,7 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-              <h4 style={{ margin: 0, color: '#fff', fontSize: '1rem' }}>
+              <h4 style={{ margin: 0, color: 'var(--text)', fontSize: '1rem' }}>
                 {action.priority}. {action.title}
               </h4>
               <span

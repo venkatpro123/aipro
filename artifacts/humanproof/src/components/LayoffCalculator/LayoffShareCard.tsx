@@ -72,7 +72,7 @@ export const LayoffShareCard: React.FC<Props> = ({ score, tier, companyName, rol
           <div style={{ fontSize: '64px', fontWeight: 700, color: getTierHex(tier.color), lineHeight: 1 }}>
             {score}%
           </div>
-          <div style={{ color: '#fff', fontSize: '22px', marginTop: '8px', marginBottom: '24px', fontWeight: 600 }}>
+          <div style={{ color: 'var(--text)', fontSize: '22px', marginTop: '8px', marginBottom: '24px', fontWeight: 600 }}>
             layoff risk estimation
           </div>
 

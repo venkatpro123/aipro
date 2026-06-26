@@ -274,7 +274,7 @@ const YearGrid: React.FC<{
                 background: C.red, borderRadius: '50%',
                 width: '14px', height: '14px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '8px', color: '#fff', fontWeight: 700,
+                fontSize: '8px', color: 'var(--text)', fontWeight: 700,
               }}>!</div>
             )}
             <div style={{ color: C.text3, fontSize: '0.68rem', fontFamily: C.mono, marginBottom: '6px', letterSpacing: '0.05em' }}>

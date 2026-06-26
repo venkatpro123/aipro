@@ -94,7 +94,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
           style={{
             fontFamily: '"JetBrains Mono", "Fira Code", monospace',
             fontSize: "0.9rem",
-            color: "#fff",
+            color: 'var(--text)',
             fontWeight: 600,
           }}
         >

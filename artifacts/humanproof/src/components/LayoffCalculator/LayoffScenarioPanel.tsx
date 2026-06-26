@@ -50,7 +50,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
     background: 'var(--alpha-bg-06)',
     border: '1px solid var(--alpha-bg-08)',
     borderRadius: '6px',
-    color: '#fff',
+    color: 'var(--text)',
     fontSize: '0.9rem',
     outline: 'none',
   };
@@ -138,7 +138,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
           borderRadius: '8px',
           borderLeft: `4px solid ${diff > 0 ? '#ef4444' : diff < 0 ? '#10b981' : '#9ba5b4'}`
         }}>
-        <h4 style={{ margin: '0 0 8px', color: '#fff', fontSize: '1.1rem' }}>
+        <h4 style={{ margin: '0 0 8px', color: 'var(--text)', fontSize: '1.1rem' }}>
             New Scenario Risk: <span style={{ color: getTierHex(scenarioResult.tier.color) }}>{scenarioResult.score}%</span>
           </h4>
           <div style={{ color: '#d1d5db', fontSize: '0.95rem' }}>

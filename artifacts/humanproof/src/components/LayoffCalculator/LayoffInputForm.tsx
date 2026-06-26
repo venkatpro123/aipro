@@ -542,7 +542,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Question title */}
-            <h2 className="text-xl font-bold mb-1 leading-snug" style={{ color: '#fff' }}>{q}</h2>
+            <h2 className="text-xl font-bold mb-1 leading-snug" style={{ color: 'var(--text)' }}>{q}</h2>
             <p className="text-sm mb-6" style={{ color: 'var(--alpha-text-45)' }}>{sub}</p>
 
             {/* ── Step 0: Company ───────────────────────────────────────── */}
@@ -567,7 +567,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                       className="w-full rounded-2xl text-sm font-medium pl-10 pr-12 py-3.5 outline-none"
                       style={{
                         background: 'var(--alpha-bg-06)', border: '1.5px solid var(--alpha-bg-08)',
-                        color: '#fff', caretColor: '#22d3ee',
+                        color: 'var(--text)', caretColor: '#22d3ee',
                       }}
                     />
                     {isProfiling && (
@@ -596,7 +596,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                           >
                             <div>
-                              <p className="text-sm font-semibold" style={{ color: '#fff' }}>{res.name}</p>
+                              <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{res.name}</p>
                               <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>
                                 {res.industry}
                                 {(res as any).fromSupabase && <span style={{ color: '#22d3ee' }}> · DB</span>}
@@ -622,8 +622,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     <div className="mt-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
                       <p className="text-xs font-bold mb-2" style={{ color: '#f59e0b' }}>Confirm company match</p>
                       <p className="text-xs mb-3" style={{ color: 'var(--alpha-text-50)' }}>
-                        You typed <strong style={{ color: '#fff' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
-                        {' '}Closest match: <strong style={{ color: '#fff' }}>{pendingMatchConfirmation.matchedName}</strong>.
+                        You typed <strong style={{ color: 'var(--text)' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
+                        {' '}Closest match: <strong style={{ color: 'var(--text)' }}>{pendingMatchConfirmation.matchedName}</strong>.
                       </p>
                       <div className="flex gap-2">
                         <button type="button" onClick={() => selectCompany(pendingMatchConfirmation.company, true)}
@@ -691,7 +691,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     className="w-full rounded-2xl text-sm font-medium pl-10 pr-4 py-3.5 outline-none"
                     style={{
                       background: 'var(--alpha-bg-06)', border: '1.5px solid var(--alpha-bg-08)',
-                      color: '#fff', caretColor: '#22d3ee',
+                      color: 'var(--text)', caretColor: '#22d3ee',
                     }}
                   />
                 </div>
@@ -713,7 +713,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                           onMouseLeave={e => (e.currentTarget.style.background = idx === focusedSuggestionIndex ? 'rgba(34,211,238,0.08)' : 'transparent')}
                         >
                           <div>
-                            <p className="text-sm font-semibold" style={{ color: '#fff' }}>{entry.displayTitle}</p>
+                            <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{entry.displayTitle}</p>
                             <p className="text-xs" style={{ color: 'var(--alpha-text-35)' }}>{entry.summary.slice(0, 48)}…</p>
                           </div>
                           <span className="text-xs font-black px-2 py-0.5 rounded-lg flex-shrink-0 ml-2" style={{ background: `${color}20`, color }}>

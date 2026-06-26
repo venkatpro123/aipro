@@ -81,7 +81,7 @@ const GateContent: React.FC<{
         ⚠ {urgency}
       </div>
     )}
-    <h3 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 700, margin: '0 0 8px' }}>
+    <h3 style={{ color: 'var(--text)', fontSize: '1.25rem', fontWeight: 700, margin: '0 0 8px' }}>
       🔒 {gate.gateTitle}
     </h3>
     <p style={{ color: '#9ba5b4', fontSize: '0.95rem', margin: '0 0 20px', maxWidth: '440px' }}>

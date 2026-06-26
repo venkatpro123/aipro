@@ -6,13 +6,23 @@ interface EnterpriseContactModalProps {
   onClose: () => void;
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 12px',
+  border: '1px solid var(--border, rgba(255,255,255,0.12))',
+  borderRadius: '6px',
+  background: 'var(--surface-glass, rgba(255,255,255,0.04))',
+  color: 'var(--text)',
+  fontSize: '14px',
+  fontFamily: 'inherit',
+};
+
 const Row: React.FC<{children: React.ReactNode}> = ({children}) => (
   <div style={{display: 'flex', gap: '16px', marginBottom: '16px'}}>{children}</div>
 );
 
 const Field: React.FC<{label: string; children: React.ReactNode; flex?: number}> = ({label, children, flex = 1}) => (
   <div style={{flex}}>
-    <label style={{display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: '#999'}}>{label}</label>
+    <label style={{display: 'block', fontSize: '13px', fontWeight: '500', marginBottom: '6px', color: 'var(--text-2)'}}>{label}</label>
     {children}
   </div>
 );
@@ -45,114 +55,56 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
     }
   };
 
+  const overlayStyle: React.CSSProperties = {
+    position: 'fixed', inset: 0,
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 1000,
+  };
+
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--bg-card, #0b1020)',
+    border: '1px solid var(--cyan, #00f5ff)',
+    borderRadius: '12px', padding: '32px',
+  };
+
   if (success) {
     return (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}>
-        <div style={{
-          background: '#0b1020',
-          border: '1px solid #00f5ff',
-          borderRadius: '12px',
-          padding: '32px',
-          maxWidth: '400px',
-          textAlign: 'center',
-        }}>
+      <div style={overlayStyle}>
+        <div style={{...cardStyle, maxWidth: '400px', textAlign: 'center'}}>
           <div style={{fontSize: '48px', marginBottom: '16px'}}>✓</div>
-          <h2 style={{marginBottom: '12px'}}>Thanks for reaching out!</h2>
-          <p style={{color: '#999'}}>Our sales team will contact you soon.</p>
+          <h2 style={{marginBottom: '12px', color: 'var(--text)'}}>Thanks for reaching out!</h2>
+          <p style={{color: 'var(--text-2)'}}>Our sales team will contact you soon.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-    }}>
-      <div style={{
-        background: '#0b1020',
-        border: '1px solid #00f5ff',
-        borderRadius: '12px',
-        padding: '32px',
-        maxWidth: '600px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-      }}>
-        <h2 style={{marginBottom: '24px', fontSize: '20px'}}>Enterprise Contact</h2>
+    <div style={overlayStyle}>
+      <div style={{...cardStyle, maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}}>
+        <h2 style={{marginBottom: '24px', fontSize: '20px', color: 'var(--text)'}}>Enterprise Contact</h2>
 
         <form onSubmit={handleSubmit}>
           <Row>
-            <Field label="Full Name" flex={1}>
-              <input
-                type="text"
-                placeholder="John Doe"
-                value={formData.name || ''}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              />
-            </Field>
-            <Field label="Email" flex={1}>
-              <input
-                type="email"
-                placeholder="john@company.com"
-                value={formData.email || ''}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              />
-            </Field>
+            <Field label="Full Name"><input type="text" placeholder="John Doe" value={formData.name || ''} onChange={(e) => setFormData({...formData, name: e.target.value})} style={inputStyle} /></Field>
+            <Field label="Email"><input type="email" placeholder="john@company.com" value={formData.email || ''} onChange={(e) => setFormData({...formData, email: e.target.value})} style={inputStyle} /></Field>
           </Row>
 
           <Row>
-            <Field label="Company" flex={1}>
-              <input
-                type="text"
-                placeholder="Acme Corp"
-                value={formData.company || ''}
-                onChange={(e) => setFormData({...formData, company: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              />
-            </Field>
-            <Field label="Job Role" flex={1}>
-              <input
-                type="text"
-                placeholder="Head of HR"
-                value={formData.role || ''}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              />
-            </Field>
+            <Field label="Company"><input type="text" placeholder="Acme Corp" value={formData.company || ''} onChange={(e) => setFormData({...formData, company: e.target.value})} style={inputStyle} /></Field>
+            <Field label="Job Role"><input type="text" placeholder="Head of HR" value={formData.role || ''} onChange={(e) => setFormData({...formData, role: e.target.value})} style={inputStyle} /></Field>
           </Row>
 
           <Row>
-            <Field label="Team Size" flex={1}>
-              <select
-                value={formData.teamSize || ''}
-                onChange={(e) => setFormData({...formData, teamSize: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              >
+            <Field label="Team Size">
+              <select value={formData.teamSize || ''} onChange={(e) => setFormData({...formData, teamSize: e.target.value})} style={inputStyle}>
                 <option value="">Select...</option>
                 {TEAM_SIZE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
             </Field>
-            <Field label="Use Case" flex={1}>
-              <select
-                value={formData.useCase || ''}
-                onChange={(e) => setFormData({...formData, useCase: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              >
+            <Field label="Use Case">
+              <select value={formData.useCase || ''} onChange={(e) => setFormData({...formData, useCase: e.target.value})} style={inputStyle}>
                 <option value="">Select...</option>
                 {USE_CASE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
               </select>
@@ -160,71 +112,26 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
           </Row>
 
           <Row>
-            <Field label="Phone (optional)" flex={1}>
-              <input
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={formData.phone || ''}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px'}}
-              />
-            </Field>
+            <Field label="Phone (optional)"><input type="tel" placeholder="+1 (555) 123-4567" value={formData.phone || ''} onChange={(e) => setFormData({...formData, phone: e.target.value})} style={inputStyle} /></Field>
           </Row>
 
           <Row>
-            <Field label="Message (optional)" flex={1}>
-              <textarea
-                placeholder="Tell us about your needs..."
-                value={formData.message || ''}
-                onChange={(e) => setFormData({...formData, message: e.target.value})}
-                rows={4}
-                style={{width: '100%', padding: '8px 12px', border: '1px solid #333', borderRadius: '6px', background: '#1a1f35', color: '#fff', fontSize: '14px', fontFamily: 'inherit'}}
-              />
+            <Field label="Message (optional)">
+              <textarea placeholder="Tell us about your needs..." value={formData.message || ''} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={4} style={inputStyle} />
             </Field>
           </Row>
 
           {error && (
-            <div style={{padding: '12px', background: '#ff5555', borderRadius: '6px', marginBottom: '16px', color: '#fff', fontSize: '13px'}}>
+            <div style={{padding: '12px', background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.30)', borderRadius: '6px', marginBottom: '16px', color: '#ef4444', fontSize: '13px'}}>
               {error}
             </div>
           )}
 
           <Row>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: 'transparent',
-                border: '1px solid #333',
-                borderRadius: '6px',
-                color: '#fff',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.5 : 1,
-                fontSize: '14px',
-                fontWeight: '500',
-              }}
-            >
+            <button type="button" onClick={onClose} disabled={loading} style={{flex: 1, padding: '10px', background: 'transparent', border: '1px solid var(--border, rgba(255,255,255,0.12))', borderRadius: '6px', color: 'var(--text-2)', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, fontSize: '14px', fontWeight: '500'}}>
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: '#00f5ff',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#000',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.5 : 1,
-                fontSize: '14px',
-                fontWeight: '500',
-              }}
-            >
+            <button type="submit" disabled={loading} style={{flex: 1, padding: '10px', background: 'var(--cyan, #00f5ff)', border: 'none', borderRadius: '6px', color: '#000', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1, fontSize: '14px', fontWeight: '500'}}>
               {loading ? 'Submitting...' : 'Submit'}
             </button>
           </Row>

@@ -48,7 +48,7 @@ export const LayoffAlertBanner: React.FC = () => {
         {isWorse ? '⚠' : '↓'}
       </div>
       <div>
-        <p style={{ margin: '0 0 4px', color: '#fff', fontWeight: 600 }}>
+        <p style={{ margin: '0 0 4px', color: 'var(--text)', fontWeight: 600 }}>
           Your layoff risk {isWorse ? 'increased' : 'decreased'} by {Math.abs(drift.drift)} points since {formatDate(drift.fromDate)}
         </p>
         <p style={{ margin: '0 0 12px', color: '#d1d5db', fontSize: '0.9rem' }}>

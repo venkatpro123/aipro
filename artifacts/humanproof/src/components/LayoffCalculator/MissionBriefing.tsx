@@ -197,7 +197,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
               {/* Title */}
               <div
                 style={{
-                  color: "#fff",
+                  color: 'var(--text)',
                   fontSize: "1rem",
                   fontWeight: 700,
                   marginBottom: "10px",

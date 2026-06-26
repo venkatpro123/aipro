@@ -187,7 +187,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         <div style={{ color: 'var(--alpha-text-35)', fontSize: '0.6rem', letterSpacing: '1px', marginBottom: '4px' }}>
           /// SCRAPING TARGET ///
         </div>
-        <div style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 700, letterSpacing: '1px' }}>
+        <div style={{ color: 'var(--text)', fontSize: '1.05rem', fontWeight: 700, letterSpacing: '1px' }}>
           {company.toUpperCase()}
         </div>
         {roleTitle && (

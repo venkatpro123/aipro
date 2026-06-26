@@ -309,7 +309,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 {getCategoryLabel(cat)}
               </div>
               <div
-                style={{ color: "#fff", fontWeight: 700, fontSize: "0.9rem" }}
+                style={{ color: 'var(--text)', fontWeight: 700, fontSize: "0.9rem" }}
               >
                 {val}%
               </div>
@@ -411,7 +411,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                     background: getCategoryColor(agent.category),
                   }}
                 />
-                <span style={{ color: "#fff", fontWeight: 600, flex: 1 }}>
+                <span style={{ color: 'var(--text)', fontWeight: 600, flex: 1 }}>
                   {agent.id}
                 </span>
                 <span

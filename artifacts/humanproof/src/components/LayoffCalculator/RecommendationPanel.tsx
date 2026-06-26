@@ -22,7 +22,7 @@ export const RecommendationPanel: React.FC<Props> = ({ recommendations }) => {
       padding: '24px',
       marginTop: '24px'
     }}>
-      <h3 style={{ color: '#fff', marginBottom: '16px', fontSize: '1.25rem' }}>Personalized Action Plan</h3>
+      <h3 style={{ color: 'var(--text)', marginBottom: '16px', fontSize: '1.25rem' }}>Personalized Action Plan</h3>
       <div style={{ display: 'grid', gap: '16px' }}>
         {recommendations.map((rec) => (
           <div key={rec.id} style={{

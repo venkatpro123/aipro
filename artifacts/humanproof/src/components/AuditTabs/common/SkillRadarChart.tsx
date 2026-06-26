@@ -250,7 +250,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
             </p>
             <div className="flex gap-3">
               <span className="text-[10px]" style={{ color: 'var(--alpha-text-70)' }}>
-                You: <strong style={{ color: '#fff' }}>{dimensions[hoveredIdx].value}</strong>
+                You: <strong style={{ color: 'var(--text)' }}>{dimensions[hoveredIdx].value}</strong>
               </span>
               {dimensions[hoveredIdx].benchmark != null && (
                 <span className="text-[10px]" style={{ color: 'rgba(245,158,11,0.8)' }}>

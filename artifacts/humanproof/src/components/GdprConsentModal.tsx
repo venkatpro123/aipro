@@ -115,7 +115,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
         <div style={PANEL}>
           <div style={{ textAlign: 'center', padding: '40px 24px' }}>
             <Trash2 style={{ color: '#10b981', width: 40, height: 40, margin: '0 auto 16px' }} />
-            <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
+            <h2 style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
               All data deleted
             </h2>
             <p style={{ color: 'var(--alpha-text-50)', fontSize: 13, lineHeight: 1.6 }}>
@@ -142,7 +142,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
             <Shield style={{ width: 22, height: 22, color: '#00d4e0' }} />
           </div>
           <div>
-            <h2 id="gdpr-modal-title" style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+            <h2 id="gdpr-modal-title" style={{ color: 'var(--text)', fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
               Your data. Your control.
             </h2>
             <p style={{ color: 'var(--alpha-text-50)', fontSize: 12, lineHeight: 1.5, margin: 0 }}>
@@ -156,7 +156,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <Toggle on={true} onChange={() => {}} disabled label="Core service data (required)" />
             <div style={{ flex: 1 }}>
-              <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
+              <p style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
                 Core service data
                 <span style={{
                   marginLeft: 8, fontSize: 10, fontWeight: 500,
@@ -182,7 +182,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
               label="Share anonymized risk score for peer benchmarks"
             />
             <div style={{ flex: 1 }}>
-              <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
+              <p style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
                 Anonymized risk signal sharing
                 <span style={{
                   marginLeft: 8, fontSize: 10, fontWeight: 500,
@@ -209,7 +209,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
               label="Store financial context in cloud for cross-device access"
             />
             <div style={{ flex: 1 }}>
-              <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
+              <p style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>
                 Financial context cloud storage
                 <span style={{
                   marginLeft: 8, fontSize: 10, fontWeight: 500,

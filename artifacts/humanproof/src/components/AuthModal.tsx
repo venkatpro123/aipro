@@ -71,7 +71,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     width: '100%', padding: '14px 18px',
     background: 'var(--alpha-bg-04)',
     border: '1px solid var(--alpha-bg-06)', borderRadius: '12px',
-    color: '#fff', fontFamily: 'var(--body)', fontSize: '0.85rem',
+    color: 'var(--text)', fontFamily: 'var(--body)', fontSize: '0.85rem',
     // v40.0 a11y: outline removed from inline style. Global `:focus:not(:focus-visible)`
     // CSS rule handles mouse focus, while `:focus-visible` preserves keyboard focus.
     boxSizing: 'border-box', transition: 'all 0.3s',
@@ -107,7 +107,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         }}>×</button>
 
         <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ color: '#fff', marginBottom: '8px', fontFamily: 'var(--heading)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
+          <h2 style={{ color: 'var(--text)', marginBottom: '8px', fontFamily: 'var(--heading)', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
             {mode === 'forgot' ? 'Protocol Reset' : mode === 'login' ? 'Authenticating' : 'Initialize Node'}
           </h2>
           <p style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 500 }}>

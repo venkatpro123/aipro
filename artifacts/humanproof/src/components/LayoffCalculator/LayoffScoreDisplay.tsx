@@ -129,7 +129,7 @@ const ClassificationBadge: React.FC<{
         </div>
         <div
           style={{
-            color: "#fff",
+            color: 'var(--text)',
             fontSize: "1.1rem",
             fontWeight: 700,
             letterSpacing: "1px",
@@ -422,7 +422,7 @@ const ModelAgreementMeter: React.FC<{
         </span>
         <span
           style={{
-            color: "#fff",
+            color: 'var(--text)',
             fontWeight: 700,
             fontFamily: "monospace",
             fontSize: "0.95rem",
@@ -723,7 +723,7 @@ const AnimatedScore: React.FC<{
           style={{
             fontSize: "3.5rem",
             fontWeight: 800,
-            color: "#fff",
+            color: 'var(--text)',
             lineHeight: 1,
           }}
         >
@@ -818,7 +818,7 @@ const LayerBar: React.FC<{ label: string; value: number; weight: string }> = ({
           </span>
           {" "}<span style={{ color: "#4b5563", fontSize: "0.72rem" }}>ⓘ</span>
         </span>
-        <span style={{ color: "#fff", fontFamily: "monospace" }}>
+        <span style={{ color: 'var(--text)', fontFamily: "monospace" }}>
           {percentage}/100
         </span>
       </div>
@@ -877,7 +877,7 @@ const ProUpsellTrigger: React.FC<{ score: number }> = ({ score }) => {
         textAlign: "center",
       }}
     >
-      <h3 style={{ margin: "0 0 16px", color: "#fff" }}>
+      <h3 style={{ margin: "0 0 16px", color: 'var(--text)' }}>
         Your risk is elevated. Get your full protection plan.
       </h3>
       <ul
@@ -905,7 +905,7 @@ const ProUpsellTrigger: React.FC<{ score: number }> = ({ score }) => {
       <button
         style={{
           background: "var(--violet, #7C3AFF)",
-          color: "#fff",
+          color: 'var(--text)',
           border: "none",
           padding: "12px 24px",
           borderRadius: "8px",
@@ -1067,7 +1067,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           >
             <span>⚠</span> Recent Layoff News Detected
           </h4>
-          <p style={{ color: "#fff", margin: "0 0 8px", fontSize: "0.95rem" }}>
+          <p style={{ color: 'var(--text)', margin: "0 0 8px", fontSize: "0.95rem" }}>
             {relevantNews.headline}
           </p>
           <div style={{ fontSize: "0.8rem", color: "#9ba5b4" }}>
@@ -1274,7 +1274,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
               LIVE OSINT
             </span>
           )}
-          <strong style={{ color: "#fff" }}>{result.confidence}</strong>
+          <strong style={{ color: 'var(--text)' }}>{result.confidence}</strong>
           <span
             title="Based on AI ensemble analysis of public signals from 4 independent models."
             style={{ cursor: "help", color: "#6b7280" }}
@@ -1297,7 +1297,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
       />
 
       <div style={{ marginBottom: "32px" }}>
-        <h3 style={{ color: "#fff", marginBottom: "24px" }}>
+        <h3 style={{ color: 'var(--text)', marginBottom: "24px" }}>
           5-Layer Score Breakdown
         </h3>
         <LayerBar label="Company health" value={breakdown.L1} weight="30%" />

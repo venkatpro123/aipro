@@ -442,7 +442,7 @@ const HorizonBar: React.FC<{
             className="h-5 rounded-lg flex items-center pl-2"
             style={{ background: color + (isActive ? 'dd' : '88') }}
           >
-            <span className="text-[10px] font-black" style={{ color: 'white' }}>{score}</span>
+            <span className="text-[10px] font-black" style={{ color: 'var(--text)' }}>{score}</span>
           </motion.div>
         </div>
       </div>

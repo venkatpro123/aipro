@@ -81,7 +81,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
       border: '1px solid var(--alpha-bg-06)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h3 style={{ color: '#fff', margin: 0 }}>Your Score History</h3>
+        <h3 style={{ color: 'var(--text)', margin: 0 }}>Your Score History</h3>
 
         {confirmClear ? (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -148,7 +148,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#fff', fontWeight: 600, fontSize: '1.1rem' }}>
+                    <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '1.1rem' }}>
                       {entry.score}%
                     </span>
                     {/* ── ENHANCEMENT: Risk velocity indicator ── */}

@@ -179,7 +179,7 @@ const CompanyIdentityCard: React.FC<{
             background: avatarGradient,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 900,
-            color: '#fff',
+            color: 'var(--text)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
           }}>
             {initial}
