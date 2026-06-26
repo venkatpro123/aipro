@@ -741,7 +741,7 @@ export default function SkillRiskCalculator({
                   left: 0,
                   right: 0,
                   zIndex: 50,
-                  background: "#111128",
+                  background: "var(--bg-raised)",
                   border: "1px solid var(--border2)",
                   borderRadius: 8,
                   maxHeight: 320,
@@ -1455,7 +1455,7 @@ export default function SkillRiskCalculator({
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "#111128",
+                      background: "var(--bg-raised)",
                       border: "1px solid var(--border)",
                       borderRadius: 8,
                       color: "var(--text)",
@@ -1488,7 +1488,7 @@ export default function SkillRiskCalculator({
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "#111128",
+                      background: "var(--bg-raised)",
                       border: "1px solid var(--border)",
                       borderRadius: 8,
                       color: "var(--text)",

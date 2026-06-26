@@ -35,7 +35,7 @@ const SimpleLoader: React.FC<{ companyName?: string; stage: number }> = ({ compa
         alignItems: 'center',
         justifyContent: 'center',
         gap: '1rem',
-        background: '#0b1020',
+        background: 'var(--bg-deep)',
         color: 'var(--alpha-text-85)',
       }}
     >

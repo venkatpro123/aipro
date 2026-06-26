@@ -620,7 +620,7 @@ export default function ScoreDriftTracker() {
               />
               <Tooltip
                 contentStyle={{
-                  background: "#111128",
+                  background: "var(--bg-raised)",
                   border: "1px solid var(--border)",
                   borderRadius: 8,
                   color: "var(--text)",
