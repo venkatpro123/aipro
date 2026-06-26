@@ -183,7 +183,7 @@ export function CareerPortfolioPanel({ result }: Props) {
                 <span className="text-[11px] text-gray-400">{dim.label}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-16 h-1 bg-gray-800 rounded-full overflow-hidden">
+                <div className="w-16 h-1 bg-[var(--alpha-bg-08)] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${dim.share * 100}%`, background: dim.color }}

@@ -239,7 +239,7 @@ const MonthlyActionPlan: React.FC<MonthlyActionPlanProps> = ({ plan, className =
           <p className="mt-2.5 text-xs text-[var(--alpha-text-45)] leading-relaxed">{plan.planSummary}</p>
         )}
 
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/[0.06]">
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[var(--alpha-bg-06)]">
           <div className="text-center">
             <div className="text-base font-bold text-[var(--alpha-text-78)]">{totalActions}</div>
             <div className="text-[10px] text-[var(--alpha-text-30)]">total actions</div>
@@ -271,7 +271,7 @@ const MonthlyActionPlan: React.FC<MonthlyActionPlanProps> = ({ plan, className =
       </div>
 
       {plan.criticalPath && plan.criticalPath.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-white/[0.06]">
+        <div className="mt-4 pt-3 border-t border-[var(--alpha-bg-06)]">
           <div className="text-xs font-medium text-[var(--alpha-text-25)] uppercase tracking-wide mb-1.5">
             Critical path (must-dos)
           </div>

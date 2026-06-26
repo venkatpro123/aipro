@@ -231,7 +231,7 @@ const JobTargetPanel: React.FC<JobTargetPanelProps> = ({ targeting, className = 
         </div>
 
         {targeting.strategyRecommendation && (
-          <p className="mt-2.5 text-xs text-[var(--alpha-text-60)] leading-relaxed border-t border-white/[0.07] pt-2.5">
+          <p className="mt-2.5 text-xs text-[var(--alpha-text-60)] leading-relaxed border-t border-[var(--alpha-bg-07)] pt-2.5">
             {targeting.strategyRecommendation}
           </p>
         )}
