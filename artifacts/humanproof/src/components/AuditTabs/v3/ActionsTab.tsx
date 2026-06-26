@@ -34,6 +34,7 @@ import {
   detectExecutiveTier,
 } from '../../../services/executiveIntelligenceEngine';
 import type { UserProfile } from '../../../services/userProfileService';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -596,74 +597,82 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
 
       {/* Executive Intelligence Panel (P2) */}
       {executiveIntelligence && executiveIntelligence.isExecutive && (
-        <ExecutiveIntelligencePanel intelligence={executiveIntelligence} />
+        <ScrollReveal><ExecutiveIntelligencePanel intelligence={executiveIntelligence} /></ScrollReveal>
       )}
 
       {/* Profile context note (P2) */}
       {personalizedSet?.profileContextNote && (
-        <div
-          className="rounded-2xl p-4"
-          style={{
-            background: 'rgba(34, 211, 238, 0.06)',
-            border: '1px solid rgba(34, 211, 238, 0.20)',
-          }}
-        >
-          <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: '#22d3ee' }}>
-            Tailored to your situation
+        <ScrollReveal>
+          <div
+            className="rounded-2xl p-4"
+            style={{
+              background: 'rgba(34, 211, 238, 0.06)',
+              border: '1px solid rgba(34, 211, 238, 0.20)',
+            }}
+          >
+            <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: '#22d3ee' }}>
+              Tailored to your situation
+            </div>
+            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
+              {personalizedSet.profileContextNote}
+            </p>
           </div>
-          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
-            {personalizedSet.profileContextNote}
-          </p>
-        </div>
+        </ScrollReveal>
       )}
       {personalizedSet?.isGenericFallback && (
-        <div
-          className="rounded-xl px-3 py-2 flex items-start gap-2"
-          style={{
-            background: 'rgba(245, 158, 11, 0.07)',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
-          }}
-        >
-          <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
-          <div className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
-            <span style={{ color: '#f59e0b', fontWeight: 600 }}>General advice.</span>{' '}
-            We don't have specific info for your exact role yet, so the actions below are general advice
-            for tech and professional roles. They're still matched to your experience level and risk score,
-            but specific certifications, pay, and companies to target may differ for your role.
+        <ScrollReveal>
+          <div
+            className="rounded-xl px-3 py-2 flex items-start gap-2"
+            style={{
+              background: 'rgba(245, 158, 11, 0.07)',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+            }}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+            <div className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
+              <span style={{ color: '#f59e0b', fontWeight: 600 }}>General advice.</span>{' '}
+              We don't have specific info for your exact role yet, so the actions below are general advice
+              for tech and professional roles. They're still matched to your experience level and risk score,
+              but specific certifications, pay, and companies to target may differ for your role.
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
       )}
 
       {/* Inline quick profile capture (P2 — after primary action flow) */}
       {showQuickCapture && (
-        <ProfileQuickCapture onComplete={() => {
-          markQuickCaptureComplete();
-          window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
-        }} />
+        <ScrollReveal>
+          <ProfileQuickCapture onComplete={() => {
+            markQuickCaptureComplete();
+            window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
+          }} />
+        </ScrollReveal>
       )}
 
       {/* PhaseProgressSystem above covers all actions — ActionPlanTab removed (exact duplicate) */}
 
       {/* More options — collapsed */}
-      <AdaptiveBlock
-        title="More Options"
-        subtitle="When to leave, job offer help, what to say, and your full plan"
-        icon={Activity}
-        tier={3}
-        accentColor="#f59e0b"
-        defaultOpen={false}
-      >
-        <div className="flex flex-col gap-4">
-          <CareerTwinCard
-            userRole={result.workTypeKey}
-            userExperience={result.tenureYears ?? 5}
-            userRiskScore={result.total}
-            userCountry={result.countryKey ?? 'global'}
-            topN={3}
-          />
-          <StrategyTab {...props} />
-        </div>
-      </AdaptiveBlock>
+      <ScrollReveal>
+        <AdaptiveBlock
+          title="More Options"
+          subtitle="When to leave, job offer help, what to say, and your full plan"
+          icon={Activity}
+          tier={3}
+          accentColor="#f59e0b"
+          defaultOpen={false}
+        >
+          <div className="flex flex-col gap-4">
+            <CareerTwinCard
+              userRole={result.workTypeKey}
+              userExperience={result.tenureYears ?? 5}
+              userRiskScore={result.total}
+              userCountry={result.countryKey ?? 'global'}
+              topN={3}
+            />
+            <StrategyTab {...props} />
+          </div>
+        </AdaptiveBlock>
+      </ScrollReveal>
 
     </div>
   );

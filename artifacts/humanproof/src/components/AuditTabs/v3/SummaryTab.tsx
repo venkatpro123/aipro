@@ -50,6 +50,7 @@ import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 import { AIMemoryCard } from '../common/AIMemoryCard';
 import { RiskTrendChart } from '../common/RiskTrendChart';
 import { AchievementGallery } from '../../../components/AchievementGallery';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
 function experienceBand(years: number | undefined): '0-2' | '2-5' | '5-10' | '10-15' | '15+' {
@@ -980,26 +981,28 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       </motion.div>
 
       {/* ── V3: AI Memory — score drift + streak + completed actions since last check */}
-      <AIMemoryCard
-        scoreDelta={r.scoreDelta}
-        streakInfo={streakInfo ?? undefined}
-        daysSinceLastAudit={daysSinceLastAudit}
-        completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
-      />
+      <ScrollReveal>
+        <AIMemoryCard
+          scoreDelta={r.scoreDelta}
+          streakInfo={streakInfo ?? undefined}
+          daysSinceLastAudit={daysSinceLastAudit}
+          completedActionCount={completedActionCount > 0 ? completedActionCount : undefined}
+        />
+      </ScrollReveal>
 
       {/* ── Phase 9/18: Achievement Gallery — Career Title ladder + badges */}
-      <AchievementGallery />
+      <ScrollReveal delay={0.04}><AchievementGallery /></ScrollReveal>
 
       {/* ── Risk Trend Chart — visual score evolution over audit history */}
       {scoreHistoryForTimeline.length >= 1 && (
-        <RiskTrendChart history={scoreHistoryForTimeline} currentScore={score} />
+        <ScrollReveal delay={0.06}><RiskTrendChart history={scoreHistoryForTimeline} currentScore={score} /></ScrollReveal>
       )}
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
-      <TopDriversStrip drivers={topDrivers} />
+      <ScrollReveal delay={0.08}><TopDriversStrip drivers={topDrivers} /></ScrollReveal>
 
       {/* ── Good News (inline when available) ────────────────────────────── */}
-      {opportunityNode}
+      {opportunityNode && <ScrollReveal delay={0.10}>{opportunityNode}</ScrollReveal>}
     </div>
   );
 };
