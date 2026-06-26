@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { submitEnterpriseContact, TEAM_SIZE_OPTIONS, USE_CASE_OPTIONS, type EnterpriseContactInput } from '../services/enterpriseContactService';
 
 interface EnterpriseContactModalProps {
@@ -32,6 +32,13 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

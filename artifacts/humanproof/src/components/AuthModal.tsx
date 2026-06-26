@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════
 // AuthModal.tsx — Futuristic Classic Redesign
 // ════════════════════════════════════════════════════════════════
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 
 interface AuthModalProps {
@@ -19,6 +19,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [oauthLoading, setOauthLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
