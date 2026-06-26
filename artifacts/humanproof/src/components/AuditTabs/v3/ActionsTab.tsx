@@ -39,6 +39,7 @@ import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePan
 import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligencePanel';
 import EmergencyProtocolPanel from '../common/EmergencyProtocolPanel';
 import JobTargetPanel from '../common/JobTargetPanel';
+import MonthlyActionPlan from '../common/MonthlyActionPlan';
 
 // ── Action Matrix ─────────────────────────────────────────────────────────────
 
@@ -629,6 +630,13 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
       {r.jobTargeting && (
         <ScrollReveal>
           <JobTargetPanel targeting={r.jobTargeting} />
+        </ScrollReveal>
+      )}
+
+      {/* Monthly Action Plan — month-by-month calendar from monthlyActionPlanEngine */}
+      {r.monthlyActionPlan && (
+        <ScrollReveal>
+          <MonthlyActionPlan plan={r.monthlyActionPlan} />
         </ScrollReveal>
       )}
 

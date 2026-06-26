@@ -35,6 +35,8 @@ import { ConfidenceDisclosure } from '../common/ConfidenceDisclosure';
 import { ProgressNarrativeCard } from '../common/ProgressNarrativeCard';
 import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
 import PredictionHorizonPanel from '../common/PredictionHorizonPanel';
+import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
+import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
@@ -984,6 +986,13 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         </div>
       </motion.div>
 
+      {/* ── Wave 5.1: Time-to-Safety — compact strip showing path to MODERATE risk */}
+      <TimeToSafetyStrip
+        currentScore={score}
+        scoreSensitivity={scoreSensitivity}
+        financialRunwayMonths={financialRunwayMonths}
+      />
+
       {/* ── Phase 12: Confidence Disclosure — collapsible "how much to trust this" */}
       <ScrollReveal>
         <ConfidenceDisclosure
@@ -1037,6 +1046,17 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       {scoreHistoryForTimeline.length >= 1 && (
         <ScrollReveal delay={0.06}><RiskTrendChart history={scoreHistoryForTimeline} currentScore={score} /></ScrollReveal>
       )}
+
+      {/* ── Career Risk Timeline — Past → Present → Future visual story */}
+      <ScrollReveal delay={0.07}>
+        <CareerRiskTimeline
+          currentScore={score}
+          scoreHistory={scoreHistoryForTimeline}
+          milestones={v3Timeline?.milestones}
+          criticalByDate={v3Timeline?.criticalByDate}
+          urgencyCategory={v3Timeline?.urgencyCategory}
+        />
+      </ScrollReveal>
 
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <ScrollReveal delay={0.08}><TopDriversStrip drivers={topDrivers} /></ScrollReveal>
