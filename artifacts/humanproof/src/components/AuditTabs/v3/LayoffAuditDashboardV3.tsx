@@ -60,6 +60,7 @@ import {
 import { ActionCelebrationToast } from '../../ActionCelebration/ActionCelebrationToast';
 import { ScoreImprovementCelebration } from '../../AuditReveal/ScoreImprovementCelebration';
 import { AuditRevealScreen } from '../../AuditReveal/AuditRevealScreen';
+import { WhatChangedCard } from '../../AuditReveal/WhatChangedCard';
 import { useSwipeGesture } from '../../../hooks/useSwipeGesture';
 import { ReturnVisitPanel } from '../common/ReturnVisitPanel';
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
@@ -329,6 +330,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   // Phase 18 Delight: score improvement celebration
   const [scoreCelebration, setScoreCelebration] = useState<{ prev: number; curr: number } | null>(null);
   const [revealActive, setRevealActive] = useState(false);
+  const [whatChangedState, setWhatChangedState] = useState<{ previousScore: number; currentScore: number; daysSinceLastAudit: number } | null>(null);
   // Wave 1.4: Risk update banner — fires when breakingNewsBroker injects a new event
   // for the user's current company. Shows a dismissible top banner with a re-analyze CTA.
   const [riskUpdateBanner, setRiskUpdateBanner] = useState<{ headline: string; company: string } | null>(null);
@@ -431,6 +433,12 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
       if (isFirstAudit && !sessionStorage.getItem('hp_reveal_seen')) {
         setRevealActive(true);
         sessionStorage.setItem('hp_reveal_seen', '1');
+      }
+      // Phase 14: re-audit "What Changed" card when score moved ≥ 1 point
+      if (prev?.score != null && Math.abs(prev.score - result.total) >= 1) {
+        const prevMs = prev.timestamp ? new Date(prev.timestamp).getTime() : 0;
+        const daysSince = prevMs ? Math.round((Date.now() - prevMs) / 86400000) : 0;
+        setWhatChangedState({ previousScore: prev.score, currentScore: result.total, daysSinceLastAudit: daysSince });
       }
       // Phase 18: fire confetti celebration when score drops ≥ 3 points (lower = better)
       if (prev?.score != null && prev.score - result.total >= 3) {
@@ -881,6 +889,16 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             firstActionTitle={result.recommendations?.[0]?.title}
             firstActionEffort={result.recommendations?.[0]?.effortBadge}
             onRevealComplete={() => setRevealActive(false)}
+          />
+        )}
+
+        {/* ── Phase 14: What Changed Card — delta report on re-audits ──── */}
+        {whatChangedState && !revealActive && (
+          <WhatChangedCard
+            previousScore={whatChangedState.previousScore}
+            currentScore={whatChangedState.currentScore}
+            daysSinceLastAudit={whatChangedState.daysSinceLastAudit}
+            onDismiss={() => setWhatChangedState(null)}
           />
         )}
 
