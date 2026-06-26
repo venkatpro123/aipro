@@ -120,7 +120,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
         {activeLevers.length > 0 && (
           <button
             onClick={resetAll}
-            className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-[11px] text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-55)] transition-colors"
           >
             Reset all
           </button>
@@ -130,7 +130,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
       {/* Score comparison */}
       <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-[var(--alpha-bg-06)]">
         <div className="text-center">
-          <div className="text-[10px] text-gray-500 mb-1">CURRENT</div>
+          <div className="text-[10px] text-[var(--alpha-text-35)] mb-1">CURRENT</div>
           <SimulatedScoreRing score={result.total} color={TIER_COLORS[result.tier.color] ?? '#f97316'} />
         </div>
         <div className="flex-1 text-center">
@@ -142,16 +142,16 @@ export function WhatIfSimulatorPanel({ result }: Props) {
             >
               <div className="text-2xl font-bold text-emerald-400">{simResult.scoreDelta}</div>
               <div className="text-[10px] text-emerald-400/70">pts reduction</div>
-              <div className="text-[10px] text-gray-500 mt-1">
+              <div className="text-[10px] text-[var(--alpha-text-35)] mt-1">
                 −{Math.round(Math.abs(simResult.probabilityDelta) * 100)}% 12mo probability
               </div>
             </motion.div>
           ) : (
-            <div className="text-[11px] text-gray-500">Adjust sliders<br/>to simulate</div>
+            <div className="text-[11px] text-[var(--alpha-text-35)]">Adjust sliders<br/>to simulate</div>
           )}
         </div>
         <div className="text-center">
-          <div className="text-[10px] text-gray-500 mb-1">SIMULATED</div>
+          <div className="text-[10px] text-[var(--alpha-text-35)] mb-1">SIMULATED</div>
           <SimulatedScoreRing score={simResult.simulatedScore} color={simColor} />
         </div>
       </div>
@@ -170,7 +170,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
                 <TrendingDown size={12} className="text-emerald-400" />
                 <span className="text-[11px] text-emerald-400">Achievable in: {simResult.estimatedTimeToAchieve}</span>
               </div>
-              <div className="text-[11px] text-gray-400">
+              <div className="text-[11px] text-[var(--alpha-text-45)]">
                 Feasibility: {simResult.feasibilityScore}/100
               </div>
             </div>
@@ -203,20 +203,20 @@ export function WhatIfSimulatorPanel({ result }: Props) {
             <div key={lever.dimension} className="group">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-medium text-gray-300">
+                  <span className="text-[11px] font-medium text-[var(--alpha-text-55)]">
                     {DIMENSION_LABELS[lever.dimension] ?? lever.dimension}
                   </span>
                   {/* BUG-FIX: lever.feasibility is a required string enum field, but check
                       it defensively and use String() to prevent any render type issues */}
                   {lever.feasibility && (
-                    <span className="text-[10px] text-gray-600">{String(lever.feasibility).replace(/_/g, ' ')}</span>
+                    <span className="text-[10px] text-[var(--alpha-text-25)]">{String(lever.feasibility).replace(/_/g, ' ')}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   {dimImpact && dimImpact.pointsReduced > 0 && (
                     <span className="text-[10px] text-emerald-400">−{dimImpact.pointsReduced}pts</span>
                   )}
-                  <span className="text-[10px] text-gray-500">{val}%</span>
+                  <span className="text-[10px] text-[var(--alpha-text-35)]">{val}%</span>
                 </div>
               </div>
               <div className="relative h-1.5 bg-[var(--alpha-bg-08)] rounded-full">
@@ -240,7 +240,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
                 />
               </div>
               {val > 0 && lever.fastestAction && (
-                <div className="mt-1 text-[10px] text-gray-500 line-clamp-1">
+                <div className="mt-1 text-[10px] text-[var(--alpha-text-35)] line-clamp-1">
                   {lever.fastestAction}
                 </div>
               )}
@@ -253,7 +253,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
       {sensitivity.levers.length > 4 && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className="mt-3 w-full flex items-center justify-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-1 text-[11px] text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-55)] transition-colors"
         >
           {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           {expanded ? 'Show fewer levers' : `Show ${sensitivity.levers.length - 4} more levers`}

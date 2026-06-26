@@ -225,8 +225,8 @@ export function SignalAttributionWaterfall({ result }: Props) {
       </svg>
 
       {archetype && archetype !== 'low_risk_maintain' && (
-        <div className="mt-2 text-[10px] text-gray-500">
-          Adaptive weights applied for <span className="text-gray-400">{archetype.replace(/_/g, ' ')}</span> scenario
+        <div className="mt-2 text-[10px] text-[var(--alpha-text-35)]">
+          Adaptive weights applied for <span className="text-[var(--alpha-text-45)]">{archetype.replace(/_/g, ' ')}</span> scenario
         </div>
       )}
     </div>

@@ -77,7 +77,7 @@ export function ManagerRiskCard({ managerRisk }: Props) {
             )}
           </div>
 
-          <p className="text-xs text-gray-300 leading-relaxed mb-3">
+          <p className="text-xs text-[var(--alpha-text-55)] leading-relaxed mb-3">
             {managerRisk.interpretation}
           </p>
 
@@ -85,8 +85,8 @@ export function ManagerRiskCard({ managerRisk }: Props) {
             <div className="space-y-1">
               {managerRisk.recommendedActions.slice(0, 3).map((action, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-[10px] mt-0.5 text-gray-500">▶</span>
-                  <span className="text-[11px] text-gray-400 leading-relaxed">{action}</span>
+                  <span className="text-[10px] mt-0.5 text-[var(--alpha-text-35)]">▶</span>
+                  <span className="text-[11px] text-[var(--alpha-text-45)] leading-relaxed">{action}</span>
                 </div>
               ))}
             </div>

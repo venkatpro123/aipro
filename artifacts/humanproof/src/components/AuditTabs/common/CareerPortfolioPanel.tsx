@@ -180,7 +180,7 @@ export function CareerPortfolioPanel({ result }: Props) {
             <div key={dim.key} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ background: dim.color }} />
-                <span className="text-[11px] text-gray-400">{dim.label}</span>
+                <span className="text-[11px] text-[var(--alpha-text-45)]">{dim.label}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-16 h-1 bg-[var(--alpha-bg-08)] rounded-full overflow-hidden">
@@ -189,7 +189,7 @@ export function CareerPortfolioPanel({ result }: Props) {
                     style={{ width: `${dim.share * 100}%`, background: dim.color }}
                   />
                 </div>
-                <span className="text-[10px] text-gray-500 w-7 text-right">
+                <span className="text-[10px] text-[var(--alpha-text-35)] w-7 text-right">
                   {Math.round(dim.share * 100)}%
                 </span>
               </div>
