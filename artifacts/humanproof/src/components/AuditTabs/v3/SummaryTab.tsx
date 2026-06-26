@@ -153,8 +153,8 @@ const ScoreRingHero: React.FC<{
                and the "end" colour matches the current risk severity color. */}
           <defs>
             <linearGradient id="scoreArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"   stopColor="#10b981" stopOpacity="0.90" />
-              <stop offset="50%"  stopColor="#f59e0b" stopOpacity="0.95" />
+              <stop offset="0%"   stopColor='#10b981' stopOpacity="0.90" />
+              <stop offset="50%"  stopColor='#f59e0b' stopOpacity="0.95" />
               <stop offset="100%" stopColor={color}   stopOpacity="1.00" />
             </linearGradient>
           </defs>
@@ -322,8 +322,8 @@ const ScoreRangeHero: React.FC<{
           border: '1px solid rgba(251,191,36,0.35)',
         }}
       >
-        <AlertOctagon className="w-3.5 h-3.5" style={{ color: 'var(--color-amber-text)' }} />
-        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: 'var(--color-amber-text)' }}>
+        <AlertOctagon className="w-3.5 h-3.5" style={{ color: '#fbbf24' }} />
+        <span className="text-[10px] font-black tracking-[0.12em] uppercase" style={{ color: '#fbbf24' }}>
           We're Not Fully Sure Yet
         </span>
       </div>

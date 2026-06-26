@@ -43,8 +43,8 @@ export const FinancialRunwayIllustration: React.FC<IllustrationProps> = ({ size 
     {/* Axis */}
     <line x1="20" y1="85" x2="100" y2="85" stroke="var(--alpha-bg-06)" strokeWidth="0.5" />
     {/* Trend line */}
-    <path d="M30 40 L45 50 L60 35 L75 55 L90 70" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="3 2" />
-    <text x="60" y="105" textAnchor="middle" fill="#f59e0b" fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">RUNWAY</text>
+    <path d="M30 40 L45 50 L60 35 L75 55 L90 70" fill="none" stroke='#f59e0b' strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="3 2" />
+    <text x="60" y="105" textAnchor="middle" fill='#f59e0b' fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">RUNWAY</text>
   </svg>
 );
 
@@ -98,21 +98,21 @@ export const NegotiationIllustration: React.FC<IllustrationProps> = ({ size = 12
     {/* Pillar */}
     <line x1="60" y1="25" x2="60" y2="85" stroke="var(--alpha-bg-08)" strokeWidth="2" />
     {/* Beam */}
-    <line x1="30" y1="45" x2="90" y2="40" stroke="#f59e0b" strokeWidth="1.5" strokeOpacity="0.4" />
+    <line x1="30" y1="45" x2="90" y2="40" stroke='#f59e0b' strokeWidth="1.5" strokeOpacity="0.4" />
     {/* Fulcrum triangle */}
-    <path d="M55 28 L65 28 L60 22 Z" fill="#f59e0b" fillOpacity="0.3" />
+    <path d="M55 28 L65 28 L60 22 Z" fill='#f59e0b' fillOpacity="0.3" />
     {/* Left pan */}
-    <path d="M20 50 Q25 60 30 50" fill="none" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.35" />
-    <line x1="25" y1="45" x2="20" y2="50" stroke="#f59e0b" strokeWidth="0.8" strokeOpacity="0.3" />
-    <line x1="35" y1="45" x2="30" y2="50" stroke="#f59e0b" strokeWidth="0.8" strokeOpacity="0.3" />
+    <path d="M20 50 Q25 60 30 50" fill="none" stroke='#f59e0b' strokeWidth="1" strokeOpacity="0.35" />
+    <line x1="25" y1="45" x2="20" y2="50" stroke='#f59e0b' strokeWidth="0.8" strokeOpacity="0.3" />
+    <line x1="35" y1="45" x2="30" y2="50" stroke='#f59e0b' strokeWidth="0.8" strokeOpacity="0.3" />
     {/* Right pan */}
-    <path d="M80 45 Q85 55 90 45" fill="none" stroke="#10b981" strokeWidth="1" strokeOpacity="0.35" />
-    <line x1="85" y1="40" x2="80" y2="45" stroke="#10b981" strokeWidth="0.8" strokeOpacity="0.3" />
-    <line x1="95" y1="40" x2="90" y2="45" stroke="#10b981" strokeWidth="0.8" strokeOpacity="0.3" />
+    <path d="M80 45 Q85 55 90 45" fill="none" stroke='#10b981' strokeWidth="1" strokeOpacity="0.35" />
+    <line x1="85" y1="40" x2="80" y2="45" stroke='#10b981' strokeWidth="0.8" strokeOpacity="0.3" />
+    <line x1="95" y1="40" x2="90" y2="45" stroke='#10b981' strokeWidth="0.8" strokeOpacity="0.3" />
     {/* Weight indicators */}
-    <circle cx="25" cy="55" r="4" fill="#f59e0b" fillOpacity="0.15" />
-    <circle cx="85" cy="50" r="5" fill="#10b981" fillOpacity="0.15" />
-    <text x="60" y="105" textAnchor="middle" fill="#f59e0b" fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">LEVERAGE</text>
+    <circle cx="25" cy="55" r="4" fill='#f59e0b' fillOpacity="0.15" />
+    <circle cx="85" cy="50" r="5" fill='#10b981' fillOpacity="0.15" />
+    <text x="60" y="105" textAnchor="middle" fill='#f59e0b' fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">LEVERAGE</text>
   </svg>
 );
 
@@ -126,12 +126,12 @@ export const MilestoneIllustration: React.FC<IllustrationProps> = ({ size = 120,
       <circle key={i} cx={cx} cy={cy} r={i === 4 ? 3 : 2} fill="#00d4e0" fillOpacity={0.2 + i * 0.1} />
     ))}
     {/* Flag at summit */}
-    <line x1="80" y1="20" x2="80" y2="35" stroke="#10b981" strokeWidth="1.5" strokeOpacity="0.6" />
-    <path d="M80 20 L95 25 L80 30" fill="#10b981" fillOpacity="0.25" stroke="#10b981" strokeWidth="0.5" strokeOpacity="0.4" />
+    <line x1="80" y1="20" x2="80" y2="35" stroke='#10b981' strokeWidth="1.5" strokeOpacity="0.6" />
+    <path d="M80 20 L95 25 L80 30" fill='#10b981' fillOpacity="0.25" stroke='#10b981' strokeWidth="0.5" strokeOpacity="0.4" />
     {/* Summit glow */}
-    <circle cx="80" cy="35" r="6" fill="#10b981" fillOpacity="0.08">
+    <circle cx="80" cy="35" r="6" fill='#10b981' fillOpacity="0.08">
       <animate attributeName="r" values="6;9;6" dur="2.5s" repeatCount="indefinite" />
     </circle>
-    <text x="60" y="108" textAnchor="middle" fill="#10b981" fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">MILESTONE</text>
+    <text x="60" y="108" textAnchor="middle" fill='#10b981' fillOpacity="0.4" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700">MILESTONE</text>
   </svg>
 );

@@ -28,8 +28,8 @@ interface Props {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  market: "#10b981",
-  company: "#f97316",
+  market: 'var(--color-emerald-text)',
+  company: 'var(--color-orange-text)',
   ai: "#a78bfa",
   external: "#60a5fa",
 };
@@ -156,7 +156,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
         <div style={{ marginBottom: "16px" }}>
           <div
             style={{
-              color: "#ef4444",
+              color: 'var(--color-red-text)',
               fontSize: "0.7rem",
               fontWeight: 700,
               letterSpacing: "1px",
@@ -205,7 +205,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
                       style={{
                         height: "100%",
                         width: `${agent.signalPercent}%`,
-                        background: "#ef4444",
+                        background: 'var(--color-red-text)',
                         borderRadius: "2px",
                       }}
                     />
@@ -213,7 +213,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
                 </div>
                 <span
                   style={{
-                    color: "#ef4444",
+                    color: 'var(--color-red-text)',
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     minWidth: "45px",
@@ -242,7 +242,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
         <div style={{ marginBottom: "16px" }}>
           <div
             style={{
-              color: "#f59e0b",
+              color: 'var(--color-amber500-text)',
               fontSize: "0.7rem",
               fontWeight: 700,
               letterSpacing: "1px",
@@ -275,7 +275,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
                 </span>
                 <span
                   style={{
-                    color: "#f59e0b",
+                    color: 'var(--color-amber500-text)',
                     fontSize: "0.7rem",
                     fontWeight: 600,
                   }}
@@ -322,7 +322,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
             <div
               style={{
                 color:
-                  val >= 50 ? "#ef4444" : val >= 30 ? "#f59e0b" : "#10b981",
+                  val >= 50 ? 'var(--color-red-text)' : val >= 30 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)',
                 fontSize: "1rem",
                 fontWeight: 700,
               }}
@@ -351,10 +351,10 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
           style={{
             color:
               swarmScore >= 50
-                ? "#ef4444"
+                ? 'var(--color-red-text)'
                 : swarmScore >= 30
-                  ? "#f59e0b"
-                  : "#10b981",
+                  ? 'var(--color-amber500-text)'
+                  : 'var(--color-emerald-text)',
             fontSize: "1.2rem",
             fontWeight: 700,
           }}

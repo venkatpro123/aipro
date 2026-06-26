@@ -119,9 +119,9 @@ const MiniSparkline: React.FC<{ trend: { riskScore: number }[]; color: string }>
 };
 
 const DirectionIcon: React.FC<{ direction: OracleRoleEntry['riskDirection']; size?: number }> = ({ direction, size = 11 }) => {
-  if (direction === 'rising')  return <TrendingUp size={size} color="#ef4444" />;
-  if (direction === 'falling') return <TrendingDown size={size} color="#10b981" />;
-  return <Minus size={size} color="#f59e0b" />;
+  if (direction === 'rising')  return <TrendingUp size={size} color='var(--color-red-text)' />;
+  if (direction === 'falling') return <TrendingDown size={size} color='var(--color-emerald-text)' />;
+  return <Minus size={size} color='var(--color-amber500-text)' />;
 };
 
 // ── Compact role intelligence preview ────────────────────────────────────────
@@ -146,18 +146,18 @@ const RoleIntelCard: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) => {
       </p>
       <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
         {entry.topSafeSkill && (
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.25)' }}>
             <CheckCircle2 size={11} strokeWidth={2} />{entry.topSafeSkill.slice(0, 22)}
           </span>
         )}
         {entry.topAtRiskSkill && entry.topAtRiskSkill !== 'None' && (
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.25)' }}>
             <Zap size={11} strokeWidth={2} />{entry.topAtRiskSkill.slice(0, 22)}
           </span>
         )}
         <div className="flex items-center gap-1 ml-auto">
           <DirectionIcon direction={entry.riskDirection} />
-          <span className="text-[10px]" style={{ color: entry.riskDirection === 'rising' ? '#ef4444' : entry.riskDirection === 'falling' ? '#10b981' : '#f59e0b' }}>
+          <span className="text-[10px]" style={{ color: entry.riskDirection === 'rising' ? 'var(--color-red-text)' : entry.riskDirection === 'falling' ? 'var(--color-emerald-text)' : 'var(--color-amber500-text)' }}>
             {entry.riskDirection === 'rising' ? 'Rising' : entry.riskDirection === 'falling' ? 'Falling' : 'Stable'}
           </span>
         </div>
@@ -175,7 +175,7 @@ const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
       className="mt-1.5 px-3 py-2 rounded-xl flex items-center gap-2"
       style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.20)' }}
     >
-      <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
+      <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
       <span className="text-xs font-semibold" style={{ color: '#6ee7b7' }}>
         Analyzing as: {intel?.displayRole ?? entry.displayTitle}
       </span>
@@ -481,7 +481,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
   const runwayLabel = (m: number) =>
     m === 0 ? 'Not specified' : m < 3 ? `${m} months — Critical` : m < 6 ? `${m} months — Elevated` : m < 12 ? `${m} months — Comfortable` : `${m} months — Strong`;
   const runwayColor = (m: number) =>
-    m === 0 ? 'var(--alpha-text-35)' : m < 3 ? '#ef4444' : m < 6 ? '#f97316' : m < 12 ? '#f59e0b' : '#10b981';
+    m === 0 ? 'var(--alpha-text-35)' : m < 3 ? 'var(--color-red-text)' : m < 6 ? 'var(--color-orange-text)' : m < 12 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
 
   return (
     <div
@@ -550,8 +550,8 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
               <div>
                 {profileFailed && (
                   <div className="rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                    <AlertTriangle size={14} strokeWidth={2} style={{ color: '#f59e0b', flexShrink: 0 }} />
-                    <p className="text-xs" style={{ color: '#f59e0b' }}>Not in our database — using industry defaults.</p>
+                    <AlertTriangle size={14} strokeWidth={2} style={{ color: 'var(--color-amber500-text)', flexShrink: 0 }} />
+                    <p className="text-xs" style={{ color: 'var(--color-amber500-text)' }}>Not in our database — using industry defaults.</p>
                   </div>
                 )}
                 <div style={{ position: 'relative' }}>
@@ -575,7 +575,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     )}
                     {selectedCompany && !isProfiling && (
                       <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <CheckCircle2 className="w-4 h-4" style={{ color: '#10b981' }} />
+                        <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--color-emerald-text)' }} />
                       </div>
                     )}
                   </div>
@@ -600,13 +600,13 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                               <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>
                                 {res.industry}
                                 {(res as any).fromSupabase && <span style={{ color: 'var(--color-cyan-text)' }}> · DB</span>}
-                                {isPartial && <span style={{ color: '#f59e0b' }}> · partial</span>}
+                                {isPartial && <span style={{ color: 'var(--color-amber500-text)' }}> · partial</span>}
                               </p>
                             </div>
                             {(res as any).riskScore != null && (
                               <span className="text-xs font-black px-2 py-0.5 rounded-lg" style={{
                                 background: (res as any).riskScore >= 65 ? 'rgba(239,68,68,0.15)' : (res as any).riskScore >= 45 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
-                                color: (res as any).riskScore >= 65 ? '#ef4444' : (res as any).riskScore >= 45 ? '#f59e0b' : '#10b981',
+                                color: (res as any).riskScore >= 65 ? 'var(--color-red-text)' : (res as any).riskScore >= 45 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)',
                               }}>
                                 {(res as any).riskScore}
                               </span>
@@ -620,7 +620,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   {/* Match confirmation */}
                   {pendingMatchConfirmation && (
                     <div className="mt-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                      <p className="text-xs font-bold mb-2" style={{ color: '#f59e0b' }}>Confirm company match</p>
+                      <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-amber500-text)' }}>Confirm company match</p>
                       <p className="text-xs mb-3" style={{ color: 'var(--alpha-text-50)' }}>
                         You typed <strong style={{ color: 'var(--text)' }}>"{pendingMatchConfirmation.userQuery}"</strong>.
                         {' '}Closest match: <strong style={{ color: 'var(--text)' }}>{pendingMatchConfirmation.matchedName}</strong>.
@@ -628,7 +628,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                       <div className="flex gap-2">
                         <button type="button" onClick={() => selectCompany(pendingMatchConfirmation.company, true)}
                           className="text-xs font-bold px-3 py-1.5 rounded-xl"
-                          style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.30)' }}>
+                          style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.30)' }}>
                           Yes, use {pendingMatchConfirmation.matchedName}
                         </button>
                         <button type="button" onClick={() => { setPendingMatchConfirmation(null); setSearchResults([]); setSelectedCompany(null); }}
@@ -643,13 +643,13 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   {/* Disambiguation */}
                   {showDisambiguation && disambiguationCandidates.length > 0 && (
                     <div className="mt-2 rounded-2xl px-4 py-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                      <p className="text-xs font-bold mb-2" style={{ color: '#f59e0b' }}>Multiple entities — pick one:</p>
+                      <p className="text-xs font-bold mb-2" style={{ color: 'var(--color-amber500-text)' }}>Multiple entities — pick one:</p>
                       {disambiguationCandidates.map(c => (
                         <button key={c.name} type="button"
                           onClick={() => { setCompanySearch(c.name); setShowDisambiguation(false); setDisambiguationCandidates([]); }}
                           className="flex items-center gap-2 w-full py-1.5 text-left"
                           style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
-                          <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                          <ChevronRight className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
                           <span className="text-xs font-medium" style={{ color: 'var(--alpha-text-70)' }}>{c.name}</span>
                           <span className="text-xs" style={{ color: 'var(--alpha-text-35)' }}>({c.industry})</span>
                         </button>
@@ -665,7 +665,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                     className="mt-3 rounded-2xl px-4 py-3 flex items-center gap-3"
                     style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.22)' }}
                   >
-                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} />
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
                     <div>
                       <p className="text-sm font-bold" style={{ color: '#6ee7b7' }}>{selectedCompany.name}</p>
                       <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>{selectedCompany.industry} · Verified</p>
@@ -730,12 +730,12 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
 
                 {oracleSelectionCleared && !selectedOracleEntry && (
                   <div className="mt-3 rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.20)' }}>
-                    <p className="text-xs" style={{ color: '#f59e0b' }}>Pick from suggestions to restore calibrated data.</p>
+                    <p className="text-xs" style={{ color: 'var(--color-amber500-text)' }}>Pick from suggestions to restore calibrated data.</p>
                   </div>
                 )}
                 {!selectedOracleEntry && roleTitle.trim().length > 1 && !resolvedRolePreview.canonicalKey && (
                   <div className="mt-3 rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}>
-                    <p className="text-xs" style={{ color: '#f87171' }}>Select a suggestion or use a title like "Software Developer".</p>
+                    <p className="text-xs" style={{ color: 'var(--color-red-text)' }}>Select a suggestion or use a title like "Software Developer".</p>
                   </div>
                 )}
               </div>
@@ -787,9 +787,9 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
             {qStep === 4 && (
               <div className="flex flex-col gap-3">
                 {[
-                  { val: 'top' as const,     label: 'Top performer',        desc: 'Exceeding targets consistently', icon: <Sparkles size={18} strokeWidth={1.8} />, accent: '#10b981' },
+                  { val: 'top' as const,     label: 'Top performer',        desc: 'Exceeding targets consistently', icon: <Sparkles size={18} strokeWidth={1.8} />, accent: 'var(--color-emerald-text)' },
                   { val: 'average' as const, label: 'Meeting expectations', desc: 'Solid contributor, on track',     icon: <CheckCircle2 size={18} strokeWidth={1.8} />, accent: '#22d3ee' },
-                  { val: 'below' as const,   label: 'Needs improvement',    desc: 'Below expectations recently',    icon: <AlertTriangle size={18} strokeWidth={1.8} />, accent: '#f59e0b' },
+                  { val: 'below' as const,   label: 'Needs improvement',    desc: 'Below expectations recently',    icon: <AlertTriangle size={18} strokeWidth={1.8} />, accent: 'var(--color-amber500-text)' },
                 ].map(opt => (
                   <OptionCard
                     key={opt.val}
@@ -874,7 +874,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   icon="↗️"
                   label="Recent promotion"
                   desc="Promoted in the last 12 months"
-                  accent="#10b981"
+                  accent='var(--color-emerald-text)'
                 />
                 <OptionCard
                   selected={hasKeyRelationships}
@@ -919,10 +919,10 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                 <div className="flex flex-wrap gap-2 mb-4">
                   {[
                     { val: 0,  label: 'Not set',    color: 'var(--alpha-text-35)' },
-                    { val: 3,  label: '3 mo',       color: '#ef4444' },
-                    { val: 6,  label: '6 mo',       color: '#f97316' },
-                    { val: 12, label: '12 mo',      color: '#f59e0b' },
-                    { val: 24, label: '24+ mo',     color: '#10b981' },
+                    { val: 3,  label: '3 mo',       color: 'var(--color-red-text)' },
+                    { val: 6,  label: '6 mo',       color: 'var(--color-orange-text)' },
+                    { val: 12, label: '12 mo',      color: 'var(--color-amber500-text)' },
+                    { val: 24, label: '24+ mo',     color: 'var(--color-emerald-text)' },
                   ].map(m => (
                     <button
                       key={m.val}

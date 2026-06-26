@@ -11,13 +11,13 @@ interface Props {
 }
 
 const TIER_META = {
-  safe:     { icon: Shield,        color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)',  label: 'PROTECTION ASSET' },
-  at_risk:  { icon: AlertTriangle, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)', label: 'ADAPT NOW' },
-  obsolete: { icon: XCircle,       color: '#ef4444', bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.20)',  label: 'TRANSITION AWAY' },
+  safe:     { icon: Shield,        color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)',  label: 'PROTECTION ASSET' },
+  at_risk:  { icon: AlertTriangle, color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)', label: 'ADAPT NOW' },
+  obsolete: { icon: XCircle,       color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.20)',  label: 'TRANSITION AWAY' },
 };
 
 const SCARCITY_COLORS: Record<string, string> = {
-  SCARCE: '#10b981', BALANCED: '#f59e0b', ABUNDANT: '#ef4444',
+  SCARCE: 'var(--color-emerald-text)', BALANCED: 'var(--color-amber500-text)', ABUNDANT: 'var(--color-red-text)',
 };
 
 function MeterBar({ value, color }: { value: number; color: string }) {

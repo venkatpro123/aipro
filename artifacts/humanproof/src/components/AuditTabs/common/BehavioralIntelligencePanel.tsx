@@ -46,9 +46,9 @@ const SECTION_LABEL: React.CSSProperties = {
 // ── A. Career Trajectory ──────────────────────────────────────────────────────
 
 const trajectoryConfig: Record<string, { color: string; icon: React.ReactNode; badge: string }> = {
-  ascending:  { color: '#10b981', icon: <TrendingUp className="w-4 h-4" />, badge: 'ASCENDING' },
-  plateauing: { color: '#f59e0b', icon: <AlertTriangle className="w-4 h-4" />, badge: 'PLATEAUING' },
-  declining:  { color: '#ef4444', icon: <AlertTriangle className="w-4 h-4" />, badge: 'DECLINING' },
+  ascending:  { color: 'var(--color-emerald-text)', icon: <TrendingUp className="w-4 h-4" />, badge: 'ASCENDING' },
+  plateauing: { color: 'var(--color-amber500-text)', icon: <AlertTriangle className="w-4 h-4" />, badge: 'PLATEAUING' },
+  declining:  { color: 'var(--color-red-text)', icon: <AlertTriangle className="w-4 h-4" />, badge: 'DECLINING' },
   resetting:  { color: 'var(--color-violet-text)', icon: <Compass className="w-4 h-4" />, badge: 'RESETTING' },
   early:      { color: 'var(--color-cyan-text)', icon: <TrendingUp className="w-4 h-4" />, badge: 'EARLY CAREER' },
 };
@@ -134,7 +134,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
   const [showRecovery, setShowRecovery] = useState(false);
   if (!data.hasGap || data.gapSeverity === 'none') return null;
 
-  const color = data.gapSeverity === 'significant' ? '#f97316' : data.gapSeverity === 'moderate' ? '#f59e0b' : '#22d3ee';
+  const color = data.gapSeverity === 'significant' ? 'var(--color-orange-text)' : data.gapSeverity === 'moderate' ? 'var(--color-amber500-text)' : '#22d3ee';
 
   return (
     <div style={CARD_STYLE}>
@@ -217,7 +217,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
               </p>
               {data.recoveryActions.map((action, i) => (
                 <div key={i} className="flex items-start gap-1.5 mb-1">
-                  <span className="text-[10px] flex-shrink-0 mt-0.5" style={{ color: '#f97316' }}>▸</span>
+                  <span className="text-[10px] flex-shrink-0 mt-0.5" style={{ color: 'var(--color-orange-text)' }}>▸</span>
                   <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{action}</p>
                 </div>
               ))}
@@ -238,7 +238,7 @@ const GapSection: React.FC<{ data: BehavioralPersonalizationResult['employmentGa
 const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interviewReadiness'] }> = ({ data }) => {
   const [expanded, setExpanded] = useState(false);
   const score = data.score;
-  const color = score >= 75 ? '#10b981' : score >= 50 ? '#f59e0b' : '#f97316';
+  const color = score >= 75 ? 'var(--color-emerald-text)' : score >= 50 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
   const label = score >= 75 ? 'READY' : score >= 50 ? 'MOSTLY READY' : 'PREPARATION NEEDED';
 
   return (
@@ -280,7 +280,7 @@ const ReadinessSection: React.FC<{ data: BehavioralPersonalizationResult['interv
           </p>
           {data.quickWins.map((w, i) => (
             <div key={i} className="flex items-start gap-1.5 mb-0.5">
-              <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#10b981', opacity: 0.6 }} />
+              <CheckCircle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-emerald-text)', opacity: 0.6 }} />
               <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{w}</p>
             </div>
           ))}
@@ -341,7 +341,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
   if (data.deltaPercent > -15) return null;
 
   const isSignificant = data.deltaPercent < -20;
-  const color = isSignificant ? '#f97316' : '#f59e0b';
+  const color = isSignificant ? 'var(--color-orange-text)' : 'var(--color-amber500-text)';
   const absDelta = Math.abs(data.deltaPercent);
 
   return (
@@ -421,7 +421,7 @@ const CompensationSection: React.FC<{ data: BehavioralPersonalizationResult['com
 const CompetitiveSection: React.FC<{ data: BehavioralPersonalizationResult['competitivePositioning'] }> = ({ data }) => {
   const [expanded, setExpanded] = useState(false);
   const pct = data.percentileEstimate;
-  const color = pct >= 70 ? '#10b981' : pct >= 50 ? '#22d3ee' : pct >= 35 ? '#f59e0b' : '#f97316';
+  const color = pct >= 70 ? 'var(--color-emerald-text)' : pct >= 50 ? '#22d3ee' : pct >= 35 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
 
   return (
     <div style={CARD_STYLE}>
@@ -553,7 +553,7 @@ const TransitionSection: React.FC<{ data: BehavioralPersonalizationResult['compa
       {data.cultureRiskWarning && (
         <div className="rounded-lg px-2.5 py-2 mb-2 flex items-start gap-1.5"
           style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.22)' }}>
-          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-amber500-text)' }} />
           <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
             {data.cultureRiskWarning}
           </p>
@@ -609,7 +609,7 @@ const RiskProfileBar: React.FC<{
   weeksToReady: number;
   profileSummary: string;
 }> = ({ riskTolerance, rationale, weeksToReady, profileSummary }) => {
-  const riskColor = riskTolerance === 'aggressive' ? '#10b981' : riskTolerance === 'conservative' ? '#f97316' : '#22d3ee';
+  const riskColor = riskTolerance === 'aggressive' ? 'var(--color-emerald-text)' : riskTolerance === 'conservative' ? 'var(--color-orange-text)' : '#22d3ee';
   const riskLabel = riskTolerance === 'aggressive' ? 'AGGRESSIVE' : riskTolerance === 'conservative' ? 'CONSERVATIVE' : 'MODERATE';
 
   return (
@@ -627,7 +627,7 @@ const RiskProfileBar: React.FC<{
           <span className="text-[10px] font-black" style={{ color: riskColor }}>{riskLabel} STRATEGY</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Zap className="w-3 h-3" style={{ color: weeksToReady === 0 ? '#10b981' : '#f59e0b' }} />
+          <Zap className="w-3 h-3" style={{ color: weeksToReady === 0 ? 'var(--color-emerald-text)' : 'var(--color-amber500-text)' }} />
           <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>
             {weeksToReady === 0 ? 'Search-ready now' : `~${weeksToReady}w prep needed`}
           </span>

@@ -28,13 +28,13 @@ const qualityMeta: Record<"live" | "partial" | "fallback", {
 }> = {
   live: {
     label: "Live data",
-    color: "#10b981",
+    color: 'var(--color-emerald-text)',
     detail:
       "Your score uses live company OSINT, seeded role intelligence, and 3+ AI models. This is the highest-accuracy data path.",
   },
   partial: {
     label: "Partial data",
-    color: "#f59e0b",
+    color: 'var(--color-amber500-text)',
     detail:
       "Some signals (e.g. role exposure or AI ensemble) fell back to estimated values. Score is reliable but the margin is wider.",
   },

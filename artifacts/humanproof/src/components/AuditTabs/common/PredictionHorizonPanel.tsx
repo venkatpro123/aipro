@@ -20,7 +20,7 @@ const HORIZON_LABELS: Record<string, { label: string; sublabel: string }> = {
 
 const WEIGHT_KEYS = ['L1', 'L2', 'L3', 'L4', 'L5'] as const;
 const WEIGHT_COLORS: Record<string, string> = {
-  L1: '#ef4444', L2: '#f97316', L3: '#f59e0b', L4: '#06b6d4', L5: '#10b981',
+  L1: 'var(--color-red-text)', L2: 'var(--color-orange-text)', L3: 'var(--color-amber500-text)', L4: '#06b6d4', L5: 'var(--color-emerald-text)',
 };
 const WEIGHT_LABELS: Record<string, string> = {
   L1: 'Financial', L2: 'Layoff Hist', L3: 'Displacement', L4: 'Sector', L5: 'Protection',
@@ -32,17 +32,17 @@ const WEIGHT_LABELS: Record<string, string> = {
 // inconsistency. Unified to 75/55/35 breakpoints.
 function scoreColor(score: number): string {
   if (score >= 75) return '#dc2626';
-  if (score >= 55) return '#f97316';
-  if (score >= 35) return '#f59e0b';
+  if (score >= 55) return 'var(--color-orange-text)';
+  if (score >= 35) return 'var(--color-amber500-text)';
   if (score >= 20) return '#00d4e0';
-  return '#10b981';
+  return 'var(--color-emerald-text)';
 }
 
 function confidenceLabel(conf: number): { text: string; color: string } {
-  if (conf >= 0.80) return { text: 'HIGH', color: '#10b981' };
+  if (conf >= 0.80) return { text: 'HIGH', color: 'var(--color-emerald-text)' };
   if (conf >= 0.65) return { text: 'MOD',  color: 'var(--color-cyan-text)' };
-  if (conf >= 0.50) return { text: 'LOW',  color: '#f59e0b' };
-  return { text: 'WEAK', color: '#f97316' };
+  if (conf >= 0.50) return { text: 'LOW',  color: 'var(--color-amber500-text)' };
+  return { text: 'WEAK', color: 'var(--color-orange-text)' };
 }
 
 const WeightMiniChart: React.FC<{ weights: HorizonRisk['weightsApplied'] }> = ({ weights }) => (
@@ -127,8 +127,8 @@ const HorizonColumn: React.FC<{
 
         {isWarnOverride && (
           <div className="flex items-center gap-1 mt-1">
-            <AlertTriangle className="w-2.5 h-2.5" style={{ color: '#ef4444' }} />
-            <span style={{ fontSize: '9px', color: '#ef4444', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.06em' }}>
+            <AlertTriangle className="w-2.5 h-2.5" style={{ color: 'var(--color-red-text)' }} />
+            <span style={{ fontSize: '9px', color: 'var(--color-red-text)', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.06em' }}>
               WARN OVERRIDE
             </span>
           </div>
@@ -168,7 +168,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           · signal weights adapt per horizon
         </span>
         {groundTruthOverride && (
-          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded animate-pulse" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
+          <span className="ml-auto text-[10px] font-black px-2 py-0.5 rounded animate-pulse" style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
             WARN ACT ACTIVE
           </span>
         )}
@@ -194,7 +194,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
             const prev = key === '30d' ? currentScore : key === '90d' ? horizon30d.score : horizon90d.score;
             const diff = h.score - prev;
             const arrow = diff > 2 ? '↑' : diff < -2 ? '↓' : '→';
-            const arrowColor = diff > 2 ? '#ef4444' : diff < -2 ? '#10b981' : 'var(--alpha-text-30)';
+            const arrowColor = diff > 2 ? 'var(--color-red-text)' : diff < -2 ? 'var(--color-emerald-text)' : 'var(--alpha-text-30)';
             return (
               <React.Fragment key={key}>
                 <span style={{ color: arrowColor, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{arrow}</span>

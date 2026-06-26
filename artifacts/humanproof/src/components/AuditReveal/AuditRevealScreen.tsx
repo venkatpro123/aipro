@@ -38,7 +38,7 @@ const ScoreRingReveal: React.FC<{ score: number; color: string; visible: boolean
   const reduce = useReducedMotion();
 
   // Color based on score
-  const ringColor = score >= 75 ? '#dc2626' : score >= 50 ? '#f97316' : score >= 35 ? '#f59e0b' : '#10b981';
+  const ringColor = score >= 75 ? '#dc2626' : score >= 50 ? 'var(--color-orange-text)' : score >= 35 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
 
   return (
     // clamp: 100px on tiny phones, 28vw on medium, 140px max
@@ -137,7 +137,7 @@ export const AuditRevealScreen: React.FC<Props> = ({
 
   if (phase === 'done') return null;
 
-  const tierColor = score >= 75 ? '#dc2626' : score >= 50 ? '#f97316' : score >= 35 ? '#f59e0b' : '#10b981';
+  const tierColor = score >= 75 ? '#dc2626' : score >= 50 ? 'var(--color-orange-text)' : score >= 35 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
 
   return (
     <motion.div

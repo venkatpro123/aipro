@@ -54,10 +54,10 @@ const KillSwitchFloorBadge: React.FC<Props> = ({
       }}
       title={`Score floored to ${winningFloor} (formula: ${formulaScore}). Active floors: ${details}`}
     >
-      <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f97316' }} />
+      <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-orange-text)' }} />
       <span
         className="text-[10px] font-mono font-semibold whitespace-nowrap"
-        style={{ color: '#f97316' }}
+        style={{ color: 'var(--color-orange-text)' }}
       >
         Floor: {winningFloor} → Formula: {formulaScore}
         {extraCount > 0 && (

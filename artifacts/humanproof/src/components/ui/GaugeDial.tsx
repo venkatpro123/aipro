@@ -16,10 +16,10 @@ interface GaugeDialProps {
 }
 
 function inferColor(value: number): string {
-  if (value >= 70) return "#ef4444";
-  if (value >= 50) return "#f97316";
-  if (value >= 35) return "#f59e0b";
-  return "#10b981";
+  if (value >= 70) return 'var(--color-red-text)';
+  if (value >= 50) return 'var(--color-orange-text)';
+  if (value >= 35) return 'var(--color-amber500-text)';
+  return 'var(--color-emerald-text)';
 }
 
 export const GaugeDial: React.FC<GaugeDialProps> = ({
@@ -117,9 +117,9 @@ export const GaugeDial: React.FC<GaugeDialProps> = ({
 
         {/* Color zone segments (green→amber→red bands) */}
         {[
-          { from: -180, to: -108, color: "#10b981" },   // 0–40% — green
-          { from: -108, to:  -36, color: "#f59e0b" },   // 40–70% — amber
-          { from:  -36, to:    0, color: "#ef4444" },   // 70–100% — red
+          { from: -180, to: -108, color: 'var(--color-emerald-text)' },   // 0–40% — green
+          { from: -108, to:  -36, color: 'var(--color-amber500-text)' },   // 40–70% — amber
+          { from:  -36, to:    0, color: 'var(--color-red-text)' },   // 70–100% — red
         ].map(({ from, to, color: zoneColor }) => (
           <path
             key={`${from}-${to}`}

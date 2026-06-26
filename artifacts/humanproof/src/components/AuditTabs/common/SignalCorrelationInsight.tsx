@@ -52,9 +52,9 @@ interface Props {
 
 function severityColor(severity: ContradictionRecord['severity']): string {
   switch (severity) {
-    case 'critical': return '#ef4444';
-    case 'high':     return '#f97316';
-    case 'medium':   return '#f59e0b';
+    case 'critical': return 'var(--color-red-text)';
+    case 'high':     return 'var(--color-orange-text)';
+    case 'medium':   return 'var(--color-amber500-text)';
     case 'low':      return '#22d3ee';
     default:         return '#6b7280';
   }
@@ -62,10 +62,10 @@ function severityColor(severity: ContradictionRecord['severity']): string {
 
 function trustLevelColor(level: ContradictionReport['overallTrustLevel']): string {
   switch (level) {
-    case 'HIGH':     return '#10b981';
-    case 'MEDIUM':   return '#f59e0b';
-    case 'LOW':      return '#f97316';
-    case 'VERY_LOW': return '#ef4444';
+    case 'HIGH':     return 'var(--color-emerald-text)';
+    case 'MEDIUM':   return 'var(--color-amber500-text)';
+    case 'LOW':      return 'var(--color-orange-text)';
+    case 'VERY_LOW': return 'var(--color-red-text)';
     default:         return '#6b7280';
   }
 }
@@ -93,13 +93,13 @@ function ResolutionIcon({ resolution }: { resolution: ContradictionRecord['resol
   const r = resolution as string;
   switch (r) {
     case 'positive_wins':
-    case 'trust_positive_signal':  return <CheckCircle className={cls} style={{ color: '#10b981' }} />;
+    case 'trust_positive_signal':  return <CheckCircle className={cls} style={{ color: 'var(--color-emerald-text)' }} />;
     case 'negative_wins':
-    case 'trust_negative_signal':  return <AlertTriangle className={cls} style={{ color: '#f97316' }} />;
+    case 'trust_negative_signal':  return <AlertTriangle className={cls} style={{ color: 'var(--color-orange-text)' }} />;
     case 'averaged':
-    case 'weight_both_equally':    return <Scale className={cls} style={{ color: '#f59e0b' }} />;
+    case 'weight_both_equally':    return <Scale className={cls} style={{ color: 'var(--color-amber500-text)' }} />;
     case 'flagged':
-    case 'defer_to_temporal':      return <Zap className={cls} style={{ color: '#f59e0b' }} />;
+    case 'defer_to_temporal':      return <Zap className={cls} style={{ color: 'var(--color-amber500-text)' }} />;
     default:                       return <Scale className={cls} style={{ color: '#6b7280' }} />;
   }
 }
@@ -170,8 +170,8 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
           style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)' }}
         >
           <div className="flex items-center gap-1 mb-1">
-            <TrendingUp className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#10b981' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#10b981' }}>
+            <TrendingUp className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-emerald-text)' }}>
               Positive signal
             </span>
           </div>
@@ -186,8 +186,8 @@ const ContradictionRow: React.FC<{ record: ContradictionRecord; index: number }>
           style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.14)' }}
         >
           <div className="flex items-center gap-1 mb-1">
-            <TrendingDown className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#f97316' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#f97316' }}>
+            <TrendingDown className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--color-orange-text)' }} />
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'var(--color-orange-text)' }}>
               Risk signal
             </span>
           </div>
@@ -255,7 +255,7 @@ export const SignalCorrelationInsight: React.FC<Props> = ({ report }) => {
               {report.netUncertaintyPoints > 0 && (
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(245,158,11,0.10)', color: '#f59e0b' }}
+                  style={{ background: 'rgba(245,158,11,0.10)', color: 'var(--color-amber500-text)' }}
                 >
                   ±{report.netUncertaintyPoints} pts total uncertainty
                 </span>

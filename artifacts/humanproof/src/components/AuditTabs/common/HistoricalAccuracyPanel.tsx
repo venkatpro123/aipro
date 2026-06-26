@@ -14,10 +14,10 @@ interface Props {
 }
 
 function tierColor(accuracy: number): string {
-  if (accuracy >= 0.70) return '#10b981';
+  if (accuracy >= 0.70) return 'var(--color-emerald-text)';
   if (accuracy >= 0.55) return '#00d4e0';
-  if (accuracy >= 0.40) return '#f59e0b';
-  return '#f97316';
+  if (accuracy >= 0.40) return 'var(--color-amber500-text)';
+  return 'var(--color-orange-text)';
 }
 
 function getTierForScore(score: number): string {

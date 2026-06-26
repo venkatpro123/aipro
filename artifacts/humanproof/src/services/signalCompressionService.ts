@@ -68,12 +68,12 @@ export interface CompressedSignal {
 
 const VERDICT_TONE: Record<VerdictLabel, string> = {
   critical:         '#dc2626',
-  distressed:       '#f97316',
-  softening:        '#f59e0b',
-  stable:           '#10b981',
-  healthy:          '#10b981',
-  'stable-confirmed': '#10b981',
-  'data-unavailable': '#f59e0b',
+  distressed:       'var(--color-orange-text)',
+  softening:        'var(--color-amber500-text)',
+  stable:           'var(--color-emerald-text)',
+  healthy:          'var(--color-emerald-text)',
+  'stable-confirmed': 'var(--color-emerald-text)',
+  'data-unavailable': 'var(--color-amber500-text)',
   unknown:          '#64748b',
 };
 
@@ -483,9 +483,9 @@ export function compressAllSignals(result: HybridResult, companyData?: CompanyDa
 export function chipToneColor(tone: SignalChip['tone']): string {
   switch (tone) {
     case 'critical': return '#dc2626';
-    case 'warning':  return '#f97316';
-    case 'caution':  return '#f59e0b';
-    case 'ok':       return '#10b981';
+    case 'warning':  return 'var(--color-orange-text)';
+    case 'caution':  return 'var(--color-amber500-text)';
+    case 'ok':       return 'var(--color-emerald-text)';
     case 'neutral':
     default:         return '#94a3b8';
   }

@@ -111,7 +111,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
               {!primaryMove.feasibleForProfile && (
                 <div
                   className="flex items-center gap-1.5 mt-1.5 text-[10px] font-semibold"
-                  style={{ color: 'var(--color-amber-text)' }}
+                  style={{ color: '#fbbf24' }}
                 >
                   <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                   <span>Best available, but constrained by your situation — see the action plan for a faster bridge.</span>

@@ -178,8 +178,8 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
 
   // Role alignment chip config
   const roleFitChip =
-    roleFit === 1  ? { label: 'YOUR ROLE IS AFFECTED',  bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',   color: '#ef4444' } :
-    roleFit === -1 ? { label: 'YOUR ROLE IS PROTECTED', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.30)',  color: '#10b981' } :
+    roleFit === 1  ? { label: 'YOUR ROLE IS AFFECTED',  bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.35)',   color: 'var(--color-red-text)' } :
+    roleFit === -1 ? { label: 'YOUR ROLE IS PROTECTED', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.30)',  color: 'var(--color-emerald-text)' } :
     roleFit === 0  ? { label: 'NEUTRAL FOR YOUR ROLE',  bg: 'var(--alpha-bg-06)', border: 'var(--alpha-bg-08)', color: 'var(--alpha-text-35)' } :
     null;
 
@@ -262,7 +262,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
           <div style={{
             fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.06em',
             textTransform: 'uppercase', marginBottom: 3,
-            color: roleFit === -1 ? 'var(--emerald)' : roleFit === 1 ? '#ef4444' : '#00d4e0',
+            color: roleFit === -1 ? 'var(--emerald)' : roleFit === 1 ? 'var(--color-red-text)' : '#00d4e0',
           }}>
             What this means for you
           </div>
@@ -370,7 +370,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
                 return (
                   <div key={i} style={{
                     fontSize: '0.65rem', lineHeight: 1.4,
-                    color: highlight ? '#ef4444' : 'var(--text-2)',
+                    color: highlight ? 'var(--color-red-text)' : 'var(--text-2)',
                     fontWeight: highlight ? 800 : 400,
                   }}>
                     {highlight ? '→ ' : '· '}{r}
@@ -387,7 +387,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
                 return (
                   <div key={i} style={{
                     fontSize: '0.65rem', lineHeight: 1.4,
-                    color: highlight ? '#10b981' : 'var(--text-2)',
+                    color: highlight ? 'var(--color-emerald-text)' : 'var(--text-2)',
                     fontWeight: highlight ? 800 : 400,
                   }}>
                     {highlight ? '→ ' : '· '}{r}

@@ -48,9 +48,9 @@ interface ShadowRow {
 const TIER_ORDER = ['LOW', 'MODERATE', 'HIGH', 'CRITICAL'] as const;
 
 const TIER_COLOR: Record<string, string> = {
-  LOW:      '#10b981',
-  MODERATE: '#f59e0b',
-  HIGH:     '#f97316',
+  LOW:      'var(--color-emerald-text)',
+  MODERATE: 'var(--color-amber500-text)',
+  HIGH:     'var(--color-orange-text)',
   CRITICAL: '#dc2626',
 };
 
@@ -114,7 +114,7 @@ const Histogram: React.FC<{ buckets: Bucket[] }> = ({ buckets }) => {
       {buckets.map((b) => {
         const h = (b.count / max) * 100;
         const mid = (b.lo + b.hi) / 2;
-        const color = Math.abs(mid) >= 10 ? '#f59e0b' : Math.abs(mid) >= 5 ? '#22d3ee' : '#10b981';
+        const color = Math.abs(mid) >= 10 ? 'var(--color-amber500-text)' : Math.abs(mid) >= 5 ? '#22d3ee' : 'var(--color-emerald-text)';
         return (
           <div key={b.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>{b.count}</div>
@@ -190,7 +190,7 @@ const TierMatrix: React.FC<{ matrix: Record<string, Record<string, number>> }> =
                     padding: '6px 10px',
                     textAlign: 'center',
                     background: isDiagonal ? 'rgba(16,185,129,0.08)' : isMigration ? 'rgba(220,38,38,0.12)' : 'transparent',
-                    color: isDiagonal ? '#10b981' : isMigration ? '#f97316' : 'rgba(255,255,255,0.4)',
+                    color: isDiagonal ? 'var(--color-emerald-text)' : isMigration ? 'var(--color-orange-text)' : 'rgba(255,255,255,0.4)',
                     fontWeight: isDiagonal ? 700 : 500,
                   }}
                 >
@@ -356,7 +356,7 @@ const ShadowComparisonPage: React.FC = () => {
 
       {loading && <div style={{ color: 'rgba(255,255,255,0.5)' }}>Loading…</div>}
       {error && (
-        <div style={{ ...PANEL, borderColor: 'rgba(220,38,38,0.4)', color: '#f87171' }}>
+        <div style={{ ...PANEL, borderColor: 'rgba(220,38,38,0.4)', color: 'var(--color-red-text)' }}>
           Error: {error}
         </div>
       )}
@@ -371,9 +371,9 @@ const ShadowComparisonPage: React.FC = () => {
           {/* Stats tiles */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
             <StatTile label="audits" value={String(stats.n)} />
-            <StatTile label="mean Δ" value={stats.meanDelta.toFixed(2)} tone={Math.abs(stats.meanDelta) > 3 ? '#f59e0b' : undefined} />
+            <StatTile label="mean Δ" value={stats.meanDelta.toFixed(2)} tone={Math.abs(stats.meanDelta) > 3 ? 'var(--color-amber500-text)' : undefined} />
             <StatTile label="median Δ" value={stats.medianDelta.toFixed(1)} />
-            <StatTile label="p95 |Δ|" value={String(stats.p95AbsDelta)} tone={stats.p95AbsDelta > 10 ? '#f97316' : undefined} />
+            <StatTile label="p95 |Δ|" value={String(stats.p95AbsDelta)} tone={stats.p95AbsDelta > 10 ? 'var(--color-orange-text)' : undefined} />
             <StatTile label="zero Δ" value={`${stats.zeroDelta} (${Math.round((stats.zeroDelta / stats.n) * 100)}%)`} />
             <StatTile label="tier migrations" value={String(stats.migrations)} tone={stats.migrations > stats.n * 0.05 ? '#dc2626' : undefined} />
             <StatTile label="mean conf Δ" value={`${stats.meanConfDelta.toFixed(1)}pp`} />
@@ -432,7 +432,7 @@ const ShadowComparisonPage: React.FC = () => {
                         style={{
                           padding: '6px 8px',
                           textAlign: 'right',
-                          color: Math.abs(r.score_delta) >= 20 ? '#dc2626' : '#f59e0b',
+                          color: Math.abs(r.score_delta) >= 20 ? '#dc2626' : 'var(--color-amber500-text)',
                           fontWeight: 700,
                         }}
                       >
@@ -441,7 +441,7 @@ const ShadowComparisonPage: React.FC = () => {
                       </td>
                       <td style={{ padding: '6px 8px' }}>
                         {r.tier_migrated ? (
-                          <span style={{ color: '#f97316' }}>
+                          <span style={{ color: 'var(--color-orange-text)' }}>
                             {r.legacy_tier} → {r.candidate_tier}
                           </span>
                         ) : (

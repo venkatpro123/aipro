@@ -89,8 +89,8 @@ export const AIMemoryCard: React.FC<AIMemoryCardProps> = ({
               border: streakInfo!.isAtRisk ? '1px solid rgba(245,158,11,0.28)' : '1px solid rgba(251,146,60,0.28)',
             }}
           >
-            <Flame className="w-3 h-3 flex-shrink-0" style={{ color: streakInfo!.isAtRisk ? '#f59e0b' : '#fb923c' }} />
-            <span className="text-[11px] font-bold" style={{ color: streakInfo!.isAtRisk ? '#f59e0b' : '#fb923c' }}>
+            <Flame className="w-3 h-3 flex-shrink-0" style={{ color: streakInfo!.isAtRisk ? '#f59e0b' : '#f97316' }} />
+            <span className="text-[11px] font-bold" style={{ color: streakInfo!.isAtRisk ? '#f59e0b' : '#f97316' }}>
               {streakInfo!.currentStreak}wk
             </span>
             <span className="text-[10px]" style={{ color: 'var(--alpha-text-45)' }}>streak</span>

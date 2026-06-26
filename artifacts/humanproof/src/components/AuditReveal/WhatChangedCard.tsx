@@ -31,7 +31,7 @@ function DeltaRow({ d }: { d: ScoreDelta }) {
   const isGood = d.delta < 0;
   const isNeutral = d.delta === 0;
   const Icon = isGood ? TrendingDown : isNeutral ? Minus : TrendingUp;
-  const color = isGood ? '#10b981' : isNeutral ? '#94a3b8' : '#f97316';
+  const color = isGood ? 'var(--color-emerald-text)' : isNeutral ? '#94a3b8' : 'var(--color-orange-text)';
   const sign = d.delta > 0 ? '+' : '';
 
   return (
@@ -63,7 +63,7 @@ export const WhatChangedCard: React.FC<Props> = ({
     return () => clearTimeout(t);
   }, [onDismiss]);
 
-  const headerColor = isImproved ? '#10b981' : isUnchanged ? '#94a3b8' : '#f97316';
+  const headerColor = isImproved ? 'var(--color-emerald-text)' : isUnchanged ? '#94a3b8' : 'var(--color-orange-text)';
   const bgColor     = isImproved
     ? 'rgba(16,185,129,0.08)'
     : isUnchanged ? 'rgba(148,163,184,0.08)' : 'rgba(249,115,22,0.08)';
@@ -130,7 +130,7 @@ export const WhatChangedCard: React.FC<Props> = ({
           {/* User action contribution */}
           {userContribution < 0 && (
             <p className="text-[10px] italic mb-2" style={{ color: 'var(--alpha-text-45)' }}>
-              Your actions contributed: <span style={{ color: '#10b981', fontWeight: 700 }}>
+              Your actions contributed: <span style={{ color: 'var(--color-emerald-text)', fontWeight: 700 }}>
                 {userContribution} pts
               </span> of the total improvement.
             </p>

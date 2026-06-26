@@ -22,9 +22,9 @@ interface Props {
 
 // Dimension labels and display order
 const DIMENSIONS = [
-  { key: 'L1', label: 'Company Health', color: '#ef4444' },
-  { key: 'L2', label: 'Layoff History',  color: '#f97316' },
-  { key: 'L3', label: 'Role Displacement', color: '#f59e0b' },
+  { key: 'L1', label: 'Company Health', color: 'var(--color-red-text)' },
+  { key: 'L2', label: 'Layoff History',  color: 'var(--color-orange-text)' },
+  { key: 'L3', label: 'Role Displacement', color: 'var(--color-amber500-text)' },
   { key: 'L5', label: 'Employee Protection', color: '#8b5cf6' },
   { key: 'D6', label: 'AI Agent Risk', color: '#06b6d4' },
   { key: 'D7', label: 'Co. Health Risk', color: '#ec4899' },

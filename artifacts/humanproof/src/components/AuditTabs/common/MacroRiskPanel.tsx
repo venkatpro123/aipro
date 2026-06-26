@@ -11,10 +11,10 @@ interface MacroRiskPanelProps {
 }
 
 const TIER_COLORS: Record<string, { text: string; bg: string; border: string }> = {
-  BENIGN:   { text: '#10b981', bg: 'rgba(16,185,129,0.08)',   border: 'rgba(16,185,129,0.25)' },
-  MODERATE: { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.25)' },
-  ELEVATED: { text: '#f97316', bg: 'rgba(249,115,22,0.08)',   border: 'rgba(249,115,22,0.25)' },
-  STRESS:   { text: '#ef4444', bg: 'rgba(239,68,68,0.08)',    border: 'rgba(239,68,68,0.25)' },
+  BENIGN:   { text: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)',   border: 'rgba(16,185,129,0.25)' },
+  MODERATE: { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.25)' },
+  ELEVATED: { text: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)',   border: 'rgba(249,115,22,0.25)' },
+  STRESS:   { text: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',    border: 'rgba(239,68,68,0.25)' },
   CRISIS:   { text: '#dc2626', bg: 'rgba(220,38,38,0.10)',    border: 'rgba(220,38,38,0.35)' },
 };
 
@@ -35,9 +35,9 @@ const RATE_LABEL: Record<string, string> = {
 };
 
 const OUTLOOK_ICON = {
-  improving: <TrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981' }} />,
-  stable: <Globe className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />,
-  deteriorating: <TrendingDown className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />,
+  improving: <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />,
+  stable: <Globe className="w-3.5 h-3.5" style={{ color: 'var(--color-amber500-text)' }} />,
+  deteriorating: <TrendingDown className="w-3.5 h-3.5" style={{ color: 'var(--color-red-text)' }} />,
 };
 
 const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
@@ -77,7 +77,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
           <div className="text-[10px] opacity-45 mt-0.5">Rate Cycle</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-          <div className="text-xs font-bold" style={{ color: macro.scoreMultiplier > 1.05 ? '#f97316' : '#10b981' }}>
+          <div className="text-xs font-bold" style={{ color: macro.scoreMultiplier > 1.05 ? 'var(--color-orange-text)' : 'var(--color-emerald-text)' }}>
             ×{macro.scoreMultiplier.toFixed(2)}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Score Mult.</div>
@@ -135,7 +135,7 @@ const MacroRiskPanel: React.FC<MacroRiskPanelProps> = ({ macro }) => {
         background: 'rgba(245,158,11,0.08)',
         border: '1px solid rgba(245,158,11,0.25)',
       }}>
-        <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
+        <AlertCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
         <p className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
           Heuristic baseline · Calibrated May 2026 · Not real-time BLS/FRED data
         </p>

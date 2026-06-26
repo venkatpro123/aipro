@@ -62,9 +62,9 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
     credibility >= 0.6 ? 'Moderate' :
     credibility >= 0.4 ? 'Low' : 'Very low';
   const credibilityColor =
-    credibility >= 0.8 ? '#10b981' :
+    credibility >= 0.8 ? 'var(--color-emerald-text)' :
     credibility >= 0.6 ? '#22d3ee' :
-    credibility >= 0.4 ? '#f59e0b' : '#f97316';
+    credibility >= 0.4 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
 
   return (
     <motion.div
@@ -81,11 +81,11 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         {wasAdjusted
-          ? <TrendingDown size={13} style={{ color: '#f97316', flexShrink: 0 }} />
-          : <AlertCircle size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
+          ? <TrendingDown size={13} style={{ color: 'var(--color-orange-text)', flexShrink: 0 }} />
+          : <AlertCircle size={13} style={{ color: 'var(--color-amber500-text)', flexShrink: 0 }} />
         }
         <div>
-          <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: wasAdjusted ? '#f97316' : '#f59e0b', fontFamily: 'var(--font-mono)' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: wasAdjusted ? 'var(--color-orange-text)' : 'var(--color-amber500-text)', fontFamily: 'var(--font-mono)' }}>
             Performance Credibility
           </p>
         </div>
@@ -107,9 +107,9 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
         }}>
           <p style={{ fontSize: '0.78rem', lineHeight: 1.5, color: 'var(--alpha-text-85)', margin: 0 }}>
             Your self-reported{' '}
-            <strong style={{ color: '#f97316' }}>"{getTierLabel(reportedPerformanceTier)}"</strong>
+            <strong style={{ color: 'var(--color-orange-text)' }}>"{getTierLabel(reportedPerformanceTier)}"</strong>
             {' '}was adjusted to{' '}
-            <strong style={{ color: '#10b981' }}>"{getTierLabel(effectivePerformanceTier)}"</strong>
+            <strong style={{ color: 'var(--color-emerald-text)' }}>"{getTierLabel(effectivePerformanceTier)}"</strong>
             {' '}due to conflicting signals. The adjusted tier is used in your risk score.
           </p>
           {regionThresholdLabel && (
@@ -141,7 +141,7 @@ export const D4CredibilityPanel: React.FC<D4CredibilityPanelProps> = ({
                 style={{
                   flexShrink: 0,
                   marginTop: 1,
-                  color: sig.severity === 'high' ? '#f97316' : sig.severity === 'medium' ? '#f59e0b' : 'var(--alpha-text-35)',
+                  color: sig.severity === 'high' ? 'var(--color-orange-text)' : sig.severity === 'medium' ? 'var(--color-amber500-text)' : 'var(--alpha-text-35)',
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>

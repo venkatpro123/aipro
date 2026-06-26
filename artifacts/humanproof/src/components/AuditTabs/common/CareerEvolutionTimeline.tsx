@@ -201,7 +201,7 @@ export const CareerEvolutionTimeline: React.FC<CareerEvolutionTimelineProps> = (
                       </span>
                     )}
                     {!isFirst && node.score != null && (
-                      <span className="text-[9px]" style={{ color: '#10b981' }}>
+                      <span className="text-[9px]" style={{ color: 'var(--color-emerald-text)' }}>
                         {currentScore - node.score > 0 ? `−${currentScore - node.score} pts` : ''}
                       </span>
                     )}

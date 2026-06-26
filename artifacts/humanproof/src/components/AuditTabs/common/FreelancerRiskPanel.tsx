@@ -39,17 +39,17 @@ const TYPE_LABELS: Record<string, string> = {
 
 function concentrationColor(tier: string): string {
   switch (tier) {
-    case 'catastrophic': return '#ef4444';
-    case 'high':         return '#f97316';
-    case 'moderate':     return '#f59e0b';
-    default:             return '#10b981';
+    case 'catastrophic': return 'var(--color-red-text)';
+    case 'high':         return 'var(--color-orange-text)';
+    case 'moderate':     return 'var(--color-amber500-text)';
+    default:             return 'var(--color-emerald-text)';
   }
 }
 
 function urgencyColor(u: string): string {
-  if (u === 'critical') return '#ef4444';
-  if (u === 'high')     return '#f97316';
-  return '#f59e0b';
+  if (u === 'critical') return 'var(--color-red-text)';
+  if (u === 'high')     return 'var(--color-orange-text)';
+  return 'var(--color-amber500-text)';
 }
 
 function categoryIcon(cat: string): React.ElementType {
@@ -243,7 +243,7 @@ export const FreelancerRiskPanel: React.FC<Props> = ({ intelligence }) => {
                     Tax reserve: <span className="font-bold text-[#f59e0b]">{fp.taxReservePct}%</span> of each invoice
                   </p>
                   {fp.runwayGapMonths != null && fp.runwayGapMonths > 0 && (
-                    <p className="text-[10px] mt-1 font-bold" style={{ color: '#f97316' }}>
+                    <p className="text-[10px] mt-1 font-bold" style={{ color: 'var(--color-orange-text)' }}>
                       Gap: {fp.runwayGapMonths}mo short
                     </p>
                   )}

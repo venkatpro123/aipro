@@ -34,13 +34,13 @@ const PHASE_LABELS: Record<string, string> = {
 const PHASE_COLORS: Record<string, { text: string; bg: string; border: string }> = {
   phase_1_foundation: { text: '#60a5fa', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.18)' },
   phase_2_engagement: { text: '#a78bfa', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.18)' },
-  phase_3_offers:     { text: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.18)' },
+  phase_3_offers:     { text: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.18)' },
 };
 
 const URGENCY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  crisis:     { label: 'CRISIS',     color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-  elevated:   { label: 'ELEVATED',   color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  standard:   { label: 'STANDARD',   color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+  crisis:     { label: 'CRISIS',     color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)' },
+  elevated:   { label: 'ELEVATED',   color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
+  standard:   { label: 'STANDARD',   color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
   monitoring: { label: 'MONITORING', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
 };
 
@@ -62,9 +62,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function priorityColor(score: number) {
-  if (score >= 80) return '#ef4444';
-  if (score >= 60) return '#f97316';
-  if (score >= 40) return '#f59e0b';
+  if (score >= 80) return 'var(--color-red-text)';
+  if (score >= 60) return 'var(--color-orange-text)';
+  if (score >= 40) return 'var(--color-amber500-text)';
   return '#94a3b8';
 }
 
@@ -113,7 +113,7 @@ function ActionCard({ action, index }: { action: PrecisionAction; index: number 
             <span className="text-[10px] text-[var(--alpha-text-30)]">{effortLabel(action.effort)} effort</span>
             {action.isBlocking && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                style={{ color: '#ef4444', background: 'rgba(239,68,68,0.10)' }}>BLOCKING</span>
+                style={{ color: 'var(--color-red-text)', background: 'rgba(239,68,68,0.10)' }}>BLOCKING</span>
             )}
           </div>
         </div>
@@ -409,7 +409,7 @@ const Precision9090Panel: React.FC<Precision9090PanelProps> = ({ plan, className
       <div className="mx-4 mb-4 p-3 rounded-xl flex items-center justify-between gap-3"
         style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)' }}>
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 flex-shrink-0" style={{ color: '#10b981' }} />
+          <TrendingUp className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
           <span className="text-xs text-[var(--alpha-text-45)]">Day 90 outlook</span>
         </div>
         <span className="text-xs font-semibold text-green-400/90 text-right">{plan.estimatedOutcomeByDay90}</span>

@@ -158,10 +158,10 @@ interface LayerScoreCardProps {
 // Raw hex values — used for alpha-compositing (background, border, glow).
 // CSS variables cannot be combined with hex-alpha suffixes, so hex is required here.
 const DIM_COLORS_HEX: Record<string, string> = {
-  L1: '#00d4e0', L2: '#f59e0b', L3: '#7c3aed',
-  L4: '#10b981', L5: '#ef4444',
+  L1: '#00d4e0', L2: 'var(--color-amber500-text)', L3: '#7c3aed',
+  L4: 'var(--color-emerald-text)', L5: 'var(--color-red-text)',
   D1: '#7c3aed', D2: '#a78bfa', D3: '#06b6d4',
-  D4: '#ef4444', D5: '#10b981',
+  D4: 'var(--color-red-text)', D5: 'var(--color-emerald-text)',
   D6: '#06b6d4', D7: '#a78bfa', D8: '#f43f5e',
 };
 
@@ -336,7 +336,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
                 padding: '1px 5px',
                 borderRadius: '3px',
                 background: 'rgba(245,158,11,0.12)',
-                color: '#f59e0b',
+                color: 'var(--color-amber500-text)',
                 border: '1px solid rgba(245,158,11,0.30)',
                 letterSpacing: '0.06em',
                 cursor: 'help',
@@ -354,7 +354,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
                 padding: '1px 5px',
                 borderRadius: '3px',
                 background: 'rgba(16,185,129,0.08)',
-                color: '#10b981',
+                color: 'var(--color-emerald-text)',
                 border: '1px solid rgba(16,185,129,0.22)',
                 letterSpacing: '0.06em',
                 cursor: 'help',
@@ -398,8 +398,8 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
   const topRiskMeta = topRisk ? getDimMeta(topRisk.key) : null;
   const topProtMeta = topProtective ? getDimMeta(topProtective.key) : null;
   // Use hex values for alpha-compositing in backgrounds/borders
-  const riskDimHex   = topRisk      ? (DIM_COLORS_HEX[topRisk.key]      ?? '#ef4444') : '#ef4444';
-  const protDimHex   = topProtective ? (DIM_COLORS_HEX[topProtective.key] ?? '#10b981') : '#10b981';
+  const riskDimHex   = topRisk      ? (DIM_COLORS_HEX[topRisk.key]      ?? 'var(--color-red-text)') : 'var(--color-red-text)';
+  const protDimHex   = topProtective ? (DIM_COLORS_HEX[topProtective.key] ?? 'var(--color-emerald-text)') : 'var(--color-emerald-text)';
   // CSS vars for text/stroke color properties
   const riskDimColor = topRisk      ? (DIM_COLOR_MAP[topRisk.key]      ?? 'var(--red)')     : 'var(--red)';
   const protDimColor = topProtective ? (DIM_COLOR_MAP[topProtective.key] ?? 'var(--emerald)') : 'var(--emerald)';
@@ -422,11 +422,11 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
           overflow: 'hidden',
         }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: '#ef4444', opacity: 0.7 }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--color-red-text)', opacity: 0.7 }} />
         <div className="flex items-start gap-3">
-          <TrendingUp className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#ef4444' }} />
+          <TrendingUp className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-red-text)' }} />
           <div className="flex-1 min-w-0">
-            <div className="data-label mb-1" style={{ color: '#ef4444' }}>Primary Risk Driver</div>
+            <div className="data-label mb-1" style={{ color: 'var(--color-red-text)' }}>Primary Risk Driver</div>
             <div className="flex items-baseline gap-2 mb-2">
               <span style={{
                 fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900,
@@ -460,11 +460,11 @@ const ScoreSummaryBanner: React.FC<{ result: TabProps["result"] }> = ({ result }
           overflow: 'hidden',
         }}
       >
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: '#10b981', opacity: 0.7 }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'var(--color-emerald-text)', opacity: 0.7 }} />
         <div className="flex items-start gap-3">
-          <TrendingDown className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#10b981' }} />
+          <TrendingDown className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-emerald-text)' }} />
           <div className="flex-1 min-w-0">
-            <div className="data-label mb-1" style={{ color: '#10b981' }}>Strongest Protection</div>
+            <div className="data-label mb-1" style={{ color: 'var(--color-emerald-text)' }}>Strongest Protection</div>
             <div className="flex items-baseline gap-2 mb-2">
               <span style={{
                 fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900,

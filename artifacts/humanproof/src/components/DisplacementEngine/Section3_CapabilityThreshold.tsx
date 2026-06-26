@@ -11,10 +11,10 @@ interface Props {
 }
 
 const STAGES: { key: ThresholdStage; shortLabel: string; color: string }[] = [
-  { key: 'CURRENT',          shortLabel: 'AI Assists',            color: '#10b981' },
-  { key: 'APPROACHING',      shortLabel: 'Workflows Disrupted',   color: '#f59e0b' },
-  { key: 'THRESHOLD_WINDOW', shortLabel: 'Threshold Window',      color: '#f97316' },
-  { key: 'POST_THRESHOLD',   shortLabel: 'Post-Threshold',        color: '#ef4444' },
+  { key: 'CURRENT',          shortLabel: 'AI Assists',            color: 'var(--color-emerald-text)' },
+  { key: 'APPROACHING',      shortLabel: 'Workflows Disrupted',   color: 'var(--color-amber500-text)' },
+  { key: 'THRESHOLD_WINDOW', shortLabel: 'Threshold Window',      color: 'var(--color-orange-text)' },
+  { key: 'POST_THRESHOLD',   shortLabel: 'Post-Threshold',        color: 'var(--color-red-text)' },
 ];
 
 const STAGE_INDEX: Record<ThresholdStage, number> = {
@@ -22,7 +22,7 @@ const STAGE_INDEX: Record<ThresholdStage, number> = {
 };
 
 const CONFIDENCE_COLORS: Record<string, string> = {
-  LOW: '#10b981', MEDIUM: '#f59e0b', HIGH: '#ef4444',
+  LOW: 'var(--color-emerald-text)', MEDIUM: 'var(--color-amber500-text)', HIGH: 'var(--color-red-text)',
 };
 
 export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => {
@@ -115,7 +115,7 @@ export const Section3_CapabilityThreshold: React.FC<Props> = ({ threshold }) => 
       {/* Confidence indicators */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {[
-          { label: 'Direction Confidence', value: 'HIGH', color: '#ef4444' },
+          { label: 'Direction Confidence', value: 'HIGH', color: 'var(--color-red-text)' },
           { label: 'Timing Confidence', value: threshold.timingConfidence, color: CONFIDENCE_COLORS[threshold.timingConfidence] },
         ].map(c => (
           <div key={c.label} style={{

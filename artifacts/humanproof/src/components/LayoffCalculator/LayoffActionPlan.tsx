@@ -94,8 +94,8 @@ export const LayoffActionPlan: React.FC<Props> = ({ score, tierColor, role, onSw
   const actions = actionsByTier[effectiveTier] || [];
 
   const getTierHex = (c: string) => {
-    const map: Record<string, string> = { red: '#ef4444', orange: '#f97316', amber: '#f59e0b' };
-    return map[c] || '#f59e0b';
+    const map: Record<string, string> = { red: 'var(--color-red-text)', orange: 'var(--color-orange-text)', amber: 'var(--color-amber500-text)' };
+    return map[c] || 'var(--color-amber500-text)';
   };
   const tierHex = getTierHex(tierColor);
 

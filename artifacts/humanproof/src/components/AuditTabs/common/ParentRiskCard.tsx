@@ -38,10 +38,10 @@ export interface ParentRiskCardProps {
 
 const RISK_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
   high:       { color: '#dc2626', bg: 'rgba(220,38,38,0.07)',  border: 'rgba(220,38,38,0.22)',  label: 'High propagation risk' },
-  elevated:   { color: '#f97316', bg: 'rgba(249,115,22,0.07)', border: 'rgba(249,115,22,0.22)', label: 'Elevated propagation risk' },
-  moderate:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.20)', label: 'Moderate propagation risk' },
+  elevated:   { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.07)', border: 'rgba(249,115,22,0.22)', label: 'Elevated propagation risk' },
+  moderate:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.20)', label: 'Moderate propagation risk' },
   low:        { color: 'var(--color-cyan-text)', bg: 'rgba(34,211,238,0.05)', border: 'rgba(34,211,238,0.18)', label: 'Low propagation risk' },
-  negligible: { color: '#10b981', bg: 'rgba(16,185,129,0.05)', border: 'rgba(16,185,129,0.18)', label: 'Negligible propagation risk' },
+  negligible: { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.05)', border: 'rgba(16,185,129,0.18)', label: 'Negligible propagation risk' },
 };
 
 export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagation: p }) => {
@@ -138,7 +138,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
               </p>
               {p.protectionFactors.slice(0, 3).map((f, i) => (
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
-                  <span style={{ fontSize: '0.7rem', color: '#10b981', flexShrink: 0 }}>+</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-emerald-text)', flexShrink: 0 }}>+</span>
                   <span style={{ fontSize: '0.72rem', color: 'var(--alpha-text-55)', lineHeight: 1.4 }}>{f}</span>
                 </div>
               ))}

@@ -58,10 +58,10 @@ const TIER_ORDER: Record<ConfidenceTier, number> = {
 };
 
 const USER_FACING: Record<ConfidenceTier, Omit<UserFacingConfidence, 'explanation'>> = {
-  live:      { label: 'High quality',   color: '#10b981' },
+  live:      { label: 'High quality',   color: 'var(--color-emerald-text)' },
   mixed:     { label: 'Typical',        color: '#22d3ee' },
-  stale:     { label: 'Below average',  color: '#f59e0b' },
-  heuristic: { label: 'Very limited',   color: '#f97316' },
+  stale:     { label: 'Below average',  color: 'var(--color-amber500-text)' },
+  heuristic: { label: 'Very limited',   color: 'var(--color-orange-text)' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

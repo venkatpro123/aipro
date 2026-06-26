@@ -36,8 +36,8 @@ export const MetricKPICard: React.FC<MetricKPICardProps> = ({
   className = "",
   onClick,
 }) => {
-  const trendColor = trend === "up" ? "#ef4444"
-    : trend === "down" ? "#10b981"
+  const trendColor = trend === "up" ? 'var(--color-red-text)'
+    : trend === "down" ? 'var(--color-emerald-text)'
     : "var(--text-3)";
 
   const TrendIcon = trend === "up" ? TrendingUp

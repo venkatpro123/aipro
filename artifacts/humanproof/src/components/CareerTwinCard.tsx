@@ -165,8 +165,8 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
 
         {submitted ? (
           <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-            <CheckCircle className="w-10 h-10 mb-3" style={{ color: '#10b981' }} />
-            <p className="text-[14px] font-bold mb-1" style={{ color: '#10b981' }}>
+            <CheckCircle className="w-10 h-10 mb-3" style={{ color: 'var(--color-emerald-text)' }} />
+            <p className="text-[14px] font-bold mb-1" style={{ color: 'var(--color-emerald-text)' }}>
               Thank you — transition added!
             </p>
             <p className="text-[11px]" style={{ color: 'var(--alpha-text-45)' }}>
@@ -311,7 +311,7 @@ const SubmitTransitionForm: React.FC<SubmitFormProps> = ({
             </div>
 
             {error && (
-              <p className="text-[11px]" style={{ color: '#ef4444' }}>{error}</p>
+              <p className="text-[11px]" style={{ color: 'var(--color-red-text)' }}>{error}</p>
             )}
 
             <button
@@ -580,8 +580,8 @@ export const CareerTwinCard: React.FC<CareerTwinCardProps> = ({
               className="mx-4 mb-3 rounded-xl px-3 py-2 flex items-center gap-2"
               style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.25)' }}
             >
-              <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
-              <p className="text-[11px] font-semibold" style={{ color: '#10b981' }}>
+              <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
+              <p className="text-[11px] font-semibold" style={{ color: 'var(--color-emerald-text)' }}>
                 Transition added — thank you for helping the community!
               </p>
             </motion.div>

@@ -12,14 +12,14 @@ interface WARNSignalPanelProps {
 
 const URGENCY_CONFIG = (daysUntil: number | null): { label: string; color: string; bg: string; border: string } => {
   if (daysUntil === null || daysUntil > 60)
-    return { label: 'FILED', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' };
+    return { label: 'FILED', color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' };
   if (daysUntil <= 0)
     return { label: 'IMMINENT', color: '#dc2626', bg: 'rgba(220,38,38,0.14)', border: 'rgba(220,38,38,0.36)' };
   if (daysUntil <= 14)
     return { label: 'IMMINENT', color: '#dc2626', bg: 'rgba(220,38,38,0.14)', border: 'rgba(220,38,38,0.36)' };
   if (daysUntil <= 30)
-    return { label: 'VERY_SOON', color: '#f97316', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' };
-  return { label: 'UPCOMING', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' };
+    return { label: 'VERY_SOON', color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.10)', border: 'rgba(249,115,22,0.28)' };
+  return { label: 'UPCOMING', color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.28)' };
 };
 
 const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
@@ -142,7 +142,7 @@ const WARNSignalPanel: React.FC<WARNSignalPanelProps> = ({ warnSignal }) => {
         className="flex items-start gap-2 rounded-lg p-2.5"
         style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
       >
-        <Shield className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#10b981' }} />
+        <Shield className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
         <p className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
           This is a legally-required 60-day advance notice filing — not a prediction.
         </p>

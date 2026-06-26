@@ -11,33 +11,33 @@ interface SECEnhancedPanelProps {
 }
 
 const EARNINGS_CONFIG: Record<EarningsSurpriseCategory, { label: string; color: string; bg: string }> = {
-  massive_miss:    { label: 'Massive Miss',    color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },
-  significant_miss:{ label: 'Significant Miss',color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  slight_miss:     { label: 'Slight Miss',     color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+  massive_miss:    { label: 'Massive Miss',    color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)'   },
+  significant_miss:{ label: 'Significant Miss',color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
+  slight_miss:     { label: 'Slight Miss',     color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.12)' },
   in_line:         { label: 'In Line',         color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
-  slight_beat:     { label: 'Slight Beat',     color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-  beat:            { label: 'Beat',            color: '#10b981', bg: 'rgba(16,185,129,0.14)' },
+  slight_beat:     { label: 'Slight Beat',     color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.12)' },
+  beat:            { label: 'Beat',            color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.14)' },
 };
 
 const ANALYST_CONFIG: Record<AnalystConsensus, { label: string; color: string; bg: string }> = {
-  strong_buy:  { label: 'Strong Buy',  color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
+  strong_buy:  { label: 'Strong Buy',  color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.12)'  },
   buy:         { label: 'Buy',         color: 'var(--color-emerald-text)', bg: 'rgba(52,211,153,0.10)'  },
-  hold:        { label: 'Hold',        color: '#f59e0b', bg: 'rgba(245,158,11,0.10)'  },
-  underperform:{ label: 'Underperform',color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  sell:        { label: 'Sell',        color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },
+  hold:        { label: 'Hold',        color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)'  },
+  underperform:{ label: 'Underperform',color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
+  sell:        { label: 'Sell',        color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)'   },
   not_rated:   { label: 'Not Rated',   color: '#6b7280', bg: 'rgba(107,114,128,0.10)'},
 };
 
 const COHORT_CONFIG = {
-  DISTRESS:   { label: 'DISTRESS',   color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.28)'   },
+  DISTRESS:   { label: 'DISTRESS',   color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.28)'   },
   EFFICIENCY: { label: 'EFFICIENCY', color: '#3b82f6', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.24)'  },
-  WAVE:       { label: 'WAVE',       color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.24)'  },
+  WAVE:       { label: 'WAVE',       color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.24)'  },
 };
 
 function fcfColor(margin: number): string {
-  if (margin > 0.05)  return '#10b981';
-  if (margin >= -0.05) return '#f59e0b';
-  return '#ef4444';
+  if (margin > 0.05)  return 'var(--color-emerald-text)';
+  if (margin >= -0.05) return 'var(--color-amber500-text)';
+  return 'var(--color-red-text)';
 }
 
 const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals }) => {
@@ -55,7 +55,7 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
     ? COHORT_CONFIG[financialSignals.cohortSignal]
     : null;
 
-  const adjColor = riskAdjustment > 0 ? '#ef4444' : riskAdjustment < 0 ? '#10b981' : '#6b7280';
+  const adjColor = riskAdjustment > 0 ? 'var(--color-red-text)' : riskAdjustment < 0 ? 'var(--color-emerald-text)' : '#6b7280';
   const adjSign  = riskAdjustment > 0 ? '+' : '';
 
   return (
@@ -104,14 +104,14 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
             <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Price Target Change (90d)</span>
             <div className="flex items-center gap-1">
               {financialSignals.priceTargetChangePct > 0
-                ? <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />
+                ? <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />
                 : financialSignals.priceTargetChangePct < 0
-                  ? <TrendingDown className="w-3 h-3" style={{ color: '#ef4444' }} />
+                  ? <TrendingDown className="w-3 h-3" style={{ color: 'var(--color-red-text)' }} />
                   : <Minus className="w-3 h-3" style={{ color: '#6b7280' }} />
               }
               <span className="text-[11px] font-bold" style={{
-                color: financialSignals.priceTargetChangePct > 0 ? '#10b981'
-                  : financialSignals.priceTargetChangePct < 0 ? '#ef4444' : '#6b7280'
+                color: financialSignals.priceTargetChangePct > 0 ? 'var(--color-emerald-text)'
+                  : financialSignals.priceTargetChangePct < 0 ? 'var(--color-red-text)' : '#6b7280'
               }}>
                 {financialSignals.priceTargetChangePct > 0 ? '+' : ''}{financialSignals.priceTargetChangePct.toFixed(1)}%
               </span>
@@ -127,8 +127,8 @@ const SECEnhancedPanel: React.FC<SECEnhancedPanelProps> = ({ secEnhancedSignals 
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full"
               style={financialSignals.isCashFlowPositive
-                ? { background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }
-                : { background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }
+                ? { background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.25)' }
+                : { background: 'rgba(239,68,68,0.12)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.22)' }
               }
             >
               {financialSignals.isCashFlowPositive ? 'POSITIVE' : 'NEGATIVE'}

@@ -63,13 +63,13 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
   // Risk tier color
   const tierColor: Record<string, string> = {
     CRITICAL: '#dc2626',
-    HIGH:     '#f97316',
-    ELEVATED: '#f59e0b',
+    HIGH:     'var(--color-orange-text)',
+    ELEVATED: 'var(--color-amber500-text)',
     MODERATE: '#22d3ee',
-    LOW:      '#10b981',
-    MINIMAL:  '#10b981',
+    LOW:      'var(--color-emerald-text)',
+    MINIMAL:  'var(--color-emerald-text)',
   };
-  const color = tierColor[survival.riskTier] ?? '#f59e0b';
+  const color = tierColor[survival.riskTier] ?? 'var(--color-amber500-text)';
 
   return (
     <motion.div
@@ -131,7 +131,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(16,185,129,0.60)' }}>
             WITH PHASE 1
           </p>
-          <p className="text-[26px] font-black leading-none mb-0.5" style={{ color: '#10b981' }}>
+          <p className="text-[26px] font-black leading-none mb-0.5" style={{ color: 'var(--color-emerald-text)' }}>
             {fmtPct(withPhase1)}
           </p>
           <p className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
@@ -140,7 +140,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           {/* Reduction badge */}
           <div
             className="absolute -top-2 right-2 px-1.5 py-0.5 rounded text-[10px] font-black"
-            style={{ background: 'rgba(16,185,129,0.20)', color: '#10b981', border: '1px solid rgba(16,185,129,0.35)' }}
+            style={{ background: 'rgba(16,185,129,0.20)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.35)' }}
           >
             −{reductionPct}%
           </div>
@@ -152,7 +152,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
         className="flex items-start gap-2 mx-4 mb-3 px-3 py-2 rounded-xl"
         style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}
       >
-        <TrendingDown className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#10b981' }} />
+        <TrendingDown className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-emerald-text)' }} />
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-semibold leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             Taking the {criticalActionCount > 0 ? `${criticalActionCount} critical action${criticalActionCount !== 1 ? 's' : ''}` : 'Phase 1 actions'} below cuts your risk by {reductionPct}%

@@ -34,8 +34,8 @@ const SIGNAL_LABELS: Record<string, string> = {
 const SOURCE_CONFIG: Record<SignalRow['source'], { color: string; label: string; bg: string }> = {
   live:     { color: 'var(--color-cyan-text)', label: 'LIVE',     bg: 'rgba(34,211,238,0.08)' },
   db:       { color: 'var(--color-indigo-text)', label: 'DATABASE', bg: 'rgba(129,140,248,0.08)' },
-  static:   { color: '#f97316', label: 'STATIC',   bg: 'rgba(249,115,22,0.08)' },
-  degraded: { color: '#f59e0b', label: 'DEGRADED', bg: 'rgba(245,158,11,0.08)' },
+  static:   { color: 'var(--color-orange-text)', label: 'STATIC',   bg: 'rgba(249,115,22,0.08)' },
+  degraded: { color: 'var(--color-amber500-text)', label: 'DEGRADED', bg: 'rgba(245,158,11,0.08)' },
 };
 
 function buildRows(coverage: LiveDataCoverage | null | undefined): SignalRow[] {
@@ -101,7 +101,7 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
         <div style={{ textAlign: 'right' }}>
           <div style={{
             fontFamily: 'var(--font-mono)', fontWeight: 900, fontSize: '1.4rem',
-            color: displayPct >= 70 ? '#22d3ee' : displayPct >= 40 ? '#f59e0b' : '#ef4444',
+            color: displayPct >= 70 ? '#22d3ee' : displayPct >= 40 ? 'var(--color-amber500-text)' : 'var(--color-red-text)',
           }}>
             {displayPct}%
           </div>
@@ -175,16 +175,16 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
           {'  '}
           <span style={{ color: 'var(--color-indigo-text)' }}>●</span> Database = Supabase company_intelligence row
           {'  '}
-          <span style={{ color: '#f97316' }}>●</span> Static = hardcoded baseline (pre-seeded)
+          <span style={{ color: 'var(--color-orange-text)' }}>●</span> Static = hardcoded baseline (pre-seeded)
         </div>
         {overallSource === 'heuristic' && (
-          <div style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#f59e0b' }}>
+          <div style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--color-amber500-text)' }}>
             ⚠ Score calculated with fewer than 2 live API signals — treat as indicative.
             Live retry will run automatically.
           </div>
         )}
         {(coverage?.hardFailures?.length ?? 0) > 0 && (
-          <div style={{ marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: '#ef4444' }}>
+          <div style={{ marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--color-red-text)' }}>
             API failures: {coverage?.hardFailures?.join(', ')}
           </div>
         )}

@@ -64,33 +64,33 @@ function pctLabel(v: number | null | undefined, suffix = '%'): string {
 
 function revenueColor(v: number | null | undefined): string {
   if (v == null) return '#94a3b8';
-  if (v >= 10) return '#10b981';
+  if (v >= 10) return 'var(--color-emerald-text)';
   if (v >= 0)  return '#22c55e';
-  if (v >= -5) return '#f59e0b';
-  return '#ef4444';
+  if (v >= -5) return 'var(--color-amber500-text)';
+  return 'var(--color-red-text)';
 }
 
 function stockColor(v: number | null | undefined): string {
   if (v == null) return '#94a3b8';
-  if (v >= 5)   return '#10b981';
+  if (v >= 5)   return 'var(--color-emerald-text)';
   if (v >= 0)   return '#22c55e';
-  if (v >= -10) return '#f59e0b';
-  return '#ef4444';
+  if (v >= -10) return 'var(--color-amber500-text)';
+  return 'var(--color-red-text)';
 }
 
 function layoffSeverityColor(rounds: number): string {
-  if (rounds === 0)  return '#10b981';
-  if (rounds === 1)  return '#f59e0b';
-  if (rounds <= 3)   return '#f97316';
-  return '#ef4444';
+  if (rounds === 0)  return 'var(--color-emerald-text)';
+  if (rounds === 1)  return 'var(--color-amber500-text)';
+  if (rounds <= 3)   return 'var(--color-orange-text)';
+  return 'var(--color-red-text)';
 }
 
 function hiringTrendColor(trend: string | undefined): string {
   switch (trend) {
-    case 'growing':   return '#10b981';
+    case 'growing':   return 'var(--color-emerald-text)';
     case 'stable':    return '#22c55e';
-    case 'declining': return '#f97316';
-    case 'frozen':    return '#ef4444';
+    case 'declining': return 'var(--color-orange-text)';
+    case 'frozen':    return 'var(--color-red-text)';
     default:          return '#94a3b8';
   }
 }
@@ -255,7 +255,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
           title="Financial Health"
           icon="💹"
           status={financial}
-          accentColor="#10b981"
+          accentColor='var(--color-emerald-text)'
           visible={financial !== 'pending'}
         >
           {financial === 'pending' && (
@@ -291,7 +291,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
                 <SignalRow
                   label="Revenue / employee"
                   value={`$${(cd.revenuePerEmployee / 1000).toFixed(0)}k`}
-                  color={cd.revenuePerEmployee >= 200000 ? '#10b981' : cd.revenuePerEmployee >= 100000 ? '#f59e0b' : '#ef4444'}
+                  color={cd.revenuePerEmployee >= 200000 ? 'var(--color-emerald-text)' : cd.revenuePerEmployee >= 100000 ? 'var(--color-amber500-text)' : 'var(--color-red-text)'}
                 />
               )}
               {cd?.revenueGrowthYoY == null && cd?.stock90DayChange == null && (
@@ -308,7 +308,7 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
           title="Layoff History"
           icon="📋"
           status={layoff}
-          accentColor={layoffRounds >= 2 ? '#ef4444' : layoffRounds === 1 ? '#f97316' : '#10b981'}
+          accentColor={layoffRounds >= 2 ? 'var(--color-red-text)' : layoffRounds === 1 ? 'var(--color-orange-text)' : 'var(--color-emerald-text)'}
           visible={layoff !== 'pending'}
         >
           {layoff === 'pending' && (
@@ -337,19 +337,19 @@ export const ProgressiveQuorumPanel: React.FC<Props> = ({ quorum }) => {
                   <SignalRow
                     label="Most recent"
                     value={`${monthsAgo(lastLayoff.date)} months ago`}
-                    color={monthsAgo(lastLayoff.date) <= 6 ? '#ef4444' : monthsAgo(lastLayoff.date) <= 18 ? '#f97316' : '#94a3b8'}
+                    color={monthsAgo(lastLayoff.date) <= 6 ? 'var(--color-red-text)' : monthsAgo(lastLayoff.date) <= 18 ? 'var(--color-orange-text)' : '#94a3b8'}
                   />
                   {lastLayoff.percentCut > 0 && (
                     <SignalRow
                       label="Headcount cut"
                       value={`${lastLayoff.percentCut.toFixed(0)}%`}
-                      color={lastLayoff.percentCut >= 10 ? '#ef4444' : '#f97316'}
+                      color={lastLayoff.percentCut >= 10 ? 'var(--color-red-text)' : 'var(--color-orange-text)'}
                     />
                   )}
                 </>
               )}
               {layoffRounds === 0 && !lastLayoff && (
-                <div style={{ fontSize: '10px', color: '#10b981', marginTop: '4px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--color-emerald-text)', marginTop: '4px' }}>
                   No layoffs found — positive L2 signal.
                 </div>
               )}

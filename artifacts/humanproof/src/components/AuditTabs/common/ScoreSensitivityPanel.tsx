@@ -23,16 +23,16 @@ interface Props {
 }
 
 const FEASIBILITY_CONFIG: Record<string, { label: string; color: string }> = {
-  immediate:   { label: 'This week',   color: '#10b981' },
+  immediate:   { label: 'This week',   color: 'var(--color-emerald-text)' },
   short_term:  { label: 'This month',  color: 'var(--color-cyan-text)' },
-  medium_term: { label: '1–3 months',  color: '#f59e0b' },
-  long_term:   { label: '3–6 months',  color: '#f97316' },
+  medium_term: { label: '1–3 months',  color: 'var(--color-amber500-text)' },
+  long_term:   { label: '3–6 months',  color: 'var(--color-orange-text)' },
 };
 
 const CONFIDENCE_COLOR: Record<string, string> = {
-  High:   '#10b981',
-  Medium: '#f59e0b',
-  Low:    '#f97316',
+  High:   'var(--color-emerald-text)',
+  Medium: 'var(--color-amber500-text)',
+  Low:    'var(--color-orange-text)',
 };
 
 function fmt(s: number) { return Math.min(100, Math.max(0, Math.round(s))); }

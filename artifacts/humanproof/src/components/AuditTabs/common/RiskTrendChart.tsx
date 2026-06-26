@@ -42,10 +42,10 @@ const PLOT_H = CHART_H - PAD_Y * 2;
 
 // Risk tier zone boundaries (score 0-100)
 const ZONES = [
-  { y0: 0, y1: 35, color: '#10b981', label: 'Low' },
-  { y0: 35, y1: 55, color: '#f59e0b', label: 'Moderate' },
-  { y0: 55, y1: 75, color: '#f97316', label: 'High' },
-  { y0: 75, y1: 100, color: '#ef4444', label: 'Critical' },
+  { y0: 0, y1: 35, color: 'var(--color-emerald-text)', label: 'Low' },
+  { y0: 35, y1: 55, color: 'var(--color-amber500-text)', label: 'Moderate' },
+  { y0: 55, y1: 75, color: 'var(--color-orange-text)', label: 'High' },
+  { y0: 75, y1: 100, color: 'var(--color-red-text)', label: 'Critical' },
 ];
 
 function scoreToY(score: number): number {
@@ -112,7 +112,7 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
   const delta = last - first;
   const direction = delta > 2 ? 'worsening' : delta < -2 ? 'improving' : 'stable';
   const DirIcon = direction === 'worsening' ? TrendingUp : direction === 'improving' ? TrendingDown : Minus;
-  const dirColor = direction === 'worsening' ? '#ef4444' : direction === 'improving' ? '#10b981' : 'var(--alpha-text-35)';
+  const dirColor = direction === 'worsening' ? 'var(--color-red-text)' : direction === 'improving' ? 'var(--color-emerald-text)' : 'var(--alpha-text-35)';
 
   return (
     <motion.div
@@ -156,8 +156,8 @@ export const RiskTrendChart: React.FC<RiskTrendChartProps> = ({
               <stop offset="100%" stopColor={riskColor(currentScore)} stopOpacity="0.02" />
             </linearGradient>
             <linearGradient id="trendStroke" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
-              <stop offset="50%" stopColor="#f59e0b" stopOpacity="0.8" />
+              <stop offset="0%" stopColor='var(--color-emerald-text)' stopOpacity="0.6" />
+              <stop offset="50%" stopColor='var(--color-amber500-text)' stopOpacity="0.8" />
               <stop offset="100%" stopColor={riskColor(currentScore)} stopOpacity="1" />
             </linearGradient>
           </defs>

@@ -134,8 +134,8 @@ export function deriveMissingDataItems(
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const SEVERITY_COLOR: Record<string, string> = {
-  high:   '#f97316',
-  medium: '#f59e0b',
+  high:   'var(--color-orange-text)',
+  medium: 'var(--color-amber500-text)',
   low:    '#22d3ee',
 };
 
@@ -147,7 +147,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
   if (items.length < 2) return null;
 
   const highCount = items.filter(i => i.severity === 'high').length;
-  const headerColor = highCount > 0 ? '#f97316' : '#f59e0b';
+  const headerColor = highCount > 0 ? 'var(--color-orange-text)' : 'var(--color-amber500-text)';
 
   const handleActionClick = (item: MissingDataItem) => {
     if (!item.actionTab) return;
@@ -188,7 +188,7 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {highCount > 0 && (
-            <AlertCircle className="w-3 h-3" style={{ color: '#f97316' }} />
+            <AlertCircle className="w-3 h-3" style={{ color: 'var(--color-orange-text)' }} />
           )}
           {open
             ? <ChevronUp className="w-3 h-3" style={{ color: 'var(--alpha-text-25)' }} />

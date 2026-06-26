@@ -10,9 +10,9 @@ interface Props {
 }
 
 const TONE_COLORS: Record<string, { accent: string; bg: string; border: string }> = {
-  calm:      { accent: '#10b981', bg: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.18)'  },
+  calm:      { accent: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.18)'  },
   strategic: { accent: '#22d3ee', bg: 'rgba(34,211,238,0.06)', border: 'rgba(34,211,238,0.18)' },
-  urgent:    { accent: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.18)' },
+  urgent:    { accent: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.18)' },
 };
 
 export const Section9_PsychologicalFraming: React.FC<Props> = ({ frame }) => {

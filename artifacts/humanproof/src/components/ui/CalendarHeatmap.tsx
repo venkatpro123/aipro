@@ -19,10 +19,10 @@ interface CalendarHeatmapProps {
 
 function amplifierToColor(amp: number, isCurrent: boolean): { bg: string; border: string; text: string } {
   if (isCurrent) return { bg: "rgba(0,212,224,0.18)", border: "rgba(0,212,224,0.6)", text: "#00d4e0" };
-  if (amp >= 1.15) return { bg: "rgba(239,68,68,0.35)",  border: "rgba(239,68,68,0.55)",  text: "#ef4444" };
-  if (amp >= 1.08) return { bg: "rgba(249,115,22,0.28)", border: "rgba(249,115,22,0.45)", text: "#f97316" };
-  if (amp >= 1.04) return { bg: "rgba(245,158,11,0.25)", border: "rgba(245,158,11,0.40)", text: "#f59e0b" };
-  if (amp <= 0.88) return { bg: "rgba(16,185,129,0.28)", border: "rgba(16,185,129,0.45)", text: "#10b981" };
+  if (amp >= 1.15) return { bg: "rgba(239,68,68,0.35)",  border: "rgba(239,68,68,0.55)",  text: 'var(--color-red-text)' };
+  if (amp >= 1.08) return { bg: "rgba(249,115,22,0.28)", border: "rgba(249,115,22,0.45)", text: 'var(--color-orange-text)' };
+  if (amp >= 1.04) return { bg: "rgba(245,158,11,0.25)", border: "rgba(245,158,11,0.40)", text: 'var(--color-amber500-text)' };
+  if (amp <= 0.88) return { bg: "rgba(16,185,129,0.28)", border: "rgba(16,185,129,0.45)", text: 'var(--color-emerald-text)' };
   if (amp <= 0.95) return { bg: "rgba(16,185,129,0.14)", border: "rgba(16,185,129,0.25)", text: "#6ee7b7" };
   return { bg: "var(--alpha-bg-06)", border: "var(--alpha-bg-08)", text: "var(--text-3)" };
 }
@@ -156,10 +156,10 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
       <div className="flex items-center justify-between mt-2" style={{ paddingInline: "2px" }}>
         <div className="flex items-center gap-2">
           {[
-            { color: "#ef4444", label: "High risk" },
-            { color: "#f59e0b", label: "Elevated" },
+            { color: 'var(--color-red-text)', label: "High risk" },
+            { color: 'var(--color-amber500-text)', label: "Elevated" },
             { color: "var(--alpha-text-30)", label: "Neutral" },
-            { color: "#10b981", label: "Safe window" },
+            { color: 'var(--color-emerald-text)', label: "Safe window" },
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-1">
               <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />

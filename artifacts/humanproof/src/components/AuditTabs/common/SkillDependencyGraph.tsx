@@ -31,8 +31,8 @@ interface SkillDependencyGraphProps {
 
 const TIER_X: Record<string, number> = { foundation: 0, intermediate: 1, advanced: 2 };
 const STATUS_COLOR: Record<string, string> = {
-  safe: '#10b981',
-  at_risk: '#f59e0b',
+  safe: 'var(--color-emerald-text)',
+  at_risk: 'var(--color-amber500-text)',
   evolving: '#7c3aed',
 };
 
@@ -169,7 +169,7 @@ export const SkillDependencyGraph: React.FC<SkillDependencyGraphProps> = ({
 
         {/* Legend */}
         <div className="flex items-center gap-4 mt-3 justify-center">
-          {[{ label: 'Safe', color: '#10b981' }, { label: 'At Risk', color: '#f59e0b' }, { label: 'Evolving', color: '#7c3aed' }].map(l => (
+          {[{ label: 'Safe', color: 'var(--color-emerald-text)' }, { label: 'At Risk', color: 'var(--color-amber500-text)' }, { label: 'Evolving', color: '#7c3aed' }].map(l => (
             <div key={l.label} className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: l.color, opacity: 0.6 }} />
               <span className="text-[8px]" style={{ color: 'var(--alpha-text-30)' }}>{l.label}</span>

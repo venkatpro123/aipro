@@ -13,14 +13,14 @@ interface Props {
 }
 
 const URGENCY_COLORS: Record<string, { color: string; bg: string }> = {
-  critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-  high:     { color: '#f97316', bg: 'rgba(249,115,22,0.10)' },
-  medium:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.09)' },
-  low:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)' },
+  critical: { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)' },
+  high:     { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.10)' },
+  medium:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.09)' },
+  low:      { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)' },
 };
 
 const READINESS_COLOR = (pct: number) =>
-  pct >= 75 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
+  pct >= 75 ? 'var(--color-emerald-text)' : pct >= 50 ? 'var(--color-amber500-text)' : 'var(--color-red-text)';
 
 const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, index }) => {
   const urg = URGENCY_COLORS[item.urgency] ?? URGENCY_COLORS.medium;
@@ -142,7 +142,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
 
           {/* Skills to fix */}
           <div className="rounded-xl p-3 text-center" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: criticalGaps.length > 0 ? '#ef4444' : '#10b981' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: criticalGaps.length > 0 ? 'var(--color-red-text)' : 'var(--color-emerald-text)' }}>
               {criticalGaps.length}
             </div>
             <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -167,8 +167,8 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
         {existingStrengths.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
-              <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#10b981' }}>
+              <CheckCircle className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />
+              <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--color-emerald-text)' }}>
                 Your Strengths
               </span>
             </div>
@@ -177,7 +177,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
                 <span
                   key={skill}
                   className="text-[10px] px-2 py-0.5 rounded"
-                  style={{ background: 'rgba(16,185,129,0.10)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}
+                  style={{ background: 'rgba(16,185,129,0.10)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.25)' }}
                 >
                   {skill}
                 </span>
@@ -190,7 +190,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
         {upskillPriority.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-3.5 h-3.5" style={{ color: '#f97316' }} />
+              <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--color-orange-text)' }} />
               <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--alpha-text-50)' }}>
                 What To Learn First
               </span>

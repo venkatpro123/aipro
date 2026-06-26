@@ -103,10 +103,10 @@ const TIER_RANGE_LABEL: Record<string, string> = {
 
 const TIER_COLOR: Record<string, string> = {
   CRITICAL: '#dc2626',
-  HIGH:     '#f97316',
-  ELEVATED: '#f59e0b',
+  HIGH:     'var(--color-orange-text)',
+  ELEVATED: 'var(--color-amber500-text)',
   MODERATE: '#22d3ee',
-  LOW:      '#10b981',
+  LOW:      'var(--color-emerald-text)',
 };
 
 // ── Mode copy ─────────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ const TIER_COLOR: Record<string, string> = {
 const MODE_COPY = {
   live_empirical: {
     badge: 'LIVE EMPIRICAL',
-    color: '#10b981',
+    color: 'var(--color-emerald-text)',
     body: 'Formula weights recalibrated from verified outcomes. Accuracy metrics reflect real tracked predictions.',
   },
   live_developing: {
@@ -124,7 +124,7 @@ const MODE_COPY = {
   },
   bootstrap: {
     badge: 'BOOTSTRAP',
-    color: '#f59e0b',
+    color: 'var(--color-amber500-text)',
     body: 'Pre-calibration mode. Formula anchored to published research (n=200). Directional accuracy is ~65–73% depending on score range.',
   },
 };
@@ -203,7 +203,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
             {tierAccuracy.map((tier) => {
               const isUserTier = tier.scoreTier === userTier;
               const acc = Math.round(tier.blendedAccuracy * 100);
-              const color = TIER_COLOR[tier.scoreTier] ?? '#f59e0b';
+              const color = TIER_COLOR[tier.scoreTier] ?? 'var(--color-amber500-text)';
               const rangeLabel = TIER_RANGE_LABEL[tier.scoreTier] ?? tier.scoreTier;
               return (
                 <div
@@ -253,7 +253,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
         </div>
         <div className="space-y-2">
           {NOTABLE_PREDICTIONS.map((p, i) => {
-            const color = TIER_COLOR[p.scoreRange] ?? '#f59e0b';
+            const color = TIER_COLOR[p.scoreRange] ?? 'var(--color-amber500-text)';
             const isPositive = !p.outcome.toLowerCase().includes('no major');
             return (
               <motion.div
@@ -269,7 +269,7 @@ export const AccuracyCredibilityPanel: React.FC<Props> = ({
               >
                 <div className="flex-shrink-0 mt-0.5">
                   {isPositive
-                    ? <CheckCircle className="w-3 h-3" style={{ color: '#10b981' }} />
+                    ? <CheckCircle className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />
                     : <AlertCircle className="w-3 h-3" style={{ color: 'var(--color-cyan-text)' }} />
                   }
                 </div>

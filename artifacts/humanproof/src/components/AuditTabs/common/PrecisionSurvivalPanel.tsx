@@ -19,18 +19,18 @@ interface PrecisionSurvivalPanelProps {
 }
 
 function getSurvivalColor(prob: number) {
-  if (prob >= 0.65) return { text: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.20)' };
-  if (prob >= 0.40) return { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.20)' };
-  return { text: '#ef4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.20)' };
+  if (prob >= 0.65) return { text: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.20)' };
+  if (prob >= 0.40) return { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.20)' };
+  return { text: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.20)' };
 }
 
 function UrgencyBadge({ level }: { level: PrecisionSurvivalResult['urgencyLevel'] }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
-    CRITICAL: { label: 'CRITICAL',  color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
-    HIGH:     { label: 'HIGH RISK', color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-    ELEVATED: { label: 'ELEVATED',  color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+    CRITICAL: { label: 'CRITICAL',  color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)' },
+    HIGH:     { label: 'HIGH RISK', color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)' },
+    ELEVATED: { label: 'ELEVATED',  color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
     MODERATE: { label: 'MODERATE',  color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
-    LOW:      { label: 'LOW RISK',  color: '#10b981', bg: 'rgba(16,185,129,0.10)' },
+    LOW:      { label: 'LOW RISK',  color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.10)' },
   };
   const c = config[level] ?? config.MODERATE;
   return (
@@ -80,8 +80,8 @@ function FactorRow({ factor, index }: { factor: SurvivalFactor; index: number })
         style={{ background: isProtective ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)' }}
       >
         {isProtective
-          ? <TrendingUp className="w-2.5 h-2.5" style={{ color: '#10b981' }} />
-          : <TrendingDown className="w-2.5 h-2.5" style={{ color: '#ef4444' }} />
+          ? <TrendingUp className="w-2.5 h-2.5" style={{ color: 'var(--color-emerald-text)' }} />
+          : <TrendingDown className="w-2.5 h-2.5" style={{ color: 'var(--color-red-text)' }} />
         }
       </div>
       <div className="flex-1 min-w-0">
@@ -89,7 +89,7 @@ function FactorRow({ factor, index }: { factor: SurvivalFactor; index: number })
           <span className="text-sm text-[var(--alpha-text-78)] leading-snug">{factor.label}</span>
           {pctImpact > 0 && (
             <span className="text-xs font-semibold whitespace-nowrap"
-              style={{ color: isProtective ? '#10b981' : '#ef4444' }}>
+              style={{ color: isProtective ? 'var(--color-emerald-text)' : 'var(--color-red-text)' }}>
               {isProtective ? '+' : '−'}{pctImpact}%
             </span>
           )}
@@ -177,13 +177,13 @@ const PrecisionSurvivalPanel: React.FC<PrecisionSurvivalPanelProps> = ({ surviva
         <div className="mx-4 mb-4 mt-3 rounded-xl p-3.5"
           style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)' }}>
           <div className="flex items-start gap-2">
-            <Zap className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+            <Zap className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
             <div>
               <div className="text-xs font-semibold text-amber-400/90 mb-1">Highest-impact action</div>
               <p className="text-sm text-[var(--alpha-text-78)]">{survival.topImprovementAction}</p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-[var(--alpha-text-40)]">12m probability if you act:</span>
-                <span className="text-xs font-bold" style={{ color: '#10b981' }}>
+                <span className="text-xs font-bold" style={{ color: 'var(--color-emerald-text)' }}>
                   {Math.round(survival.probabilityIfActionTaken * 100)}%
                 </span>
                 <span className="text-xs text-[var(--alpha-text-25)]">

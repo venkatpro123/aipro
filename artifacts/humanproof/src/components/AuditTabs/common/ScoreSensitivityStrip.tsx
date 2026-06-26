@@ -21,9 +21,9 @@ function fmtScore(s: number) {
 
 function feasibilityColor(f: string): string {
   switch (f) {
-    case 'immediate':   return '#10b981';
+    case 'immediate':   return 'var(--color-emerald-text)';
     case 'short_term':  return '#22d3ee';
-    case 'medium_term': return '#f59e0b';
+    case 'medium_term': return 'var(--color-amber500-text)';
     default:            return '#94a3b8';
   }
 }

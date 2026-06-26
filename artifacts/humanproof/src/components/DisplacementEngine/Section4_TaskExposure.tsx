@@ -10,10 +10,10 @@ interface Props {
 }
 
 const EXPOSURE_STYLES: Record<string, { bg: string; border: string; color: string; label: string }> = {
-  critical: { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)',  color: '#ef4444', label: 'CRITICAL' },
-  high:     { bg: 'rgba(249,115,22,0.07)', border: 'rgba(249,115,22,0.22)', color: '#f97316', label: 'HIGH' },
-  medium:   { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)', color: '#f59e0b', label: 'MEDIUM' },
-  low:      { bg: 'rgba(16,185,129,0.07)', border: 'rgba(16,185,129,0.20)', color: '#10b981', label: 'LOW' },
+  critical: { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)',  color: 'var(--color-red-text)', label: 'CRITICAL' },
+  high:     { bg: 'rgba(249,115,22,0.07)', border: 'rgba(249,115,22,0.22)', color: 'var(--color-orange-text)', label: 'HIGH' },
+  medium:   { bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)', color: 'var(--color-amber500-text)', label: 'MEDIUM' },
+  low:      { bg: 'rgba(16,185,129,0.07)', border: 'rgba(16,185,129,0.20)', color: 'var(--color-emerald-text)', label: 'LOW' },
 };
 
 const TRAJECTORY_LABEL: Record<string, string> = {
@@ -45,7 +45,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
           Estimated Task Exposure — AI Automatable Share
         </span>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {[['Human', '#10b981'], ['AI Automatable', '#ef4444']].map(([l, c]) => (
+          {[['Human', 'var(--color-emerald-text)'], ['AI Automatable', 'var(--color-red-text)']].map(([l, c]) => (
             <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 8, height: 8, borderRadius: 1, background: c }} />
               <span style={{ fontSize: 9, color: 'var(--alpha-text-45)', fontFamily: 'var(--font-mono)' }}>{l}</span>
@@ -91,7 +91,7 @@ export const Section4_TaskExposure: React.FC<Props> = ({ tasks }) => {
                   <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${task.humanPct}%`, background: 'linear-gradient(90deg,#10b981,#22d3ee)', borderRadius: 3, transition: 'width 0.8s ease' }} />
                 </div>
                 <div style={{ width: 40, textAlign: 'right', flexShrink: 0 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)' }}>{task.humanPct}%</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)' }}>{task.humanPct}%</span>
                   <span style={{ fontSize: 8, color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}> H</span>
                 </div>
               </div>

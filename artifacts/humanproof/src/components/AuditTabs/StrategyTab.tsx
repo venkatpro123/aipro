@@ -26,11 +26,11 @@ interface StrategyTabProps {
 
 // ── Strategy color system ─────────────────────────────────────────────────────
 const STRATEGY_COLORS: Record<string, { bg: string; border: string; text: string; accent: string }> = {
-  EMERGENCY_EXIT:      { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.35)',   text: '#ef4444',  accent: '#ef4444' },
-  ACCELERATE_EXIT:     { bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.35)',  text: '#f97316',  accent: '#f97316' },
-  PROTECT_AND_WAIT:    { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.35)',  text: '#f59e0b',  accent: '#f59e0b' },
+  EMERGENCY_EXIT:      { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.35)',   text: 'var(--color-red-text)',  accent: 'var(--color-red-text)' },
+  ACCELERATE_EXIT:     { bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.35)',  text: 'var(--color-orange-text)',  accent: 'var(--color-orange-text)' },
+  PROTECT_AND_WAIT:    { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.35)',  text: 'var(--color-amber500-text)',  accent: 'var(--color-amber500-text)' },
   STRENGTHEN_POSITION: { bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.35)',   text: '#00d4e0',  accent: '#00d4e0' },
-  OPPORTUNISTIC_MOVE:  { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.35)',  text: '#10b981',  accent: '#10b981' },
+  OPPORTUNISTIC_MOVE:  { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.35)',  text: 'var(--color-emerald-text)',  accent: 'var(--color-emerald-text)' },
 };
 
 const STRATEGY_HUMAN_LABELS: Record<string, string> = {
@@ -42,10 +42,10 @@ const STRATEGY_HUMAN_LABELS: Record<string, string> = {
 };
 
 const URGENCY_COLORS: Record<string, string> = {
-  CRITICAL: '#ef4444',
-  HIGH:     '#f97316',
-  MODERATE: '#f59e0b',
-  LOW:      '#10b981',
+  CRITICAL: 'var(--color-red-text)',
+  HIGH:     'var(--color-orange-text)',
+  MODERATE: 'var(--color-amber500-text)',
+  LOW:      'var(--color-emerald-text)',
 };
 
 const URGENCY_HUMAN_LABELS: Record<string, string> = {
@@ -76,10 +76,10 @@ const PHASE_ICONS = {
 };
 
 const PHASE_COLORS: Record<string, string> = {
-  PHASE_0_EMERGENCY:  '#ef4444',
-  PHASE_1_IMMEDIATE:  '#f97316',
+  PHASE_0_EMERGENCY:  'var(--color-red-text)',
+  PHASE_1_IMMEDIATE:  'var(--color-orange-text)',
   PHASE_2_SHORT_TERM: '#00d4e0',
-  PHASE_3_LONG_TERM:  '#10b981',
+  PHASE_3_LONG_TERM:  'var(--color-emerald-text)',
 };
 
 // ── Action card ───────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ const ActionCard: React.FC<{
   >
     <button className="mt-0.5 flex-shrink-0" onClick={onToggle}>
       {completed
-        ? <CheckCircle2 className="w-4 h-4" style={{ color: '#10b981' }} />
+        ? <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--color-emerald-text)' }} />
         : <Circle className="w-4 h-4 opacity-30 group-hover:opacity-60 transition-opacity" />
       }
     </button>
@@ -119,7 +119,7 @@ const ActionCard: React.FC<{
         </p>
         {action.isUrgent && !completed && (
           <span className="text-[10px] font-bold tracking-widest flex-shrink-0 px-1.5 py-0.5 rounded-full"
-            style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+            style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.3)' }}>
             URGENT
           </span>
         )}
@@ -253,8 +253,8 @@ const OfferModal: React.FC<{
   };
 
   const REC_COLORS: Record<string, string> = {
-    STRONG_ACCEPT: '#10b981', ACCEPT: '#10b981', NEGOTIATE: '#f59e0b',
-    NEGOTIATE_HARD: '#f97316', DECLINE: '#ef4444', INVESTIGATE_MORE: '#00d4e0',
+    STRONG_ACCEPT: 'var(--color-emerald-text)', ACCEPT: 'var(--color-emerald-text)', NEGOTIATE: 'var(--color-amber500-text)',
+    NEGOTIATE_HARD: 'var(--color-orange-text)', DECLINE: 'var(--color-red-text)', INVESTIGATE_MORE: '#00d4e0',
   };
 
   // Render through a portal to document.body. The modal lives inside the
@@ -374,7 +374,7 @@ const OfferModal: React.FC<{
                   <span className="text-xs w-32 flex-shrink-0" style={{ color: 'var(--alpha-text-50)' }}>{dim.name}</span>
                   <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--alpha-bg-08)' }}>
                     <div className="h-full rounded-full transition-all"
-                      style={{ width: `${dim.score}%`, background: dim.score >= 70 ? '#10b981' : dim.score >= 45 ? '#f59e0b' : '#ef4444' }} />
+                      style={{ width: `${dim.score}%`, background: dim.score >= 70 ? 'var(--color-emerald-text)' : dim.score >= 45 ? 'var(--color-amber500-text)' : 'var(--color-red-text)' }} />
                   </div>
                   <span className="text-xs w-8 text-right" style={{ color: 'var(--alpha-text-50)' }}>{dim.score}</span>
                 </div>
@@ -383,11 +383,11 @@ const OfferModal: React.FC<{
 
             {offerResult.negotiationPoints.length > 0 && (
               <div className="rounded-xl p-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}>
-                <p className="text-xs font-semibold mb-2" style={{ color: '#f59e0b' }}>Negotiation Points</p>
+                <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-amber500-text)' }}>Negotiation Points</p>
                 {offerResult.negotiationPoints.map((pt, i) => (
                   <div key={i} className="mb-2">
                     <p className="text-xs" style={{ color: 'var(--alpha-text-70)' }}>
-                      <span className="font-medium" style={{ color: '#f59e0b' }}>{toTitleCase(pt.priority)}: </span>
+                      <span className="font-medium" style={{ color: 'var(--color-amber500-text)' }}>{toTitleCase(pt.priority)}: </span>
                       {pt.lever}
                     </p>
                     {pt.script && (
@@ -396,7 +396,7 @@ const OfferModal: React.FC<{
                       </p>
                     )}
                     {pt.expectedImprovement && (
-                      <p className="text-[10px] mt-0.5" style={{ color: '#10b981' }}>
+                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-emerald-text)' }}>
                         Expected: {pt.expectedImprovement}
                       </p>
                     )}
@@ -485,7 +485,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
   }
 
   const strategyColors = STRATEGY_COLORS[synthesis.overallStrategy] ?? STRATEGY_COLORS.PROTECT_AND_WAIT;
-  const urgencyColor = URGENCY_COLORS[synthesis.urgencyLevel] ?? '#f59e0b';
+  const urgencyColor = URGENCY_COLORS[synthesis.urgencyLevel] ?? 'var(--color-amber500-text)';
   const allActions = (synthesis.phases ?? []).flatMap((p: StrategicPlan) => p.actions);
   const completedCount = allActions.filter((a: StrategyAction) => completedIds.has(a.id)).length;
   const progressPct = allActions.length > 0 ? Math.round((completedCount / allActions.length) * 100) : 0;
@@ -564,14 +564,14 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         const leadership = (result as any).leadershipTransitionRisk;
         const alerts: Array<{ icon: string; text: string; color: string }> = [];
 
-        if (careerVel?.plateauRisk === 'HIGH') alerts.push({ icon: '⚠', text: `Your growth has slowed — ${careerVel.promotionNote?.split('.')[0]}`, color: '#f59e0b' });
+        if (careerVel?.plateauRisk === 'HIGH') alerts.push({ icon: '⚠', text: `Your growth has slowed — ${careerVel.promotionNote?.split('.')[0]}`, color: 'var(--color-amber500-text)' });
         if (compRisk?.cascadeStage === 'PAY_FREEZE' || compRisk?.cascadeStage === 'PAY_CUT' || compRisk?.cascadeStage === 'PRE_LAYOFF') {
-          alerts.push({ icon: '🔴', text: `${compRisk.cascadeStageLabel}`, color: '#ef4444' });
+          alerts.push({ icon: '🔴', text: `${compRisk.cascadeStageLabel}`, color: 'var(--color-red-text)' });
         }
-        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'Your company may be merging or restructuring soon', color: '#ef4444' });
-        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: 'Employees are unhappy — often happens before layoffs', color: '#f59e0b' });
-        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: 'Several leaders have left recently', color: '#f97316' });
-        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'The finance chief left — often happens before layoffs', color: '#ef4444' });
+        if (maRisk?.isInPeakRiskWindow) alerts.push({ icon: '🔴', text: 'Your company may be merging or restructuring soon', color: 'var(--color-red-text)' });
+        if (sentiment?.earlyWarningActive) alerts.push({ icon: '⚠', text: 'Employees are unhappy — often happens before layoffs', color: 'var(--color-amber500-text)' });
+        if (leadership?.vpClusteringAlert === 'ACTIVE') alerts.push({ icon: '⚠', text: 'Several leaders have left recently', color: 'var(--color-orange-text)' });
+        if (leadership?.cfoSignal === 'DEPARTED') alerts.push({ icon: '🔴', text: 'The finance chief left — often happens before layoffs', color: 'var(--color-red-text)' });
 
         if (alerts.length === 0) return null;
         return (
@@ -615,8 +615,8 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
 
         <div className="rounded-xl p-4" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
-            <span className="text-[10px] font-bold tracking-widest" style={{ color: '#10b981' }}>BEST OPPORTUNITY</span>
+            <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />
+            <span className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--color-emerald-text)' }}>BEST OPPORTUNITY</span>
           </div>
           <p className="text-sm leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             {synthesis.singleBiggestOpportunity}
@@ -726,7 +726,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
                   <div className="h-full rounded-full"
                     style={{
                       width: `${pillar.score}%`,
-                      background: pillar.score >= 70 ? '#10b981' : pillar.score >= 45 ? '#f59e0b' : '#ef4444',
+                      background: pillar.score >= 70 ? 'var(--color-emerald-text)' : pillar.score >= 45 ? 'var(--color-amber500-text)' : 'var(--color-red-text)',
                     }} />
                 </div>
                 <span className="text-xs w-8 text-right" style={{ color: 'var(--alpha-text-35)' }}>{pillar.score}</span>
@@ -738,7 +738,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           {confidence.keyStrength && (
             <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
               <p className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>
-                <span className="font-semibold" style={{ color: '#10b981' }}>Key strength ({confidence.keyStrength.name}): </span>
+                <span className="font-semibold" style={{ color: 'var(--color-emerald-text)' }}>Key strength ({confidence.keyStrength.name}): </span>
                 lead with this — it is your strongest readiness pillar.
               </p>
             </div>
@@ -746,7 +746,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
           {confidence.criticalGap && (
             <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
               <p className="text-xs" style={{ color: 'var(--alpha-text-55)' }}>
-                <span className="font-semibold" style={{ color: '#ef4444' }}>Critical gap ({confidence.criticalGap.name}): </span>
+                <span className="font-semibold" style={{ color: 'var(--color-red-text)' }}>Critical gap ({confidence.criticalGap.name}): </span>
                 {confidence.criticalGap.topAction}
               </p>
             </div>
@@ -768,7 +768,7 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
             <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.singleBiggestRisk}</p>
           </div>
           <div className="rounded-lg p-2.5" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
-            <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: '#10b981' }}>
+            <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'var(--color-emerald-text)' }}>
               <TrendingUp className="w-3 h-3" /> BEST OPPORTUNITY
             </p>
             <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.singleBiggestOpportunity}</p>

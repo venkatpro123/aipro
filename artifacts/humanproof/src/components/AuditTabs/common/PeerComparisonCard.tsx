@@ -112,13 +112,13 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
         className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: '1px solid var(--alpha-bg-06)' }}
       >
-        <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-violet-text)' }} />
+        <Users className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a78bfa' }} />
         <span className="text-[11px] font-black tracking-[0.08em] uppercase" style={{ color: 'var(--alpha-text-55)' }}>
           Peer Risk Comparison
         </span>
         <span
           className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-          style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--color-violet-text)', border: '1px solid rgba(167,139,250,0.25)' }}
+          style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}
         >
           {peers.length} companies
         </span>
@@ -142,7 +142,7 @@ export const PeerComparisonCard: React.FC<PeerComparisonCardProps> = ({ result, 
                   {peer.isCurrentCompany && (
                     <span
                       className="text-[8px] font-black px-1.5 py-0.5 rounded flex-shrink-0"
-                      style={{ background: 'rgba(34,211,238,0.12)', color: 'var(--color-cyan-text)', border: '1px solid rgba(34,211,238,0.25)' }}
+                      style={{ background: 'rgba(34,211,238,0.12)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.25)' }}
                     >
                       YOU
                     </span>

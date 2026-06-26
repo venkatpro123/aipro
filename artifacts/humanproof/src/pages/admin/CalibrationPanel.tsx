@@ -96,16 +96,16 @@ const SECTION_HEADER: React.CSSProperties = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  active:     '#10b981',
-  pending:    '#f59e0b',
+  active:     'var(--color-emerald-text)',
+  pending:    'var(--color-amber500-text)',
   superseded: 'rgba(255,255,255,0.45)',
   rejected:   '#dc2626',
 };
 
 const ALERT_KIND_COLOR: Record<string, string> = {
   auc_regression:           '#dc2626',
-  coverage_divergence:      '#f97316',
-  sample_size_collapse:     '#f59e0b',
+  coverage_divergence:      'var(--color-orange-text)',
+  sample_size_collapse:     'var(--color-amber500-text)',
   cohort_distribution_shift: '#22d3ee',
 };
 
@@ -182,7 +182,7 @@ const VersionsTable: React.FC<{
                     fontSize: 11,
                     fontFamily: 'monospace',
                     background: 'rgba(16,185,129,0.1)',
-                    color: '#10b981',
+                    color: 'var(--color-emerald-text)',
                     border: '1px solid rgba(16,185,129,0.4)',
                     borderRadius: 4,
                     cursor: 'pointer',
@@ -198,7 +198,7 @@ const VersionsTable: React.FC<{
                     fontSize: 11,
                     fontFamily: 'monospace',
                     background: 'rgba(220,38,38,0.1)',
-                    color: '#f87171',
+                    color: 'var(--color-red-text)',
                     border: '1px solid rgba(220,38,38,0.4)',
                     borderRadius: 4,
                     cursor: 'pointer',
@@ -246,7 +246,7 @@ const AlertsPanel: React.FC<{ alerts: DriftAlert[] }> = ({ alerts }) => {
           <tr key={a.id} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
             <td style={{ padding: '6px 8px', color: 'rgba(255,255,255,0.5)' }}>{fmtRelTime(a.created_at)}</td>
             <td style={{ padding: '6px 8px' }}>{a.cohort_scope}</td>
-            <td style={{ padding: '6px 8px', color: ALERT_KIND_COLOR[a.alert_kind] ?? '#f59e0b' }}>{a.alert_kind}</td>
+            <td style={{ padding: '6px 8px', color: ALERT_KIND_COLOR[a.alert_kind] ?? 'var(--color-amber500-text)' }}>{a.alert_kind}</td>
             <td style={{ padding: '6px 8px', color: 'rgba(255,255,255,0.7)' }}>{a.metric_name}</td>
             <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmtNum(a.prior_value)}</td>
             <td style={{ padding: '6px 8px', textAlign: 'right' }}>{fmtNum(a.candidate_value)}</td>
@@ -254,7 +254,7 @@ const AlertsPanel: React.FC<{ alerts: DriftAlert[] }> = ({ alerts }) => {
               style={{
                 padding: '6px 8px',
                 textAlign: 'right',
-                color: (a.delta ?? 0) < 0 ? '#dc2626' : '#10b981',
+                color: (a.delta ?? 0) < 0 ? '#dc2626' : 'var(--color-emerald-text)',
                 fontWeight: 700,
               }}
             >
@@ -316,7 +316,7 @@ const CoverageGrid: React.FC<{ measurements: CoverageMeasurement[] }> = ({ measu
               {nominals.map((n) => {
                 const m = cellFor(scope, n);
                 if (!m) return <td key={n} style={{ padding: '6px 10px', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>—</td>;
-                const color = m.is_misaligned ? '#dc2626' : Math.abs(m.delta_from_nominal) > 0.05 ? '#f59e0b' : '#10b981';
+                const color = m.is_misaligned ? '#dc2626' : Math.abs(m.delta_from_nominal) > 0.05 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
                 return (
                   <td
                     key={n}
@@ -423,7 +423,7 @@ const CalibrationPanel: React.FC = () => {
         <div style={{ ...PANEL, borderColor: 'rgba(220,38,38,0.4)' }}>
           <div style={SECTION_HEADER}>partial load</div>
           {errors.map((e, i) => (
-            <div key={i} style={{ color: '#f87171', fontSize: 12, fontFamily: 'monospace' }}>
+            <div key={i} style={{ color: 'var(--color-red-text)', fontSize: 12, fontFamily: 'monospace' }}>
               {e}
             </div>
           ))}

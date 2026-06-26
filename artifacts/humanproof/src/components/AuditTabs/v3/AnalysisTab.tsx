@@ -119,7 +119,7 @@ const IntelligenceBriefBlock: React.FC<{
             </span>
           </div>
           {interimSummary && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: 'var(--color-cyan-text)', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
+            <span className="text-[10px] font-black px-2 py-0.5 rounded" style={{ background: 'rgba(0,212,224,0.10)', color: '#22d3ee', border: '1px solid rgba(0,212,224,0.25)', fontFamily: 'var(--font-mono)' }}>
               SIGNAL SUMMARY
             </span>
           )}
@@ -325,8 +325,8 @@ const MiniGaugeRange: React.FC<{
         className="flex items-center gap-1 px-1.5 py-0.5 rounded"
         style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)' }}
       >
-        <AlertOctagon className="w-2.5 h-2.5" style={{ color: 'var(--color-amber-text)' }} />
-        <span className="text-[10px] font-bold" style={{ color: 'var(--color-amber-text)' }}>RANGE</span>
+        <AlertOctagon className="w-2.5 h-2.5" style={{ color: '#fbbf24' }} />
+        <span className="text-[10px] font-bold" style={{ color: '#fbbf24' }}>RANGE</span>
       </div>
       <p className="text-[11px] font-bold text-center" style={{ color: 'var(--alpha-text-85)' }}>{label}</p>
       <p className="text-[10px] text-center" style={{ color: 'var(--alpha-text-45)' }}>{sublabel}</p>
@@ -363,7 +363,7 @@ const DualGaugePanel: React.FC<{
     if (riskScore >= 45 && (pScore ?? 0) < 45)
       return { label: 'Needs Attention', color: '#f59e0b', desc: 'Moderate risk and low readiness — close the readiness gap before risk escalates' };
     if (riskScore >= 45 && (pScore ?? 0) >= 65)
-      return { label: 'Risk Offset',     color: 'var(--color-cyan-text)', desc: 'Moderate risk but high readiness offsets it — maintain your preparation edge' };
+      return { label: 'Risk Offset',     color: '#22d3ee', desc: 'Moderate risk but high readiness offsets it — maintain your preparation edge' };
     if (riskScore < 45 && (pScore ?? 0) >= 65)
       return { label: 'Well Positioned', color: '#10b981', desc: 'Low risk + high readiness — leverage this window to grow' };
     if (riskScore < 35)
@@ -690,7 +690,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           subtitle="Competing signals detected — how the AI resolved them"
           icon={Zap}
           tier={2}
-          accentColor="#f59e0b"
+          accentColor='#f59e0b'
           defaultOpen={r.signalContradictions.overallTrustLevel === 'VERY_LOW' || r.signalContradictions.overallTrustLevel === 'LOW'}
           badge={r.signalContradictions.hasMaterialUncertainty ? `±${r.signalContradictions.netUncertaintyPoints} pts` : undefined}
           badgeColor={r.signalContradictions.overallTrustLevel === 'VERY_LOW' ? '#dc2626' : '#f97316'}
@@ -720,7 +720,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           subtitle="30 / 90 / 180-day score forecasts with confidence intervals"
           icon={Compass}
           tier={3}
-          accentColor="#f59e0b"
+          accentColor='#f59e0b'
           defaultOpen={false}
           badge={horizon.groundTruthOverride ? 'WARN OVERRIDE' : undefined}
           badgeColor={horizon.groundTruthOverride ? '#dc2626' : undefined}
@@ -736,7 +736,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
           subtitle="Bear / base / bull outcomes — tap a scenario to see its recommended actions"
           icon={Activity}
           tier={3}
-          accentColor="#f59e0b"
+          accentColor='#f59e0b'
           defaultOpen={false}
         >
           <ScenarioExplorer
@@ -752,7 +752,7 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
         subtitle="How AI adoption will likely affect your role over the next 6 years"
         icon={AlertOctagon}
         tier={3}
-        accentColor="#f97316"
+        accentColor='#f97316'
         defaultOpen={false}
       >
         <DisplacementTrajectoryPanel

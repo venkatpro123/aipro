@@ -29,16 +29,16 @@ interface Props {
 }
 
 const TREND_CONFIG = {
-  rising:    { color: '#10b981', icon: '↑', label: 'Growing'   },
+  rising:    { color: 'var(--color-emerald-text)', icon: '↑', label: 'Growing'   },
   stable:    { color: '#94a3b8', icon: '→', label: 'Stable'    },
-  declining: { color: '#f97316', icon: '↓', label: 'Declining' },
+  declining: { color: 'var(--color-orange-text)', icon: '↓', label: 'Declining' },
   collapsing:{ color: '#dc2626', icon: '↓↓','label': 'Collapsing' },
 };
 
 const HEALTH_CONFIG = {
-  current:  { color: '#10b981', label: 'CURRENT STACK',  desc: 'Your tech stack is in good shape' },
-  aging:    { color: '#f59e0b', label: 'AGING STACK',    desc: '1–2 technologies need modernization' },
-  at_risk:  { color: '#f97316', label: 'AT RISK',        desc: 'Multiple technologies are declining' },
+  current:  { color: 'var(--color-emerald-text)', label: 'CURRENT STACK',  desc: 'Your tech stack is in good shape' },
+  aging:    { color: 'var(--color-amber500-text)', label: 'AGING STACK',    desc: '1–2 technologies need modernization' },
+  at_risk:  { color: 'var(--color-orange-text)', label: 'AT RISK',        desc: 'Multiple technologies are declining' },
   critical: { color: '#dc2626', label: 'CRITICAL',       desc: 'Core tech is becoming obsolete' },
 };
 

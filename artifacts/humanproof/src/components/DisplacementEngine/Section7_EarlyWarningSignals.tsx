@@ -9,11 +9,11 @@ interface Props {
 }
 
 const WAVE_STAGES: { key: WaveStatus; label: string; color: string; shortDesc: string }[] = [
-  { key: 'EARLY',        label: 'EARLY',        color: '#10b981', shortDesc: 'Limited deployment' },
+  { key: 'EARLY',        label: 'EARLY',        color: 'var(--color-emerald-text)', shortDesc: 'Limited deployment' },
   { key: 'BUILDING',     label: 'BUILDING',     color: 'var(--color-cyan-text)', shortDesc: 'Tools emerging' },
-  { key: 'ACCELERATING', label: 'ACCELERATING', color: '#f59e0b', shortDesc: 'Rapid adoption' },
-  { key: 'INFLECTION',   label: 'INFLECTION',   color: '#f97316', shortDesc: 'Restructuring begins' },
-  { key: 'ACTIVE',       label: 'ACTIVE',       color: '#ef4444', shortDesc: 'Threshold crossed' },
+  { key: 'ACCELERATING', label: 'ACCELERATING', color: 'var(--color-amber500-text)', shortDesc: 'Rapid adoption' },
+  { key: 'INFLECTION',   label: 'INFLECTION',   color: 'var(--color-orange-text)', shortDesc: 'Restructuring begins' },
+  { key: 'ACTIVE',       label: 'ACTIVE',       color: 'var(--color-red-text)', shortDesc: 'Threshold crossed' },
 ];
 
 const STAGE_IDX: Record<WaveStatus, number> = {

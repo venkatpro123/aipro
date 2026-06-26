@@ -11,15 +11,15 @@ interface CareerConfidencePanelProps {
 }
 
 const TIER_STYLE: Record<string, { color: string; bg: string; border: string; icon: React.ReactNode }> = {
-  READY:        { color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)', icon: <CheckCircle className="w-4 h-4" style={{ color: '#10b981' }} /> },
+  READY:        { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)', icon: <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-emerald-text)' }} /> },
   MOSTLY_READY: { color: 'var(--color-cyan-text)', bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.22)',  icon: <CheckCircle className="w-4 h-4" style={{ color: 'var(--color-cyan-text)' }} /> },
-  PREPARING:    { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)', icon: <Clock className="w-4 h-4" style={{ color: '#f59e0b' }} /> },
-  UNREADY:      { color: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.25)', icon: <AlertCircle className="w-4 h-4" style={{ color: '#f97316' }} /> },
-  VULNERABLE:   { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)',  icon: <XCircle className="w-4 h-4" style={{ color: '#ef4444' }} /> },
+  PREPARING:    { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)', icon: <Clock className="w-4 h-4" style={{ color: 'var(--color-amber500-text)' }} /> },
+  UNREADY:      { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.25)', icon: <AlertCircle className="w-4 h-4" style={{ color: 'var(--color-orange-text)' }} /> },
+  VULNERABLE:   { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.30)',  icon: <XCircle className="w-4 h-4" style={{ color: 'var(--color-red-text)' }} /> },
 };
 
 const pillarBarColor = (score: number) =>
-  score >= 70 ? '#10b981' : score >= 45 ? '#f59e0b' : '#ef4444';
+  score >= 70 ? 'var(--color-emerald-text)' : score >= 45 ? 'var(--color-amber500-text)' : 'var(--color-red-text)';
 
 const PillarRow: React.FC<{ pillar: ReadinessPillar; index: number }> = ({ pillar, index }) => (
   <motion.div
@@ -89,7 +89,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       {/* Critical gap */}
       {confidence.criticalGap && (
         <div className="rounded-xl p-3 mb-3" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}>
-          <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: '#ef4444' }}>CRITICAL GAP</p>
+          <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: 'var(--color-red-text)' }}>CRITICAL GAP</p>
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--alpha-text-85)' }}>
             {confidence.criticalGap.name}
           </p>
@@ -103,7 +103,7 @@ const CareerConfidencePanel: React.FC<CareerConfidencePanelProps> = ({ confidenc
       {/* Key strength */}
       {confidence.keyStrength && (
         <div className="rounded-xl p-3 mb-3" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.18)' }}>
-          <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: '#10b981' }}>KEY STRENGTH</p>
+          <p className="text-[10px] font-bold tracking-wider mb-1" style={{ color: 'var(--color-emerald-text)' }}>KEY STRENGTH</p>
           <p className="text-xs" style={{ color: 'var(--alpha-text-70)' }}>
             <span className="font-semibold">{confidence.keyStrength.name}: </span>
             {confidence.keyStrength.topAction.slice(0, 120)}

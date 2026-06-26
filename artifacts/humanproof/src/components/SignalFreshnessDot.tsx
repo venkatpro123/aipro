@@ -17,9 +17,9 @@ interface Props {
 }
 
 const COLOR_BY_CLASS: Record<SignalFreshnessClass, string> = {
-  fresh: '#10b981', // emerald
-  mid:   '#f59e0b', // amber
-  stale: '#ef4444', // red
+  fresh: 'var(--color-emerald-text)', // emerald
+  mid:   'var(--color-amber500-text)', // amber
+  stale: 'var(--color-red-text)', // red
 };
 
 const ageLabel = (lastUpdated?: string | null): string => {

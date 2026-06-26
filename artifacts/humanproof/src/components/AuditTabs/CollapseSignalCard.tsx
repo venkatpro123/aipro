@@ -230,9 +230,9 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
               border: '1px solid rgba(220,38,38,0.25)',
             }}
           >
-            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#ef4444' }} />
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-red-text)' }} />
             <div style={{ flex: 1 }}>
-              <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: '#ef4444' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: 'var(--color-red-text)' }}>
                 Stealth Layoff Pattern
               </p>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
@@ -283,10 +283,10 @@ export const CollapseSignalCard: React.FC<CollapseSignalCardProps> = ({
             </div>
             <div className="space-y-1.5">
               {report.departmentRisks.slice(0, 5).map(dept => {
-                const barColor = dept.freezeScore >= 80 ? '#ef4444'
-                  : dept.freezeScore >= 55 ? '#f97316'
-                  : dept.freezeScore >= 30 ? '#f59e0b'
-                  : '#10b981';
+                const barColor = dept.freezeScore >= 80 ? 'var(--color-red-text)'
+                  : dept.freezeScore >= 55 ? 'var(--color-orange-text)'
+                  : dept.freezeScore >= 30 ? 'var(--color-amber500-text)'
+                  : 'var(--color-emerald-text)';
                 return (
                   <div key={dept.department} className="flex items-center gap-2">
                     <span

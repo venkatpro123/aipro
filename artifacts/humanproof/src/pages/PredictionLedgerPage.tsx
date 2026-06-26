@@ -567,18 +567,18 @@ const VALIDATED_RETROACTIVE = RETROACTIVE_PREDICTIONS.filter(entry => {
 const ALL_PREDICTIONS = [...PREDICTIONS, ...VALIDATED_RETROACTIVE];
 
 const STATUS_CONFIG: Record<PredictionStatus, { color: string; bg: string; label: string; Icon: typeof CheckCircle }> = {
-  confirmed: { color: '#10b981', bg: 'rgba(16,185,129,0.1)', label: '✓ Confirmed', Icon: CheckCircle },
-  pending:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  label: '⏳ Pending',   Icon: Clock },
+  confirmed: { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.1)', label: '✓ Confirmed', Icon: CheckCircle },
+  pending:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.1)',  label: '⏳ Pending',   Icon: Clock },
   monitoring:{ color: '#3b82f6', bg: 'rgba(59,130,246,0.1)', label: '👁 Monitoring', Icon: Shield },
   refuted:   { color: '#6b7280', bg: 'rgba(107,114,128,0.1)', label: '✗ Refuted',  Icon: AlertTriangle },
 };
 
 const STAGE_COLORS: Record<RiskStage, string> = {
-  'Stage 1': '#f59e0b',
-  'Stage 2': '#f97316',
-  'Stage 3': '#ef4444',
-  'High Risk': '#ef4444',
-  'Elevated Risk': '#f97316',
+  'Stage 1': 'var(--color-amber500-text)',
+  'Stage 2': 'var(--color-orange-text)',
+  'Stage 3': 'var(--color-red-text)',
+  'High Risk': 'var(--color-red-text)',
+  'Elevated Risk': 'var(--color-orange-text)',
 };
 
 function formatDate(iso: string): string {
@@ -661,7 +661,7 @@ export default function PredictionLedgerPage() {
                 <strong style={{ color: 'var(--text-1)' }}>{confirmedForward.length} confirmed</strong>{' '}
                 of{' '}
                 <strong style={{ color: 'var(--text-1)' }}>{completedForward} completed</strong>{' '}
-                (<strong style={{ color: forwardAccuracy >= 75 ? '#10b981' : forwardAccuracy < 60 ? '#f59e0b' : 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>{forwardAccuracy}% accuracy</strong>).{' '}
+                (<strong style={{ color: forwardAccuracy >= 75 ? 'var(--color-emerald-text)' : forwardAccuracy < 60 ? 'var(--color-amber500-text)' : 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>{forwardAccuracy}% accuracy</strong>).{' '}
                 <span style={{ color: 'var(--text-3)' }}>
                   {monitoringForward.length} prediction{monitoringForward.length !== 1 ? 's' : ''} currently monitoring.
                 </span>
@@ -670,7 +670,7 @@ export default function PredictionLedgerPage() {
                     display: 'inline-block', marginLeft: 10,
                     padding: '2px 9px', borderRadius: 5, fontSize: '0.75rem', fontWeight: 800,
                     background: forwardAccuracy >= 75 ? 'rgba(16,185,129,0.12)' : forwardAccuracy < 60 ? 'rgba(245,158,11,0.12)' : 'rgba(59,130,246,0.10)',
-                    color: forwardAccuracy >= 75 ? '#10b981' : forwardAccuracy < 60 ? '#f59e0b' : 'var(--text-2)',
+                    color: forwardAccuracy >= 75 ? 'var(--color-emerald-text)' : forwardAccuracy < 60 ? 'var(--color-amber500-text)' : 'var(--text-2)',
                     border: `1px solid ${forwardAccuracy >= 75 ? 'rgba(16,185,129,0.25)' : forwardAccuracy < 60 ? 'rgba(245,158,11,0.30)' : 'rgba(59,130,246,0.20)'}`,
                   }}>
                     {forwardAccuracy >= 75 ? '✓ Model validated' : forwardAccuracy < 60 ? '⚠ Model under review.' : 'Model tracking'}
@@ -717,7 +717,7 @@ export default function PredictionLedgerPage() {
                     : 'rgba(59,130,246,0.08)',
                 border: `1px solid ${forwardAccuracy >= 75 ? 'rgba(16,185,129,0.30)' : forwardAccuracy < 60 ? 'rgba(245,158,11,0.35)' : 'rgba(59,130,246,0.20)'}`,
                 fontSize: '0.72rem',
-                color: forwardAccuracy >= 75 ? '#10b981' : forwardAccuracy < 60 ? '#f59e0b' : 'var(--text-2)',
+                color: forwardAccuracy >= 75 ? 'var(--color-emerald-text)' : forwardAccuracy < 60 ? 'var(--color-amber500-text)' : 'var(--text-2)',
                 fontWeight: 700,
               }}>
                 {forwardAccuracy >= 75
@@ -769,7 +769,7 @@ export default function PredictionLedgerPage() {
                 label: 'Timestamp-verified pre-event',
                 count: provCounts.preEventWithTs,
                 pct:   provPct(provCounts.preEventWithTs),
-                color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: '✓',
+                color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.1)', icon: '✓',
                 desc:  'Pre-event signal with a specific observable date — time-stamped to before the layoff announcement',
               },
               ...(provCounts.preEventNoTs > 0 ? [{
@@ -783,14 +783,14 @@ export default function PredictionLedgerPage() {
                 label: 'Ambiguous (source uncited)',
                 count: provCounts.ambiguous,
                 pct:   provPct(provCounts.ambiguous),
-                color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: '?',
+                color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.1)', icon: '?',
                 desc:  'Directionally correct; no independent pre-event source verified',
               },
               ...(provCounts.hindsight > 0 ? [{
                 label: 'Hindsight (to be removed)',
                 count: provCounts.hindsight,
                 pct:   provPct(provCounts.hindsight),
-                color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: '✗',
+                color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.1)', icon: '✗',
                 desc:  'Only discoverable post-event — entry queued for signal replacement or removal',
               }] : []),
             ].map(({ label, count, pct, color, bg, icon, desc }) => (
@@ -875,9 +875,9 @@ export default function PredictionLedgerPage() {
 
             // Provenance config used to colour per-signal badges
             const PROV_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-              pre_event: { label: 'Pre-event',  color: '#10b981', bg: 'rgba(16,185,129,0.12)', icon: '✓' },
-              ambiguous: { label: 'Ambiguous',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', icon: '?' },
-              hindsight: { label: 'Hindsight',  color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  icon: '✗' },
+              pre_event: { label: 'Pre-event',  color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.12)', icon: '✓' },
+              ambiguous: { label: 'Ambiguous',  color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.12)', icon: '?' },
+              hindsight: { label: 'Hindsight',  color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.12)',  icon: '✗' },
             };
 
             return (
@@ -911,7 +911,7 @@ export default function PredictionLedgerPage() {
                       {isShortLead && (
                         <span
                           title={`Only ${leadDays} day${leadDays === 1 ? '' : 's'} lead time — prediction is near-simultaneous with the event, not a meaningful forecast`}
-                          style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', cursor: 'help' }}
+                          style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.3)', cursor: 'help' }}
                         >
                           {leadDays}D LEAD ⚠
                         </span>
@@ -983,7 +983,7 @@ export default function PredictionLedgerPage() {
                           </div>
                           {/* Lead-time sentence — turns the timestamp into a human-readable trust signal */}
                           {leadTimeSentence && (
-                            <div style={{ marginLeft: 19, fontSize: '0.67rem', color: '#10b981', opacity: 0.85, fontStyle: 'italic' }}>
+                            <div style={{ marginLeft: 19, fontSize: '0.67rem', color: 'var(--color-emerald-text)', opacity: 0.85, fontStyle: 'italic' }}>
                               {leadTimeSentence}
                               {sig.source && (
                                 <span style={{ color: 'var(--text-3)', marginLeft: 4 }}>Source: {sig.source}</span>
@@ -1004,7 +1004,7 @@ export default function PredictionLedgerPage() {
                 {/* Confirmed event */}
                 {pred.status === 'confirmed' && pred.confirmedEvent && (
                   <div style={{ padding: '12px 18px', background: pred.isRetroactive ? 'rgba(107,114,128,0.06)' : 'rgba(16,185,129,0.06)' }}>
-                    <div style={{ fontSize: '0.62rem', color: pred.isRetroactive ? '#9ca3af' : '#10b981', marginBottom: 4, letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.62rem', color: pred.isRetroactive ? '#9ca3af' : 'var(--color-emerald-text)', marginBottom: 4, letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
                       {pred.isRetroactive ? 'Historical Event' : 'Confirmed'} {formatDate(pred.confirmedDate!)}
                       {pred.affectedCount ? ` · ${pred.affectedCount.toLocaleString()} affected` : ''}
                     </div>
@@ -1051,7 +1051,7 @@ export default function PredictionLedgerPage() {
             <strong style={{ color: 'var(--text-2)' }}>Retroactive calibration entries</strong> are drawn from layoffs.fyi historical data to validate that the model's signal patterns correspond to real pre-event indicators. They are excluded from the accuracy rate. A full provenance audit was conducted in April 2026 across all 26 retroactive entries (78 signals): 67% were provably observable before the event, 23% are directionally correct but lack independent source verification, and 8 signals (10%) were identified as hindsight-only and replaced with equivalent observable signals. 5 entries have lead times under 30 days and are flagged as near-simultaneous — they are included for calibration reference but do not constitute advance predictions.
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', lineHeight: 1.75, marginTop: 8 }}>
-            <strong style={{ color: 'var(--text-2)' }}>Signal provenance badges</strong> on each retroactive entry show: <span style={{ color: '#10b981', fontWeight: 700 }}>✓ pre-event</span> (publicly observable and time-stamped before the layoff), <span style={{ color: '#f59e0b', fontWeight: 700 }}>? ambiguous</span> (directionally correct, source not independently verified), and <span style={{ color: '#ef4444', fontWeight: 700 }}>✗ corrected</span> (original signal was hindsight-only — replaced after audit).
+            <strong style={{ color: 'var(--text-2)' }}>Signal provenance badges</strong> on each retroactive entry show: <span style={{ color: 'var(--color-emerald-text)', fontWeight: 700 }}>✓ pre-event</span> (publicly observable and time-stamped before the layoff), <span style={{ color: 'var(--color-amber500-text)', fontWeight: 700 }}>? ambiguous</span> (directionally correct, source not independently verified), and <span style={{ color: 'var(--color-red-text)', fontWeight: 700 }}>✗ corrected</span> (original signal was hindsight-only — replaced after audit).
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', lineHeight: 1.75, marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 10 }}>
             <strong style={{ color: 'var(--text-2)' }}>Accuracy disclosure policy.</strong>{' '}
@@ -1066,8 +1066,8 @@ export default function PredictionLedgerPage() {
             Silence about a model's accuracy is itself an accuracy claim — the implicit claim that the
             number would look bad if stated. Accurate disclosure of a below-target rate is more
             trust-building than silence about a claimed higher rate. When accuracy falls below 60%,
-            a <span style={{ color: '#f59e0b', fontWeight: 700 }}>⚠ Model under review</span> indicator appears.
-            When it exceeds 75%, a <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Model validated</span> indicator appears.
+            a <span style={{ color: 'var(--color-amber500-text)', fontWeight: 700 }}>⚠ Model under review</span> indicator appears.
+            When it exceeds 75%, a <span style={{ color: 'var(--color-emerald-text)', fontWeight: 700 }}>✓ Model validated</span> indicator appears.
           </div>
         </div>
 

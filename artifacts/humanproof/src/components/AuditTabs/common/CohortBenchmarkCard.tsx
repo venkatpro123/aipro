@@ -45,10 +45,10 @@ interface Props {
 }
 
 const CATEGORY_CONFIG = {
-  top_tier:     { color: '#10b981', label: 'TOP TIER' },
+  top_tier:     { color: 'var(--color-emerald-text)', label: 'TOP TIER' },
   competitive:  { color: 'var(--color-cyan-text)', label: 'COMPETITIVE' },
-  average:      { color: '#f59e0b', label: 'AVERAGE' },
-  below_average:{ color: '#f97316', label: 'BELOW AVERAGE' },
+  average:      { color: 'var(--color-amber500-text)', label: 'AVERAGE' },
+  below_average:{ color: 'var(--color-orange-text)', label: 'BELOW AVERAGE' },
   critical:     { color: '#dc2626', label: 'NEEDS WORK' },
 };
 
@@ -135,7 +135,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
         {topEdge && (
           <div className="rounded-lg p-2" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.20)' }}>
             <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />
+              <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />
               <p className="text-[10px] font-bold" style={{ color: 'rgba(16,185,129,0.70)' }}>YOU LEAD</p>
             </div>
             <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{topEdge}</p>
@@ -144,7 +144,7 @@ export const CohortBenchmarkCard: React.FC<Props> = ({ competitivePosition }) =>
         {topGap && (
           <div className="rounded-lg p-2" style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.20)' }}>
             <div className="flex items-center gap-1 mb-1">
-              <TrendingDown className="w-3 h-3" style={{ color: '#f97316' }} />
+              <TrendingDown className="w-3 h-3" style={{ color: 'var(--color-orange-text)' }} />
               <p className="text-[10px] font-bold" style={{ color: 'rgba(249,115,22,0.70)' }}>YOU LAG</p>
             </div>
             <p className="text-[10px]" style={{ color: 'var(--alpha-text-55)' }}>{topGap}</p>

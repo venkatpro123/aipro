@@ -40,7 +40,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
   const diff = scenarioResult ? scenarioResult.score - currentScore : 0;
 
   const getTierHex = (c: string) => {
-    const map: Record<string, string> = { red: '#ef4444', orange: '#f97316', amber: '#f59e0b', green: '#10b981', teal: '#14b8a6' };
+    const map: Record<string, string> = { red: 'var(--color-red-text)', orange: 'var(--color-orange-text)', amber: 'var(--color-amber500-text)', green: 'var(--color-emerald-text)', teal: '#14b8a6' };
     return map[c] || '#14b8a6';
   };
 
@@ -136,7 +136,7 @@ export const LayoffScenarioPanel: React.FC<Props> = ({ baseInputs, currentScore,
           padding: '16px',
           background: 'var(--alpha-bg-06)',
           borderRadius: '8px',
-          borderLeft: `4px solid ${diff > 0 ? '#ef4444' : diff < 0 ? '#10b981' : '#9ba5b4'}`
+          borderLeft: `4px solid ${diff > 0 ? 'var(--color-red-text)' : diff < 0 ? 'var(--color-emerald-text)' : '#9ba5b4'}`
         }}>
         <h4 style={{ margin: '0 0 8px', color: 'var(--text)', fontSize: '1.1rem' }}>
             New Scenario Risk: <span style={{ color: getTierHex(scenarioResult.tier.color) }}>{scenarioResult.score}%</span>

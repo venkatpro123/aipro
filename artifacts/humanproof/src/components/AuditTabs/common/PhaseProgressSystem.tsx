@@ -83,8 +83,8 @@ const CheckItem: React.FC<{
 }> = ({ action, isCompleted, onToggle, phaseUnlocked }) => {
   const priorityColor =
     action.priority === 'Critical' ? '#dc2626' :
-    action.priority === 'High'     ? '#f97316' :
-    action.priority === 'Medium'   ? '#f59e0b' : '#10b981';
+    action.priority === 'High'     ? 'var(--color-orange-text)' :
+    action.priority === 'Medium'   ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
 
   return (
     <motion.div
@@ -109,8 +109,8 @@ const CheckItem: React.FC<{
         <motion.div
           className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
           animate={{
-            borderColor: isCompleted ? '#10b981' : `${priorityColor}50`,
-            background:  isCompleted ? '#10b981' : 'transparent',
+            borderColor: isCompleted ? 'var(--color-emerald-text)' : `${priorityColor}50`,
+            background:  isCompleted ? 'var(--color-emerald-text)' : 'transparent',
             scale: isCompleted ? [1, 1.22, 1.0] : 1,
           }}
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
@@ -175,8 +175,8 @@ const CheckItem: React.FC<{
 
 const PHASE_CONFIG = {
   1: { label: 'THIS WEEK',    icon: Zap,      accent: '#dc2626', desc: 'Critical foundation'    },
-  2: { label: 'THIS MONTH',   icon: Calendar, accent: '#f97316', desc: 'Build momentum'          },
-  3: { label: 'THIS QUARTER', icon: BarChart3, accent: '#f59e0b', desc: 'Strategic positioning'  },
+  2: { label: 'THIS MONTH',   icon: Calendar, accent: 'var(--color-orange-text)', desc: 'Build momentum'          },
+  3: { label: 'THIS QUARTER', icon: BarChart3, accent: 'var(--color-amber500-text)', desc: 'Strategic positioning'  },
 };
 
 const PhaseBlock: React.FC<{
@@ -264,7 +264,7 @@ const PhaseBlock: React.FC<{
             </span>
             {isComplete && (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{ background: 'rgba(16,185,129,0.18)', color: '#10b981' }}>
+                style={{ background: 'rgba(16,185,129,0.18)', color: 'var(--color-emerald-text)' }}>
                 <Check size={10} strokeWidth={2.5} />DONE
               </span>
             )}
@@ -466,9 +466,9 @@ export const PhaseProgressSystem: React.FC<Props> = ({ actions, companyName, onA
             className="rounded-xl px-3 py-2.5 flex items-center gap-2"
             style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.20)' }}
           >
-            <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />
+            <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black tracking-wide" style={{ color: '#10b981' }}>Action completed</p>
+              <p className="text-[10px] font-black tracking-wide" style={{ color: 'var(--color-emerald-text)' }}>Action completed</p>
               {nextNudge.next && (
                 <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-55)' }}>
                   Next priority:{' '}

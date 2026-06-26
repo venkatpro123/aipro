@@ -91,7 +91,7 @@ function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp:
       week: "Week 1",
       title: "Financial Preparation",
       Icon: DollarSign,
-      color: "#ef4444",
+      color: 'var(--color-red-text)',
       milestone: needsConservativeAdaptation
         ? "Emergency fund plan documented. No resignation under any circumstances."
         : "Emergency fund documented. Monthly burn calculated. One person notified.",
@@ -101,7 +101,7 @@ function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp:
       week: "Week 2",
       title: "Profile Activation",
       Icon: UserCheck,
-      color: "#f97316",
+      color: 'var(--color-orange-text)',
       milestone: "CV with impact bullets ready. 5 warm outreach emails sent.",
       actions: [
         {
@@ -130,7 +130,7 @@ function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp:
       week: "Weeks 3–4",
       title: "Parallel Pursuit",
       Icon: Send,
-      color: "#f59e0b",
+      color: 'var(--color-amber500-text)',
       milestone: "6+ targeted applications submitted. First interview scheduled.",
       actions: [
         {
@@ -161,7 +161,7 @@ function buildWeekPlan(companyName: string, _roleKey: string, score: number, fp:
       week: "Weeks 5–6",
       title: "Consolidation",
       Icon: TrendingUp,
-      color: "#10b981",
+      color: 'var(--color-emerald-text)',
       milestone: "Offer in hand OR 3+ active conversations. Pipeline expanding if needed.",
       actions: [
         {

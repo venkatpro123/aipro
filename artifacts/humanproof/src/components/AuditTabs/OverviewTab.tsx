@@ -270,19 +270,19 @@ const VerdictBadge: React.FC<{ score: number }> = ({ score }) => {
     Icon: typeof Shield; dotColor: string;
   }> = {
     'Critical risk': {
-      color: '#fff', gradStart: '#ef4444', gradEnd: '#b91c1c',
+      color: '#fff', gradStart: 'var(--color-red-text)', gradEnd: '#b91c1c',
       glow: '0 0 32px rgba(239,68,68,0.45)', Icon: Zap, dotColor: '#fca5a5',
     },
     'High risk': {
-      color: '#fff', gradStart: '#f97316', gradEnd: '#c2410c',
+      color: '#fff', gradStart: 'var(--color-orange-text)', gradEnd: '#c2410c',
       glow: '0 0 32px rgba(249,115,22,0.40)', Icon: Zap, dotColor: '#fdba74',
     },
     'Moderate risk': {
-      color: '#fff', gradStart: '#f59e0b', gradEnd: '#b45309',
+      color: '#fff', gradStart: 'var(--color-amber500-text)', gradEnd: '#b45309',
       glow: '0 0 28px rgba(245,158,11,0.35)', Icon: AlertTriangle, dotColor: '#fcd34d',
     },
     'Low risk': {
-      color: '#fff', gradStart: '#10b981', gradEnd: '#047857',
+      color: '#fff', gradStart: 'var(--color-emerald-text)', gradEnd: '#047857',
       glow: '0 0 28px rgba(16,185,129,0.35)', Icon: Shield, dotColor: '#6ee7b7',
     },
   };
@@ -520,7 +520,7 @@ const QuickStatsRow: React.FC<{
 };
 
 const InactionPanel: React.FC<{ scenario: string; score: number }> = ({ scenario, score }) => {
-  const color = score >= 70 ? '#ef4444' : score >= 50 ? '#f59e0b' : '#00d4e0';
+  const color = score >= 70 ? 'var(--color-red-text)' : score >= 50 ? 'var(--color-amber500-text)' : '#00d4e0';
   const title = score >= 70 ? '⚠ What Happens If You Do Nothing'
     : score >= 50 ? '⏳ The Cost of Waiting'
     : 'ℹ Monitoring Recommendation';
@@ -576,7 +576,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
       score: brief.topRiskDriver.score,
       pct: brief.topRiskDriver.percentOfTotal,
       text: brief.topRiskDriver.naturalLanguage,
-      color: '#ef4444',
+      color: 'var(--color-red-text)',
       gradBg: 'rgba(239,68,68,0.07)',
       border: 'rgba(239,68,68,0.20)',
       icon: '🔴',
@@ -588,7 +588,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
       score: brief.topProtectiveFactor.score,
       pct: brief.topProtectiveFactor.percentOfTotal,
       text: brief.topProtectiveFactor.naturalLanguage,
-      color: '#10b981',
+      color: 'var(--color-emerald-text)',
       gradBg: 'rgba(16,185,129,0.07)',
       border: 'rgba(16,185,129,0.20)',
       icon: '🟢',
@@ -601,7 +601,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
       pct: null,
       text: brief.mostVolatileSignal.reason,
       extra: brief.mostVolatileSignal.currentValue,
-      color: '#f59e0b',
+      color: 'var(--color-amber500-text)',
       gradBg: 'rgba(245,158,11,0.07)',
       border: 'rgba(245,158,11,0.20)',
       icon: '⚡',
@@ -719,7 +719,7 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
 
   const isAmplified = temporal.currentAmplifier > 1.04;
   const isDampened  = temporal.currentAmplifier < 0.96;
-  const accentColor = isAmplified ? '#ef4444' : isDampened ? '#10b981' : 'var(--text-3)';
+  const accentColor = isAmplified ? 'var(--color-red-text)' : isDampened ? 'var(--color-emerald-text)' : 'var(--text-3)';
 
   // Build CalendarHeatmap month entries from riskCalendar
   const now = new Date();
@@ -760,13 +760,13 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         </span>
         {isAmplified && (
           <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold"
-            style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.30)' }}>
+            style={{ background: 'rgba(239,68,68,0.15)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.30)' }}>
             ×{temporal.currentAmplifier.toFixed(2)} NOW
           </span>
         )}
         {isDampened && (
           <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold"
-            style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}>
+            style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.30)' }}>
             ×{temporal.currentAmplifier.toFixed(2)} SAFE
           </span>
         )}
@@ -787,7 +787,7 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
           <div>
             <div className="data-label mb-1">Peak Month</div>
-            <div className="text-xs font-bold" style={{ color: temporal.peakAmplifier > 1.10 ? '#ef4444' : '#f59e0b' }}>
+            <div className="text-xs font-bold" style={{ color: temporal.peakAmplifier > 1.10 ? 'var(--color-red-text)' : 'var(--color-amber500-text)' }}>
               {temporal.peakRiskMonth?.split(' ')[0] ?? '—'}
             </div>
             <div className="data-label" style={{ opacity: 0.5 }}>×{temporal.peakAmplifier?.toFixed(2)}</div>
@@ -795,7 +795,7 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
           {temporal.nextDangerWindow && (
             <div>
               <div className="data-label mb-1">Next Window</div>
-              <div className="text-xs font-bold" style={{ color: '#f59e0b' }}>
+              <div className="text-xs font-bold" style={{ color: 'var(--color-amber500-text)' }}>
                 {temporal.nextDangerWindow.startsInDays < 30
                   ? `${temporal.nextDangerWindow.startsInDays}d`
                   : `${Math.round(temporal.nextDangerWindow.startsInDays / 30)}mo`}
@@ -806,7 +806,7 @@ const TemporalRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
           {temporal.safeWindows?.length > 0 && (
             <div>
               <div className="data-label mb-1">Best to Move</div>
-              <div className="text-xs font-bold" style={{ color: '#10b981' }}>
+              <div className="text-xs font-bold" style={{ color: 'var(--color-emerald-text)' }}>
                 {temporal.safeWindows[0]?.split(' ')[0] ?? '—'}
               </div>
               <div className="data-label" style={{ opacity: 0.5 }}>low risk</div>
@@ -838,7 +838,7 @@ const ProtectionBufferCard: React.FC<{ buffer: ProtectionBufferResult }> = ({ bu
 
   // Visual accent: green gradient for high protection, amber for moderate
   const isHighProtection = pct >= 40;
-  const accentColor    = isHighProtection ? '#10b981' : '#f59e0b';
+  const accentColor    = isHighProtection ? 'var(--color-emerald-text)' : 'var(--color-amber500-text)';
   const accentBg       = isHighProtection ? 'rgba(16,185,129,0.08)' : 'rgba(245,158,11,0.06)';
   const accentBorder   = isHighProtection ? 'rgba(16,185,129,0.22)' : 'rgba(245,158,11,0.20)';
   const accentBadgeBg  = isHighProtection ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.14)';
@@ -1028,10 +1028,10 @@ const JobMarketLiquidityPanel: React.FC<{ result: HybridResult }> = ({ result })
   if (!liq) return null;
 
   const tierColors = {
-    Fast:       '#10b981',
-    Moderate:   '#f59e0b',
-    Slow:       '#f97316',
-    'Very Slow':'#ef4444',
+    Fast:       'var(--color-emerald-text)',
+    Moderate:   'var(--color-amber500-text)',
+    Slow:       'var(--color-orange-text)',
+    'Very Slow':'var(--color-red-text)',
   } as Record<string, string>;
   const color = tierColors[liq.tier] ?? '#94a3b8';
   const trendIcon = liq.marketDemandTrend === 'rising'
@@ -1140,7 +1140,7 @@ const EscapePathsPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
   const report = (result as any).escapePaths as EscapePathReport | undefined;
   if (!report || report.paths.length === 0) return null;
 
-  const effortColors = { Low: '#10b981', Medium: '#f59e0b', High: '#ef4444' };
+  const effortColors = { Low: 'var(--color-emerald-text)', Medium: 'var(--color-amber500-text)', High: 'var(--color-red-text)' };
   const scoreColor = getScoreColor(result.total);
 
   return (
@@ -1306,8 +1306,8 @@ const ScoreSensitivityPanel: React.FC<{ result: HybridResult }> = ({ result }) =
         <div className="space-y-2">
           {top3.map((lever: any, idx: number) => {
             const barWidth = Math.min(100, (lever.scoreDropIfImproved / (top3[0].scoreDropIfImproved || 1)) * 100);
-            const feasibilityColor = lever.feasibility === 'immediate' ? '#10b981'
-              : lever.feasibility === 'short_term' ? '#f59e0b'
+            const feasibilityColor = lever.feasibility === 'immediate' ? 'var(--color-emerald-text)'
+              : lever.feasibility === 'short_term' ? 'var(--color-amber500-text)'
               : '#64748b';
             return (
               <div key={lever.dimension} className="rounded-lg border border-[var(--alpha-bg-06)] p-2.5 bg-[var(--alpha-bg-01)]">
@@ -1362,10 +1362,10 @@ const DepartmentRiskPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
 
   const riskScore = deptRisk.D9ScoreDisplay;
   // Raw hex required for hex-alpha backgrounds/borders
-  const riskColor = riskScore >= 70 ? '#ef4444'
-    : riskScore >= 50 ? '#f59e0b'
+  const riskColor = riskScore >= 70 ? 'var(--color-red-text)'
+    : riskScore >= 50 ? 'var(--color-amber500-text)'
     : riskScore >= 30 ? '#94a3b8'
-    : '#10b981';
+    : 'var(--color-emerald-text)';
 
   return (
     <motion.div
@@ -1427,8 +1427,8 @@ const SurvivalProbabilityPanel: React.FC<{ result: HybridResult }> = ({ result }
   const pct1m  = Math.round(sp.probability1m * 100);
 
   const tierColors: Record<string, string> = {
-    CRITICAL: '#ef4444', HIGH: '#f97316', ELEVATED: '#f59e0b',
-    MODERATE: '#00d4e0', LOW: '#10b981', MINIMAL: '#6ee7b7',
+    CRITICAL: 'var(--color-red-text)', HIGH: 'var(--color-orange-text)', ELEVATED: 'var(--color-amber500-text)',
+    MODERATE: '#00d4e0', LOW: 'var(--color-emerald-text)', MINIMAL: '#6ee7b7',
   };
   const color = tierColors[sp.riskTier] ?? '#94a3b8';
 
@@ -1508,11 +1508,11 @@ const SignalContradictionPanel: React.FC<{ result: HybridResult }> = ({ result }
   if (!report || report.totalContradictions === 0) return null;
 
   const trustColors: Record<string, string> = {
-    HIGH: '#10b981', MEDIUM: '#f59e0b', LOW: '#f97316', VERY_LOW: '#ef4444',
+    HIGH: 'var(--color-emerald-text)', MEDIUM: 'var(--color-amber500-text)', LOW: 'var(--color-orange-text)', VERY_LOW: 'var(--color-red-text)',
   };
-  const color = trustColors[report.overallTrustLevel] ?? '#f59e0b';
+  const color = trustColors[report.overallTrustLevel] ?? 'var(--color-amber500-text)';
   const severityColors: Record<string, string> = {
-    low: '#94a3b8', medium: '#f59e0b', high: '#f97316', critical: '#ef4444',
+    low: '#94a3b8', medium: 'var(--color-amber500-text)', high: 'var(--color-orange-text)', critical: 'var(--color-red-text)',
   };
 
   return (
@@ -1532,7 +1532,7 @@ const SignalContradictionPanel: React.FC<{ result: HybridResult }> = ({ result }
         </span>
         {report.hasMaterialUncertainty && (
           <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
-            style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }}>
+            style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.22)' }}>
             ±{report.netUncertaintyPoints}pt uncertainty
           </span>
         )}
@@ -1594,8 +1594,8 @@ const HiringSignalPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
   if (!hs || hs.riskPattern === 'NO_SIGNAL') return null;
 
   const riskColors: Record<string, string> = {
-    CRITICAL: '#ef4444', HIGH: '#f97316', ELEVATED: '#f59e0b',
-    MODERATE: '#00d4e0', LOW: '#10b981', POSITIVE: '#6ee7b7',
+    CRITICAL: 'var(--color-red-text)', HIGH: 'var(--color-orange-text)', ELEVATED: 'var(--color-amber500-text)',
+    MODERATE: '#00d4e0', LOW: 'var(--color-emerald-text)', POSITIVE: '#6ee7b7',
   };
   const color = riskColors[hs.riskLevel] ?? '#94a3b8';
 
@@ -1662,12 +1662,12 @@ const CareerResiliencePanel: React.FC<{ result: HybridResult }> = ({ result }) =
   if (!resilience) return null;
 
   const classColors: Record<string, string> = {
-    FORTRESS: '#10b981', RESILIENT: '#00d4e0', ADEQUATE: '#f59e0b',
-    FRAGILE: '#f97316', CRITICAL: '#ef4444',
+    FORTRESS: 'var(--color-emerald-text)', RESILIENT: '#00d4e0', ADEQUATE: 'var(--color-amber500-text)',
+    FRAGILE: 'var(--color-orange-text)', CRITICAL: 'var(--color-red-text)',
   };
   const color = classColors[resilience.classification] ?? '#94a3b8';
   const statusColors: Record<string, string> = {
-    STRONG: '#10b981', ADEQUATE: '#00d4e0', WEAK: '#f59e0b', CRITICAL: '#ef4444',
+    STRONG: 'var(--color-emerald-text)', ADEQUATE: '#00d4e0', WEAK: 'var(--color-amber500-text)', CRITICAL: 'var(--color-red-text)',
   };
 
   return (
@@ -1766,7 +1766,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
   if (!et || (result.total < 45 && !et.isGoldenHandcuffZone)) return null;
 
   const optimalColor = '#00d4e0';
-  const worstColor = '#ef4444';
+  const worstColor = 'var(--color-red-text)';
 
   return (
     <motion.div
@@ -1802,9 +1802,9 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
           <div className="flex gap-1 flex-wrap">
             {et.calendar.map((m: any, i: number) => {
               const cellColor = m.isOptimalWindow ? optimalColor
-                : m.isHighRisk ? '#ef4444'
-                : m.compositeScore >= 65 ? '#10b981'
-                : m.compositeScore >= 45 ? '#f59e0b'
+                : m.isHighRisk ? 'var(--color-red-text)'
+                : m.compositeScore >= 65 ? 'var(--color-emerald-text)'
+                : m.compositeScore >= 45 ? 'var(--color-amber500-text)'
                 : '#94a3b8';
               const shortMonth = m.month.split(' ')[0].slice(0, 3);
               return (
@@ -1840,7 +1840,7 @@ const ExitTimingPanel: React.FC<{ result: HybridResult }> = ({ result }) => {
             <div className="text-[10px] text-muted-foreground mt-0.5">Unvested if exit now</div>
           </div>
           <div className="rounded-lg bg-[var(--alpha-bg-02)] border border-[var(--alpha-bg-05)] p-2 text-center">
-            <div className="text-xs font-bold" style={{ color: '#10b981' }}>
+            <div className="text-xs font-bold" style={{ color: 'var(--color-emerald-text)' }}>
               {et.unvestedAtOptimalExit > 0 ? `$${(et.unvestedAtOptimalExit / 1000).toFixed(0)}K` : 'N/A'}
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">Unvested at optimal exit</div>
@@ -1882,10 +1882,10 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
 
   // Raw hex required — CSS variables can't be combined with hex-alpha suffixes
   const tierColors: Record<string, string> = {
-    critical:    '#ef4444',
-    elevated:    '#f97316',
+    critical:    'var(--color-red-text)',
+    elevated:    'var(--color-orange-text)',
     comfortable: '#00d4e0',
-    strong:      '#10b981',
+    strong:      'var(--color-emerald-text)',
   };
   const color = tierColors[runway.tier] ?? '#94a3b8';
   const riskColor = getScoreColor(runway.runwayRiskScore);
@@ -1929,11 +1929,11 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
             <div className="flex items-center gap-1.5 mb-1.5">
               <span
                 className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded"
-                style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.30)' }}
+                style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.30)' }}
               >
                 MODELED
               </span>
-              <span className="text-[10px] font-semibold" style={{ color: '#10b981' }}>
+              <span className="text-[10px] font-semibold" style={{ color: 'var(--color-emerald-text)' }}>
                 End-of-Service Gratuity Included
               </span>
             </div>
@@ -1946,7 +1946,7 @@ const FinancialRunwayPanel: React.FC<{ result: HybridResult }> = ({ result }) =>
                   Savings: {runway.savedRunwayMonths}mo
                 </span>
                 <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>+</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)' }}>
                   Gratuity: {runway.gratuityMonths.toFixed(1)}mo
                 </span>
                 <span className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>=</span>

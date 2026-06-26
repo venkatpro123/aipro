@@ -11,10 +11,10 @@ interface ExecutiveDeparturePatternPanelProps {
 }
 
 const TIER_CONFIG = {
-  CRITICAL: { color: '#ef4444', bg: 'rgba(239,68,68,0.09)',   border: 'rgba(239,68,68,0.24)'   },
-  HIGH:     { color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)'  },
-  MODERATE: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)'  },
-  LOW:      { color: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)'  },
+  CRITICAL: { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.09)',   border: 'rgba(239,68,68,0.24)'   },
+  HIGH:     { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)'  },
+  MODERATE: { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)'  },
+  LOW:      { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)'  },
   NONE:     { color: '#6b7280', bg: 'rgba(107,114,128,0.05)', border: 'rgba(107,114,128,0.14)' },
 };
 
@@ -61,7 +61,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
         {executiveDeparturePattern.exodusSignalActive && (
           <span
             className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
-            style={{ background: 'rgba(239,68,68,0.14)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.28)' }}
+            style={{ background: 'rgba(239,68,68,0.14)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.28)' }}
           >
             <AlertTriangle className="w-3 h-3" />
             Exodus Signal Active
@@ -70,7 +70,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
         {executiveDeparturePattern.turnaroundHireSignal && (
           <span
             className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
-            style={{ background: 'rgba(249,115,22,0.14)', color: '#f97316', border: '1px solid rgba(249,115,22,0.28)' }}
+            style={{ background: 'rgba(249,115,22,0.14)', color: 'var(--color-orange-text)', border: '1px solid rgba(249,115,22,0.28)' }}
           >
             <TrendingDown className="w-3 h-3" />
             Turnaround Hire
@@ -79,7 +79,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
         {executiveDeparturePattern.equityAccelerationSignal && (
           <span
             className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
-            style={{ background: 'rgba(245,158,11,0.14)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.28)' }}
+            style={{ background: 'rgba(245,158,11,0.14)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.28)' }}
           >
             <AlertTriangle className="w-3 h-3" />
             Equity Acceleration
@@ -92,7 +92,7 @@ const ExecutiveDeparturePatternPanel: React.FC<ExecutiveDeparturePatternPanelPro
         <div className="rounded-lg p-2.5 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div
             className="text-sm font-black"
-            style={{ color: restructuringPct >= 70 ? '#ef4444' : restructuringPct >= 50 ? '#f97316' : 'var(--alpha-text-92)' }}
+            style={{ color: restructuringPct >= 70 ? 'var(--color-red-text)' : restructuringPct >= 50 ? 'var(--color-orange-text)' : 'var(--alpha-text-92)' }}
           >
             {restructuringPct}%
           </div>

@@ -379,7 +379,7 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
         subtitle="Exit timing, offer evaluation, negotiation intelligence, phase roadmap"
         icon={Activity}
         tier={3}
-        accentColor="#f59e0b"
+        accentColor='var(--color-amber500-text)'
         defaultOpen={false}
       >
         <StrategyTab result={result} companyData={companyData} />

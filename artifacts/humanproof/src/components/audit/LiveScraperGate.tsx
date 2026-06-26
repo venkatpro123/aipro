@@ -30,9 +30,9 @@ interface Source {
 const SOURCES: Source[] = [
   { key: 'identity',       label: 'Resolving company identity',     icon: '🔎', color: '#7c3aed', delay:     0 },
   { key: 'newsExtract',    label: 'Acquiring workforce intelligence', icon: '👥', color: '#06b6d4', delay:  1500 },
-  { key: 'careerPageScrape', label: 'Validating hiring signals',    icon: '📥', color: '#f59e0b', delay:  4000 },
-  { key: 'layoffTracker',  label: 'Reconciling live market signals',icon: '📡', color: '#ef4444', delay:  7000 },
-  { key: 'secEdgarPoll',   label: 'Cross-validating layoffs',       icon: '⚖️', color: '#10b981', delay: 11000 },
+  { key: 'careerPageScrape', label: 'Validating hiring signals',    icon: '📥', color: 'var(--color-amber500-text)', delay:  4000 },
+  { key: 'layoffTracker',  label: 'Reconciling live market signals',icon: '📡', color: 'var(--color-red-text)', delay:  7000 },
+  { key: 'secEdgarPoll',   label: 'Cross-validating layoffs',       icon: '⚖️', color: 'var(--color-emerald-text)', delay: 11000 },
   { key: 'finalize',       label: 'Finalizing confidence model',    icon: '✓',  color: 'var(--color-emerald-text)', delay: 18000 },
 ];
 
@@ -206,7 +206,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
       }}>
         <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>🛡️</span>
         <div>
-          <div style={{ color: '#10b981', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '3px' }}>
+          <div style={{ color: 'var(--color-emerald-text)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '3px' }}>
             AUTHORITATIVE LIVE INTELLIGENCE
           </div>
           <div style={{ color: 'var(--alpha-text-50)', fontSize: '0.68rem', lineHeight: '1.5' }}>
@@ -237,7 +237,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
                 {/* Dot */}
                 <div style={{
                   width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                  background: isDone ? '#10b981' : isLoading ? src.color : 'var(--alpha-bg-08)',
+                  background: isDone ? 'var(--color-emerald-text)' : isLoading ? src.color : 'var(--alpha-bg-08)',
                   boxShadow: isLoading ? `0 0 10px ${src.color}80` : isDone ? '0 0 8px #10b981' : 'none',
                   animation: isLoading ? 'lsg-pulse 1s ease-in-out infinite' : 'none',
                 }} />
@@ -252,7 +252,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
                 {/* Status badge */}
                 <span style={{
                   fontSize: '0.55rem', fontWeight: 800, letterSpacing: '0.1em',
-                  color: isDone ? '#10b981' : isLoading ? src.color : 'var(--alpha-text-25)',
+                  color: isDone ? 'var(--color-emerald-text)' : isLoading ? src.color : 'var(--alpha-text-25)',
                   minWidth: '52px', textAlign: 'right',
                 }}>
                   {isDone ? '✓ DONE' : isLoading ? 'ACQUIRING' : 'QUEUED'}

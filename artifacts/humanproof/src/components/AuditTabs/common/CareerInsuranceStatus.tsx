@@ -56,9 +56,9 @@ const PILLAR_ICONS: Record<string, string> = {
 };
 
 const STATUS_CONFIG = {
-  STRONG:   { color: '#10b981', label: 'Strong',   barAlpha: '0.85' },
-  ADEQUATE: { color: '#f59e0b', label: 'Adequate', barAlpha: '0.70' },
-  WEAK:     { color: '#f97316', label: 'Weak',     barAlpha: '0.70' },
+  STRONG:   { color: 'var(--color-emerald-text)', label: 'Strong',   barAlpha: '0.85' },
+  ADEQUATE: { color: 'var(--color-amber500-text)', label: 'Adequate', barAlpha: '0.70' },
+  WEAK:     { color: 'var(--color-orange-text)', label: 'Weak',     barAlpha: '0.70' },
   CRITICAL: { color: '#dc2626', label: 'Critical', barAlpha: '0.85' },
 };
 
@@ -70,10 +70,10 @@ function pillarIcon(name: string): string {
 }
 
 function insuranceGrade(score: number): { label: string; color: string; sub: string } {
-  if (score >= 85) return { label: 'FULLY INSURED',   color: '#10b981', sub: 'Top 15% for career protection' };
+  if (score >= 85) return { label: 'FULLY INSURED',   color: 'var(--color-emerald-text)', sub: 'Top 15% for career protection' };
   if (score >= 65) return { label: 'MOSTLY INSURED',  color: 'var(--color-cyan-text)', sub: 'Solid foundation — close the gaps below' };
-  if (score >= 45) return { label: 'PARTIAL',         color: '#f59e0b', sub: 'Moderate protection — 2-3 pillars need work' };
-  if (score >= 25) return { label: 'UNDERINSURED',    color: '#f97316', sub: 'Significant gaps — start with the weakest pillar' };
+  if (score >= 45) return { label: 'PARTIAL',         color: 'var(--color-amber500-text)', sub: 'Moderate protection — 2-3 pillars need work' };
+  if (score >= 25) return { label: 'UNDERINSURED',    color: 'var(--color-orange-text)', sub: 'Significant gaps — start with the weakest pillar' };
   return          { label: 'UNPROTECTED',    color: '#dc2626', sub: 'Immediate resilience building required' };
 }
 
@@ -117,7 +117,7 @@ const PillarRow: React.FC<{
               {pillar.name}
               {isTop && (
                 <span className="ml-1.5 text-[9px] font-bold px-1 py-0.5 rounded"
-                  style={{ background: 'rgba(16,185,129,0.14)', color: '#10b981' }}>
+                  style={{ background: 'rgba(16,185,129,0.14)', color: 'var(--color-emerald-text)' }}>
                   STRENGTH
                 </span>
               )}
@@ -226,7 +226,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           <div className="flex items-center gap-2">
             <Shield
               className="w-4 h-4"
-              style={{ color: isFullyInsured ? '#10b981' : 'var(--alpha-text-45)' }}
+              style={{ color: isFullyInsured ? 'var(--color-emerald-text)' : 'var(--alpha-text-45)' }}
             />
             <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
               CAREER INSURANCE STATUS
@@ -279,8 +279,8 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
             className="flex items-center gap-2 rounded-xl px-3 py-2"
             style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.25)' }}
           >
-            <Flame className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
-            <p className="text-[10px] font-semibold" style={{ color: '#10b981' }}>
+            <Flame className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />
+            <p className="text-[10px] font-semibold" style={{ color: 'var(--color-emerald-text)' }}>
               You're in the top 15% of career-protected professionals in your cohort.
             </p>
           </div>
@@ -325,7 +325,7 @@ export const CareerInsuranceStatus: React.FC<Props> = ({ resilience }) => {
           <div className="flex items-start gap-2">
             <span className="text-sm flex-shrink-0">{pillarIcon(criticalWeakness.name)}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold mb-1" style={{ color: STATUS_CONFIG[criticalWeakness.status]?.color ?? '#f97316' }}>
+              <p className="text-[11px] font-semibold mb-1" style={{ color: STATUS_CONFIG[criticalWeakness.status]?.color ?? 'var(--color-orange-text)' }}>
                 {criticalWeakness.name}: {criticalWeakness.score}/100
               </p>
               {resilienceImprovementPlan?.[0] && (

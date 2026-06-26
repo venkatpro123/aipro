@@ -12,13 +12,13 @@ interface MASignalPanelProps {
 
 const EVENT_COLORS: Partial<Record<MAEventType, { text: string; bg: string; border: string }>> = {
   PE_ACQUISITION:      { text: '#dc2626', bg: 'rgba(220,38,38,0.10)',   border: 'rgba(220,38,38,0.30)' },
-  STRATEGIC_ACQUISITION: { text: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.25)' },
-  MERGER_EQUALS:       { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
-  SPAC_GO_PRIVATE:     { text: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
-  DIVESTITURE_SOLD:    { text: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.22)' },
-  SPINOFF:             { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
-  RUMORED:             { text: '#f59e0b', bg: 'rgba(245,158,11,0.06)',  border: 'rgba(245,158,11,0.18)' },
-  NONE:                { text: '#10b981', bg: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.18)' },
+  STRATEGIC_ACQUISITION: { text: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.25)' },
+  MERGER_EQUALS:       { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
+  SPAC_GO_PRIVATE:     { text: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
+  DIVESTITURE_SOLD:    { text: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.22)' },
+  SPINOFF:             { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
+  RUMORED:             { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.06)',  border: 'rgba(245,158,11,0.18)' },
+  NONE:                { text: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.18)' },
 };
 
 const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
@@ -62,8 +62,8 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       {/* Integration phase */}
       {maRisk.integrationPhase !== 'NOT_APPLICABLE' && (
         <div className="flex items-center gap-1.5 mb-3">
-          <Clock className="w-3 h-3 flex-shrink-0" style={{ color: maRisk.isInPeakRiskWindow ? '#ef4444' : 'var(--alpha-text-45)' }} />
-          <span className="text-[10px]" style={{ color: maRisk.isInPeakRiskWindow ? '#ef4444' : 'var(--alpha-text-50)' }}>
+          <Clock className="w-3 h-3 flex-shrink-0" style={{ color: maRisk.isInPeakRiskWindow ? 'var(--color-red-text)' : 'var(--alpha-text-45)' }} />
+          <span className="text-[10px]" style={{ color: maRisk.isInPeakRiskWindow ? 'var(--color-red-text)' : 'var(--alpha-text-50)' }}>
             {maRisk.integrationPhaseLabel}
           </span>
         </div>
@@ -72,7 +72,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-          <div className="text-sm font-bold" style={{ color: restructuringPct >= 60 ? '#ef4444' : 'var(--alpha-text-92)' }}>
+          <div className="text-sm font-bold" style={{ color: restructuringPct >= 60 ? 'var(--color-red-text)' : 'var(--alpha-text-92)' }}>
             {restructuringPct}%
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Restructuring Prob.</div>
@@ -102,7 +102,7 @@ const MASignalPanel: React.FC<MASignalPanelProps> = ({ maRisk }) => {
       {maRisk.isInPeakRiskWindow && (
         <div className="flex items-start gap-2 rounded-lg p-2.5"
           style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}>
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#ef4444' }} />
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-red-text)' }} />
           <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(239,68,68,0.85)' }}>
             You are in the peak restructuring window (months 6–18 post-close). This is when the majority of M&A-driven layoffs are executed.
           </p>

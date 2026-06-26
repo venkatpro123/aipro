@@ -71,7 +71,7 @@ function buildNarrative(scoreDelta?: ScoreDeltaLike | null, streak?: StreakLike 
   if (hasMovement && dir === 'improving') {
     return {
       icon: TrendingDown,
-      accent: '#10b981',
+      accent: 'var(--color-emerald-text)',
       headline: `Your risk is down ${delta} pt${delta > 1 ? 's' : ''} since your last check`,
       body: `That's the work paying off — not luck. ${momentum}${atRiskNudge}`,
     };
@@ -79,7 +79,7 @@ function buildNarrative(scoreDelta?: ScoreDeltaLike | null, streak?: StreakLike 
   if (hasMovement && dir === 'worsening') {
     return {
       icon: TrendingUp,
-      accent: '#f59e0b',
+      accent: 'var(--color-amber500-text)',
       headline: `Risk ticked up ${delta} pt${delta > 1 ? 's' : ''} since last time`,
       body: `Catching it early is exactly the point — you have room to respond. ${momentum}${atRiskNudge}`,
     };
@@ -87,7 +87,7 @@ function buildNarrative(scoreDelta?: ScoreDeltaLike | null, streak?: StreakLike 
   // No movement, but the user has history worth acknowledging.
   return {
     icon: streakLen >= 2 ? Flame : Minus,
-    accent: streakLen >= 2 ? '#f97316' : 'var(--alpha-text-50)',
+    accent: streakLen >= 2 ? 'var(--color-orange-text)' : 'var(--alpha-text-50)',
     headline: streakLen >= 2 ? `You're on a ${streakLen}-week streak` : 'Holding steady since your last visit',
     body: `${momentum}${atRiskNudge}`,
   };

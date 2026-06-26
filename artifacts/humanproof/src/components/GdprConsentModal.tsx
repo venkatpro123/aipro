@@ -114,7 +114,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
       <div style={OVERLAY}>
         <div style={PANEL}>
           <div style={{ textAlign: 'center', padding: '40px 24px' }}>
-            <Trash2 style={{ color: '#10b981', width: 40, height: 40, margin: '0 auto 16px' }} />
+            <Trash2 style={{ color: 'var(--color-emerald-text)', width: 40, height: 40, margin: '0 auto 16px' }} />
             <h2 style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
               All data deleted
             </h2>
@@ -283,7 +283,7 @@ export const GdprConsentModal: React.FC<Props> = ({ onConsentSaved }) => {
                   background: deletePhase === 'confirm' ? 'rgba(239,68,68,0.15)' : 'var(--alpha-bg-06)',
                   border: `1px solid ${deletePhase === 'confirm' ? 'rgba(239,68,68,0.40)' : 'var(--alpha-bg-08)'}`,
                   borderRadius: 8, padding: '6px 12px', cursor: 'pointer',
-                  color: deletePhase === 'confirm' ? '#ef4444' : 'var(--alpha-text-45)',
+                  color: deletePhase === 'confirm' ? 'var(--color-red-text)' : 'var(--alpha-text-45)',
                   fontSize: 10, display: 'flex', alignItems: 'center', gap: 5,
                 }}
               >

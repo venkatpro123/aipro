@@ -22,10 +22,10 @@ interface Props {
 
 const getPriorityColor = (priority: string): string => {
   const colors: Record<string, string> = {
-    CRITICAL: "#ef4444",
-    HIGH: "#f97316",
-    MEDIUM: "#f59e0b",
-    LOW: "#10b981",
+    CRITICAL: 'var(--color-red-text)',
+    HIGH: 'var(--color-orange-text)',
+    MEDIUM: 'var(--color-amber500-text)',
+    LOW: 'var(--color-emerald-text)',
   };
   return colors[priority] || "#6b7280";
 };
@@ -64,7 +64,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
         }}
       >
         <div style={{ fontSize: "2rem", marginBottom: "12px" }}>✅</div>
-        <div style={{ color: "#10b981", fontWeight: 700, marginBottom: "8px" }}>
+        <div style={{ color: 'var(--color-emerald-text)', fontWeight: 700, marginBottom: "8px" }}>
           ALL OBJECTIVES COMPLETE
         </div>
         <div style={{ color: "var(--alpha-text-55)", fontSize: "0.85rem" }}>
@@ -171,7 +171,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
                     borderRadius: "6px",
                     padding: "2px 9px",
                     fontSize: "0.62rem",
-                    color: "#10b981",
+                    color: 'var(--color-emerald-text)',
                     fontFamily: '"JetBrains Mono", monospace',
                     fontWeight: 700,
                     letterSpacing: "0.5px",

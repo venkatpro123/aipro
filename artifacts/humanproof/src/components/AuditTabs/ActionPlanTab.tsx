@@ -1056,9 +1056,9 @@ const ACTION_TRACK_CFG = [
 
 // Priority color tokens for action items
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
-  Critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.20)',  label: 'CRITICAL' },
-  High:     { color: '#f97316', bg: 'rgba(249,115,22,0.06)', border: 'rgba(249,115,22,0.18)', label: 'HIGH' },
-  Medium:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.05)', border: 'rgba(245,158,11,0.16)', label: 'MEDIUM' },
+  Critical: { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.06)',  border: 'rgba(239,68,68,0.20)',  label: 'CRITICAL' },
+  High:     { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.06)', border: 'rgba(249,115,22,0.18)', label: 'HIGH' },
+  Medium:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.05)', border: 'rgba(245,158,11,0.16)', label: 'MEDIUM' },
   Low:      { color: '#94a3b8', bg: 'rgba(148,163,184,0.04)',border: 'rgba(148,163,184,0.14)',label: 'LOW' },
 };
 
@@ -1105,7 +1105,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
         role="checkbox"
       >
         {isCompleted ? (
-          <CheckCircle className="w-5 h-5" style={{ color: '#10b981' }} />
+          <CheckCircle className="w-5 h-5" style={{ color: 'var(--color-emerald-text)' }} />
         ) : (
           <Circle className="w-5 h-5" style={{ color: cfg.color, opacity: 0.5 }} />
         )}
@@ -1131,7 +1131,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                 <span style={{
                   fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 900,
                   padding: '2px 6px', borderRadius: '4px',
-                  background: 'rgba(16,185,129,0.12)', color: '#10b981',
+                  background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)',
                   border: '1px solid rgba(16,185,129,0.22)', letterSpacing: '0.08em',
                 }}>
                   −{item.riskReductionPct}% RISK
@@ -1143,7 +1143,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                   style={{
                     fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 900,
                     padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.06em',
-                    background: 'rgba(245,158,11,0.14)', color: '#f59e0b',
+                    background: 'rgba(245,158,11,0.14)', color: 'var(--color-amber500-text)',
                     border: '1px solid rgba(245,158,11,0.32)',
                     display: 'flex', alignItems: 'center', gap: '3px',
                   }}
@@ -1178,7 +1178,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                   <React.Fragment key={track}>
                     {i > 0 && <span style={{ color: 'var(--alpha-text-25)' }}>·</span>}
                     <span style={{
-                      color: sel ? '#f59e0b' : 'var(--text-3)',
+                      color: sel ? 'var(--color-amber500-text)' : 'var(--text-3)',
                       fontWeight: sel ? 800 : 400,
                       opacity: sel ? 1 : 0.45,
                       letterSpacing: '0.06em',
@@ -1195,8 +1195,8 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
           {/* Cost label — only when the engine extracted a cost and converted it */}
           {item.costDisplayLabel && (
             <div className="flex items-center gap-1.5 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.60rem' }}>
-              <DollarSign className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#10b981', opacity: 0.75 }} />
-              <span style={{ color: '#10b981', fontWeight: 700 }}>{item.costDisplayLabel}</span>
+              <DollarSign className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)', opacity: 0.75 }} />
+              <span style={{ color: 'var(--color-emerald-text)', fontWeight: 700 }}>{item.costDisplayLabel}</span>
               <span style={{ color: 'var(--alpha-text-25)', fontSize: '0.52rem', letterSpacing: '0.05em' }}>MODELED · 2024-Q2</span>
             </div>
           )}
@@ -1221,7 +1221,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                 fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
                 letterSpacing: '0.06em',
               }}>
-                <Clock className="w-2.5 h-2.5 flex-shrink-0" style={{ color: '#f59e0b' }} />
+                <Clock className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
                 {/* When learningWeeks is present, the deadline annotation reflects
                     the selected track — updates live on track change, pure JS. */}
                 {item.learningWeeks
@@ -1250,7 +1250,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
 
 const ProgressIndicator: React.FC<{ completed: number; total: number }> = ({ completed, total }) => {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const color = pct < 30 ? "#ef4444" : pct < 70 ? "#f97316" : "#10b981";
+  const color = pct < 30 ? 'var(--color-red-text)' : pct < 70 ? 'var(--color-orange-text)' : 'var(--color-emerald-text)';
 
   // SVG ring parameters
   const size = 64;
@@ -2110,7 +2110,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                       {sectionCompleted > 0 && (
                         <div style={{
                           height: '3px', width: `${Math.round((sectionCompleted / priorityItems.length) * 60)}px`,
-                          background: '#10b981', borderRadius: '2px', boxShadow: '0 0 8px #10b98140',
+                          background: 'var(--color-emerald-text)', borderRadius: '2px', boxShadow: '0 0 8px #10b98140',
                         }} />
                       )}
                     </div>

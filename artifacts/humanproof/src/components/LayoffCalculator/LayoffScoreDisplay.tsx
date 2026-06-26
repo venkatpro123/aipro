@@ -47,10 +47,10 @@ const ClassificationBadge: React.FC<{
 }> = ({ score, companyName, roleTitle, timestamp }) => {
   // Determine classification based on score
   const getClassification = (s: number): { level: string; color: string } => {
-    if (s >= 75) return { level: "TOP SECRET", color: "#ef4444" };
-    if (s >= 55) return { level: "CONFIDENTIAL", color: "#f97316" };
-    if (s >= 35) return { level: "RESTRICTED", color: "#f59e0b" };
-    return { level: "UNCLASSIFIED", color: "#10b981" };
+    if (s >= 75) return { level: "TOP SECRET", color: 'var(--color-red-text)' };
+    if (s >= 55) return { level: "CONFIDENTIAL", color: 'var(--color-orange-text)' };
+    if (s >= 35) return { level: "RESTRICTED", color: 'var(--color-amber500-text)' };
+    return { level: "UNCLASSIFIED", color: 'var(--color-emerald-text)' };
   };
 
   const classification = getClassification(score);
@@ -175,8 +175,8 @@ const AccuracyBadge: React.FC<{
 }> = ({ accuracyLabel, confidencePercent, modelsUsed }) => {
   const colorMap: Record<string, string> = {
     teal: "#14b8a6",
-    green: "#10b981",
-    amber: "#f59e0b",
+    green: 'var(--color-emerald-text)',
+    amber: 'var(--color-amber500-text)',
     gray: "#6b7280",
   };
   const c = colorMap[accuracyLabel.color] || "#6b7280";
@@ -254,7 +254,7 @@ const SwarmBadge: React.FC<{
   categoryBreakdown,
 }) => {
   const isLive = liveAgentsUsed > 0;
-  const accent = isLive ? "#10b981" : "#6b7280";
+  const accent = isLive ? 'var(--color-emerald-text)' : "#6b7280";
   const categories = [
     { label: "Market", val: categoryBreakdown.market },
     { label: "Company", val: categoryBreakdown.company },
@@ -336,7 +336,7 @@ const SwarmBadge: React.FC<{
             <div
               style={{
                 color:
-                  c.val >= 60 ? "#ef4444" : c.val >= 40 ? "#f59e0b" : "#10b981",
+                  c.val >= 60 ? 'var(--color-red-text)' : c.val >= 40 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)',
                 fontWeight: 700,
                 fontFamily: "monospace",
               }}
@@ -360,10 +360,10 @@ const SwarmBadge: React.FC<{
             style={{
               color:
                 swarmScore >= 65
-                  ? "#ef4444"
+                  ? 'var(--color-red-text)'
                   : swarmScore >= 40
-                    ? "#f59e0b"
-                    : "#10b981",
+                    ? 'var(--color-amber500-text)'
+                    : 'var(--color-emerald-text)',
             }}
           >
             {swarmScore}/100
@@ -391,13 +391,13 @@ const ModelAgreementMeter: React.FC<{
       "gemini-2.0-flash": "Gemini",
     })[m] || m;
   const scoreColor = (s: number) =>
-    s >= 65 ? "#ef4444" : s >= 40 ? "#f59e0b" : "#10b981";
+    s >= 65 ? 'var(--color-red-text)' : s >= 40 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
   const barColor =
     modelAgreement >= 80
       ? "#14b8a6"
       : modelAgreement >= 60
-        ? "#f59e0b"
-        : "#ef4444";
+        ? 'var(--color-amber500-text)'
+        : 'var(--color-red-text)';
 
   return (
     <div
@@ -489,7 +489,7 @@ const ModelAgreementMeter: React.FC<{
       </div>
       {hasOutlier && (
         <p
-          style={{ margin: "12px 0 0", color: "#f59e0b", fontSize: "0.78rem" }}
+          style={{ margin: "12px 0 0", color: 'var(--color-amber500-text)', fontSize: "0.78rem" }}
         >
           ⚡ {outlierModels.map((m) => modelShortName(m)).join(", ")} flagged a
           different signal — Gemini synthesis applied to resolve.
@@ -661,10 +661,10 @@ const AnimatedScore: React.FC<{
 
   const getTierHex = (c: string) => {
     const map: Record<string, string> = {
-      red: "#ef4444",
-      orange: "#f97316",
-      amber: "#f59e0b",
-      green: "#10b981",
+      red: 'var(--color-red-text)',
+      orange: 'var(--color-orange-text)',
+      amber: 'var(--color-amber500-text)',
+      green: 'var(--color-emerald-text)',
       teal: "#14b8a6",
     };
     return map[c] || "#14b8a6";
@@ -746,7 +746,7 @@ const AnimatedScore: React.FC<{
             style={{
               marginTop: 6,
               fontSize: "0.7rem",
-              color: "#f59e0b",
+              color: 'var(--color-amber500-text)',
               letterSpacing: "0.5px",
               textTransform: "uppercase",
             }}
@@ -790,9 +790,9 @@ const LayerBar: React.FC<{ label: string; value: number; weight: string }> = ({
   const percentage = Math.round(value * 100);
   const [showTip, setShowTip] = React.useState(false);
   const getTierHex = (p: number) => {
-    if (p > 70) return "#ef4444";
-    if (p > 50) return "#f97316";
-    if (p > 30) return "#f59e0b";
+    if (p > 70) return 'var(--color-red-text)';
+    if (p > 50) return 'var(--color-orange-text)';
+    if (p > 30) return 'var(--color-amber500-text)';
     return "#14b8a6";
   };
   const barColor = getTierHex(percentage);
@@ -973,10 +973,10 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
 
   const getTierHex = (c: string) => {
     const map: Record<string, string> = {
-      red: "#ef4444",
-      orange: "#f97316",
-      amber: "#f59e0b",
-      green: "#10b981",
+      red: 'var(--color-red-text)',
+      orange: 'var(--color-orange-text)',
+      amber: 'var(--color-amber500-text)',
+      green: 'var(--color-emerald-text)',
       teal: "#14b8a6",
     };
     return map[c] || "#14b8a6";
@@ -1013,7 +1013,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             padding: "12px 16px",
             marginBottom: "20px",
             fontSize: "0.85rem",
-            color: "#f59e0b",
+            color: 'var(--color-amber500-text)',
             display: "flex",
             alignItems: "flex-start",
             gap: "10px",
@@ -1058,7 +1058,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
         >
           <h4
             style={{
-              color: "#ef4444",
+              color: 'var(--color-red-text)',
               margin: "0 0 8px",
               display: "flex",
               alignItems: "center",
@@ -1086,7 +1086,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             padding: "12px 16px",
             marginBottom: "24px",
             fontSize: "0.85rem",
-            color: "#f59e0b",
+            color: 'var(--color-amber500-text)',
           }}
         >
           {/* BUG-B18 FIX: More explicit warning text for stale data */}
@@ -1264,7 +1264,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             <span
               style={{
                 background: "rgba(16, 185, 129, 0.2)",
-                color: "#10b981",
+                color: 'var(--color-emerald-text)',
                 padding: "2px 8px",
                 borderRadius: "4px",
                 fontSize: "0.75rem",
@@ -1360,7 +1360,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
               <span style={{ fontSize: "1rem" }}>🌐</span>
               <span
                 style={{
-                  color: "#ef4444",
+                  color: 'var(--color-red-text)',
                   fontSize: "0.75rem",
                   fontWeight: 700,
                   letterSpacing: "0.5px",
@@ -1384,7 +1384,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
               { label: "Layoff history", val: Math.round(breakdown.L2 * 100), wt: "25%" },
               { label: "Market conditions", val: Math.round(breakdown.L4 * 100), wt: "5%" },
             ].map(({ label, val, wt }) => {
-              const c = val > 70 ? "#ef4444" : val > 50 ? "#f97316" : val > 30 ? "#f59e0b" : "#10b981";
+              const c = val > 70 ? 'var(--color-red-text)' : val > 50 ? 'var(--color-orange-text)' : val > 30 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
               return (
                 <div key={label} style={{ marginBottom: "8px" }}>
                   <div
@@ -1432,7 +1432,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
               <span style={{ fontSize: "1rem" }}>🧠</span>
               <span
                 style={{
-                  color: "#10b981",
+                  color: 'var(--color-emerald-text)',
                   fontSize: "0.75rem",
                   fontWeight: 700,
                   letterSpacing: "0.5px",
@@ -1455,7 +1455,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
               { label: "Role exposure", val: Math.round(breakdown.L3 * 100), wt: "25%", action: "Learn AI tools for your domain" },
               { label: "Your profile", val: Math.round(breakdown.L5 * 100), wt: "15%", action: "Build relationships, seek promotion" },
             ].map(({ label, val, wt, action }) => {
-              const c = val > 70 ? "#ef4444" : val > 50 ? "#f97316" : val > 30 ? "#f59e0b" : "#10b981";
+              const c = val > 70 ? 'var(--color-red-text)' : val > 50 ? 'var(--color-orange-text)' : val > 30 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
               return (
                 <div key={label} style={{ marginBottom: "8px" }}>
                   <div

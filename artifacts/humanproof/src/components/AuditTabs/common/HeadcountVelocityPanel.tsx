@@ -11,19 +11,19 @@ interface HeadcountVelocityPanelProps {
 }
 
 const SCORE_BG = (score: number) =>
-  score >= 70 ? { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)',   text: '#ef4444' }
-  : score >= 50 ? { bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)', text: '#f97316' }
-  : score >= 30 ? { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)', text: '#f59e0b' }
-  : { bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)',              text: '#10b981' };
+  score >= 70 ? { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)',   text: 'var(--color-red-text)' }
+  : score >= 50 ? { bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)', text: 'var(--color-orange-text)' }
+  : score >= 30 ? { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)', text: 'var(--color-amber500-text)' }
+  : { bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)',              text: 'var(--color-emerald-text)' };
 
 const TREND_COLOR: Record<HeadcountTrend, string> = {
-  GROWING: '#10b981', STABLE: '#f59e0b', DECLINING: '#f97316',
-  DECLINING_SHARPLY: '#ef4444', UNKNOWN: 'var(--alpha-text-45)',
+  GROWING: 'var(--color-emerald-text)', STABLE: 'var(--color-amber500-text)', DECLINING: 'var(--color-orange-text)',
+  DECLINING_SHARPLY: 'var(--color-red-text)', UNKNOWN: 'var(--alpha-text-45)',
 };
 
 const POSTING_COLOR: Record<PostingVelocity, string> = {
-  ACCELERATING: '#10b981', STABLE: '#f59e0b', DECELERATING: '#f97316',
-  FROZEN: '#ef4444', UNKNOWN: 'var(--alpha-text-45)',
+  ACCELERATING: 'var(--color-emerald-text)', STABLE: 'var(--color-amber500-text)', DECELERATING: 'var(--color-orange-text)',
+  FROZEN: 'var(--color-red-text)', UNKNOWN: 'var(--alpha-text-45)',
 };
 
 const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcount }) => {
@@ -69,8 +69,8 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[11px] font-bold" style={{
-            color: headcount.contractorRatioRisk === 'HIGH' ? '#ef4444'
-              : headcount.contractorRatioRisk === 'MODERATE' ? '#f59e0b' : '#10b981',
+            color: headcount.contractorRatioRisk === 'HIGH' ? 'var(--color-red-text)'
+              : headcount.contractorRatioRisk === 'MODERATE' ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)',
           }}>
             {headcount.contractorRatioRisk}
           </div>
@@ -104,13 +104,13 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
           <div className="text-[10px] font-medium mb-1.5" style={{ color: 'var(--alpha-text-35)' }}>
             EARLY WARNING SIGNALS
             {headcount.estimatedLayoffLeadTimeDays && (
-              <span style={{ color: '#f59e0b' }}> — ~{headcount.estimatedLayoffLeadTimeDays} days lead time</span>
+              <span style={{ color: 'var(--color-amber500-text)' }}> — ~{headcount.estimatedLayoffLeadTimeDays} days lead time</span>
             )}
           </div>
           <div className="space-y-1">
             {headcount.earlyWarningSignals.map((sig, i) => (
               <div key={i} className="flex items-start gap-1.5">
-                <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: '#f97316' }} />
+                <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-orange-text)' }} />
                 <span className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>{sig}</span>
               </div>
             ))}
@@ -123,7 +123,7 @@ const HeadcountVelocityPanel: React.FC<HeadcountVelocityPanelProps> = ({ headcou
         <div className="flex items-center gap-2 mt-2.5 rounded-lg p-2"
           style={{ background: 'var(--alpha-bg-04)' }}>
           <TrendingDown className="w-3 h-3 flex-shrink-0" style={{
-            color: headcount.netHeadcountMomentum === 'NEGATIVE' ? '#ef4444' : '#10b981',
+            color: headcount.netHeadcountMomentum === 'NEGATIVE' ? 'var(--color-red-text)' : 'var(--color-emerald-text)',
             transform: headcount.netHeadcountMomentum === 'POSITIVE' ? 'rotate(180deg)' : undefined,
           }} />
           <p className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>

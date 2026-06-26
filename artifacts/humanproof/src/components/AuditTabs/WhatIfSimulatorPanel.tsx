@@ -28,7 +28,7 @@ const DIMENSION_LABELS: Record<string, string> = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  red: '#ef4444', orange: '#f97316', amber: '#f59e0b', green: '#10b981', teal: '#14b8a6',
+  red: 'var(--color-red-text)', orange: 'var(--color-orange-text)', amber: 'var(--color-amber500-text)', green: 'var(--color-emerald-text)', teal: '#14b8a6',
 };
 
 function SimulatedScoreRing({ score, color }: { score: number; color: string }) {
@@ -92,7 +92,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
     dataFreshnessAgeInDays: result.dataFreshness?.ageInDays,
   });
 
-  const simColor = TIER_COLORS[simResult.simulatedTier.color] ?? '#10b981';
+  const simColor = TIER_COLORS[simResult.simulatedTier.color] ?? 'var(--color-emerald-text)';
   const hasDelta = simResult.scoreDelta < 0;
 
   const handleSlider = useCallback((dim: string, val: number) => {
@@ -131,7 +131,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
       <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-[var(--alpha-bg-06)]">
         <div className="text-center">
           <div className="text-[10px] text-[var(--alpha-text-35)] mb-1">CURRENT</div>
-          <SimulatedScoreRing score={result.total} color={TIER_COLORS[result.tier.color] ?? '#f97316'} />
+          <SimulatedScoreRing score={result.total} color={TIER_COLORS[result.tier.color] ?? 'var(--color-orange-text)'} />
         </div>
         <div className="flex-1 text-center">
           {hasDelta ? (

@@ -18,14 +18,14 @@ const HUBS: [number, number, string, number][] = [
   [-46.6, -23.5, "#8b5cf6", 1300],  // São Paulo
   [-0.1, 51.5, "#00d4ff", 400],     // London
   [2.35, 48.85, "#38bdf8", 1700],   // Paris
-  [13.4, 52.5, "#10b981", 1100],    // Berlin
-  [55.3, 25.2, "#f59e0b", 700],     // Dubai
+  [13.4, 52.5, 'var(--color-emerald-text)', 1100],    // Berlin
+  [55.3, 25.2, 'var(--color-amber500-text)', 700],     // Dubai
   [72.8, 19.0, "#00d4ff", 1500],    // Mumbai
-  [103.8, 1.35, "#10b981", 300],    // Singapore
-  [116.4, 39.9, "#ef4444", 2000],   // Beijing
-  [139.7, 35.7, "#10b981", 1900],   // Tokyo
+  [103.8, 1.35, 'var(--color-emerald-text)', 300],    // Singapore
+  [116.4, 39.9, 'var(--color-red-text)', 2000],   // Beijing
+  [139.7, 35.7, 'var(--color-emerald-text)', 1900],   // Tokyo
   [151.2, -33.9, "#00d4ff", 800],   // Sydney
-  [28.0, -26.2, "#f59e0b", 2200],   // Johannesburg
+  [28.0, -26.2, 'var(--color-amber500-text)', 2200],   // Johannesburg
 ];
 
 // Connection arcs between hub indices

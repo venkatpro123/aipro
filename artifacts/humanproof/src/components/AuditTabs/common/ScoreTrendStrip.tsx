@@ -40,7 +40,7 @@ const DIRECTION_CONFIG = {
   },
   deteriorating: {
     Icon: TrendingUp,
-    color: '#f97316',
+    color: 'var(--color-orange-text)',
     bgColor: 'rgba(249,115,22,0.08)',
     borderColor: 'rgba(249,115,22,0.20)',
     label: 'Risk rising',
@@ -58,7 +58,7 @@ const DIRECTION_CONFIG = {
   },
   improving: {
     Icon: TrendingDown,
-    color: '#10b981',
+    color: 'var(--color-emerald-text)',
     bgColor: 'rgba(16,185,129,0.08)',
     borderColor: 'rgba(16,185,129,0.20)',
     label: 'Improving',

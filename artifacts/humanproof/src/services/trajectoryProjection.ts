@@ -314,7 +314,7 @@ export function generateTrajectoryProjection(
     staticTrajectory: {
       label: 'No Action Taken',
       description: 'Score trajectory if current situation continues unchanged',
-      color: '#ef4444',
+      color: 'var(--color-red-text)',
       points: staticPoints,
       outcomeAt12Months: `Score ${staticAt12.projectedScore}/100 — ${getRiskLabel(staticAt12.projectedScore)} risk`,
       probabilityAt12Months: staticAt12.layoffProbability,
@@ -322,7 +322,7 @@ export function generateTrajectoryProjection(
     actionTrajectory: {
       label: 'With Recommended Actions',
       description: 'Score trajectory if you implement the full 90-day protection plan',
-      color: '#10b981',
+      color: 'var(--color-emerald-text)',
       points: actionPoints,
       outcomeAt12Months: `Score ${actionAt12.projectedScore}/100 — ${getRiskLabel(actionAt12.projectedScore)} risk`,
       probabilityAt12Months: actionAt12.layoffProbability,
@@ -330,7 +330,7 @@ export function generateTrajectoryProjection(
     downsideTrajectory: {
       label: 'Downside Scenario',
       description: 'Score trajectory if company signals worsen (earnings miss, leadership change)',
-      color: '#f59e0b',
+      color: 'var(--color-amber500-text)',
       points: downsidePoints,
       outcomeAt12Months: `Score ${downsideAt12.projectedScore}/100 — ${getRiskLabel(downsideAt12.projectedScore)} risk`,
       probabilityAt12Months: downsideAt12.layoffProbability,

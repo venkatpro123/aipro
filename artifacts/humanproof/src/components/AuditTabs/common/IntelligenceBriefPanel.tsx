@@ -37,10 +37,10 @@ interface Props {
 const URGENCY_CONFIG: Record<IntelligenceBriefResult['urgencyLevel'], {
   color: string; bg: string; border: string; label: string;
 }> = {
-  CRITICAL: { color: '#ef4444', bg: 'rgba(239,68,68,0.10)', border: 'rgba(239,68,68,0.35)', label: 'CRITICAL URGENCY' },
-  HIGH:     { color: '#f97316', bg: 'rgba(249,115,22,0.09)', border: 'rgba(249,115,22,0.30)', label: 'HIGH URGENCY' },
-  MODERATE: { color: '#f59e0b', bg: 'rgba(245,158,11,0.09)', border: 'rgba(245,158,11,0.28)', label: 'MODERATE URGENCY' },
-  LOW:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)', label: 'LOW URGENCY' },
+  CRITICAL: { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.10)', border: 'rgba(239,68,68,0.35)', label: 'CRITICAL URGENCY' },
+  HIGH:     { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.09)', border: 'rgba(249,115,22,0.30)', label: 'HIGH URGENCY' },
+  MODERATE: { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.09)', border: 'rgba(245,158,11,0.28)', label: 'MODERATE URGENCY' },
+  LOW:      { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)', label: 'LOW URGENCY' },
 };
 
 const PARAGRAPH_ICONS = [Brain, AlertTriangle, Shield] as const;

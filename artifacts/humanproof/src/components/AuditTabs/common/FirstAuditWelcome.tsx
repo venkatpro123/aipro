@@ -75,13 +75,13 @@ export const FirstAuditWelcome: React.FC<Props> = ({
       icon:  Radio,
       label: liveSignalCount > 0 ? `${liveSignalCount} live signal${liveSignalCount === 1 ? '' : 's'} read just now` : 'Scanning live sources',
       sub:   'WARN filings, hiring trends, SEC filings, news, and more.',
-      color: '#10b981',
+      color: 'var(--color-emerald-text)',
     },
     {
       icon:  Zap,
       label: confidenceLabel,
       sub:   'Every signal is paired with a concrete step you can take.',
-      color: confidencePercent != null && confidencePercent < 50 ? '#f97316' : '#f59e0b',
+      color: confidencePercent != null && confidencePercent < 50 ? 'var(--color-orange-text)' : 'var(--color-amber500-text)',
     },
   ];
 

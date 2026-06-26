@@ -14,14 +14,14 @@ interface ModelCalibrationPanelProps {
 }
 
 const TRUST_COLORS: Record<string, { color: string; bg: string; border: string }> = {
-  HIGH:                { color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' },
+  HIGH:                { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' },
   MODERATE:            { color: 'var(--color-cyan-text)', bg: 'rgba(0,212,224,0.08)',   border: 'rgba(0,212,224,0.22)' },
-  BUILDING:            { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
+  BUILDING:            { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
   RESEARCH_GROUNDED:   { color: 'var(--color-violet-text)', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.25)' },
 };
 
 const TIER_ACCURACY_COLOR = (acc: number) =>
-  acc >= 0.70 ? '#10b981' : acc >= 0.55 ? '#f59e0b' : '#f97316';
+  acc >= 0.70 ? 'var(--color-emerald-text)' : acc >= 0.55 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
 
 const CONFIDENCE_OPACITY: Record<string, number> = { HIGH: 1.0, MEDIUM: 0.75, LOW: 0.5 };
 
@@ -93,7 +93,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
           className="flex items-start gap-2 rounded-lg px-3 py-2 mb-3"
           style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.30)' }}
         >
-          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-amber500-text)' }} />
           <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
             {liveCalibrationStatus.ciDriftWarning}
           </p>
@@ -147,7 +147,7 @@ const ModelCalibrationPanel: React.FC<ModelCalibrationPanelProps> = ({ calibrati
           {calibration.signalContributions.map((sig, i) => (
             <div key={i} className="flex items-start gap-2">
               <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0`}
-                style={{ background: sig.availableForCurrentAudit ? '#10b981' : '#6b7280' }} />
+                style={{ background: sig.availableForCurrentAudit ? 'var(--color-emerald-text)' : '#6b7280' }} />
               <div>
                 <span className="text-xs font-medium" style={{ color: sig.availableForCurrentAudit ? 'var(--alpha-text-78)' : 'var(--alpha-text-35)' }}>
                   {sig.signalName}

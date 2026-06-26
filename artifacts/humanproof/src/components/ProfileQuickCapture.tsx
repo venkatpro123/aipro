@@ -254,9 +254,9 @@ export const ProfileQuickCapture: React.FC<Props> = ({ onComplete }) => {
             transition={{ duration: 0.22 }}
             className="flex items-center gap-3 py-1"
           >
-            <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#10b981' }} />
+            <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
             <div>
-              <p className="text-[12px] font-semibold" style={{ color: '#10b981' }}>
+              <p className="text-[12px] font-semibold" style={{ color: 'var(--color-emerald-text)' }}>
                 {(saveSucceeded) ? 'Profile saved — your action plan is now personalized' : 'Preferences noted for this session'}
               </p>
               <button

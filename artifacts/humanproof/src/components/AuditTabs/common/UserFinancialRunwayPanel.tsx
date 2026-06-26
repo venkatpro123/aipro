@@ -14,18 +14,18 @@ interface UserFinancialRunwayPanelProps {
 const SITUATION_CONFIG: Record<Exclude<RunwaySituation, 'unknown'>, {
   label: string; color: string; bg: string; border: string
 }> = {
-  critical:    { label: 'CRITICAL',    color: '#ef4444', bg: 'rgba(239,68,68,0.09)',    border: 'rgba(239,68,68,0.24)'    },
-  tight:       { label: 'TIGHT',       color: '#f97316', bg: 'rgba(249,115,22,0.08)',   border: 'rgba(249,115,22,0.22)'   },
-  moderate:    { label: 'MODERATE',    color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.22)'   },
+  critical:    { label: 'CRITICAL',    color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.09)',    border: 'rgba(239,68,68,0.24)'    },
+  tight:       { label: 'TIGHT',       color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)',   border: 'rgba(249,115,22,0.22)'   },
+  moderate:    { label: 'MODERATE',    color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.22)'   },
   comfortable: { label: 'COMFORTABLE', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)',   border: 'rgba(59,130,246,0.22)'   },
-  secure:      { label: 'SECURE',      color: '#10b981', bg: 'rgba(16,185,129,0.07)',   border: 'rgba(16,185,129,0.20)'   },
+  secure:      { label: 'SECURE',      color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.07)',   border: 'rgba(16,185,129,0.20)'   },
 };
 
 const URGENCY_CONFIG = {
-  IMMEDIATE: { color: '#ef4444', bg: 'rgba(239,68,68,0.14)', border: 'rgba(239,68,68,0.28)' },
-  HIGH:      { color: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.26)' },
-  MODERATE:  { color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.22)' },
-  LOW:       { color: '#10b981', bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.22)' },
+  IMMEDIATE: { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.14)', border: 'rgba(239,68,68,0.28)' },
+  HIGH:      { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.26)' },
+  MODERATE:  { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.22)' },
+  LOW:       { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.22)' },
 };
 
 const UserFinancialRunwayPanel: React.FC<UserFinancialRunwayPanelProps> = ({ userFinancialRunway }) => {
@@ -97,8 +97,8 @@ const UserFinancialRunwayPanel: React.FC<UserFinancialRunwayPanelProps> = ({ use
             border: `1px solid ${multiplierAccelerated ? 'rgba(239,68,68,0.20)' : 'rgba(16,185,129,0.20)'}`,
           }}
         >
-          <Zap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: multiplierAccelerated ? '#ef4444' : '#10b981' }} />
-          <span className="text-[11px] font-semibold" style={{ color: multiplierAccelerated ? '#ef4444' : '#10b981' }}>
+          <Zap className="w-3.5 h-3.5 flex-shrink-0" style={{ color: multiplierAccelerated ? 'var(--color-red-text)' : 'var(--color-emerald-text)' }} />
+          <span className="text-[11px] font-semibold" style={{ color: multiplierAccelerated ? 'var(--color-red-text)' : 'var(--color-emerald-text)' }}>
             Actions {multiplierAccelerated ? 'accelerated' : 'relaxed'}{' '}
             <span className="font-black">{userFinancialRunway.actionUrgencyMultiplier.toFixed(2)}×</span>
           </span>
@@ -109,13 +109,13 @@ const UserFinancialRunwayPanel: React.FC<UserFinancialRunwayPanelProps> = ({ use
       {userFinancialRunway.keyConstraints.length > 0 && (
         <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.14)' }}>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f97316' }} />
+            <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-orange-text)' }} />
             <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>KEY CONSTRAINTS</span>
           </div>
           <div className="space-y-1">
             {userFinancialRunway.keyConstraints.map((constraint, i) => (
               <div key={i} className="flex items-start gap-1.5">
-                <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: '#f97316' }} />
+                <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: 'var(--color-orange-text)' }} />
                 <span className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                   {constraint}
                 </span>
@@ -129,13 +129,13 @@ const UserFinancialRunwayPanel: React.FC<UserFinancialRunwayPanelProps> = ({ use
       {userFinancialRunway.keyStrengths.length > 0 && (
         <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.16)' }}>
           <div className="flex items-center gap-1.5 mb-1.5">
-            <CheckCircle className="w-3 h-3 flex-shrink-0" style={{ color: '#10b981' }} />
+            <CheckCircle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
             <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-50)' }}>KEY STRENGTHS</span>
           </div>
           <div className="space-y-1">
             {userFinancialRunway.keyStrengths.map((strength, i) => (
               <div key={i} className="flex items-start gap-1.5">
-                <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: '#10b981' }} />
+                <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: 'var(--color-emerald-text)' }} />
                 <span className="text-[10px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
                   {strength}
                 </span>

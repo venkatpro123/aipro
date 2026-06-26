@@ -94,7 +94,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
       >
         {/* Icon */}
         <AlertTriangle
-          style={{ width: '18px', height: '18px', color: '#fb923c', flexShrink: 0, marginTop: '2px' }}
+          style={{ width: '18px', height: '18px', color: 'var(--color-orange-text)', flexShrink: 0, marginTop: '2px' }}
         />
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -103,7 +103,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
             <span style={{
               fontFamily: 'var(--font-mono)', fontWeight: 700,
               fontSize: '0.72rem', letterSpacing: '0.06em',
-              color: '#fb923c', textTransform: 'uppercase',
+              color: 'var(--color-orange-text)', textTransform: 'uppercase',
             }}>
               Breaking Signal
             </span>
@@ -153,7 +153,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
           }}>
             {event.headline}
             {event.percentCut > 0 && (
-              <span style={{ marginLeft: '6px', color: '#fb923c', fontWeight: 700 }}>
+              <span style={{ marginLeft: '6px', color: 'var(--color-orange-text)', fontWeight: 700 }}>
                 (~{event.percentCut}% of staff)
               </span>
             )}
@@ -181,7 +181,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 borderRadius: '8px',
                 border: '1px solid rgba(249,115,22,0.50)',
                 background: isRefreshing ? 'rgba(249,115,22,0.08)' : 'rgba(249,115,22,0.18)',
-                color: isRefreshing ? '#fdba74' : '#fb923c',
+                color: isRefreshing ? '#fdba74' : 'var(--color-orange-text)',
                 fontSize: '0.72rem', fontWeight: 700,
                 cursor: isRefreshing ? 'not-allowed' : 'pointer',
                 opacity: isRefreshing ? 0.6 : 1,

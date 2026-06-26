@@ -53,7 +53,7 @@ function generateInsights(ctx: CopilotContext): QuickInsight[] {
       icon: TrendingDown,
       question: 'What is driving my risk the most?',
       answer: `Your biggest risk driver is "${ctx.topDriverLabel}". This single factor contributes the most to your score. Addressing it directly — through the actions in your plan — will have the largest impact on reducing your overall risk.`,
-      accent: '#f97316',
+      accent: 'var(--color-orange-text)',
     });
   }
 
@@ -63,7 +63,7 @@ function generateInsights(ctx: CopilotContext): QuickInsight[] {
       icon: Zap,
       question: 'What should I do this week?',
       answer: `Your highest-priority action is: "${ctx.topAction}". This was selected because it targets your biggest vulnerability with the shortest time-to-impact. Complete it before moving to lower-priority items.`,
-      accent: '#10b981',
+      accent: 'var(--color-emerald-text)',
     });
   }
 
@@ -105,7 +105,7 @@ function generateInsights(ctx: CopilotContext): QuickInsight[] {
       icon: Clock,
       question: 'What are my escape paths?',
       answer: `Your audit found ${ctx.escapePaths} viable escape path${ctx.escapePaths > 1 ? 's' : ''} — adjacent roles you could transition to with targeted upskilling. The best path is shown in your Protection tab's Career Evolution Timeline. Each path includes the specific skills to bridge and estimated time to qualify.`,
-      accent: '#10b981',
+      accent: 'var(--color-emerald-text)',
     });
   }
 

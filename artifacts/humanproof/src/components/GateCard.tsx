@@ -74,7 +74,7 @@ const GateContent: React.FC<{
     {urgency && (
       <div style={{
         display: 'inline-block', padding: '4px 12px', marginBottom: '12px',
-        background: 'rgba(239,68,68,0.2)', color: '#ef4444',
+        background: 'rgba(239,68,68,0.2)', color: 'var(--color-red-text)',
         borderRadius: '99px', fontSize: '0.78rem', fontWeight: 700,
         border: '1px solid rgba(239,68,68,0.4)',
       }}>

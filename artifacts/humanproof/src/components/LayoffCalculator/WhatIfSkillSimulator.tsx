@@ -54,10 +54,10 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
   const reduction = selected ? Math.abs(selected.scoreDelta) : 0;
   const bgColor =
     projectedScore < 35
-      ? "#10b981"
+      ? 'var(--color-emerald-text)'
       : projectedScore < 55
-        ? "#f59e0b"
-        : "#ef4444";
+        ? 'var(--color-amber500-text)'
+        : 'var(--color-red-text)';
 
   if (safeSkills.length === 0) return null;
 
@@ -206,7 +206,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                     style={{
                       fontSize: "2.2rem",
                       fontWeight: 800,
-                      color: "#ef4444",
+                      color: 'var(--color-red-text)',
                       fontFamily: "monospace",
                       lineHeight: 1,
                     }}
@@ -235,11 +235,11 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                     gap: 4,
                   }}
                 >
-                  <span style={{ color: "#10b981", fontSize: "1.4rem" }}>→</span>
+                  <span style={{ color: 'var(--color-emerald-text)', fontSize: "1.4rem" }}>→</span>
                   <span
                     style={{
                       background: "rgba(16,185,129,0.15)",
-                      color: "#10b981",
+                      color: 'var(--color-emerald-text)',
                       borderRadius: 20,
                       padding: "1px 8px",
                       fontSize: "0.7rem",
@@ -315,7 +315,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                     lineHeight: 1.6,
                   }}
                 >
-                  <strong style={{ color: "#10b981" }}>Why this helps: </strong>
+                  <strong style={{ color: 'var(--color-emerald-text)' }}>Why this helps: </strong>
                   {selected.reason}
                 </p>
               </div>

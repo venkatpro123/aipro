@@ -13,10 +13,10 @@ interface CompensationRiskPanelProps {
 }
 
 const CASCADE_COLORS: Record<CompensationCascadeStage, { text: string; bg: string; border: string }> = {
-  NORMAL:          { text: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)' },
-  HIRING_FREEZE:   { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' },
-  CONTRACTOR_CUTS: { text: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)' },
-  PAY_FREEZE:      { text: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
+  NORMAL:          { text: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)' },
+  HIRING_FREEZE:   { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' },
+  CONTRACTOR_CUTS: { text: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)' },
+  PAY_FREEZE:      { text: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
   PAY_CUT:         { text: '#dc2626', bg: 'rgba(220,38,38,0.10)',   border: 'rgba(220,38,38,0.30)' },
   PRE_LAYOFF:      { text: '#b91c1c', bg: 'rgba(185,28,28,0.12)',   border: 'rgba(185,28,28,0.35)' },
 };
@@ -103,7 +103,7 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
       {/* Metrics row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-          <div className="text-sm font-bold" style={{ color: layoffProbPct >= 50 ? '#ef4444' : 'var(--alpha-text-92)' }}>
+          <div className="text-sm font-bold" style={{ color: layoffProbPct >= 50 ? 'var(--color-red-text)' : 'var(--alpha-text-92)' }}>
             {layoffProbPct}%
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">12mo Prob.</div>
@@ -133,8 +133,8 @@ const CompensationRiskPanel: React.FC<CompensationRiskPanelProps> = ({ compensat
       <div className="rounded-lg p-2.5 mb-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
         <div className="flex items-center gap-1.5 mb-1">
           {compensation.payPosition === 'HIGHLY_ABOVE_MARKET' || compensation.payPosition === 'ABOVE_MARKET'
-            ? <AlertTriangle className="w-3 h-3" style={{ color: '#f59e0b' }} />
-            : <CheckCircle className="w-3 h-3" style={{ color: '#10b981' }} />
+            ? <AlertTriangle className="w-3 h-3" style={{ color: 'var(--color-amber500-text)' }} />
+            : <CheckCircle className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />
           }
           <span className="text-[11px] font-semibold" style={{ color: 'var(--alpha-text-85)' }}>
             {compensation.payPositionLabel}

@@ -11,19 +11,19 @@ interface SkillPortfolioPanelProps {
 }
 
 const TIER_COLORS: Record<string, { text: string; bg: string; border: string }> = {
-  ELITE:       { text: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)' },
+  ELITE:       { text: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.22)' },
   STRONG:      { text: '#3b82f6', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.22)' },
-  ADEQUATE:    { text: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
-  WEAK:        { text: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.22)' },
-  VULNERABLE:  { text: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
+  ADEQUATE:    { text: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.22)' },
+  WEAK:        { text: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.22)' },
+  VULNERABLE:  { text: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
 };
 
 const TREND_ICON = {
-  SURGING:  <TrendingUp className="w-3 h-3" style={{ color: '#10b981' }} />,
+  SURGING:  <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />,
   GROWING:  <TrendingUp className="w-3 h-3" style={{ color: '#3b82f6' }} />,
-  STABLE:   <Zap className="w-3 h-3" style={{ color: '#f59e0b' }} />,
-  DECLINING: <TrendingDown className="w-3 h-3" style={{ color: '#f97316' }} />,
-  OBSOLETE:  <AlertCircle className="w-3 h-3" style={{ color: '#ef4444' }} />,
+  STABLE:   <Zap className="w-3 h-3" style={{ color: 'var(--color-amber500-text)' }} />,
+  DECLINING: <TrendingDown className="w-3 h-3" style={{ color: 'var(--color-orange-text)' }} />,
+  OBSOLETE:  <AlertCircle className="w-3 h-3" style={{ color: 'var(--color-red-text)' }} />,
 };
 
 const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) => {
@@ -57,7 +57,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
           <div className="text-[10px] opacity-45 mt-0.5">Skill Match</div>
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
-          <div className="text-[10px] font-bold" style={{ color: portfolio.skillDecayRisk === 'HIGH' ? '#ef4444' : portfolio.skillDecayRisk === 'MEDIUM' ? '#f59e0b' : '#10b981' }}>
+          <div className="text-[10px] font-bold" style={{ color: portfolio.skillDecayRisk === 'HIGH' ? 'var(--color-red-text)' : portfolio.skillDecayRisk === 'MEDIUM' ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)' }}>
             {portfolio.skillDecayRisk}
           </div>
           <div className="text-[10px] opacity-45 mt-0.5">Going Out of Date</div>
@@ -72,17 +72,17 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       {/* Surging skills — with 12-month demand projection */}
       {portfolio.surgingSkills.length > 0 && (
         <div className="mb-2.5">
-          <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: '#10b981' }}>
+          <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: 'var(--color-emerald-text)' }}>
             <TrendingUp className="w-3 h-3" /> SURGING DEMAND
           </div>
           <div className="flex flex-col gap-1">
             {portfolio.surgingSkills.slice(0, 4).map(s => (
               <div key={s.skill} className="flex items-center justify-between rounded-lg px-2 py-1"
                 style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)' }}>
-                <span className="text-[10px] font-semibold" style={{ color: '#10b981' }}>{s.skill}</span>
+                <span className="text-[10px] font-semibold" style={{ color: 'var(--color-emerald-text)' }}>{s.skill}</span>
                 <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-45)' }}>
                   {s.demandIn12Months != null && (
-                    <span style={{ color: s.demandIn12Months > s.demandScore ? '#10b981' : 'var(--alpha-text-30)' }}>
+                    <span style={{ color: s.demandIn12Months > s.demandScore ? 'var(--color-emerald-text)' : 'var(--alpha-text-30)' }}>
                       getting more valuable
                     </span>
                   )}
@@ -96,7 +96,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
       {/* Declining skills — with urgency and projected demand */}
       {portfolio.decliningSkills.length > 0 && (
         <div className="mb-2.5">
-          <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: '#ef4444' }}>
+          <div className="text-[10px] font-medium mb-1.5 flex items-center gap-1" style={{ color: 'var(--color-red-text)' }}>
             <TrendingDown className="w-3 h-3" /> DECLINING SKILLS
           </div>
           <div className="flex flex-col gap-1">
@@ -105,7 +105,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                 style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)' }}>
                 <div className="flex items-center gap-1.5">
                   {TREND_ICON[s.trend]}
-                  <span className="text-[10px] font-semibold" style={{ color: '#ef4444' }}>{s.skill}</span>
+                  <span className="text-[10px] font-semibold" style={{ color: 'var(--color-red-text)' }}>{s.skill}</span>
                   <span className="text-[9px] px-1 rounded"
                     style={{ background: 'rgba(239,68,68,0.12)', color: 'rgba(239,68,68,0.70)' }}>
                     {s.trend}
@@ -113,7 +113,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                 </div>
                 <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-45)' }}>
                   {s.demandIn12Months != null && (
-                    <span style={{ color: '#ef4444' }}>losing value</span>
+                    <span style={{ color: 'var(--color-red-text)' }}>losing value</span>
                   )}
                 </div>
               </div>

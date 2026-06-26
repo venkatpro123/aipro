@@ -24,10 +24,10 @@ export interface SignalNode {
 }
 
 const NODE_COLORS: Record<SignalNodeKey, string> = {
-  hiring: '#10b981',
+  hiring: 'var(--color-emerald-text)',
   financial: '#00d4e0',
-  layoff: '#ef4444',
-  market: '#f59e0b',
+  layoff: 'var(--color-red-text)',
+  market: 'var(--color-amber500-text)',
   personal: '#7c3aed',
 };
 

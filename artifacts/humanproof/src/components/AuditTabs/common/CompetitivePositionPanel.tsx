@@ -43,18 +43,18 @@ const DIMENSION_ICONS: Record<string, React.ReactNode> = {
 };
 
 const STATUS_CONFIG: Record<CompetitiveDimension['status'], { color: string; label: string }> = {
-  ahead:        { color: '#10b981', label: 'Ahead'         },
+  ahead:        { color: 'var(--color-emerald-text)', label: 'Ahead'         },
   competitive:  { color: '#3b82f6', label: 'Competitive'   },
-  gap:          { color: '#f59e0b', label: 'Gap'           },
-  critical_gap: { color: '#ef4444', label: 'Critical Gap'  },
+  gap:          { color: 'var(--color-amber500-text)', label: 'Gap'           },
+  critical_gap: { color: 'var(--color-red-text)', label: 'Critical Gap'  },
 };
 
 const CATEGORY_CONFIG: Record<string, { color: string; label: string }> = {
-  top_tier:     { color: '#10b981', label: 'Top Tier'     },
+  top_tier:     { color: 'var(--color-emerald-text)', label: 'Top Tier'     },
   competitive:  { color: '#3b82f6', label: 'Competitive'  },
-  average:      { color: '#f59e0b', label: 'Average'      },
-  below_average:{ color: '#f97316', label: 'Below Average' },
-  critical:     { color: '#ef4444', label: 'Critical'     },
+  average:      { color: 'var(--color-amber500-text)', label: 'Average'      },
+  below_average:{ color: 'var(--color-orange-text)', label: 'Below Average' },
+  critical:     { color: 'var(--color-red-text)', label: 'Critical'     },
 };
 
 // ─── Percentile ring ─────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ function DimensionBar({ dim }: { dim: CompetitiveDimension }) {
 // ─── Gap action card ──────────────────────────────────────────────────────────
 
 function GapActionCard({ gap, index }: { gap: GapCloseAction; index: number }) {
-  const pctColor = gap.percentileImpact >= 12 ? '#10b981' : gap.percentileImpact >= 8 ? '#3b82f6' : '#f59e0b';
+  const pctColor = gap.percentileImpact >= 12 ? 'var(--color-emerald-text)' : gap.percentileImpact >= 8 ? '#3b82f6' : 'var(--color-amber500-text)';
 
   return (
     <motion.div
@@ -228,7 +228,7 @@ function EdgeCard({ edge, index }: { edge: CompetitiveEdge; index: number }) {
       {edge.percentileAdvantage > 0 && (
         <div
           className="flex-shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-          style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}
+          style={{ background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)' }}
         >
           +{edge.percentileAdvantage}pts
         </div>

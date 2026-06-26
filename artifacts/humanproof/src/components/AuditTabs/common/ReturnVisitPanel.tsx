@@ -57,7 +57,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       items.push({
         icon: scoreDelta > 0 ? TrendingUp : TrendingDown,
         text: `Risk score ${scoreDelta > 0 ? 'increased' : 'decreased'} by ${Math.abs(scoreDelta)} points`,
-        color: scoreDelta > 0 ? '#ef4444' : '#10b981',
+        color: scoreDelta > 0 ? 'var(--color-red-text)' : 'var(--color-emerald-text)',
       });
     }
 
@@ -65,7 +65,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       items.push({
         icon: Shield,
         text: `${completedActions} action${completedActions > 1 ? 's' : ''} completed`,
-        color: '#10b981',
+        color: 'var(--color-emerald-text)',
       });
     }
 
@@ -73,7 +73,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
       items.push({
         icon: Activity,
         text: `${newSignals} new signal${newSignals > 1 ? 's' : ''} detected`,
-        color: '#f59e0b',
+        color: 'var(--color-amber500-text)',
       });
     }
 
@@ -172,7 +172,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
             className="px-2 py-1 rounded-lg text-[10px] font-bold"
             style={{
               background: scoreDelta! > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)',
-              color: scoreDelta! > 0 ? '#ef4444' : '#10b981',
+              color: scoreDelta! > 0 ? 'var(--color-red-text)' : 'var(--color-emerald-text)',
             }}
           >
             {scoreDelta! > 0 ? '+' : ''}{scoreDelta}pt
@@ -188,7 +188,7 @@ export const ReturnVisitPanel: React.FC<ReturnVisitPanelProps> = ({
           </p>
           {marketChanges.slice(0, 3).map((change, i) => (
             <div key={i} className="flex items-start gap-2 py-1">
-              <span style={{ color: change.direction === 'up' ? '#ef4444' : change.direction === 'down' ? '#10b981' : '#f59e0b', fontSize: 10 }}>
+              <span style={{ color: change.direction === 'up' ? 'var(--color-red-text)' : change.direction === 'down' ? 'var(--color-emerald-text)' : 'var(--color-amber500-text)', fontSize: 10 }}>
                 {change.direction === 'up' ? '↑' : change.direction === 'down' ? '↓' : '→'}
               </span>
               <div>

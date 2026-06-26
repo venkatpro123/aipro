@@ -136,7 +136,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
             className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
             style={{ background: 'rgba(34,211,238,0.12)', border: '1px solid rgba(34,211,238,0.22)' }}
           >
-            <Flame className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
+            <Flame className="w-3.5 h-3.5" style={{ color: '#22d3ee' }} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'rgba(34,211,238,0.65)' }}>
@@ -154,7 +154,7 @@ export const EmergencyModeBanner: React.FC<Props> = ({ result, onJumpToActions }
           <button
             onClick={onJumpToActions}
             className="flex-shrink-0 text-[10px] font-semibold px-2 py-1 rounded-lg"
-            style={{ background: 'rgba(34,211,238,0.12)', color: 'var(--color-cyan-text)', border: '1px solid rgba(34,211,238,0.22)' }}
+            style={{ background: 'rgba(34,211,238,0.12)', color: '#22d3ee', border: '1px solid rgba(34,211,238,0.22)' }}
           >
             Start
           </button>

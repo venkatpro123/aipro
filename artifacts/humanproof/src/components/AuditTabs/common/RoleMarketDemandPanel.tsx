@@ -12,23 +12,23 @@ interface RoleMarketDemandPanelProps {
 }
 
 const DEMAND_TREND_CONFIG: Record<DemandTrend, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  surging:  { label: 'Surging',  color: '#10b981', bg: 'rgba(16,185,129,0.12)',  icon: <TrendingUp className="w-3 h-3" /> },
+  surging:  { label: 'Surging',  color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.12)',  icon: <TrendingUp className="w-3 h-3" /> },
   rising:   { label: 'Rising',   color: 'var(--color-emerald-text)', bg: 'rgba(52,211,153,0.10)',  icon: <TrendingUp className="w-3 h-3" /> },
-  stable:   { label: 'Stable',   color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  icon: <Minus className="w-3 h-3" />      },
-  declining:{ label: 'Declining',color: '#f97316', bg: 'rgba(249,115,22,0.10)',  icon: <TrendingDown className="w-3 h-3" /> },
-  falling:  { label: 'Falling',  color: '#ef4444', bg: 'rgba(239,68,68,0.10)',   icon: <TrendingDown className="w-3 h-3" /> },
+  stable:   { label: 'Stable',   color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)',  icon: <Minus className="w-3 h-3" />      },
+  declining:{ label: 'Declining',color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.10)',  icon: <TrendingDown className="w-3 h-3" /> },
+  falling:  { label: 'Falling',  color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.10)',   icon: <TrendingDown className="w-3 h-3" /> },
 };
 
 const SALARY_TREND_CONFIG: Record<'rising' | 'stable' | 'falling', { label: string; color: string; bg: string }> = {
-  rising:  { label: 'Salaries Rising',  color: '#10b981', bg: 'rgba(16,185,129,0.10)' },
-  stable:  { label: 'Salaries Stable',  color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
-  falling: { label: 'Salaries Falling', color: '#ef4444', bg: 'rgba(239,68,68,0.10)'  },
+  rising:  { label: 'Salaries Rising',  color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.10)' },
+  stable:  { label: 'Salaries Stable',  color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
+  falling: { label: 'Salaries Falling', color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.10)'  },
 };
 
 function demandIndexStyle(idx: number): { color: string; bg: string; border: string } {
-  if (idx > 70) return { color: '#10b981', bg: 'rgba(16,185,129,0.07)',  border: 'rgba(16,185,129,0.20)'  };
-  if (idx >= 45) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)'  };
-  return              { color: '#ef4444', bg: 'rgba(239,68,68,0.07)',   border: 'rgba(239,68,68,0.20)'   };
+  if (idx > 70) return { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.07)',  border: 'rgba(16,185,129,0.20)'  };
+  if (idx >= 45) return { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)'  };
+  return              { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.07)',   border: 'rgba(239,68,68,0.20)'   };
 }
 
 const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarketDemand }) => {
@@ -127,7 +127,7 @@ const RoleMarketDemandPanel: React.FC<RoleMarketDemandPanelProps> = ({ roleMarke
             style={{ background: 'var(--alpha-bg-04)' }}>
             <span className="text-[11px]" style={{ color: 'var(--alpha-text-50)' }}>Local market</span>
             <span className="text-[11px] font-bold" style={{
-              color: localMarketMultiplier > 1 ? '#10b981' : '#f97316'
+              color: localMarketMultiplier > 1 ? 'var(--color-emerald-text)' : 'var(--color-orange-text)'
             }}>
               {localMarketMultiplier.toFixed(2)}× vs. national avg
             </span>

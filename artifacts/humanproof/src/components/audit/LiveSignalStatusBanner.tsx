@@ -81,31 +81,31 @@ const TIER_CONFIG: Record<Tier, {
     text:   'var(--accent)',
   },
   partial: {
-    dot:    '#f59e0b',
+    dot:    'var(--color-amber500-text)',
     label:  'Partial Live Coverage',
     sub:    'Some signals from live APIs; remainder from database cache.',
     bg:     'rgba(245, 158, 11, 0.06)',
     border: 'rgba(245, 158, 11, 0.25)',
-    text:   '#f59e0b',
+    text:   'var(--color-amber500-text)',
   },
   // v32: 'db' and 'static' tiers now map to "live-partial" + "live-unavailable" —
   // the audit pipeline blocks for live quorum, so anything reaching the user
   // either has live evidence or explicitly cannot be acquired live.
   db: {
-    dot:    '#f59e0b',
+    dot:    'var(--color-amber500-text)',
     label:  'Live Intelligence (Partial)',
     sub:    'Some signal classes were satisfied by absence of evidence rather than positive confirmation.',
     bg:     'rgba(245, 158, 11, 0.07)',
     border: 'rgba(245, 158, 11, 0.30)',
-    text:   '#f59e0b',
+    text:   'var(--color-amber500-text)',
   },
   static: {
-    dot:    '#ef4444',
+    dot:    'var(--color-red-text)',
     label:  'Live Intelligence Unavailable',
     sub:    'Live sources could not be reached for this company. Score reflects best-available evidence.',
     bg:     'rgba(239, 68, 68, 0.08)',
     border: 'rgba(239, 68, 68, 0.35)',
-    text:   '#ef4444',
+    text:   'var(--color-red-text)',
   },
 };
 
@@ -212,7 +212,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
                 </span>
               )}
               {hardFails.length > 0 && tier !== 'static' && (
-                <span style={{ marginLeft: '4px', color: '#ef4444' }}>
+                <span style={{ marginLeft: '4px', color: 'var(--color-red-text)' }}>
                   API failures: {hardFails.length}.
                 </span>
               )}
@@ -220,7 +220,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
               {degradationReason === 'live_quorum_timeout' && (
                 <span style={{
                   display: 'block', marginTop: '4px',
-                  color: '#f59e0b', fontWeight: 600,
+                  color: 'var(--color-amber500-text)', fontWeight: 600,
                 }}>
                   {degradationDetail ?? 'Live scrape ceiling hit — confidence capped at 60%.'}
                 </span>
@@ -229,7 +229,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
               {quorumInsufficient && (
                 <span style={{
                   display: 'block', marginTop: '4px',
-                  color: '#ef4444', fontWeight: 700,
+                  color: 'var(--color-red-text)', fontWeight: 700,
                 }}>
                   Quorum not met — {quorumPositiveClassCount ?? 0}/4 signal classes
                   positively confirmed. A score from insufficient sources is not a score:
@@ -241,7 +241,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
               {structuralNote && !quorumInsufficient && (
                 <span style={{
                   display: 'block', marginTop: '4px',
-                  color: '#f59e0b', fontWeight: 500,
+                  color: 'var(--color-amber500-text)', fontWeight: 500,
                 }}>
                   {structuralNote}
                 </span>

@@ -26,10 +26,10 @@ const LAYER_CONTRIBUTIONS: Array<{
   color: string;
   protects?: boolean;
 }> = [
-  { key: 'L1', label: 'Company Financial Health', shortLabel: 'L1 Health',    color: '#ef4444' },
-  { key: 'L2', label: 'Layoff History',            shortLabel: 'L2 History',   color: '#f97316' },
-  { key: 'L3', label: 'Role Displacement',         shortLabel: 'L3 Role',      color: '#f59e0b' },
-  { key: 'L5', label: 'Employee Protection',       shortLabel: 'L5 Employee',  color: '#10b981', protects: true },
+  { key: 'L1', label: 'Company Financial Health', shortLabel: 'L1 Health',    color: 'var(--color-red-text)' },
+  { key: 'L2', label: 'Layoff History',            shortLabel: 'L2 History',   color: 'var(--color-orange-text)' },
+  { key: 'L3', label: 'Role Displacement',         shortLabel: 'L3 Role',      color: 'var(--color-amber500-text)' },
+  { key: 'L5', label: 'Employee Protection',       shortLabel: 'L5 Employee',  color: 'var(--color-emerald-text)', protects: true },
   { key: 'D6', label: 'AI Agent Coverage',         shortLabel: 'D6 AI Agent',  color: '#06b6d4' },
   { key: 'D7', label: 'Company Risk Composite',    shortLabel: 'D7 Co.Risk',   color: '#ec4899' },
 ];
@@ -180,7 +180,7 @@ export function SignalAttributionWaterfall({ result }: Props) {
                 x={x2 + 4}
                 y={y + BAR_HEIGHT / 2 + 3}
                 fontSize="9"
-                fill={bar.isPositive ? '#f97316' : '#10b981'}
+                fill={bar.isPositive ? 'var(--color-orange-text)' : 'var(--color-emerald-text)'}
               >
                 {bar.contribution >= 0 ? '+' : ''}{Math.round(bar.contribution)}
               </text>
@@ -202,11 +202,11 @@ export function SignalAttributionWaterfall({ result }: Props) {
               </text>
               <motion.rect
                 x={x1} y={y} width={barW} height={BAR_HEIGHT} rx={3}
-                fill="#ef4444" fillOpacity={0.6}
+                fill='var(--color-red-text)' fillOpacity={0.6}
                 initial={{ width: 0 }} animate={{ width: barW }}
                 transition={{ duration: 0.4, delay: bars.length * 0.08 }}
               />
-              <text x={x2 + 4} y={y + BAR_HEIGHT / 2 + 3} fontSize="9" fill="#ef4444">
+              <text x={x2 + 4} y={y + BAR_HEIGHT / 2 + 3} fontSize="9" fill='var(--color-red-text)'>
                 +{Math.round(ksAdjustment)} ({ksDisplayLabel})
               </text>
             </g>

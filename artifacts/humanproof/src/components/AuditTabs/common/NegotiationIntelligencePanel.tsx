@@ -17,9 +17,9 @@ interface Props {
 const RATING_CONFIG: Record<NegotiationLeverageRating, {
   bg: string; border: string; badge: string; label: string; barColor: string;
 }> = {
-  STRONG:   { bg: 'bg-emerald-950/25', border: 'border-emerald-500/40', badge: 'bg-emerald-500/15 text-emerald-300', label: 'Strong Leverage', barColor: '#10b981' },
+  STRONG:   { bg: 'bg-emerald-950/25', border: 'border-emerald-500/40', badge: 'bg-emerald-500/15 text-emerald-300', label: 'Strong Leverage', barColor: 'var(--color-emerald-text)' },
   MODERATE: { bg: 'bg-blue-950/20',    border: 'border-blue-500/30',    badge: 'bg-blue-500/15 text-blue-300',    label: 'Moderate Leverage', barColor: '#3b82f6' },
-  WEAK:     { bg: 'bg-amber-950/15',   border: 'border-amber-500/25',   badge: 'bg-amber-500/15 text-amber-300',  label: 'Weak Leverage',   barColor: '#f59e0b' },
+  WEAK:     { bg: 'bg-amber-950/15',   border: 'border-amber-500/25',   badge: 'bg-amber-500/15 text-amber-300',  label: 'Weak Leverage',   barColor: 'var(--color-amber500-text)' },
   NONE:     { bg: '', border: '', badge: '', label: '', barColor: '' },
 };
 

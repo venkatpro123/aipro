@@ -160,7 +160,7 @@ const CompanyIdentityCard: React.FC<{
   const revGrowth = companyData.revenueGrowthYoY;
   const stockChange = companyData.stock90DayChange;
   const layoffRounds = companyData.layoffRounds ?? 0;
-  const provenanceColor = provenance.ageDays > 90 ? '#ef4444' : provenance.ageDays > 30 ? '#f59e0b' : '#10b981';
+  const provenanceColor = provenance.ageDays > 90 ? 'var(--color-red-text)' : provenance.ageDays > 30 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
 
   return (
     <motion.div
@@ -207,9 +207,9 @@ const CompanyIdentityCard: React.FC<{
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{
               fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
-              color: provenance.sourceLabel === "Canonical Live" ? '#10b981'
+              color: provenance.sourceLabel === "Canonical Live" ? 'var(--color-emerald-text)'
                 : provenance.sourceLabel === "Canonical DB" ? '#06b6d4'
-                : '#f59e0b',
+                : 'var(--color-amber500-text)',
               background: 'rgba(0,0,0,0.3)',
               border: '1px solid var(--alpha-bg-08)',
               borderRadius: '6px', padding: '3px 8px',
@@ -236,19 +236,19 @@ const CompanyIdentityCard: React.FC<{
           {
             label: 'Revenue YoY',
             value: revGrowth != null ? `${revGrowth > 0 ? '+' : ''}${revGrowth}%` : '—',
-            color: revGrowth == null ? 'var(--text-3)' : revGrowth >= 0 ? '#10b981' : '#ef4444',
+            color: revGrowth == null ? 'var(--text-3)' : revGrowth >= 0 ? 'var(--color-emerald-text)' : 'var(--color-red-text)',
             icon: revGrowth != null ? (revGrowth >= 0 ? '▲' : '▼') : '—',
           },
           {
             label: 'Stock 90d',
             value: stockChange != null ? `${stockChange > 0 ? '+' : ''}${stockChange}%` : '—',
-            color: stockChange == null ? 'var(--text-3)' : stockChange >= 0 ? '#10b981' : '#ef4444',
+            color: stockChange == null ? 'var(--text-3)' : stockChange >= 0 ? 'var(--color-emerald-text)' : 'var(--color-red-text)',
             icon: stockChange != null ? (stockChange >= 0 ? '▲' : '▼') : '—',
           },
           {
             label: 'Layoff Rounds',
             value: `${layoffRounds}`,
-            color: layoffRounds === 0 ? '#10b981' : layoffRounds === 1 ? '#f59e0b' : '#ef4444',
+            color: layoffRounds === 0 ? 'var(--color-emerald-text)' : layoffRounds === 1 ? 'var(--color-amber500-text)' : 'var(--color-red-text)',
             icon: layoffRounds > 0 ? '⚠' : '✓',
           },
           {
@@ -526,7 +526,7 @@ const FinancialHealthDossier: React.FC<{
       <div className="grid grid-cols-1 md:grid-cols-2" style={{ padding: '4px' }}>
         {metrics.map((metric, i) => {
           const accentColor = metricColors[i % metricColors.length];
-          const trendColor = metric.trend === 'up' ? '#10b981' : metric.trend === 'down' ? '#ef4444' : 'var(--text-3)';
+          const trendColor = metric.trend === 'up' ? 'var(--color-emerald-text)' : metric.trend === 'down' ? 'var(--color-red-text)' : 'var(--text-3)';
           return (
             <motion.div
               key={i}
@@ -556,12 +556,12 @@ const FinancialHealthDossier: React.FC<{
                     <span style={{
                       fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 900,
                       letterSpacing: '-0.04em', lineHeight: 1,
-                      color: metric.trend === 'up' ? '#10b981' : metric.trend === 'down' ? '#ef4444' : accentColor,
+                      color: metric.trend === 'up' ? 'var(--color-emerald-text)' : metric.trend === 'down' ? 'var(--color-red-text)' : accentColor,
                     }}>
                       {metric.value}
                     </span>
-                    {metric.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#10b981' }} />}
-                    {metric.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#ef4444' }} />}
+                    {metric.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />}
+                    {metric.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-red-text)' }} />}
                   </div>
                   {metric.description && (
                     <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4, marginBottom: '4px' }}>
@@ -571,7 +571,7 @@ const FinancialHealthDossier: React.FC<{
                   {metric.benchmark && (
                     <div style={{
                       fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
-                      color: metric.benchmarkDelta === 'above' ? '#10b981' : metric.benchmarkDelta === 'below' ? '#ef4444' : 'var(--text-3)',
+                      color: metric.benchmarkDelta === 'above' ? 'var(--color-emerald-text)' : metric.benchmarkDelta === 'below' ? 'var(--color-red-text)' : 'var(--text-3)',
                       letterSpacing: '0.06em',
                     }}>
                       {metric.benchmarkDelta === 'above' ? '▲ Above' : metric.benchmarkDelta === 'below' ? '▼ Below' : '≈'} {metric.benchmark}
@@ -610,7 +610,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
   const sorted = [...events].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const getSeverityColor = (s: LayoffEvent["severity"]) =>
-    s === "major" ? "#ef4444" : s === "moderate" ? "#f97316" : "#f59e0b";
+    s === "major" ? 'var(--color-red-text)' : s === "moderate" ? 'var(--color-orange-text)' : 'var(--color-amber500-text)';
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "short" });
@@ -636,7 +636,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
             marginLeft: 'auto',
             fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
             padding: '2px 8px', borderRadius: '4px',
-            background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)',
+            background: 'rgba(239,68,68,0.12)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.22)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
             {patternLabel}
@@ -650,7 +650,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
             padding: '14px 16px', borderRadius: '12px',
             background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.20)',
           }}>
-            <div className="data-label" style={{ color: '#10b981', marginBottom: '4px' }}>✓ STABILITY INDEX: HIGH</div>
+            <div className="data-label" style={{ color: 'var(--color-emerald-text)', marginBottom: '4px' }}>✓ STABILITY INDEX: HIGH</div>
             <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
               No documented workforce reductions in the primary 24-month tracking window. This is a meaningful protective signal.
             </p>

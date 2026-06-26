@@ -14,7 +14,7 @@ export const LayoffShareCard: React.FC<Props> = ({ score, tier, companyName, rol
   const [downloading, setDownloading] = useState(false);
 
   const getTierHex = (colorString: string) => {
-    const map: any = { 'red': '#ef4444', 'orange': '#f97316', 'amber': '#f59e0b', 'green': '#10b981', 'teal': '#14b8a6' };
+    const map: any = { 'red': 'var(--color-red-text)', 'orange': 'var(--color-orange-text)', 'amber': 'var(--color-amber500-text)', 'green': 'var(--color-emerald-text)', 'teal': '#14b8a6' };
     return map[colorString] || '#14b8a6';
   };
 

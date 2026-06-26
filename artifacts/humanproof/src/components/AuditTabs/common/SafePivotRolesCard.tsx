@@ -48,9 +48,9 @@ export interface SafePivotRolesCardProps {
 }
 
 const STRENGTH_CONFIG = {
-  strong:   { color: '#10b981', label: 'Strong match', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.22)' },
+  strong:   { color: 'var(--color-emerald-text)', label: 'Strong match', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.22)' },
   moderate: { color: 'var(--color-cyan-text)', label: 'Moderate match', bg: 'rgba(34,211,238,0.07)', border: 'rgba(34,211,238,0.20)' },
-  weak:     { color: '#f59e0b', label: 'Stretch pivot', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)' },
+  weak:     { color: 'var(--color-amber500-text)', label: 'Stretch pivot', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.20)' },
 };
 
 const fmtWeeks = (w: number) =>
@@ -88,9 +88,9 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <TrendingDown size={13} style={{ color: '#10b981', flexShrink: 0 }} />
+        <TrendingDown size={13} style={{ color: 'var(--color-emerald-text)', flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+          <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)' }}>
             Safe Pivot Roles
           </p>
           <p style={{ fontSize: '0.68rem', color: 'var(--alpha-text-45)', marginTop: 1 }}>
@@ -139,11 +139,11 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                       {currentScore}
                     </span>
                     <ArrowRight size={10} style={{ color: 'var(--alpha-text-30)' }} />
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#10b981', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)' }}>
                       {targetScore}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.62rem', color: '#10b981', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.62rem', color: 'var(--color-emerald-text)', fontWeight: 700 }}>
                     −{delta} risk pts
                   </span>
                 </div>

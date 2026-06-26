@@ -30,8 +30,8 @@ interface CareerPathMapProps {
 const NODE_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   current: { bg: 'rgba(0,212,224,0.12)', border: 'rgba(0,212,224,0.40)', text: 'var(--cyan)' },
   pivot:   { bg: 'rgba(124,58,237,0.10)', border: 'rgba(124,58,237,0.35)', text: '#a78bfa' },
-  target:  { bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.35)', text: '#10b981' },
-  stretch: { bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.35)', text: '#f59e0b' },
+  target:  { bg: 'rgba(16,185,129,0.10)', border: 'rgba(16,185,129,0.35)', text: 'var(--color-emerald-text)' },
+  stretch: { bg: 'rgba(245,158,11,0.10)', border: 'rgba(245,158,11,0.35)', text: 'var(--color-amber500-text)' },
 };
 
 const STRENGTH_LABEL: Record<string, string> = {
@@ -155,12 +155,12 @@ export const CareerPathMap: React.FC<CareerPathMapProps> = ({
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {node.demand != null && node.demand >= 60 && (
                         <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(16,185,129,0.12)' }}>
-                          <TrendingUp className="w-2.5 h-2.5" style={{ color: '#10b981' }} />
-                          <span className="text-[8px] font-bold" style={{ color: '#10b981' }}>Hot</span>
+                          <TrendingUp className="w-2.5 h-2.5" style={{ color: 'var(--color-emerald-text)' }} />
+                          <span className="text-[8px] font-bold" style={{ color: 'var(--color-emerald-text)' }}>Hot</span>
                         </div>
                       )}
                       {node.riskDelta != null && (
-                        <span className="text-[9px] font-bold" style={{ color: node.riskDelta < 0 ? '#10b981' : '#f59e0b' }}>
+                        <span className="text-[9px] font-bold" style={{ color: node.riskDelta < 0 ? 'var(--color-emerald-text)' : 'var(--color-amber500-text)' }}>
                           {node.riskDelta > 0 ? '+' : ''}{node.riskDelta}pt
                         </span>
                       )}

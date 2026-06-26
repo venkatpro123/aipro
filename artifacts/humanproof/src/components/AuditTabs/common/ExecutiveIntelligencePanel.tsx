@@ -37,15 +37,15 @@ const TIER_LABELS: Record<string, string> = {
 };
 
 function urgencyColor(u: 'critical' | 'high' | 'medium' | string): string {
-  if (u === 'critical') return '#ef4444';
-  if (u === 'high')     return '#f97316';
-  return '#f59e0b';
+  if (u === 'critical') return 'var(--color-red-text)';
+  if (u === 'high')     return 'var(--color-orange-text)';
+  return 'var(--color-amber500-text)';
 }
 
 function ncRiskColor(score: number): string {
-  if (score >= 65) return '#f97316';
-  if (score >= 40) return '#f59e0b';
-  return '#10b981';
+  if (score >= 65) return 'var(--color-orange-text)';
+  if (score >= 40) return 'var(--color-amber500-text)';
+  return 'var(--color-emerald-text)';
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -188,9 +188,9 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                   }}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <Key className="w-3 h-3" style={{ color: intelligence.equityUrgency === 'critical' ? '#ef4444' : '#f97316' }} />
+                    <Key className="w-3 h-3" style={{ color: intelligence.equityUrgency === 'critical' ? 'var(--color-red-text)' : 'var(--color-orange-text)' }} />
                     <p className="text-[10px] font-black tracking-wide"
-                      style={{ color: intelligence.equityUrgency === 'critical' ? '#ef4444' : '#f97316' }}>
+                      style={{ color: intelligence.equityUrgency === 'critical' ? 'var(--color-red-text)' : 'var(--color-orange-text)' }}>
                       EQUITY VEST ALERT — {intelligence.equityUrgency.toUpperCase()}
                     </p>
                   </div>
@@ -253,7 +253,7 @@ export const ExecutiveIntelligencePanel: React.FC<Props> = ({ intelligence }) =>
                   </p>
                   {intelligence.successorThreatNarrative && (
                     <div className="flex items-start gap-1.5 mt-2">
-                      <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+                      <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-amber500-text)' }} />
                       <p className="text-[10px] italic leading-snug" style={{ color: '#f59e0b80' }}>
                         {intelligence.successorThreatNarrative}
                       </p>

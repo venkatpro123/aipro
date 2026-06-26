@@ -835,7 +835,7 @@ const EffectiveWeightsPanel: React.FC<{
                       <span className="font-medium">{name}</span>
                       {isL1Estimated && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                          style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}>
                           ESTIMATED
                         </span>
                       )}
@@ -907,7 +907,7 @@ const EffectiveWeightsPanel: React.FC<{
                       )}
                       {d8IsActive && (
                         <span className="text-[10px] px-1 py-0.5 rounded font-bold"
-                          style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                          style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>
                           {d8FlagActive ? 'LOGISTIC' : 'HEURISTIC'}
                         </span>
                       )}
@@ -1691,7 +1691,7 @@ const CIWideningSourcesPanel: React.FC<{
 // ---------------------------------------------------------------------------
 
 const COHORT_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  DISTRESS:   { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.28)',   text: '#f87171' },
+  DISTRESS:   { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.28)',   text: '#ef4444' },
   EFFICIENCY: { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.28)',  text: '#60a5fa' },
   WAVE:       { bg: 'rgba(168,85,247,0.08)',  border: 'rgba(168,85,247,0.28)',  text: '#c084fc' },
   GLOBAL:     { bg: 'rgba(99,102,241,0.08)',  border: 'rgba(99,102,241,0.25)',  text: '#a5b4fc' },
@@ -1730,8 +1730,8 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
             style={isConformal
-              ? { background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)', border: '1px solid rgba(16,185,129,0.25)' }
-              : { background: 'rgba(245,158,11,0.12)', color: 'var(--color-amber-text)', border: '1px solid rgba(245,158,11,0.25)' }
+              ? { background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }
+              : { background: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
             }
           >
             {isConformal ? 'CONFORMAL' : 'HEURISTIC FALLBACK'}
@@ -1756,7 +1756,7 @@ const ConformalCIPanel: React.FC<{ bundle: ConformalBundle }> = ({ bundle }) => 
         >
           <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
           <div>
-            <p className="text-[11px] font-semibold mb-0.5" style={{ color: 'var(--color-amber-text)' }}>
+            <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#fbbf24' }}>
               Pooled CI — cohort data insufficient
             </p>
             <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
@@ -2260,7 +2260,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       </div>
                       <span className="text-orange-400/60 text-xs">→</span>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                        style={{ background: 'rgba(251,146,60,0.18)', border: '1px solid rgba(251,146,60,0.40)', color: '#fb923c' }}>
+                        style={{ background: 'rgba(251,146,60,0.18)', border: '1px solid rgba(251,146,60,0.40)', color: '#f97316' }}>
                         Structural cap
                         <span className="text-base font-bold text-orange-200">{capPct}%</span>
                       </div>
@@ -2358,7 +2358,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                             </h4>
                             <span
                               className="text-[10px] font-black px-2 py-0.5 rounded"
-                              style={{ background: 'rgba(239,68,68,0.18)', color: '#f87171', border: '1px solid rgba(239,68,68,0.35)' }}
+                              style={{ background: 'rgba(239,68,68,0.18)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.35)' }}
                             >
                               FLOOR-ADJUSTED · NOT FORMULA-DERIVED
                             </span>
@@ -2518,8 +2518,8 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             };
             const stageColors: Record<1 | 2 | 3, { border: string; bg: string; text: string }> = {
               1: { border: 'rgba(245,158,11,0.35)', bg: 'rgba(245,158,11,0.07)', text: '#fbbf24' },
-              2: { border: 'rgba(249,115,22,0.35)', bg: 'rgba(249,115,22,0.07)', text: '#fb923c' },
-              3: { border: 'rgba(239,68,68,0.40)',  bg: 'rgba(239,68,68,0.09)',  text: '#f87171' },
+              2: { border: 'rgba(249,115,22,0.35)', bg: 'rgba(249,115,22,0.07)', text: '#f97316' },
+              3: { border: 'rgba(239,68,68,0.40)',  bg: 'rgba(239,68,68,0.09)',  text: '#ef4444' },
             };
             const c = stageColors[stage];
             return (
@@ -2546,7 +2546,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {stage === 3 && (
                         <span
                           className="text-[10px] font-black px-2 py-0.5 rounded"
-                          style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
+                          style={{ background: 'rgba(239,68,68,0.12)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
                         >
                           EMERGENCY PROTOCOL ACTIVE
                         </span>
@@ -3146,7 +3146,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {isLive ? (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(16,185,129,0.15)', color: 'var(--color-emerald-text)' }}
+                          style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}
                         >
                           LIVE
                         </span>
@@ -3161,7 +3161,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                       {hiringMarket && (
                         <span
                           className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded"
-                          style={{ background: 'rgba(167,139,250,0.12)', color: 'var(--color-violet-text)', border: '1px solid rgba(167,139,250,0.25)' }}
+                          style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)' }}
                           title={`Job-board connectors routed to the ${hiringMarket} hiring market`}
                         >
                           {hiringMarket.toUpperCase()} market

@@ -11,9 +11,9 @@ interface Props {
 
 const HORIZON_STYLES: Record<string, { color: string; bg: string; border: string; icon: string }> = {
   '30d':              { color: 'var(--color-cyan-text)', bg: 'rgba(34,211,238,0.07)',  border: 'rgba(34,211,238,0.22)',  icon: '◈' },
-  '90d':              { color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.22)', icon: '◉' },
+  '90d':              { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.22)', icon: '◉' },
   '12mo':             { color: '#8b5cf6', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.22)', icon: '⬡' },
-  'before_threshold': { color: '#ef4444', bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.22)',  icon: '⬢' },
+  'before_threshold': { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.22)',  icon: '⬢' },
 };
 
 export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => {
@@ -30,9 +30,9 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
         padding: '12px 16px', borderRadius: 12,
         background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.22)',
       }}>
-        <TrendingDown size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+        <TrendingDown size={16} style={{ color: 'var(--color-emerald-text)', flexShrink: 0 }} />
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Estimated Risk Reduction — Full Plan
           </div>
           <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--alpha-text-85)', fontFamily: 'var(--font-mono)' }}>
@@ -61,7 +61,7 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.22)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.22)' }}>
                     −{horizon.totalRiskReduction}%
                   </span>
                   {isOpen ? <ChevronUp size={14} style={{ color: 'var(--alpha-text-35)' }} /> : <ChevronDown size={14} style={{ color: 'var(--alpha-text-35)' }} />}
@@ -104,11 +104,11 @@ export const Section8_PersonalActionPlan: React.FC<Props> = ({ actionPlan }) => 
                               {action.why}
                             </div>
                             {action.outcome && (
-                              <div style={{ fontSize: 10, color: '#10b981', fontStyle: 'italic', lineHeight: 1.4, marginBottom: 4 }}>
+                              <div style={{ fontSize: 10, color: 'var(--color-emerald-text)', fontStyle: 'italic', lineHeight: 1.4, marginBottom: 4 }}>
                                 → {action.outcome}
                               </div>
                             )}
-                            <div style={{ fontSize: 9, color: '#10b981', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+                            <div style={{ fontSize: 9, color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
                               −{action.riskReduction}% risk reduction
                             </div>
                           </div>

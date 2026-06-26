@@ -66,7 +66,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
         subtitle="How your skills line up with current market demand"
         icon={GraduationCap}
         tier={2}
-        accentColor="#10b981"
+        accentColor='var(--color-emerald-text)'
         defaultOpen={skillsAutoOpen}
         empty={!hasSkills}
       >
@@ -118,7 +118,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
               <div className="rounded-lg px-3 py-2 flex items-center gap-2"
                 style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.28)' }}>
                 <span className="text-[11px]">⚡</span>
-                <p className="text-[10px] font-black" style={{ color: '#f59e0b' }}>
+                <p className="text-[10px] font-black" style={{ color: 'var(--color-amber500-text)' }}>
                   TRANSFER WINDOW CLOSING — Act before restructuring is announced.
                 </p>
               </div>

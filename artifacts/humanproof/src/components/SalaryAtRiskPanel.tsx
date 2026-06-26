@@ -757,9 +757,9 @@ export function computeTrajectory(
 const formatMoney = (amount: number, code: string): string => formatCurrency(amount, code);
 
 const SCENARIO_COLORS = {
-  noAction: "#ef4444",
-  partial:  "#f59e0b",
-  full:     "#10b981",
+  noAction: 'var(--color-red-text)',
+  partial:  'var(--color-amber500-text)',
+  full:     'var(--color-emerald-text)',
   scenario: "#7c3aed",  // violet — conditional layoff experience path
 };
 
@@ -1099,9 +1099,9 @@ export const SalaryAtRiskPanel: React.FC<Props> = ({
                         )}
                         {/* Compressed stable period — amber solid */}
                         <line x1={adjX} y1={PAD.t} x2={adjX} y2={PAD.t + plotH}
-                          stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.85" />
+                          stroke='var(--color-amber500-text)' strokeWidth="1.5" strokeDasharray="4 2" opacity="0.85" />
                         <text x={adjX + 3} y={PAD.t + 14}
-                          fill="#f59e0b" fontSize="7" fontFamily="monospace" opacity="0.9">
+                          fill='var(--color-amber500-text)' fontSize="7" fontFamily="monospace" opacity="0.9">
                           Stage {collapseStage} M{params.stableMonths}
                         </text>
                       </g>

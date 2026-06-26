@@ -53,9 +53,9 @@ export const IntelligenceUpdateBanner: React.FC<Props> = ({
   };
 
   const urgencyColor = update.urgency === 'high'
-    ? '#f97316'
+    ? 'var(--color-orange-text)'
     : update.urgency === 'medium'
-      ? '#f59e0b'
+      ? 'var(--color-amber500-text)'
       : '#22d3ee';
 
   const Icon = update.urgency === 'high' ? AlertTriangle : Activity;

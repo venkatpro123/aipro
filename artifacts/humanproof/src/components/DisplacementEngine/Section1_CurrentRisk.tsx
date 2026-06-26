@@ -29,7 +29,7 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
   const protectSignals = sorted.slice(-2).reverse();
 
   const SIGNAL_COLORS: Record<string, string> = {
-    D1: '#ef4444', D2: '#f97316', D3: '#10b981', D4: '#22d3ee', D5: '#f59e0b', D6: '#8b5cf6',
+    D1: 'var(--color-red-text)', D2: 'var(--color-orange-text)', D3: 'var(--color-emerald-text)', D4: '#22d3ee', D5: 'var(--color-amber500-text)', D6: '#8b5cf6',
   };
 
   return (
@@ -97,15 +97,15 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <TrendingUp size={13} style={{ color: '#ef4444', flexShrink: 0 }} />
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#ef4444', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Risk Signal</span>
+              <TrendingUp size={13} style={{ color: 'var(--color-red-text)', flexShrink: 0 }} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-red-text)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Risk Signal</span>
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--alpha-bg-08)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? '#ef4444', borderRadius: 2, transition: 'width 0.8s ease' }} />
+                <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? 'var(--color-red-text)', borderRadius: 2, transition: 'width 0.8s ease' }} />
               </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: SIGNAL_COLORS[dim.key] ?? '#ef4444', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{dim.score}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: SIGNAL_COLORS[dim.key] ?? 'var(--color-red-text)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{dim.score}</span>
             </div>
           </motion.div>
         ))}
@@ -122,15 +122,15 @@ export const Section1_CurrentRisk: React.FC<Props> = ({ result }) => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <Shield size={13} style={{ color: '#10b981', flexShrink: 0 }} />
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#10b981', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Protection Signal</span>
+              <Shield size={13} style={{ color: 'var(--color-emerald-text)', flexShrink: 0 }} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)', letterSpacing: '0.10em', textTransform: 'uppercase' }}>Protection Signal</span>
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--alpha-text-85)', marginBottom: 4 }}>{DIM_LABELS[dim.key] ?? dim.key}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'var(--alpha-bg-08)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? '#10b981', borderRadius: 2, transition: 'width 0.8s ease' }} />
+                <div style={{ height: '100%', width: `${dim.score}%`, background: SIGNAL_COLORS[dim.key] ?? 'var(--color-emerald-text)', borderRadius: 2, transition: 'width 0.8s ease' }} />
               </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: SIGNAL_COLORS[dim.key] ?? '#10b981', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{dim.score}</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: SIGNAL_COLORS[dim.key] ?? 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{dim.score}</span>
             </div>
           </motion.div>
         ))}

@@ -48,7 +48,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
 
   const getTierHex = (c: string) => {
     const map: Record<string, string> = {
-      red: '#ef4444', orange: '#f97316', amber: '#f59e0b', green: '#10b981', teal: '#14b8a6',
+      red: 'var(--color-red-text)', orange: 'var(--color-orange-text)', amber: 'var(--color-amber500-text)', green: 'var(--color-emerald-text)', teal: '#14b8a6',
     };
     return map[c] || '#00F5FF';
   };
@@ -91,7 +91,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
               aria-label="Confirm clear history"
               style={{
                 background: 'rgba(239,68,68,0.15)', border: '1px solid #ef4444',
-                color: '#ef4444', padding: '4px 10px', borderRadius: '4px',
+                color: 'var(--color-red-text)', padding: '4px 10px', borderRadius: '4px',
                 cursor: 'pointer', fontSize: '0.8rem',
               }}
             >
@@ -156,7 +156,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                       <span style={{
                         fontSize: '0.75rem',
                         fontWeight: 700,
-                        color: velocity.direction === 'up' ? '#ef4444' : '#10b981',
+                        color: velocity.direction === 'up' ? 'var(--color-red-text)' : 'var(--color-emerald-text)',
                         background: velocity.direction === 'up' ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)',
                         padding: '2px 7px',
                         borderRadius: '10px',
@@ -203,7 +203,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                       style={{
                         padding: '4px 12px', borderRadius: '6px',
                         background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
-                        color: '#10b981', fontSize: '0.78rem', cursor: 'pointer',
+                        color: 'var(--color-emerald-text)', fontSize: '0.78rem', cursor: 'pointer',
                       }}
                     >
                       ✓ Yes, it was
@@ -213,7 +213,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                       style={{
                         padding: '4px 12px', borderRadius: '6px',
                         background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
-                        color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer',
+                        color: 'var(--color-red-text)', fontSize: '0.78rem', cursor: 'pointer',
                       }}
                     >
                       ✗ No, it wasn't
@@ -227,7 +227,7 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
                   borderTop: '1px solid var(--alpha-bg-06)',
                   background: 'var(--alpha-bg-04)',
                   fontSize: '0.73rem',
-                  color: outcome === 'correct' ? '#10b981' : '#6b7280',
+                  color: outcome === 'correct' ? 'var(--color-emerald-text)' : '#6b7280',
                 }}>
                   {outcome === 'correct'
                     ? '✓ You marked this as correct — thank you for the feedback!'

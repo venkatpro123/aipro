@@ -112,9 +112,9 @@ const PivotCard = ({
   const [expanded, setExpanded] = useState(rank === 0);
 
   const diffColor = (d: string) =>
-    d === 'Very Hard' ? '#ef4444' :
-    d === 'Hard' ? '#f59e0b' :
-    d === 'Medium' ? '#3b82f6' : '#10b981';
+    d === 'Very Hard' ? 'var(--color-red-text)' :
+    d === 'Hard' ? 'var(--color-amber500-text)' :
+    d === 'Medium' ? '#3b82f6' : 'var(--color-emerald-text)';
 
   const salaryIsPositive = path.salaryDelta.startsWith('+');
 
@@ -157,7 +157,7 @@ const PivotCard = ({
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: expanded ? 14 : 0 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
-              background: 'rgba(16,185,129,0.12)', color: '#10b981',
+              background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)',
               border: '1px solid rgba(16,185,129,0.25)', borderRadius: 6,
               padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700,
             }}>
@@ -166,7 +166,7 @@ const PivotCard = ({
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4,
               background: salaryIsPositive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-              color: salaryIsPositive ? '#10b981' : '#ef4444',
+              color: salaryIsPositive ? 'var(--color-emerald-text)' : 'var(--color-red-text)',
               borderRadius: 6, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700,
               border: `1px solid ${salaryIsPositive ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}`,
             }}>
@@ -229,7 +229,7 @@ const PhaseCard = ({
   isActive: boolean;
   scoreColor: string;
 }) => {
-  const phaseColors = ['#3b82f6', '#8b5cf6', '#10b981'];
+  const phaseColors = ['#3b82f6', '#8b5cf6', 'var(--color-emerald-text)'];
   const color = phaseColors[phaseNum - 1] ?? scoreColor;
 
   return (
@@ -333,7 +333,7 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
     ? [roadmap.phase_1, roadmap.phase_2, roadmap.phase_3].filter(Boolean)
     : [];
 
-  const urgencyColor = score >= 70 ? '#ef4444' : score >= 45 ? '#f59e0b' : '#10b981';
+  const urgencyColor = score >= 70 ? 'var(--color-red-text)' : score >= 45 ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)';
 
   return (
     <div>
@@ -436,7 +436,7 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
                   {
                     step: 'Pivot Positioning (Month 3-6)',
                     desc: `Identify which of the ${careerPaths.length} pivot paths fits your existing strengths and network. Begin making 3 connections per week in that direction.`,
-                    color: '#10b981',
+                    color: 'var(--color-emerald-text)',
                   },
                 ].map((item, i) => (
                   <div key={i} style={{
@@ -477,12 +477,12 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
                 </div>
                 <div style={{ width: 1, background: 'var(--alpha-bg-06)' }} />
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#10b981' }}>-{Math.max(...careerPaths.map(p => p.riskReduction))}%</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-emerald-text)' }}>-{Math.max(...careerPaths.map(p => p.riskReduction))}%</div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Max Risk Drop</div>
                 </div>
                 <div style={{ width: 1, background: 'var(--alpha-bg-06)' }} />
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#f59e0b' }}>{careerPaths[0]?.salaryDelta}</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-amber500-text)' }}>{careerPaths[0]?.salaryDelta}</div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Top Salary △</div>
                 </div>
               </div>

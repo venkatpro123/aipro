@@ -46,6 +46,9 @@
   --color-indigo-text: #818cf8;   /* indigo-400: bright on dark */
   --color-amber-text:  #fbbf24;   /* amber-400: bright on dark  */
   --color-emerald-text: #34d399;  /* emerald-400: on dark       */
+  --color-red-text:    #f87171;   /* red-400: on dark           */
+  --color-orange-text: #fb923c;   /* orange-400: on dark        */
+  --color-amber500-text: #f59e0b; /* amber-500: on dark         */
 
   /* ── Border hierarchy ───────────────────────────────────────────── */
   --border-2:   rgba(255, 255, 255, 0.12);
@@ -8924,6 +8927,9 @@ html.light {
   --color-indigo-text:  #3730a3;   /* 7.5:1 on white */
   --color-amber-text:   #92400e;   /* 5.5:1 on white */
   --color-emerald-text: #065f46;   /* 7.9:1 on white */
+  --color-red-text:      #b91c1c;   /* 5.8:1 on white */
+  --color-orange-text:   #9a3412;   /* 5.7:1 on white */
+  --color-amber500-text: #92400e;   /* 5.5:1 on white */
 
   /* Accent — deeper teal reads premium + accessible on light */
   --cyan:        #0096aa;

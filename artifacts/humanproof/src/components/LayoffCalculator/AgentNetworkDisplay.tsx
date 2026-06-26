@@ -38,8 +38,8 @@ const generateAgents = (): Agent[] => {
 
 const getCategoryColor = (category: string): string => {
   const colors: Record<string, string> = {
-    market: "#10b981",
-    company: "#f97316",
+    market: 'var(--color-emerald-text)',
+    company: 'var(--color-orange-text)',
     ai: "#a78bfa",
     external: "#60a5fa",
   };
@@ -242,7 +242,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
             SIGNALS
           </div>
           <div
-            style={{ color: "#10b981", fontSize: "1.4rem", fontWeight: 700 }}
+            style={{ color: 'var(--color-emerald-text)', fontSize: "1.4rem", fontWeight: 700 }}
           >
             {signalsIntercepted}
           </div>
@@ -470,10 +470,10 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 style={{
                   color:
                     sig.signal >= 0.6
-                      ? "#ef4444"
+                      ? 'var(--color-red-text)'
                       : sig.signal >= 0.4
-                        ? "#f59e0b"
-                        : "#10b981",
+                        ? 'var(--color-amber500-text)'
+                        : 'var(--color-emerald-text)',
                 }}
               >
                 {(sig.signal * 100).toFixed(0)}% risk signal

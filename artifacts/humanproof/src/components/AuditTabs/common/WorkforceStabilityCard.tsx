@@ -184,10 +184,10 @@ export const WorkforceStabilityCard: React.FC<Props> = ({ result, defaultOpen = 
           <MiniChip label="Hiring" value="Frozen" tone="#dc2626" />
         )}
         {hiringTrend === 'declining' && (
-          <MiniChip label="Hiring" value="Slowing" tone="#f59e0b" />
+          <MiniChip label="Hiring" value="Slowing" tone='#f59e0b' />
         )}
         {hiringTrend === 'growing' && (
-          <MiniChip label="Hiring" value="Active" tone="#10b981" />
+          <MiniChip label="Hiring" value="Active" tone='#10b981' />
         )}
         {typeof headcountDelta === 'number' && Math.abs(headcountDelta) >= 3 && (
           <MiniChip

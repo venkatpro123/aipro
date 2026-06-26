@@ -51,7 +51,7 @@ const horizonUrgency = (horizon: string | undefined | null): 'critical' | 'warni
 const AIToolBadge = ({ tool }: { tool: string }) => (
   <span style={{
     display: 'inline-flex', alignItems: 'center', gap: 4,
-    background: 'rgba(239,68,68,0.12)', color: '#ef4444',
+    background: 'rgba(239,68,68,0.12)', color: 'var(--color-red-text)',
     border: '1px solid rgba(239,68,68,0.25)',
     borderRadius: 6, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700,
     fontFamily: 'var(--font-mono, monospace)',
@@ -81,7 +81,7 @@ const ImpactBar = ({ score, color, label }: { score: number; color: string; labe
 // ── Urgency Clock ─────────────────────────────────────────────────────────────
 const UrgencyClock = ({ horizon }: { horizon: string | undefined | null }) => {
   const urgency = horizonUrgency(horizon);
-  const colorMap = { critical: '#ef4444', warning: '#f59e0b', caution: '#3b82f6' };
+  const colorMap = { critical: 'var(--color-red-text)', warning: 'var(--color-amber500-text)', caution: '#3b82f6' };
   const color = colorMap[urgency];
   return (
     <span style={{
@@ -109,16 +109,16 @@ const ObsoleteSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => 
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1 }}>
-          <XCircle size={16} color="#ef4444" style={{ flexShrink: 0, marginTop: 2 }} />
+          <XCircle size={16} color='var(--color-red-text)' style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, color: '#ef4444', fontSize: '0.875rem', letterSpacing: '-0.01em' }}>
+              <span style={{ fontWeight: 700, color: 'var(--color-red-text)', fontSize: '0.875rem', letterSpacing: '-0.01em' }}>
                 {skill.skill}
               </span>
               <UrgencyClock horizon={skill.horizon} />
               {skill.aiReplacement === 'Full' && (
                 <span style={{
-                  background: 'rgba(239,68,68,0.15)', color: '#ef4444',
+                  background: 'rgba(239,68,68,0.15)', color: 'var(--color-red-text)',
                   borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
                 }}>FULLY AUTOMATED</span>
               )}
@@ -144,14 +144,14 @@ const ObsoleteSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => 
               {skill.aiTool.split(',').map(t => <AIToolBadge key={t} tool={t.trim()} />)}
             </div>
           )}
-          <ImpactBar score={skill.riskScore} color="#ef4444" label="AI Replacement Risk" />
+          <ImpactBar score={skill.riskScore} color='var(--color-red-text)' label="AI Replacement Risk" />
           <div style={{
             marginTop: 12, padding: '10px 12px',
             background: 'rgba(239,68,68,0.08)', borderRadius: 8,
             borderLeft: '3px solid #ef4444',
           }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
-              <strong style={{ color: '#ef4444' }}>Adaptation Strategy:</strong>{' '}
+              <strong style={{ color: 'var(--color-red-text)' }}>Adaptation Strategy:</strong>{' '}
               {buildObsoleteAdvice(skill)}
             </p>
           </div>
@@ -175,15 +175,15 @@ const AtRiskSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => {
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1 }}>
-          <AlertTriangle size={16} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
+          <AlertTriangle size={16} color='var(--color-amber500-text)' style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, color: '#f59e0b', fontSize: '0.875rem', letterSpacing: '-0.01em' }}>
+              <span style={{ fontWeight: 700, color: 'var(--color-amber500-text)', fontSize: '0.875rem', letterSpacing: '-0.01em' }}>
                 {skill.skill}
               </span>
               <UrgencyClock horizon={skill.horizon} />
               <span style={{
-                background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+                background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber500-text)',
                 borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
               }}>AI-ASSISTED</span>
             </div>
@@ -202,15 +202,15 @@ const AtRiskSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => {
 
       {expanded && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(245,158,11,0.15)' }}>
-          <ImpactBar score={skill.riskScore} color="#f59e0b" label="Exposure Level" />
+          <ImpactBar score={skill.riskScore} color='var(--color-amber500-text)' label="Exposure Level" />
           <div style={{
             marginTop: 12, padding: '10px 12px',
             background: 'rgba(245,158,11,0.08)', borderRadius: 8,
             borderLeft: '3px solid #f59e0b',
           }}>
             <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
-              <Lightbulb size={13} color="#f59e0b" style={{ flexShrink: 0, marginTop: 2 }} />
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#f59e0b' }}>HOW TO ADAPT</span>
+              <Lightbulb size={13} color='var(--color-amber500-text)' style={{ flexShrink: 0, marginTop: 2 }} />
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-amber500-text)' }}>HOW TO ADAPT</span>
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
               {buildAtRiskAdvice(skill)}
@@ -231,7 +231,7 @@ const SafeSkillRow = ({ skill }: { skill: SafeSkill }) => {
     d === 'Extremely High' ? '#8b5cf6' :
     d === 'Very High' ? '#6366f1' :
     d === 'High' ? '#3b82f6' :
-    d === 'Medium' ? '#10b981' : '#6b7280';
+    d === 'Medium' ? 'var(--color-emerald-text)' : '#6b7280';
 
   return (
     <div style={{
@@ -241,10 +241,10 @@ const SafeSkillRow = ({ skill }: { skill: SafeSkill }) => {
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1 }}>
-          <CheckCircle2 size={16} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
+          <CheckCircle2 size={16} color='var(--color-emerald-text)' style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, color: '#10b981', fontSize: '0.875rem', letterSpacing: '-0.01em' }}>
+              <span style={{ fontWeight: 700, color: 'var(--color-emerald-text)', fontSize: '0.875rem', letterSpacing: '-0.01em' }}>
                 {skill.skill}
               </span>
               <span style={{
@@ -269,10 +269,10 @@ const SafeSkillRow = ({ skill }: { skill: SafeSkill }) => {
 
       {expanded && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(16,185,129,0.15)' }}>
-          <ImpactBar score={ltv} color="#10b981" label="Long-Term Strategic Value" />
+          <ImpactBar score={ltv} color='var(--color-emerald-text)' label="Long-Term Strategic Value" />
           {skill.resource && (
             <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(16,185,129,0.08)', borderRadius: 8 }}>
-              <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 700 }}>📚 Build via: </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--color-emerald-text)', fontWeight: 700 }}>📚 Build via: </span>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-2)' }}>{skill.resource}</span>
             </div>
           )}
@@ -281,9 +281,9 @@ const SafeSkillRow = ({ skill }: { skill: SafeSkill }) => {
             padding: '8px 12px', background: 'rgba(16,185,129,0.08)', borderRadius: 8,
             alignItems: 'flex-start',
           }}>
-            <Shield size={13} color="#10b981" style={{ flexShrink: 0, marginTop: 2 }} />
+            <Shield size={13} color='var(--color-emerald-text)' style={{ flexShrink: 0, marginTop: 2 }} />
             <p style={{ fontSize: '0.75rem', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
-              <strong style={{ color: '#10b981' }}>Why it holds:</strong>{' '}
+              <strong style={{ color: 'var(--color-emerald-text)' }}>Why it holds:</strong>{' '}
               AI systems can approximate individual components of this skill in isolation, but cannot replicate the judgment, accountability, and contextual synthesis
               required when it matters most — under high-stakes, novel conditions.
             </p>
@@ -357,19 +357,19 @@ export const AIRiskSkillMatrix = ({ intel, scoreColor }: Props) => {
         <div style={{ display: 'flex', gap: 8 }}>
           {obsolete.length > 0 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#ef4444', lineHeight: 1 }}>{obsoletePct}%</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--color-red-text)', lineHeight: 1 }}>{obsoletePct}%</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Obsolete</div>
             </div>
           )}
           {atRisk.length > 0 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f59e0b', lineHeight: 1 }}>{atRiskPct}%</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--color-amber500-text)', lineHeight: 1 }}>{atRiskPct}%</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>At-Risk</div>
             </div>
           )}
           {safe.length > 0 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#10b981', lineHeight: 1 }}>{safePct}%</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--color-emerald-text)', lineHeight: 1 }}>{safePct}%</div>
               <div style={{ fontSize: '0.6rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Safe</div>
             </div>
           )}
@@ -381,20 +381,20 @@ export const AIRiskSkillMatrix = ({ intel, scoreColor }: Props) => {
         height: 8, borderRadius: 99, overflow: 'hidden',
         display: 'flex', marginBottom: 24, gap: 2,
       }}>
-        {obsoletePct > 0 && <div style={{ flex: obsoletePct, background: '#ef4444', boxShadow: '0 0 8px #ef444460' }} />}
-        {atRiskPct > 0 && <div style={{ flex: atRiskPct, background: '#f59e0b', boxShadow: '0 0 8px #f59e0b60' }} />}
-        {safePct > 0 && <div style={{ flex: safePct, background: '#10b981', boxShadow: '0 0 8px #10b98160' }} />}
+        {obsoletePct > 0 && <div style={{ flex: obsoletePct, background: 'var(--color-red-text)', boxShadow: '0 0 8px #ef444460' }} />}
+        {atRiskPct > 0 && <div style={{ flex: atRiskPct, background: 'var(--color-amber500-text)', boxShadow: '0 0 8px #f59e0b60' }} />}
+        {safePct > 0 && <div style={{ flex: safePct, background: 'var(--color-emerald-text)', boxShadow: '0 0 8px #10b98160' }} />}
       </div>
 
       {/* ❌ Obsolete Skills */}
       {obsolete.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <SectionHeader
-            icon={<XCircle size={18} color="#ef4444" />}
+            icon={<XCircle size={18} color='var(--color-red-text)' />}
             title="Obsolete Skills"
             subtitle="AI replaces these entirely — stop investing, start pivoting"
             count={obsolete.length}
-            color="#ef4444"
+            color='var(--color-red-text)'
             bg="rgba(239,68,68,0.12)"
           />
           {obsolete.map((s, i) => <ObsoleteSkillRow key={s.skill} skill={s} idx={i} />)}
@@ -405,11 +405,11 @@ export const AIRiskSkillMatrix = ({ intel, scoreColor }: Props) => {
       {atRisk.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <SectionHeader
-            icon={<AlertTriangle size={18} color="#f59e0b" />}
+            icon={<AlertTriangle size={18} color='var(--color-amber500-text)' />}
             title="At-Risk Skills"
             subtitle="Partial automation — the execution layer is being absorbed, judgment remains"
             count={atRisk.length}
-            color="#f59e0b"
+            color='var(--color-amber500-text)'
             bg="rgba(245,158,11,0.12)"
           />
           {atRisk.map((s, i) => <AtRiskSkillRow key={s.skill} skill={s} idx={i} />)}
@@ -420,11 +420,11 @@ export const AIRiskSkillMatrix = ({ intel, scoreColor }: Props) => {
       {safe.length > 0 && (
         <div style={{ marginBottom: 0 }}>
           <SectionHeader
-            icon={<Shield size={18} color="#10b981" />}
+            icon={<Shield size={18} color='var(--color-emerald-text)' />}
             title="Human-Durable Skills"
             subtitle="AI cannot replicate — compound these for long-term resilience"
             count={safe.length}
-            color="#10b981"
+            color='var(--color-emerald-text)'
             bg="rgba(16,185,129,0.12)"
           />
           {safe.map(s => <SafeSkillRow key={s.skill} skill={s} />)}

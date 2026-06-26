@@ -15,7 +15,7 @@ const EmergencyModeHeader: React.FC<Props> = ({ score, onScrollToProtocol }) => 
   if (score < 80) return null;
 
   const isCritical = score >= 90;
-  const color = isCritical ? '#ef4444' : '#f97316';
+  const color = isCritical ? 'var(--color-red-text)' : 'var(--color-orange-text)';
   const bgGrad = isCritical
     ? 'linear-gradient(135deg, rgba(239,68,68,0.16) 0%, rgba(239,68,68,0.06) 100%)'
     : 'linear-gradient(135deg, rgba(249,115,22,0.14) 0%, rgba(249,115,22,0.05) 100%)';

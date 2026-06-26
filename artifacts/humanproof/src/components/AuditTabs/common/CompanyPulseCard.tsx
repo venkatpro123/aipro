@@ -329,7 +329,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ background: 'rgba(0,212,224,0.10)' }}
               >
-                <Building2 className="w-3 h-3" style={{ color: 'var(--color-cyan-text)' }} />
+                <Building2 className="w-3 h-3" style={{ color: '#22d3ee' }} />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>
@@ -350,7 +350,7 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
                 className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{ background: 'rgba(139,92,246,0.12)' }}
               >
-                <Briefcase className="w-3 h-3" style={{ color: 'var(--color-violet-text)' }} />
+                <Briefcase className="w-3 h-3" style={{ color: '#a78bfa' }} />
               </div>
               <div className="min-w-0">
                 <p className="text-[9px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'var(--alpha-text-30)' }}>

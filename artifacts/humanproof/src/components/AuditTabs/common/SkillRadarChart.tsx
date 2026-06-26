@@ -161,7 +161,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
             if (dim.disruption == null || dim.disruption < 40) return null;
             const r = (dim.value / 100) * MAX_R;
             const [x, y] = polarToXY(i * angleStep, r);
-            const disruptColor = dim.disruption >= 70 ? '#ef4444' : dim.disruption >= 55 ? '#f97316' : '#f59e0b';
+            const disruptColor = dim.disruption >= 70 ? 'var(--color-red-text)' : dim.disruption >= 55 ? 'var(--color-orange-text)' : 'var(--color-amber500-text)';
             return (
               <circle
                 key={`disrupt-${i}`}

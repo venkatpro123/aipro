@@ -88,9 +88,9 @@ interface Props {
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const FRICTION_CONFIG = {
-  low:      { label: 'EASY ACCESS',       color: '#10b981', desc: 'Strong market — quick transitions possible' },
-  moderate: { label: 'MODERATE FRICTION', color: '#f59e0b', desc: 'Typical job search timeline applies'        },
-  high:     { label: 'TIGHT MARKET',      color: '#f97316', desc: 'Longer timeline — start positioning now'   },
+  low:      { label: 'EASY ACCESS',       color: 'var(--color-emerald-text)', desc: 'Strong market — quick transitions possible' },
+  moderate: { label: 'MODERATE FRICTION', color: 'var(--color-amber500-text)', desc: 'Typical job search timeline applies'        },
+  high:     { label: 'TIGHT MARKET',      color: 'var(--color-orange-text)', desc: 'Longer timeline — start positioning now'   },
   very_high:{ label: 'VERY TIGHT',        color: '#dc2626', desc: 'Difficult market — hedge with internal moves'},
 };
 
@@ -215,10 +215,10 @@ const CityCard: React.FC<{
   opp: CityOpportunity;
   isHighlighted: boolean;
 }> = ({ opp, isHighlighted }) => {
-  const color = opp.opportunityScore >= 70 ? '#10b981' :
-    opp.opportunityScore >= 50 ? '#f59e0b' : '#f97316';
-  const salaryColor = opp.roleData.salaryPremiumPct > 10 ? '#10b981' :
-    opp.roleData.salaryPremiumPct < -5 ? '#f97316' : '#94a3b8';
+  const color = opp.opportunityScore >= 70 ? 'var(--color-emerald-text)' :
+    opp.opportunityScore >= 50 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
+  const salaryColor = opp.roleData.salaryPremiumPct > 10 ? 'var(--color-emerald-text)' :
+    opp.roleData.salaryPremiumPct < -5 ? 'var(--color-orange-text)' : '#94a3b8';
 
   return (
     <div
@@ -347,7 +347,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
     : null;
 
   const trendIcon = roleInRegionTrend === 'rising' ? '↑' : roleInRegionTrend === 'declining' ? '↓' : '→';
-  const trendColor = roleInRegionTrend === 'rising' ? '#10b981' : roleInRegionTrend === 'declining' ? '#f97316' : '#94a3b8';
+  const trendColor = roleInRegionTrend === 'rising' ? 'var(--color-emerald-text)' : roleInRegionTrend === 'declining' ? 'var(--color-orange-text)' : '#94a3b8';
 
   return (
     <div
@@ -377,7 +377,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             )}
             {salaryPreservation != null && (
               <span className="text-[10px] px-1.5 py-0.5 rounded"
-                style={{ background: 'rgba(16,185,129,0.10)', color: '#10b981' }}>
+                style={{ background: 'rgba(16,185,129,0.10)', color: 'var(--color-emerald-text)' }}>
                 ~{salaryPreservation}% salary preserved
               </span>
             )}
@@ -458,8 +458,8 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             style={{ background: 'rgba(249,115,22,0.07)', border: '1px solid rgba(249,115,22,0.25)' }}
           >
             <div className="flex items-center gap-1.5 mb-1">
-              <AlertTriangle style={{ width: 11, height: 11, color: '#f97316', flexShrink: 0 }} />
-              <p className="text-[10px] font-black" style={{ color: '#f97316' }}>
+              <AlertTriangle style={{ width: 11, height: 11, color: 'var(--color-orange-text)', flexShrink: 0 }} />
+              <p className="text-[10px] font-black" style={{ color: 'var(--color-orange-text)' }}>
                 SUPPLY SURGE — {geoSupplySurge.metroName}
               </p>
             </div>
@@ -478,8 +478,8 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.22)' }}
           >
             <div className="flex items-center gap-1.5 mb-1">
-              <Globe style={{ width: 11, height: 11, color: '#10b981', flexShrink: 0 }} />
-              <p className="text-[10px] font-black" style={{ color: '#10b981' }}>
+              <Globe style={{ width: 11, height: 11, color: 'var(--color-emerald-text)', flexShrink: 0 }} />
+              <p className="text-[10px] font-black" style={{ color: 'var(--color-emerald-text)' }}>
                 REMOTE-FIRST ADVANTAGE
               </p>
               <span className="text-[9px] px-1 rounded" style={{ background: 'rgba(148,163,184,0.14)', color: '#94a3b8' }}>
@@ -491,12 +491,12 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             </p>
             <div className="flex gap-2 mt-2">
               <span className="text-[9px] px-2 py-1 rounded"
-                style={{ background: 'rgba(16,185,129,0.10)', color: '#10b981' }}>
+                style={{ background: 'rgba(16,185,129,0.10)', color: 'var(--color-emerald-text)' }}>
                 {remoteFirstAdvantage.monthsBeforeAdjustment}mo → {remoteFirstAdvantage.monthsAfterAdjustment}mo timeline
               </span>
               {remoteFirstAdvantage.accessLift > 1 && (
                 <span className="text-[9px] px-2 py-1 rounded"
-                  style={{ background: 'rgba(16,185,129,0.10)', color: '#10b981' }}>
+                  style={{ background: 'rgba(16,185,129,0.10)', color: 'var(--color-emerald-text)' }}>
                   {remoteFirstAdvantage.accessLift}× market access
                 </span>
               )}
@@ -512,8 +512,8 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             <div key={i} className="rounded-lg px-2.5 py-2"
               style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.16)' }}>
               <div className="flex items-center gap-1 mb-1">
-                <TrendingDown style={{ width: 10, height: 10, color: '#f97316' }} />
-                <span className="text-[9px] font-black tracking-wide" style={{ color: '#f97316' }}>BARRIER</span>
+                <TrendingDown style={{ width: 10, height: 10, color: 'var(--color-orange-text)' }} />
+                <span className="text-[9px] font-black tracking-wide" style={{ color: 'var(--color-orange-text)' }}>BARRIER</span>
               </div>
               <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>{b}</p>
             </div>
@@ -522,8 +522,8 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
             <div key={i} className="rounded-lg px-2.5 py-2"
               style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)' }}>
               <div className="flex items-center gap-1 mb-1">
-                <TrendingUp style={{ width: 10, height: 10, color: '#10b981' }} />
-                <span className="text-[9px] font-black tracking-wide" style={{ color: '#10b981' }}>ACCELERATOR</span>
+                <TrendingUp style={{ width: 10, height: 10, color: 'var(--color-emerald-text)' }} />
+                <span className="text-[9px] font-black tracking-wide" style={{ color: 'var(--color-emerald-text)' }}>ACCELERATOR</span>
               </div>
               <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-50)' }}>{a}</p>
             </div>
@@ -554,7 +554,7 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
               >
                 <div className="mt-2 space-y-1.5">
                   {factors!.map((f) => {
-                    const barColor = f.value >= 0.65 ? '#10b981' : f.value >= 0.45 ? '#f59e0b' : '#f97316';
+                    const barColor = f.value >= 0.65 ? 'var(--color-emerald-text)' : f.value >= 0.45 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
                     return (
                       <div key={f.name} className="rounded-lg px-2.5 py-2"
                         style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>

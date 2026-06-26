@@ -356,7 +356,7 @@ const PathCard: React.FC<PathCardProps> = ({ path, isRecommended, isExpanded, on
               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                 <span
                   className="text-[10px] font-black tracking-widest px-1.5 py-0.5 rounded"
-                  style={{ background: 'rgba(220,38,38,0.15)', color: '#f87171', border: '1px solid rgba(220,38,38,0.30)' }}
+                  style={{ background: 'rgba(220,38,38,0.15)', color: '#ef4444', border: '1px solid rgba(220,38,38,0.30)' }}
                 >
                   NOT RECOMMENDED FOR YOUR FINANCIAL PROFILE
                 </span>

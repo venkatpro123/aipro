@@ -11,10 +11,10 @@ interface BLSMacroPanelProps {
 }
 
 const SCORE_STYLE = (score: number): { color: string; bg: string; border: string } => {
-  if (score > 80)  return { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)'   };
-  if (score > 60)  return { color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)' };
-  if (score >= 30) return { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' };
-  return              { color: '#10b981', bg: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.18)'  };
+  if (score > 80)  return { color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)'   };
+  if (score > 60)  return { color: 'var(--color-orange-text)', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.22)' };
+  if (score >= 30) return { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.22)' };
+  return              { color: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.18)'  };
 };
 
 const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
@@ -65,27 +65,27 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
         <span
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
           style={blsMacroSignal.quitsFallSignal
-            ? { background: 'rgba(239,68,68,0.14)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.30)' }
+            ? { background: 'rgba(239,68,68,0.14)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.30)' }
             : { background: 'var(--alpha-bg-04)', color: 'var(--alpha-text-35)', border: '1px solid var(--alpha-bg-08)' }
           }
         >
-          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.quitsFallSignal ? '#ef4444' : 'var(--alpha-text-25)', color: 'transparent' }} />
+          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.quitsFallSignal ? 'var(--color-red-text)' : 'var(--alpha-text-25)', color: 'transparent' }} />
           Quits Fall
         </span>
         <span
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
           style={blsMacroSignal.yieldCurveWarning
-            ? { background: 'rgba(245,158,11,0.14)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.30)' }
+            ? { background: 'rgba(245,158,11,0.14)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.30)' }
             : { background: 'var(--alpha-bg-04)', color: 'var(--alpha-text-35)', border: '1px solid var(--alpha-bg-08)' }
           }
         >
-          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.yieldCurveWarning ? '#f59e0b' : 'var(--alpha-text-25)', color: 'transparent' }} />
+          <Circle className="w-2 h-2" style={{ fill: blsMacroSignal.yieldCurveWarning ? 'var(--color-amber500-text)' : 'var(--alpha-text-25)', color: 'transparent' }} />
           Yield Curve Inverted
         </span>
         <span
           className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full"
           style={blsMacroSignal.sectorLayoffAcceleration
-            ? { background: 'rgba(239,68,68,0.14)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.30)' }
+            ? { background: 'rgba(239,68,68,0.14)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.30)' }
             : { background: 'var(--alpha-bg-04)', color: 'var(--alpha-text-35)', border: '1px solid var(--alpha-bg-08)' }
           }
         >
@@ -121,7 +121,7 @@ const BLSMacroPanel: React.FC<BLSMacroPanelProps> = ({ blsMacroSignal }) => {
           background: 'rgba(245,158,11,0.08)',
           border: '1px solid rgba(245,158,11,0.25)',
         }}>
-          <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: '#f59e0b' }} />
+          <AlertTriangle className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
           <p className="text-[10px]" style={{ color: 'rgba(245,158,11,0.85)' }}>
             Heuristic baseline · Live BLS/FRED data unavailable for this audit
           </p>

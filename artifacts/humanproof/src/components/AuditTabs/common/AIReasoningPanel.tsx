@@ -38,17 +38,17 @@ interface Props {
 }
 
 const EVIDENCE_CONFIG = {
-  live:       { color: '#10b981', label: 'Live data'   },
+  live:       { color: 'var(--color-emerald-text)', label: 'Live data'   },
   regulatory: { color: 'var(--color-cyan-text)', label: 'Filed data'  },
-  heuristic:  { color: '#f59e0b', label: 'Estimated'   },
+  heuristic:  { color: 'var(--color-amber500-text)', label: 'Estimated'   },
   derived:    { color: 'var(--color-violet-text)', label: 'Derived'      },
 };
 
 function scoreColor(score: number): string {
   if (score >= 75) return '#dc2626';
-  if (score >= 55) return '#f97316';
-  if (score >= 35) return '#f59e0b';
-  return '#10b981';
+  if (score >= 55) return 'var(--color-orange-text)';
+  if (score >= 35) return 'var(--color-amber500-text)';
+  return 'var(--color-emerald-text)';
 }
 
 const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: boolean }> = ({

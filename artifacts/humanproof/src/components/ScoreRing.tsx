@@ -16,10 +16,10 @@ interface ScoreRingProps {
 
 // Returns gradient stop colors per risk tier
 function getRingGradient(score: number): { start: string; mid: string; end: string } {
-  if (score >= 70) return { start: "#ef4444", mid: "#f97316", end: "rgba(239,68,68,0.35)" };
-  if (score >= 50) return { start: "#f97316", mid: "#f59e0b", end: "rgba(249,115,22,0.35)" };
-  if (score >= 35) return { start: "#f59e0b", mid: "#eab308", end: "rgba(245,158,11,0.35)" };
-  return { start: "#10b981", mid: "#34d399", end: "rgba(16,185,129,0.35)" };
+  if (score >= 70) return { start: 'var(--color-red-text)', mid: 'var(--color-orange-text)', end: "rgba(239,68,68,0.35)" };
+  if (score >= 50) return { start: 'var(--color-orange-text)', mid: 'var(--color-amber500-text)', end: "rgba(249,115,22,0.35)" };
+  if (score >= 35) return { start: 'var(--color-amber500-text)', mid: "#eab308", end: "rgba(245,158,11,0.35)" };
+  return { start: 'var(--color-emerald-text)', mid: "#34d399", end: "rgba(16,185,129,0.35)" };
 }
 
 function getScoreLabel(score: number): string {
@@ -254,7 +254,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
               fontSize: "0.58rem",
               fontWeight: 800,
               letterSpacing: "0.1em",
-              color: scoreDelta > 0 ? "#ef4444" : "#10b981",
+              color: scoreDelta > 0 ? 'var(--color-red-text)' : 'var(--color-emerald-text)',
               background: scoreDelta > 0 ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)",
               border: `1px solid ${scoreDelta > 0 ? "rgba(239,68,68,0.25)" : "rgba(16,185,129,0.25)"}`,
               borderRadius: "4px",
@@ -278,7 +278,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
               fontSize: "0.52rem",
               fontWeight: 700,
               letterSpacing: "0.08em",
-              color: velocityPtsPerMonth > 0 ? "#f97316" : "#34d399",
+              color: velocityPtsPerMonth > 0 ? 'var(--color-orange-text)' : "#34d399",
               background: velocityPtsPerMonth > 0 ? "rgba(249,115,22,0.10)" : "rgba(52,211,153,0.10)",
               border: `1px solid ${velocityPtsPerMonth > 0 ? "rgba(249,115,22,0.25)" : "rgba(52,211,153,0.25)"}`,
               borderRadius: "4px",

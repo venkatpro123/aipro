@@ -65,12 +65,12 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
   const scoreDeltaDir: string = r.scoreDelta?.direction ?? '';
   const scoreDelta30d: number = Math.abs(r.scoreDelta?.delta30d ?? 0);
   const velocityColor = scoreDeltaDir === 'worsening' ? '#dc2626'
-    : scoreDeltaDir === 'improving' ? '#10b981' : 'var(--alpha-text-35)';
+    : scoreDeltaDir === 'improving' ? 'var(--color-emerald-text)' : 'var(--alpha-text-35)';
   const VelocityIcon = scoreDeltaDir === 'worsening' ? TrendingUp
     : scoreDeltaDir === 'improving' ? TrendingDown : Minus;
 
   const pScore = preparedness?.overallScore ?? 0;
-  const pColor = pScore >= 75 ? '#10b981' : pScore >= 55 ? '#22d3ee' : pScore >= 35 ? '#f59e0b' : '#f97316';
+  const pColor = pScore >= 75 ? 'var(--color-emerald-text)' : pScore >= 55 ? '#22d3ee' : pScore >= 35 ? 'var(--color-amber500-text)' : 'var(--color-orange-text)';
 
   // Strongest protection — precisionBrief (most specific) → keyProtectiveFactor (narrative)
   const strongestProtection: string | null = useMemo(() => {

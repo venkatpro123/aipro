@@ -105,15 +105,15 @@ function normalizeScenario(
 
 const SCENARIO_CONFIG = {
   bear: { icon: TrendingDown, accent: '#dc2626', bg: 'rgba(220,38,38,0.08)', border: 'rgba(220,38,38,0.28)', tag: 'BEAR CASE' },
-  base: { icon: Minus,        accent: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.28)', tag: 'BASE CASE' },
-  bull: { icon: TrendingUp,   accent: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.22)', tag: 'BULL CASE' },
+  base: { icon: Minus,        accent: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.28)', tag: 'BASE CASE' },
+  bull: { icon: TrendingUp,   accent: 'var(--color-emerald-text)', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.22)', tag: 'BULL CASE' },
 };
 
 function scoreColor(score: number): string {
   if (score >= 75) return '#dc2626';
-  if (score >= 55) return '#f97316';
-  if (score >= 35) return '#f59e0b';
-  return '#10b981';
+  if (score >= 55) return 'var(--color-orange-text)';
+  if (score >= 35) return 'var(--color-amber500-text)';
+  return 'var(--color-emerald-text)';
 }
 
 function scoreDeltaLabel(current: number, projected: number): string {

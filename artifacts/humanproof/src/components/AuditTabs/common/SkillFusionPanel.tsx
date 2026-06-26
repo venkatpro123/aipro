@@ -19,8 +19,8 @@ interface SkillFusionPanelProps {
 
 function ScarcityBadge({ level }: { level: SkillCombo['candidateScarcity'] }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
-    extreme:     { label: 'Extreme Scarcity', color: '#ef4444', bg: 'rgba(239,68,68,0.10)'  },
-    high:        { label: 'High Demand',      color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+    extreme:     { label: 'Extreme Scarcity', color: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.10)'  },
+    high:        { label: 'High Demand',      color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.10)' },
     moderate:    { label: 'Moderate',         color: '#3b82f6', bg: 'rgba(59,130,246,0.10)' },
     competitive: { label: 'Competitive',      color: 'var(--alpha-text-35)', bg: 'var(--alpha-bg-06)' },
   };
@@ -35,10 +35,10 @@ function ScarcityBadge({ level }: { level: SkillCombo['candidateScarcity'] }) {
 
 function TrendBadge({ trend }: { trend: SkillCombo['demandTrend'] }) {
   const config: Record<string, { label: string; color: string }> = {
-    exploding:  { label: '↑↑ Exploding', color: '#10b981' },
+    exploding:  { label: '↑↑ Exploding', color: 'var(--color-emerald-text)' },
     growing:    { label: '↑ Growing',    color: '#3b82f6' },
     stable:     { label: '→ Stable',     color: '#60a5fa' },
-    saturating: { label: '↓ Saturating', color: '#f59e0b' },
+    saturating: { label: '↓ Saturating', color: 'var(--color-amber500-text)' },
   };
   const c = config[trend] ?? config.stable;
   return <span className="text-[10px] font-medium" style={{ color: c.color }}>{c.label}</span>;
@@ -87,7 +87,7 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
 }) {
   const [showPaths, setShowPaths] = useState(false);
   const premiumPct = Math.round(combo.salaryPremiumPct);
-  const premiumColor = premiumPct >= 45 ? '#10b981' : premiumPct >= 25 ? '#3b82f6' : '#f59e0b';
+  const premiumColor = premiumPct >= 45 ? 'var(--color-emerald-text)' : premiumPct >= 25 ? '#3b82f6' : 'var(--color-amber500-text)';
 
   return (
     <motion.div

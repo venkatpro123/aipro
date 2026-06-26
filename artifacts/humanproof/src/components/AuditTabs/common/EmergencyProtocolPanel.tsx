@@ -12,9 +12,9 @@ interface EmergencyProtocolPanelProps {
 }
 
 const TIMEBOX_COLORS: Record<ActionTimeboxLabel, string> = {
-  '0–4h':   '#ef4444',
-  '4–24h':  '#f97316',
-  '24–48h': '#f59e0b',
+  '0–4h':   'var(--color-red-text)',
+  '4–24h':  'var(--color-orange-text)',
+  '24–48h': 'var(--color-amber500-text)',
   '48–72h': '#00d4e0',
 };
 
@@ -53,7 +53,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
   const completedCount = emergency.actions.filter(a => completedIds.has(a.id)).length;
   const progressPct = Math.round((completedCount / emergency.totalActions) * 100);
 
-  const tierColor = emergency.protocolTier === 'CRITICAL' ? '#ef4444' : '#f97316';
+  const tierColor = emergency.protocolTier === 'CRITICAL' ? 'var(--color-red-text)' : 'var(--color-orange-text)';
 
   return (
     <div className="rounded-2xl overflow-hidden"
@@ -125,7 +125,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                           onClick={() => toggle(action.id)}>
                           <div className="mt-0.5 flex-shrink-0">
                             {completedIds.has(action.id)
-                              ? <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
+                              ? <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />
                               : <Circle className="w-3.5 h-3.5 opacity-25 group-hover:opacity-50 transition-opacity" />
                             }
                           </div>
@@ -164,7 +164,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
           </span>
           <div className="flex items-center gap-2">
             <span className="text-[10px] px-2 py-0.5 rounded-full" style={{
-              background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)',
+              background: 'rgba(245,158,11,0.12)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.25)',
             }}>
               {emergency.severanceStrategy.negotiabilityLevel.toUpperCase()} leverage
             </span>
@@ -178,7 +178,7 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
               transition={{ duration: 0.18 }} className="overflow-hidden">
               <div className="px-3 pb-3 space-y-2 text-xs" style={{ color: 'var(--alpha-text-55)' }}>
                 <p>
-                  <span className="font-semibold" style={{ color: '#f59e0b' }}>Typical severance: </span>
+                  <span className="font-semibold" style={{ color: 'var(--color-amber500-text)' }}>Typical severance: </span>
                   {emergency.severanceStrategy.typicalSeveranceWeeks} weeks
                 </p>
                 <div>
@@ -188,11 +188,11 @@ const EmergencyProtocolPanel: React.FC<EmergencyProtocolPanelProps> = ({ emergen
                   </p>
                 </div>
                 <div>
-                  <p className="font-semibold mb-1" style={{ color: '#ef4444' }}>Red lines (never do):</p>
+                  <p className="font-semibold mb-1" style={{ color: 'var(--color-red-text)' }}>Red lines (never do):</p>
                   <ul className="space-y-0.5">
                     {emergency.severanceStrategy.redLines.map((r, i) => (
                       <li key={i} className="flex gap-1.5">
-                        <span style={{ color: '#ef4444' }}>×</span>
+                        <span style={{ color: 'var(--color-red-text)' }}>×</span>
                         <span>{r}</span>
                       </li>
                     ))}

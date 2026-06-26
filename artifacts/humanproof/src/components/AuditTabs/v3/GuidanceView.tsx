@@ -357,7 +357,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="var(--alpha-text-55)" />
             {confidenceSummary.lowDataWarning && (
-              <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />
+              <ConfidenceBadge text="⚠ Limited data" color='#f59e0b' />
             )}
           </div>
         </Section>
@@ -582,7 +582,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
             color="var(--alpha-text-55)"
           />
           {confidenceSummary.lowDataWarning && (
-            <ConfidenceBadge text="⚠ Limited data" color="#f59e0b" />
+            <ConfidenceBadge text="⚠ Limited data" color='#f59e0b' />
           )}
         </div>
       </Section>
@@ -599,7 +599,7 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         <span style={{ fontSize: '12px', color: 'var(--alpha-text-30)' }}>
           Want the full picture?{' '}
         </span>
-        <span style={{ fontSize: '12px', color: 'var(--color-cyan-text)', fontWeight: 600 }}>See full analysis →</span>
+        <span style={{ fontSize: '12px', color: '#22d3ee', fontWeight: 600 }}>See full analysis →</span>
       </motion.button>
 
     </div>

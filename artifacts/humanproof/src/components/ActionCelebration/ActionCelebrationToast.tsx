@@ -123,7 +123,7 @@ export const ActionCelebrationToast: React.FC = () => {
                 ? <Star className="w-3.5 h-3.5" style={{ color: 'var(--color-violet-text)' }} />
                 : toast.type === 'milestone'
                 ? <Zap className="w-3.5 h-3.5" style={{ color: 'var(--color-cyan-text)' }} />
-                : <Check className="w-3.5 h-3.5" style={{ color: '#10b981' }} />
+                : <Check className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />
               }
             </div>
 
@@ -151,7 +151,7 @@ export const ActionCelebrationToast: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <p className="text-[11px] font-bold leading-tight" style={{ color: '#10b981' }}>
+                  <p className="text-[11px] font-bold leading-tight" style={{ color: 'var(--color-emerald-text)' }}>
                     ✓ Action completed
                   </p>
                   <p className="text-[9px] mt-0.5" style={{ color: 'var(--alpha-text-45)' }}>

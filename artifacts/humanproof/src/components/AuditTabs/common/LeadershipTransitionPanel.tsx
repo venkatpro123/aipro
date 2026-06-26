@@ -11,10 +11,10 @@ interface LeadershipTransitionPanelProps {
 }
 
 const SCORE_COLOR = (score: number) =>
-  score >= 70 ? '#ef4444'
-  : score >= 50 ? '#f97316'
-  : score >= 30 ? '#f59e0b'
-  : '#10b981';
+  score >= 70 ? 'var(--color-red-text)'
+  : score >= 50 ? 'var(--color-orange-text)'
+  : score >= 30 ? 'var(--color-amber500-text)'
+  : 'var(--color-emerald-text)';
 
 const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ leadershipRisk }) => {
   const score = leadershipRisk.leadershipRiskScore;
@@ -72,7 +72,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
           <div className="rounded-lg p-2.5" style={{ background: 'var(--alpha-bg-04)' }}>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-55)' }}>CFO SIGNAL</span>
-              <span className="text-[10px] font-bold" style={{ color: leadershipRisk.cfoSignal === 'DEPARTED' ? '#ef4444' : 'var(--alpha-text-70)' }}>
+              <span className="text-[10px] font-bold" style={{ color: leadershipRisk.cfoSignal === 'DEPARTED' ? 'var(--color-red-text)' : 'var(--alpha-text-70)' }}>
                 {leadershipRisk.cfoSignal.replace('_', ' ')}
               </span>
             </div>
@@ -87,8 +87,8 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
           <div className="rounded-lg p-2.5"
             style={{ background: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? 'rgba(239,68,68,0.08)' : 'var(--alpha-bg-04)', border: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '1px solid rgba(239,68,68,0.20)' : 'none' }}>
             <div className="flex items-center gap-1.5 mb-1">
-              <UserMinus className="w-3 h-3" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '#ef4444' : '#f59e0b' }} />
-              <span className="text-[10px] font-semibold" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? '#ef4444' : 'var(--alpha-text-55)' }}>
+              <UserMinus className="w-3 h-3" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? 'var(--color-red-text)' : 'var(--color-amber500-text)' }} />
+              <span className="text-[10px] font-semibold" style={{ color: leadershipRisk.vpClusteringAlert === 'ACTIVE' ? 'var(--color-red-text)' : 'var(--alpha-text-55)' }}>
                 VP DEPARTURE CLUSTER — {leadershipRisk.vpClusteringAlert}
               </span>
             </div>
@@ -103,7 +103,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
       {leadershipRisk.hasActivistInvestor && (
         <div className="flex items-start gap-2 rounded-lg p-2.5"
           style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.20)' }}>
-          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: '#f59e0b' }} />
+          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: 'var(--color-amber500-text)' }} />
           <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(245,158,11,0.85)' }}>
             {leadershipRisk.activistInvestorNote}
           </p>
@@ -117,7 +117,7 @@ const LeadershipTransitionPanel: React.FC<LeadershipTransitionPanelProps> = ({ l
           <div className="space-y-0.5">
             {leadershipRisk.leadershipStabilityFactors.map((f, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: '#10b981' }} />
+                <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: 'var(--color-emerald-text)' }} />
                 <span className="text-[10px]" style={{ color: 'var(--alpha-text-50)' }}>{f}</span>
               </div>
             ))}

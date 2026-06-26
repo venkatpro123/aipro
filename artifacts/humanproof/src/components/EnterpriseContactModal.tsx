@@ -122,7 +122,7 @@ export const EnterpriseContactModal: React.FC<EnterpriseContactModalProps> = ({i
           </Row>
 
           {error && (
-            <div style={{padding: '12px', background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.30)', borderRadius: '6px', marginBottom: '16px', color: '#ef4444', fontSize: '13px'}}>
+            <div style={{padding: '12px', background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.30)', borderRadius: '6px', marginBottom: '16px', color: 'var(--color-red-text)', fontSize: '13px'}}>
               {error}
             </div>
           )}

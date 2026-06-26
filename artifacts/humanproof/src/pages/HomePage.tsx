@@ -194,10 +194,10 @@ export default function HomePage() {
                   <circle cx="100" cy="100" r="70" fill="none" stroke="rgba(139,92,246,.1)" strokeWidth="1" strokeDasharray="5 8" style={{ transformOrigin:"100px 100px",animation:"hp-spinring2 14s linear infinite" }}/>
                   <polygon points="100,40 142,68 136,118 68,122 58,70" fill="url(#rfg)" stroke="rgba(0,212,255,.8)" strokeWidth="1.5" strokeLinejoin="round"/>
                   <circle cx="100" cy="40" r="4" fill="#00d4ff"/>
-                  <circle cx="142" cy="68" r="4" fill="#ef4444"/>
-                  <circle cx="136" cy="118" r="4" fill="#f59e0b"/>
-                  <circle cx="68" cy="122" r="4" fill="#f59e0b"/>
-                  <circle cx="58" cy="70" r="4" fill="#ef4444"/>
+                  <circle cx="142" cy="68" r="4" fill='var(--color-red-text)'/>
+                  <circle cx="136" cy="118" r="4" fill='var(--color-amber500-text)'/>
+                  <circle cx="68" cy="122" r="4" fill='var(--color-amber500-text)'/>
+                  <circle cx="58" cy="70" r="4" fill='var(--color-red-text)'/>
                   <circle cx="100" cy="100" r="5" fill="rgba(0,212,255,.4)" stroke="rgba(0,212,255,.8)" strokeWidth="1.5"/>
                   <line x1="100" y1="100" x2="100" y2="18" stroke="rgba(0,212,255,.5)" strokeWidth="1" style={{ transformOrigin:"100px 100px",animation:"hp-spinring 4s linear infinite" }}/>
                 </svg>
@@ -241,8 +241,8 @@ export default function HomePage() {
               border: "1px solid rgba(239,68,68,0.22)",
               marginBottom: "2rem",
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 8px #ef4444", animation: "hp-bpulse 2s infinite", display: "inline-block" }} />
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: "#ef4444", fontWeight: 700 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: 'var(--color-red-text)', boxShadow: "0 0 8px #ef4444", animation: "hp-bpulse 2s infinite", display: "inline-block" }} />
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: 'var(--color-red-text)', fontWeight: 700 }}>
                 Long-Term Career Risk
               </span>
             </div>
@@ -317,9 +317,9 @@ export default function HomePage() {
             }}>
               {[
                 { Illustration: MarketDynamicsIllustration, label: "How Fast Jobs Are Changing",   color: "rgba(0,212,255,0.12)", border: "rgba(0,212,255,0.22)", tc: "var(--hp-cyan)" },
-                { Illustration: AIDisplacementIllustration, label: "How Much AI Affects Your Job", color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: "#ef4444" },
-                { Illustration: ProtectionIllustration,     label: "How Stable Your Career Is",    color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: "#10b981" },
-                { Illustration: OpportunityIllustration,    label: "Where Jobs Are Headed",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: "#f59e0b" },
+                { Illustration: AIDisplacementIllustration, label: "How Much AI Affects Your Job", color: "rgba(239,68,68,0.08)",  border: "rgba(239,68,68,0.22)",  tc: 'var(--color-red-text)' },
+                { Illustration: ProtectionIllustration,     label: "How Stable Your Career Is",    color: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.22)", tc: 'var(--color-emerald-text)' },
+                { Illustration: OpportunityIllustration,    label: "Where Jobs Are Headed",        color: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.22)", tc: 'var(--color-amber500-text)' },
               ].map(p => (
                 <div key={p.label} style={{
                   padding: "18px 16px",
@@ -363,16 +363,16 @@ export default function HomePage() {
               <svg viewBox="0 0 380 280" style={{ width:"100%",borderRadius:16,background:"var(--hp-bg3)",border:"1px solid var(--hp-border)" }}>
                 <defs>
                   <linearGradient id="rdg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity=".3"/>
-                    <stop offset="100%" stopColor="#10b981" stopOpacity=".1"/>
+                    <stop offset="0%" stopColor='var(--color-red-text)' stopOpacity=".3"/>
+                    <stop offset="100%" stopColor='var(--color-emerald-text)' stopOpacity=".1"/>
                   </linearGradient>
                 </defs>
                 <line x1="40" y1="30" x2="40" y2="240" stroke="var(--alpha-bg-06)" strokeWidth="1"/>
                 <line x1="40" y1="240" x2="360" y2="240" stroke="var(--alpha-bg-06)" strokeWidth="1"/>
                 {[180,130,80].map(y=><line key={y} x1="40" y1={y} x2="360" y2={y} stroke="var(--alpha-bg-04)" strokeWidth="1" strokeDasharray="4 3"/>)}
                 <path d="M80,80 L160,116 L240,140 L320,162 L320,240 L80,240 Z" fill="url(#rdg)"/>
-                <path d="M80,80 L160,116 L240,140 L320,162" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray:400,animation:"hp-linedraw 2s ease forwards" }}/>
-                {[{cx:80,cy:80,fill:"#ef4444",label:"68",ly:70},{cx:160,cy:116,fill:"#f59e0b",label:"55",ly:106},{cx:240,cy:140,fill:"#f59e0b",label:"46",ly:130},{cx:320,cy:162,fill:"#10b981",label:"38",ly:152}].map(p=>(
+                <path d="M80,80 L160,116 L240,140 L320,162" fill="none" stroke='var(--color-amber500-text)' strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ strokeDasharray:400,animation:"hp-linedraw 2s ease forwards" }}/>
+                {[{cx:80,cy:80,fill:'var(--color-red-text)',label:"68",ly:70},{cx:160,cy:116,fill:'var(--color-amber500-text)',label:"55",ly:106},{cx:240,cy:140,fill:'var(--color-amber500-text)',label:"46",ly:130},{cx:320,cy:162,fill:'var(--color-emerald-text)',label:"38",ly:152}].map(p=>(
                   <g key={p.cx}>
                     <circle cx={p.cx} cy={p.cy} r="6" fill={p.fill}/>
                     <text x={p.cx} y={p.ly} textAnchor="middle" fontSize="10" fill={p.fill} fontFamily="'Syne',sans-serif" fontWeight="700">{p.label}</text>

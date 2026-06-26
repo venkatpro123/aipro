@@ -39,14 +39,14 @@ type Posture = StrategySynthesisResult['overallStrategy'];
 
 // Plain-English posture copy — written for the person living it, not a reviewer.
 const POSTURE_COPY: Record<Posture, { label: string; accent: string }> = {
-  EMERGENCY_EXIT:            { label: 'Start job hunting now', accent: '#ef4444' },
-  ACCELERATE_EXIT:           { label: 'Start job hunting now', accent: '#f97316' },
-  VISA_WINDOW_EXIT:          { label: 'Start job hunting now', accent: '#f97316' },
-  EQUITY_HARVEST_THEN_EXIT:  { label: 'Stay a bit longer, then move on', accent: '#f59e0b' },
+  EMERGENCY_EXIT:            { label: 'Start job hunting now', accent: 'var(--color-red-text)' },
+  ACCELERATE_EXIT:           { label: 'Start job hunting now', accent: 'var(--color-orange-text)' },
+  VISA_WINDOW_EXIT:          { label: 'Start job hunting now', accent: 'var(--color-orange-text)' },
+  EQUITY_HARVEST_THEN_EXIT:  { label: 'Stay a bit longer, then move on', accent: 'var(--color-amber500-text)' },
   GEOGRAPHIC_ARBITRAGE:      { label: 'Consider relocating', accent: '#22d3ee' },
-  PROTECT_AND_WAIT:          { label: 'Stay and improve', accent: '#f59e0b' },
+  PROTECT_AND_WAIT:          { label: 'Stay and improve', accent: 'var(--color-amber500-text)' },
   STRENGTHEN_POSITION:       { label: 'Stay and improve', accent: '#22d3ee' },
-  OPPORTUNISTIC_MOVE:        { label: 'Watch for a good opportunity', accent: '#10b981' },
+  OPPORTUNISTIC_MOVE:        { label: 'Watch for a good opportunity', accent: 'var(--color-emerald-text)' },
 };
 
 const URGENCY_COPY: Record<StrategySynthesisResult['urgencyLevel'], string> = {
@@ -139,11 +139,11 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
         <Row icon={CalendarClock} color="var(--alpha-text-55)" label="Time"
           text={safetyWindowPhrase(strategy.estimatedSafetyWindowDays)} />
         {strategy.singleBiggestRisk && (
-          <Row icon={ShieldAlert} color="#f59e0b" label="Main Concern"
+          <Row icon={ShieldAlert} color='var(--color-amber500-text)' label="Main Concern"
             text={strategy.singleBiggestRisk} />
         )}
         {strategy.singleBiggestOpportunity && (
-          <Row icon={Sparkles} color="#10b981" label="Best Opportunity"
+          <Row icon={Sparkles} color='var(--color-emerald-text)' label="Best Opportunity"
             text={strategy.singleBiggestOpportunity} />
         )}
         {strategy.competitivePositionStatement && (
