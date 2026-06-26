@@ -229,7 +229,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
               key={value}
               id={`av-${value}`}
               ref={el => { if (el) sectionRefs.current[value] = el; }}
-              className={idx > 0 ? 'border-t border-white/[0.06]' : undefined}
+              className={idx > 0 ? 'border-t border-[var(--alpha-bg-06)]' : undefined}
             >
               <TabErrorBoundary tabLabel={label}>
                 <Suspense fallback={SECTION_SKELETONS[value]}>

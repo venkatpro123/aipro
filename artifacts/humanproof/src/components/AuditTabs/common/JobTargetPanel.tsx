@@ -262,7 +262,7 @@ const JobTargetPanel: React.FC<JobTargetPanelProps> = ({ targeting, className = 
           >
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-400/70" />
-              <span className="text-sm text-white/70 font-medium">
+              <span className="text-sm text-[var(--alpha-text-70)] font-medium">
                 {targeting.avoidList.length} companies to avoid (layoff wave contagion)
               </span>
             </div>

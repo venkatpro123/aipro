@@ -39,7 +39,6 @@ import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
 import { PersonalImpactSimulator } from '../common/PersonalImpactSimulator';
 import { CareerPortfolioPanel } from '../common/CareerPortfolioPanel';
-import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
 import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
@@ -878,6 +877,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
                   : 'You\'re discovering this risk months early. Most people find out 2 weeks before layoffs. That gap is your advantage — use it.'}
               </p>
               <button
+                type="button"
                 onClick={() => {
                   try { window.dispatchEvent(new CustomEvent('hp.dashboard.navigate', { detail: { tab: 'actions' } })); } catch { /* SSR */ }
                 }}

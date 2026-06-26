@@ -162,7 +162,9 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
 
       {prioritised.length > 5 && (
         <button
+          type="button"
           onClick={() => setShowAll(s => !s)}
+          aria-expanded={showAll}
           className="w-full mt-3 py-2 text-[11px] font-semibold rounded-xl transition-colors"
           style={{ color: 'rgba(0,212,224,0.85)', background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.15)' }}
         >
