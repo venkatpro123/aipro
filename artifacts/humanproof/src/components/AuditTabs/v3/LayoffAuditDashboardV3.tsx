@@ -64,6 +64,7 @@ import { WhatChangedCard } from '../../AuditReveal/WhatChangedCard';
 import { useSwipeGesture } from '../../../hooks/useSwipeGesture';
 import { ReturnVisitPanel } from '../common/ReturnVisitPanel';
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
+import { OutcomeFeedbackPrompt } from '../../OutcomeFeedbackPrompt';
 import { onNewLayoffEvent } from '../../../data/layoffNewsCache';
 import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 import { checkAndUnlockAchievements } from '../../../services/achievementService';
@@ -901,6 +902,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             onDismiss={() => setWhatChangedState(null)}
           />
         )}
+
+        {/* ── Phase 12: Outcome feedback — calibration data collection ── */}
+        <OutcomeFeedbackPrompt />
 
         {/* ── Phase 18 Delight: score improvement confetti ─────────────── */}
         {scoreCelebration && (
