@@ -59,6 +59,7 @@ import {
 } from '../../../services/reEngagementService';
 import { ActionCelebrationToast } from '../../ActionCelebration/ActionCelebrationToast';
 import { ScoreImprovementCelebration } from '../../AuditReveal/ScoreImprovementCelebration';
+import { AuditRevealScreen } from '../../AuditReveal/AuditRevealScreen';
 import { useSwipeGesture } from '../../../hooks/useSwipeGesture';
 import { ReturnVisitPanel } from '../common/ReturnVisitPanel';
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
@@ -327,6 +328,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   const [reEngagementDismissed, setReEngagementDismissed] = useState(false);
   // Phase 18 Delight: score improvement celebration
   const [scoreCelebration, setScoreCelebration] = useState<{ prev: number; curr: number } | null>(null);
+  const [revealActive, setRevealActive] = useState(false);
   // Wave 1.4: Risk update banner — fires when breakingNewsBroker injects a new event
   // for the user's current company. Shows a dismissible top banner with a re-analyze CTA.
   const [riskUpdateBanner, setRiskUpdateBanner] = useState<{ headline: string; company: string } | null>(null);
@@ -424,6 +426,12 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         currentScore: result.total,
         previousScore: prev?.score,
       });
+      // Phase 14: cinematic reveal on first-ever audit (once per session)
+      const isFirstAudit = history.length <= 1;
+      if (isFirstAudit && !sessionStorage.getItem('hp_reveal_seen')) {
+        setRevealActive(true);
+        sessionStorage.setItem('hp_reveal_seen', '1');
+      }
       // Phase 18: fire confetti celebration when score drops ≥ 3 points (lower = better)
       if (prev?.score != null && prev.score - result.total >= 3) {
         setScoreCelebration({ prev: prev.score, curr: result.total });
@@ -861,6 +869,20 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
         {/* ── Wave 3.4: Action completion celebration toast ─────────────── */}
         {/* Fixed bottom-right, appears when 'hp.action.milestone' fires.   */}
         <ActionCelebrationToast />
+
+        {/* ── Phase 14: Cinematic reveal — first-audit 2.8s reveal sequence ── */}
+        {revealActive && (
+          <AuditRevealScreen
+            score={result.total}
+            tier={result.tier ?? { label: 'Unknown', color: '#94a3b8' }}
+            companyName={result.companyName ?? 'Your Company'}
+            liveSignalCount={result.signalQuality?.liveSignals ?? 0}
+            confidencePercent={result.confidencePercent ?? 0}
+            firstActionTitle={result.recommendations?.[0]?.title}
+            firstActionEffort={result.recommendations?.[0]?.effortBadge}
+            onRevealComplete={() => setRevealActive(false)}
+          />
+        )}
 
         {/* ── Phase 18 Delight: score improvement confetti ─────────────── */}
         {scoreCelebration && (
