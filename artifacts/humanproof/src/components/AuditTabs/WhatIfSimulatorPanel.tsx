@@ -111,7 +111,7 @@ export function WhatIfSimulatorPanel({ result }: Props) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Sliders size={14} className="text-purple-400" />
-          <span className="text-sm font-semibold text-white">What-If Simulator</span>
+          <span className="text-sm font-semibold text-[var(--text)]">What-If Simulator</span>
           <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
             Instant · No server calls
           </span>

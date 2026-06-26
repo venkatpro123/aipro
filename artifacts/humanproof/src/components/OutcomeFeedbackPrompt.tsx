@@ -69,7 +69,8 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 50, scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="fixed bottom-6 right-6 z-50 w-full max-w-sm bg-neutral-900 border border-neutral-700/50 rounded-xl shadow-2xl p-4 overflow-hidden"
+        className="fixed bottom-6 right-6 z-50 w-full max-w-sm rounded-xl shadow-2xl p-4 overflow-hidden"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--alpha-bg-08)' }}
         role="dialog"
         aria-label="Outcome feedback"
       >
@@ -78,7 +79,8 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
         <button
           onClick={() => setIsVisible(false)}
           aria-label="Dismiss"
-          className="absolute top-3 right-3 text-neutral-400 hover:text-white transition-colors"
+          className="absolute top-3 right-3 transition-colors"
+          style={{ color: 'var(--alpha-text-40)' }}
         >
           <X className="w-4 h-4" />
         </button>
@@ -99,8 +101,8 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
                 <AlertCircle className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-white mb-1">What happened?</h4>
-                <p className="text-xs text-neutral-400 leading-snug">
+                <h4 className="text-sm font-semibold text-[var(--text)] mb-1">What happened?</h4>
+                <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
                   You ran a risk audit for <strong>{role}</strong> at{' '}
                   <strong>{company}</strong> on {formattedDate}. What actually happened?
                   Your answer improves prediction accuracy for everyone.
@@ -113,7 +115,8 @@ export const OutcomeFeedbackPrompt: React.FC<Props> = ({ companyRoleKey, predict
                 <button
                   key={opt.label}
                   onClick={() => handleOutcome(opt)}
-                  className="py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white transition-colors text-xs font-medium border border-neutral-700 hover:border-neutral-500"
+                  className="py-2 px-3 rounded-lg transition-colors text-xs font-medium"
+                  style={{ background: 'var(--alpha-bg-08)', color: 'var(--alpha-text-78)', border: '1px solid var(--alpha-bg-12)' }}
                 >
                   {opt.display}
                 </button>
