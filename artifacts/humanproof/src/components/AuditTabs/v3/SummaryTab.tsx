@@ -31,6 +31,7 @@ import type { TabProps } from '../common/types';
 import type { PreparednessResult } from '../../../services/preparednessScoreEngine';
 import { FirstAuditTour } from '../common/FirstAuditTour';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
+import { ConfidenceDisclosure } from '../common/ConfidenceDisclosure';
 import TierBadge from '../common/TierBadge';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
@@ -979,6 +980,22 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           )}
         </div>
       </motion.div>
+
+      {/* ── Phase 12: Confidence Disclosure — collapsible "how much to trust this" */}
+      <ScrollReveal>
+        <ConfidenceDisclosure
+          confPct={confPct}
+          confidenceLabel={canonicalConf.userFacing.label}
+          confidenceColor={canonicalConf.userFacing.color}
+          primarySource={canonicalConf.primarySource}
+          calibrationMode={calibrationMode}
+          lowDataWarning={lowDataWarning}
+          conflictCount={conflictCount}
+          hardFailures={hardFailures}
+          freshnessTier={canonicalConf.tier}
+          calibrationLimitationReason={canonicalConf.limitingFactor}
+        />
+      </ScrollReveal>
 
       {/* ── V3: AI Memory — score drift + streak + completed actions since last check */}
       <ScrollReveal>
