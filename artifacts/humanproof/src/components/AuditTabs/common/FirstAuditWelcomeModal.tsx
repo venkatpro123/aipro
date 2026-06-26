@@ -192,7 +192,7 @@ export const FirstAuditWelcomeModal: React.FC<Props> = ({
                   >
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, paddingTop: 2 }}>
                       <Icon size={14} style={{ color, flexShrink: 0 }} />
-                      <span style={{ fontSize: '0.58rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color, letterSpacing: '0.08em' }}>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 800, fontFamily: 'var(--font-mono)', color, letterSpacing: '0.08em' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
                     </div>

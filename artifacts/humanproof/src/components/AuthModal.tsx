@@ -164,17 +164,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label htmlFor="auth-email" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-slate600-text)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Network Identity</label>
+              <label htmlFor="auth-email" style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--color-slate600-text)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Network Identity</label>
               <input id="auth-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required style={inputStyle} placeholder="USER://EMAIL_ADDR" />
             </div>
 
             {mode !== 'forgot' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label htmlFor="auth-password" style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--color-slate600-text)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Access Key</label>
+                  <label htmlFor="auth-password" style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--color-slate600-text)', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Access Key</label>
                   {mode === 'login' && (
                     <button type="button" onClick={() => { setMode('forgot'); resetMessages(); }}
-                      style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: '0.6875rem', fontWeight: 800, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       Recover Key?
                     </button>
                   )}

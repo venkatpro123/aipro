@@ -393,7 +393,7 @@ function LiveResourcesStrip({
       <div
         style={{
           fontFamily: "var(--mono)",
-          fontSize: "0.65rem",
+          fontSize: "0.6875rem",
           color: "var(--cyan)",
           letterSpacing: "0.06em",
           marginBottom: 8,
@@ -959,7 +959,7 @@ export default function UpskillingRoadmap({
                         <div
                           style={{
                             fontFamily: "var(--mono)",
-                            fontSize: "0.65rem",
+                            fontSize: "0.6875rem",
                             color: "var(--text2)",
                             textTransform: "uppercase",
                             letterSpacing: "0.06em",
@@ -1145,7 +1145,7 @@ export default function UpskillingRoadmap({
                                       borderRadius: 6,
                                       padding: "4px 10px",
                                       fontFamily: "var(--mono)",
-                                      fontSize: "0.65rem",
+                                      fontSize: "0.6875rem",
                                       cursor: "pointer",
                                       textTransform: "uppercase",
                                       letterSpacing: "0.04em",
@@ -1583,7 +1583,7 @@ export default function UpskillingRoadmap({
                                         borderRadius: 6,
                                         padding: "4px 10px",
                                         fontFamily: "var(--mono)",
-                                        fontSize: "0.65rem",
+                                        fontSize: "0.6875rem",
                                         cursor: "pointer",
                                         textTransform: "uppercase",
                                         letterSpacing: "0.04em",

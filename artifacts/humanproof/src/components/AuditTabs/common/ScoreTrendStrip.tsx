@@ -151,7 +151,7 @@ export const ScoreTrendStrip: React.FC<ScoreTrendStripProps> = ({
           {!traj.velocityFromHistory && (
             <span
               style={{
-                fontSize: '0.58rem',
+                fontSize: '0.6875rem',
                 fontFamily: 'var(--font-mono)',
                 color: 'var(--alpha-text-25)',
                 letterSpacing: '0.06em',

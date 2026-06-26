@@ -118,7 +118,7 @@ export default function PeerBenchmark({ score, scoreType, jobTitle, industry }: 
       marginBottom: 16,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Peer Benchmark · {SCORE_TYPE_LABELS[scoreType]}</span>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6875rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Peer Benchmark · {SCORE_TYPE_LABELS[scoreType]}</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -132,8 +132,8 @@ export default function PeerBenchmark({ score, scoreType, jobTitle, industry }: 
       {/* Peer distribution bar */}
       <div style={{ marginBottom: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text2)' }}>Bottom 25%</span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: 'var(--text2)' }}>Top 10%</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6875rem', color: 'var(--text2)' }}>Bottom 25%</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6875rem', color: 'var(--text2)' }}>Top 10%</span>
         </div>
         <div style={{ height: 8, background: 'var(--alpha-bg-06)', borderRadius: 4, position: 'relative', overflow: 'visible' }}>
           <div style={{

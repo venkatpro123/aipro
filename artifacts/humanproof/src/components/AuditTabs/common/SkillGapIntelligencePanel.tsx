@@ -55,7 +55,7 @@ const GapRow: React.FC<{ item: UpskillPriorityItem; index: number }> = ({ item, 
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.95rem', fontWeight: 900, color: urg.color }}>
           {item.estimatedWeeksToLearn}w
         </div>
-        <div style={{ fontSize: '8px', color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ fontSize: '11px', color: 'var(--alpha-text-30)', fontFamily: 'var(--font-mono)' }}>
           to learn
         </div>
       </div>
@@ -116,7 +116,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
       {/* Header */}
       <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <Brain className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Skills To Improve
         </span>
         <span
@@ -135,7 +135,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: readinessColor }}>
               {marketReadinessPct}%
             </div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Readiness Score
             </div>
           </div>
@@ -145,7 +145,7 @@ const SkillGapIntelligencePanel: React.FC<Props> = ({ skillGapIntelligence }) =>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.04em', color: criticalGaps.length > 0 ? 'var(--color-red-text)' : 'var(--color-emerald-text)' }}>
               {criticalGaps.length}
             </div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Urgent Skills
             </div>
           </div>

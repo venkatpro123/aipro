@@ -259,11 +259,11 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
             >
               {score}
             </div>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", color: "var(--text-3)", opacity: 0.6 }}>/100</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--text-3)", opacity: 0.6 }}>/100</span>
             <span
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: "0.58rem",
+                fontSize: "0.6875rem",
                 fontWeight: 900,
                 padding: "2px 6px",
                 borderRadius: "4px",
@@ -331,7 +331,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
               title="This weight is a developer estimate not yet validated through logistic regression on outcome data."
               style={{
                 marginLeft: '6px',
-                fontSize: '0.55rem',
+                fontSize: '0.6875rem',
                 fontWeight: 700,
                 padding: '1px 5px',
                 borderRadius: '3px',
@@ -349,7 +349,7 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
               title={`Weight derived from logistic regression on confirmed layoff outcomes. Calibrated: ${dim.weightCalibratedAt}.`}
               style={{
                 marginLeft: '6px',
-                fontSize: '0.55rem',
+                fontSize: '0.6875rem',
                 fontWeight: 700,
                 padding: '1px 5px',
                 borderRadius: '3px',
@@ -525,7 +525,7 @@ const ScoreConfidenceInterval: React.FC<{
       {/* Epistemic uncertainty explanation — toggles on info click */}
       {showEpistemicNote && (
         <div style={{ marginBottom: 20, padding: '12px 14px', borderRadius: 10, background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.15)' }}>
-          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
             Epistemic uncertainty — not a statistical error bar
           </div>
           <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--alpha-text-78)' }}>

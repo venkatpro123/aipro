@@ -113,7 +113,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 padding: '1px 7px', borderRadius: '999px',
                 background: 'rgba(249,115,22,0.18)',
                 border: '1px solid rgba(249,115,22,0.30)',
-                fontSize: '0.65rem', fontWeight: 600,
+                fontSize: '0.6875rem', fontWeight: 600,
                 color: 'var(--color-orange-text)', fontFamily: 'var(--font-mono)',
               }}>
                 <Rss style={{ width: '9px', height: '9px' }} />
@@ -122,7 +122,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
             )}
             {timeAgo && !cacheAgeLabel && (
               <span style={{
-                fontSize: '0.65rem', color: 'var(--text-secondary)',
+                fontSize: '0.6875rem', color: 'var(--text-secondary)',
                 fontFamily: 'var(--font-mono)',
               }}>
                 {timeAgo}
@@ -135,7 +135,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 padding: '1px 7px', borderRadius: '999px',
                 background: 'rgba(234,179,8,0.15)',
                 border: '1px solid rgba(234,179,8,0.35)',
-                fontSize: '0.65rem', fontWeight: 600,
+                fontSize: '0.6875rem', fontWeight: 600,
                 color: 'var(--color-amber-text)', fontFamily: 'var(--font-mono)',
               }}>
                 {cacheAgeLabel}
@@ -205,7 +205,7 @@ export const BreakingNewsBanner: React.FC<Props> = ({
                 rel="noopener noreferrer"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
-                  fontSize: '0.68rem', color: 'var(--text-secondary)',
+                  fontSize: '0.6875rem', color: 'var(--text-secondary)',
                   textDecoration: 'none',
                 }}
               >

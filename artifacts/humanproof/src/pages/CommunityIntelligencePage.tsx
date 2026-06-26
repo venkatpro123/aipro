@@ -467,7 +467,7 @@ export default function CommunityIntelligencePage() {
                     minWidth: platformCount > 0 ? 4 : 0,
                   }} />
                 </div>
-                <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginTop: 3 }}>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginTop: 3 }}>
                   {platformCount}/{totalTracked} roles
                 </div>
               </div>
@@ -499,7 +499,7 @@ export default function CommunityIntelligencePage() {
             <div key={stat.label} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 20px', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <stat.Icon size={16} style={{ color: stat.color }} />
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{stat.label}</div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>{stat.label}</div>
               </div>
               <div style={{ fontSize: '1.6rem', fontWeight: 900, color: stat.color, fontFamily: 'var(--font-mono)', overflowWrap: 'anywhere' }}>{stat.value}</div>
             </div>
@@ -594,7 +594,7 @@ export default function CommunityIntelligencePage() {
                   {signal.isNewlyTransitioned && signal.dataSource === 'platform' && (
                     <div style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5,
-                      padding: '2px 7px', borderRadius: 4, fontSize: '0.62rem', fontWeight: 700,
+                      padding: '2px 7px', borderRadius: 4, fontSize: '0.6875rem', fontWeight: 700,
                       background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)',
                       color: 'var(--emerald)', marginBottom: 3,
                     }}>
@@ -634,16 +634,16 @@ export default function CommunityIntelligencePage() {
                 <div style={{ display: 'flex', gap: 16, flexShrink: 0, flexWrap: 'wrap' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.9rem', fontWeight: 900, color: signal.pctHighCritical >= 60 ? 'var(--red)' : 'var(--text-2)' }}>{signal.pctHighCritical}%</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>High/Critical</div>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)' }}>High/Critical</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.9rem', fontWeight: 700, color: signal.dataSource === 'platform' ? 'var(--text-2)' : 'var(--text-3)' }}>
                       {signal.sampleSize.toLocaleString()}
                       {signal.dataSource === 'research' && (
-                        <span style={{ fontSize: '0.58rem', color: 'var(--amber)', marginLeft: 3, fontWeight: 700 }}>est.</span>
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--amber)', marginLeft: 3, fontWeight: 700 }}>est.</span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-3)' }}>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)' }}>
                       {signal.dataSource === 'platform' ? 'Verified' : 'Projected'}
                     </div>
                   </div>

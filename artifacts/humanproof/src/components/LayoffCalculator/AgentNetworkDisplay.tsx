@@ -209,7 +209,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
           <div
             style={{
               color: "var(--alpha-text-50)",
-              fontSize: "0.65rem",
+              fontSize: "0.6875rem",
               marginBottom: "4px",
               letterSpacing: "1px",
             }}
@@ -234,7 +234,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
           <div
             style={{
               color: "var(--alpha-text-50)",
-              fontSize: "0.65rem",
+              fontSize: "0.6875rem",
               marginBottom: "4px",
               letterSpacing: "1px",
             }}
@@ -259,7 +259,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
           <div
             style={{
               color: "var(--alpha-text-50)",
-              fontSize: "0.65rem",
+              fontSize: "0.6875rem",
               marginBottom: "4px",
               letterSpacing: "1px",
             }}
@@ -300,7 +300,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
               <div
                 style={{
                   color: getCategoryColor(cat),
-                  fontSize: "0.65rem",
+                  fontSize: "0.6875rem",
                   marginBottom: "2px",
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
@@ -439,7 +439,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
           <div
             style={{
               color: "var(--alpha-text-50)",
-              fontSize: "0.65rem",
+              fontSize: "0.6875rem",
               marginBottom: "8px",
               letterSpacing: "1px",
             }}

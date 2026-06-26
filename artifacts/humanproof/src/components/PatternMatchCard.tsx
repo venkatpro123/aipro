@@ -208,7 +208,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
 
             {pctMatch != null && (
               <span style={{
-                fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4,
+                fontSize: '0.6875rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4,
                 background: `${matchColor}15`, border: `1px solid ${matchColor}30`,
                 color: matchColor,
               }}>
@@ -228,7 +228,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
               </span>
             )}
 
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
               Verified pattern
             </span>
           </div>
@@ -260,7 +260,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
           }}
         >
           <div style={{
-            fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.06em',
+            fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.06em',
             textTransform: 'uppercase', marginBottom: 3,
             color: roleFit === -1 ? 'var(--emerald)' : roleFit === 1 ? 'var(--color-red-text)' : '#00d4e0',
           }}>
@@ -312,7 +312,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
           {!expanded && pattern.historicalCompanies.length > 2 && (
             <button
               onClick={() => setExpanded(true)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--cyan)', textAlign: 'left', padding: '2px 0', fontFamily: 'inherit' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.6875rem', color: 'var(--cyan)', textAlign: 'left', padding: '2px 0', fontFamily: 'inherit' }}
             >
               +{pattern.historicalCompanies.length - 2} more cases →
             </button>
@@ -332,10 +332,10 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
             { label: 'Worst case', value: pattern.outcomeTimeline.worst_case, color: 'var(--red)' },
           ].map(t => (
             <div key={t.label} style={{ background: 'var(--bg)', borderRadius: 6, padding: '6px 8px' }}>
-              <div style={{ fontSize: '0.58rem', fontWeight: 700, color: t.color, marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: t.color, marginBottom: 2, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {t.label}
               </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text-2)', lineHeight: 1.4 }}>{t.value}</div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-2)', lineHeight: 1.4 }}>{t.value}</div>
             </div>
           ))}
         </div>
@@ -362,14 +362,14 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
           {/* Roles affected / protected — highlight user's role if matched */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
             <div>
-              <div style={{ fontSize: '0.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--red)', marginBottom: 3 }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--red)', marginBottom: 3 }}>
                 Most Affected
               </div>
               {pattern.affectedRoles.slice(0, 4).map((r, i) => {
                 const highlight = roleOverlaps(r, userRoleTitle);
                 return (
                   <div key={i} style={{
-                    fontSize: '0.65rem', lineHeight: 1.4,
+                    fontSize: '0.6875rem', lineHeight: 1.4,
                     color: highlight ? 'var(--color-red-text)' : 'var(--text-2)',
                     fontWeight: highlight ? 800 : 400,
                   }}>
@@ -379,14 +379,14 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
               })}
             </div>
             <div>
-              <div style={{ fontSize: '0.58rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--emerald)', marginBottom: 3 }}>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--emerald)', marginBottom: 3 }}>
                 Protected / Growing
               </div>
               {pattern.protectedRoles.slice(0, 4).map((r, i) => {
                 const highlight = roleOverlaps(r, userRoleTitle);
                 return (
                   <div key={i} style={{
-                    fontSize: '0.65rem', lineHeight: 1.4,
+                    fontSize: '0.6875rem', lineHeight: 1.4,
                     color: highlight ? 'var(--color-emerald-text)' : 'var(--text-2)',
                     fontWeight: highlight ? 800 : 400,
                   }}>
@@ -404,7 +404,7 @@ export const PatternMatchCard: React.FC<PatternMatchCardProps> = ({
         onClick={() => setExpanded(e => !e)}
         style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: '0.68rem', color: 'var(--cyan)', padding: '2px 0',
+          fontSize: '0.6875rem', color: 'var(--cyan)', padding: '2px 0',
           fontFamily: 'inherit', fontWeight: 600,
         }}
       >

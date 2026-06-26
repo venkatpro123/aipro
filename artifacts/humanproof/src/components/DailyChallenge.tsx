@@ -185,7 +185,7 @@ export default function DailyChallenge({ onNavigateJournal }: DailyChallengeProp
             Daily Challenge · {DIM_LABELS[targetDim]}
           </div>
           {streak > 0 && (
-            <div style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: dimColor }}>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: '0.6875rem', color: dimColor }}>
               🔥 {streak} day streak
             </div>
           )}

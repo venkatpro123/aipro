@@ -111,7 +111,7 @@ const HistoricalAccuracyPanel: React.FC<Props> = ({ calibration, currentScore })
       {/* Header */}
       <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <Shield className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Historical Prediction Accuracy
         </span>
         <span

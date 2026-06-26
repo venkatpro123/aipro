@@ -597,7 +597,7 @@ export default function HumanEdgeJournal({
           <span
             style={{
               fontFamily: "var(--mono)",
-              fontSize: "0.65rem",
+              fontSize: "0.6875rem",
               color: "var(--text2)",
               textTransform: "uppercase",
               letterSpacing: "0.05em",
@@ -947,7 +947,7 @@ export default function HumanEdgeJournal({
                               borderRadius: 6,
                               padding: "2px 10px",
                               fontFamily: "var(--mono)",
-                              fontSize: "0.65rem",
+                              fontSize: "0.6875rem",
                               cursor: "pointer",
                               letterSpacing: "0.03em",
                             }}
@@ -1197,7 +1197,7 @@ export default function HumanEdgeJournal({
                 />
                 <div
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                     color:
                       form.title.length > TITLE_MAX
                         ? "var(--rose)"
@@ -1244,7 +1244,7 @@ export default function HumanEdgeJournal({
                 />
                 <div
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                     color:
                       form.body.length > BODY_MAX
                         ? "var(--rose)"

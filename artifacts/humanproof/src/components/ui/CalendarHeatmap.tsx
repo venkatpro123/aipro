@@ -95,7 +95,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
                 {/* Month abbreviation */}
                 <div style={{
                   fontFamily: "var(--font-mono)",
-                  fontSize: "0.55rem",
+                  fontSize: "0.6875rem",
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   color: text,
@@ -107,7 +107,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
                 {/* Amplifier value or icon */}
                 <div style={{
                   fontFamily: "var(--font-mono)",
-                  fontSize: "0.55rem",
+                  fontSize: "0.6875rem",
                   fontWeight: 800,
                   color: text,
                   lineHeight: 1,
@@ -134,7 +134,7 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
                     boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
                   }}
                 >
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", fontWeight: 800, color: text }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", fontWeight: 800, color: text }}>
                     {monthStr}
                   </div>
                   <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", color: "var(--text-2)", marginTop: 2 }}>
@@ -163,13 +163,13 @@ export const CalendarHeatmap: React.FC<CalendarHeatmapProps> = ({ months, classN
           ].map(({ color, label }) => (
             <div key={label} className="flex items-center gap-1">
               <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.52rem", color: "var(--text-3)", letterSpacing: "0.06em" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--text-3)", letterSpacing: "0.06em" }}>
                 {label}
               </span>
             </div>
           ))}
         </div>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.52rem", color: "var(--text-3)" }}>
+        <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--text-3)" }}>
           ▲ current
         </div>
       </div>

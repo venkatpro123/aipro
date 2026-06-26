@@ -168,13 +168,13 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
             animation: 'lsg-pulse 1.4s ease-in-out infinite',
           }} />
           <span style={{
-            color: 'var(--color-cyan-text)', fontSize: '0.68rem', fontWeight: 700,
+            color: 'var(--color-cyan-text)', fontSize: '0.6875rem', fontWeight: 700,
             letterSpacing: '2px', textTransform: 'uppercase',
           }}>
             LIVE INTELLIGENCE FETCH
           </span>
         </div>
-        <span style={{ color: 'var(--alpha-text-30)', fontSize: '0.62rem', letterSpacing: '1px' }}>
+        <span style={{ color: 'var(--alpha-text-30)', fontSize: '0.6875rem', letterSpacing: '1px' }}>
           {elapsedSec}s elapsed
         </span>
       </div>
@@ -206,10 +206,10 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
       }}>
         <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '1px' }}>🛡️</span>
         <div>
-          <div style={{ color: 'var(--color-emerald-text)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '3px' }}>
+          <div style={{ color: 'var(--color-emerald-text)', fontSize: '0.6875rem', fontWeight: 700, letterSpacing: '1px', marginBottom: '3px' }}>
             AUTHORITATIVE LIVE INTELLIGENCE
           </div>
-          <div style={{ color: 'var(--alpha-text-50)', fontSize: '0.68rem', lineHeight: '1.5' }}>
+          <div style={{ color: 'var(--alpha-text-50)', fontSize: '0.6875rem', lineHeight: '1.5' }}>
             Acquiring live evidence across workforce, hiring, financial, and layoff sources.
             The audit will complete only when sources cross-validate — no provisional results.
           </div>
@@ -222,7 +222,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
         borderRadius: '10px', padding: '16px', marginBottom: '20px',
       }}>
         <div style={{
-          fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.16em',
+          fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.16em',
           color: 'rgba(0,245,255,0.55)', marginBottom: '12px', textTransform: 'uppercase',
         }}>
           ◈ Stage Progress
@@ -251,7 +251,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
                 </span>
                 {/* Status badge */}
                 <span style={{
-                  fontSize: '0.55rem', fontWeight: 800, letterSpacing: '0.1em',
+                  fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.1em',
                   color: isDone ? 'var(--color-emerald-text)' : isLoading ? src.color : 'var(--alpha-text-25)',
                   minWidth: '52px', textAlign: 'right',
                 }}>
@@ -277,7 +277,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
       <div style={{ marginBottom: '20px' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between',
-          marginBottom: '7px', fontSize: '0.65rem',
+          marginBottom: '7px', fontSize: '0.6875rem',
         }}>
           <span style={{ color: 'var(--alpha-text-35)', letterSpacing: '1px' }}>
             LIVE EVIDENCE ACQUIRED
@@ -319,7 +319,7 @@ export const LiveScraperGate: React.FC<Props> = ({ company, roleTitle, onReady }
               border: '1px solid var(--alpha-bg-08)',
               borderRadius: '6px',
               color: 'var(--alpha-text-50)',
-              fontSize: '0.65rem',
+              fontSize: '0.6875rem',
               padding: '5px 12px',
               cursor: 'pointer',
               letterSpacing: '0.05em',

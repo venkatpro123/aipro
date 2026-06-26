@@ -532,7 +532,7 @@ const AuditTerminalPage: React.FC = () => {
                 </svg>
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ fontSize: 'clamp(1.4rem,4vw,2rem)', fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{result.total}</span>
-                  <span style={{ fontSize: '0.55rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginTop: '2px' }}>RISK SCORE</span>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', marginTop: '2px' }}>RISK SCORE</span>
                 </div>
               </div>
 
@@ -570,8 +570,8 @@ const AuditTerminalPage: React.FC = () => {
                         <div style={{ height: '100%', width: `${pct}%`, background: cColor, borderRadius: 2, transition: 'width 0.6s ease', boxShadow: `0 0 5px ${cColor}88` }} />
                       </div>
                       <div>
-                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: cColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{cLabel}</span>
-                        <span style={{ fontSize: '0.62rem', color: 'var(--text-3)', marginLeft: 6 }}>{cDesc}</span>
+                        <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: cColor, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{cLabel}</span>
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginLeft: 6 }}>{cDesc}</span>
                       </div>
                     </div>
                   );
@@ -596,7 +596,7 @@ const AuditTerminalPage: React.FC = () => {
 
               {currentIndustry && (
                 <div style={{ padding: '10px 18px', borderRadius: '8px', background: `${catColor}12`, border: `1px solid ${catColor}33`, textAlign: 'center', flexShrink: 0 }}>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>Your Industry</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>Your Industry</div>
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: catColor }}>{currentIndustry.cat}</div>
                 </div>
               )}
@@ -657,7 +657,7 @@ const AuditTerminalPage: React.FC = () => {
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', color: 'var(--cyan)' }}>
                     WHAT-IF SENSITIVITY
                   </span>
-                  <span className="hidden sm:inline" style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                  <span className="hidden sm:inline" style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
                     — explore how experience or country changes your risk
                   </span>
                 </div>
@@ -718,7 +718,7 @@ const AuditTerminalPage: React.FC = () => {
                           <div style={{ fontSize: '0.72rem', fontWeight: 700, color: wiColor, fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
                             {wiDelta > 0 ? `▲ +${wiDelta}` : wiDelta < 0 ? `▼ ${wiDelta}` : '— no change'}
                           </div>
-                          <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginTop: '2px' }}>
                             {getVerdict(whatIfResult.total)}
                           </div>
                         </div>
@@ -742,7 +742,7 @@ const AuditTerminalPage: React.FC = () => {
                           const dc = getScoreColor(wd.score);
                           return (
                             <div key={wd.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem' }}>
-                              <span style={{ width: 24, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.65rem', fontWeight: 700 }}>{wd.key}</span>
+                              <span style={{ width: 24, fontFamily: 'var(--font-mono)', color: 'var(--cyan)', fontSize: '0.6875rem', fontWeight: 700 }}>{wd.key}</span>
                               <span style={{ flex: 1, color: 'var(--text-2)' }}>{DIM_INFO[wd.key]?.label ?? wd.label}</span>
                               <span style={{ fontFamily: 'var(--font-mono)', color: dc, fontWeight: 700, minWidth: 28, textAlign: 'right' }}>{wd.score}</span>
                               <span style={{ fontFamily: 'var(--font-mono)', color: diff < 0 ? 'var(--emerald)' : 'var(--red)', fontWeight: 700, minWidth: 36, textAlign: 'right', fontSize: '0.7rem' }}>
@@ -784,7 +784,7 @@ const AuditTerminalPage: React.FC = () => {
                   }}
                 >
                   <span>{tab.label}</span>
-                  <span style={{ fontSize: 'clamp(0.52rem, 1.6vw, 0.60rem)', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
+                  <span style={{ fontSize: 'clamp(0.6875rem, 1.6vw, 0.75rem)', fontWeight: 500, opacity: 0.65, letterSpacing: '0.03em' }}>{tab.sub}</span>
                 </button>
               ))}
             </div>

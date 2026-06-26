@@ -291,14 +291,14 @@ const MobileBottomNav: React.FC<{ active: TabKeyV4; onChange: (v: TabKeyV4) => v
                 ) : (
                   <span
                     className="absolute -top-1.5 -right-2 min-w-[14px] h-3.5 px-0.5 rounded-full flex items-center justify-center font-black whitespace-nowrap"
-                    style={{ background: badge.color, color: '#fff', fontSize: 9, lineHeight: 1, boxShadow: `0 0 6px ${badge.color}88` }}
+                    style={{ background: badge.color, color: '#fff', fontSize: 11, lineHeight: 1, boxShadow: `0 0 6px ${badge.color}88` }}
                   >
                     {badge.text}
                   </span>
                 );
               })()}
             </div>
-            <span className="relative z-10 font-semibold leading-none" style={{ fontSize: 9.5, letterSpacing: isActive ? '0.02em' : '0' }}>
+            <span className="relative z-10 font-semibold leading-none" style={{ fontSize: 11, letterSpacing: isActive ? '0.02em' : '0' }}>
               {shortLabel}
             </span>
           </button>

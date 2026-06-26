@@ -170,7 +170,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
                     border: "1px solid rgba(16,185,129,0.30)",
                     borderRadius: "6px",
                     padding: "2px 9px",
-                    fontSize: "0.62rem",
+                    fontSize: "0.6875rem",
                     color: 'var(--color-emerald-text)',
                     fontFamily: '"JetBrains Mono", monospace',
                     fontWeight: 700,
@@ -185,7 +185,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
               <div
                 style={{
                   color: "var(--alpha-text-35)",
-                  fontSize: "0.65rem",
+                  fontSize: "0.6875rem",
                   letterSpacing: "1px",
                   marginBottom: "8px",
                 }}
@@ -272,7 +272,7 @@ export const MissionBriefing: React.FC<Props> = ({ objectives }) => {
           borderTop: "1px solid rgba(0, 245, 255, 0.1)",
           display: "flex",
           justifyContent: "space-between",
-          fontSize: "0.65rem",
+          fontSize: "0.6875rem",
           color: "var(--alpha-text-30)",
           letterSpacing: "1px",
         }}

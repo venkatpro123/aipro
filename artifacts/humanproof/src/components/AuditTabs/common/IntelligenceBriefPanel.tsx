@@ -62,7 +62,7 @@ const LoadingSkeleton: React.FC = () => (
       </span>
       <div className="ml-auto flex items-center gap-1.5" style={{ color: 'var(--alpha-text-30)' }}>
         <div className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: 'var(--cyan)', opacity: 0.6 }} />
-        <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)' }}>GENERATING...</span>
+        <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>GENERATING...</span>
       </div>
     </div>
     <div className="p-5 space-y-5">
@@ -250,7 +250,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
         {/* Freshness / cache indicator */}
         <div className="ml-auto flex items-center gap-1" style={{ color: 'var(--alpha-text-35)' }}>
           <Clock className="w-3 h-3" />
-          <span style={{ fontSize: '9px', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
             {intelligenceBrief.fromCache ? 'CACHED · ' : ''}{generatedDate}
           </span>
         </div>
@@ -264,7 +264,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
         >
           <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: urgency.color }} />
           <div>
-            <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
+            <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
               Primary Risk Driver
             </div>
             <p style={{ fontSize: '11px', color: 'var(--alpha-text-85)', lineHeight: 1.5, fontWeight: 600 }}>
@@ -312,7 +312,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                 Top Action This Week
               </div>
               {/* Market-grounded badge — shown when action cites real market data numbers */}
@@ -320,7 +320,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
                 <span
                   title="This action references real market data: opening counts, hiring bar, and success rates from career market research."
                   style={{
-                    fontSize: '8px', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                    fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700,
                     padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.06em',
                     background: 'rgba(16,185,129,0.10)', color: 'var(--color-emerald-text)',
                     border: '1px solid rgba(16,185,129,0.22)', cursor: 'help',
@@ -332,7 +332,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
                 <span
                   title="Market context unavailable for this role — action is based on general guidance."
                   style={{
-                    fontSize: '8px', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                    fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700,
                     padding: '1px 5px', borderRadius: '3px', letterSpacing: '0.06em',
                     background: 'rgba(107,114,128,0.10)', color: 'var(--color-gray400-text)',
                     border: '1px solid rgba(107,114,128,0.22)', cursor: 'help',
@@ -350,10 +350,10 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
 
         {/* Model footnote */}
         <div className="mt-4 flex items-center justify-between">
-          <span style={{ fontSize: '9px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
             Model: {intelligenceBrief.modelUsed}
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
             Refreshes when score shifts &gt;5pts or after 24h
           </span>
         </div>

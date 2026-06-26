@@ -491,7 +491,7 @@ export default function ScoreDriftTracker() {
           >
             <span
               style={{
-                fontSize: "0.65rem",
+                fontSize: "0.6875rem",
                 transform: showWhatChanged ? "rotate(90deg)" : "none",
                 transition: "transform 0.2s",
                 display: "inline-block",
@@ -784,7 +784,7 @@ export default function ScoreDriftTracker() {
               <div
                 style={{
                   fontFamily: "var(--mono)",
-                  fontSize: "0.65rem",
+                  fontSize: "0.6875rem",
                   color: "var(--text2)",
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",

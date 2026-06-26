@@ -293,7 +293,7 @@ export default function PricingPage() {
                     <div style={{
                       position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)',
                       background: 'var(--cyan)', color: '#000',
-                      fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.08em',
+                      fontSize: '0.6875rem', fontWeight: 900, letterSpacing: '0.08em',
                       padding: '4px 14px', borderRadius: 'var(--radius-full)',
                       whiteSpace: 'nowrap', textTransform: 'uppercase',
                     }}>

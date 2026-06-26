@@ -241,7 +241,7 @@ const ScoreRingHero: React.FC<{
           className="flex items-center gap-1.5"
           style={{
             marginTop: 'var(--space-2)',
-            fontSize: '0.62rem',
+            fontSize: '0.6875rem',
             fontFamily: 'var(--font-mono)',
             color: 'var(--alpha-text-50)',
           }}
@@ -868,7 +868,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           <div className="flex items-start gap-3">
             <div className="audit-step-dot active" style={{ width: 8, height: 8, marginTop: 5, flexShrink: 0 }} />
             <div className="flex-1 min-w-0">
-              <div style={{ fontSize: '0.58rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--red)', marginBottom: 4, fontWeight: 800 }}>
+              <div style={{ fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--red)', marginBottom: 4, fontWeight: 800 }}>
                 {(result as any).warnSignal?.hasActiveWARN ? 'LEGAL NOTICE DETECTED' : `${riskLabel(score)} RISK · AHEAD OF 90%+ WHO FACE THIS`}
               </div>
               <p style={{ fontSize: '0.84rem', lineHeight: 1.5, color: 'var(--text-2)', marginBottom: 8 }}>

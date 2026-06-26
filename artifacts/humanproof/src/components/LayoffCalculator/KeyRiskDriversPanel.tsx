@@ -349,7 +349,7 @@ const DriverCard: React.FC<{ driver: KeyRiskDriver; index: number; expanded: boo
           width:         '22px', height: '22px', borderRadius: '50%',
           background:    `${borderHue}15`, border: `1px solid ${borderHue}30`,
           display:       'flex', alignItems: 'center', justifyContent: 'center',
-          color:         borderHue, fontSize: '0.65rem', fontWeight: 700,
+          color:         borderHue, fontSize: '0.6875rem', fontWeight: 700,
           fontFamily:    C.mono, flexShrink: 0, marginTop: '1px',
         }}>
           {String(index + 1).padStart(2, '0')}
@@ -381,7 +381,7 @@ const DriverCard: React.FC<{ driver: KeyRiskDriver; index: number; expanded: boo
               <span style={{ color: contribColor, fontFamily: C.mono, fontSize: '0.82rem', fontWeight: 800 }}>
                 +{driver.riskContribution}pt
               </span>
-              <span style={{ color: C.text3, fontSize: '0.62rem', fontFamily: C.mono }}>contrib</span>
+              <span style={{ color: C.text3, fontSize: '0.6875rem', fontFamily: C.mono }}>contrib</span>
               <span style={{ color: C.text3, fontSize: '0.75rem', marginLeft: '4px' }}>
                 {expanded ? '−' : '+'}
               </span>
@@ -420,7 +420,7 @@ const DriverCard: React.FC<{ driver: KeyRiskDriver; index: number; expanded: boo
               display:    'flex',
               alignItems: 'center',
               gap:        '6px',
-              fontSize:   '0.68rem',
+              fontSize:   '0.6875rem',
               color:      C.text3,
               fontFamily: C.mono,
             }}>
@@ -499,7 +499,7 @@ const OutlierAlert: React.FC<{
       )}
       {verificationNote && (
         <p style={{ margin: 0, color: C.text2, fontSize: '0.8rem', lineHeight: 1.5 }}>
-          <span style={{ color: C.violet, fontFamily: C.mono, fontSize: '0.68rem' }}>◎ AI SYNTHESIS → </span>
+          <span style={{ color: C.violet, fontFamily: C.mono, fontSize: '0.6875rem' }}>◎ AI SYNTHESIS → </span>
           {verificationNote}
         </p>
       )}
@@ -566,7 +566,7 @@ export const KeyRiskDriversPanel: React.FC<Props> = ({
           <div>
             <div style={{
               color:         C.text3,
-              fontSize:      '0.62rem',
+              fontSize:      '0.6875rem',
               letterSpacing: '2px',
               fontFamily:    C.mono,
               marginBottom:  '3px',
@@ -623,9 +623,9 @@ export const KeyRiskDriversPanel: React.FC<Props> = ({
             <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <span style={{
                 background: cfg.bg, color: cfg.color, borderRadius: '3px',
-                padding: '0px 6px', fontSize: '0.58rem', fontFamily: C.mono, fontWeight: 700,
+                padding: '0px 6px', fontSize: '0.6875rem', fontFamily: C.mono, fontWeight: 700,
               }}>{cfg.label}</span>
-              <span style={{ color: C.text3, fontSize: '0.68rem' }}>{cfg.tooltip}</span>
+              <span style={{ color: C.text3, fontSize: '0.6875rem' }}>{cfg.tooltip}</span>
             </div>
           ))}
         </div>
@@ -692,7 +692,7 @@ export const KeyRiskDriversPanel: React.FC<Props> = ({
         <div style={{
           marginTop:  '14px',
           color:      C.text3,
-          fontSize:   '0.65rem',
+          fontSize:   '0.6875rem',
           fontFamily: C.mono,
           textAlign:  'center',
         }}>

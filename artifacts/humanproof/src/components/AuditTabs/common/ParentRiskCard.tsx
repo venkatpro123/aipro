@@ -76,7 +76,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
               <span style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: cfg.color, fontFamily: 'var(--font-mono)' }}>
                 Parent Company Risk
               </span>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+              <span style={{ fontSize: '0.6875rem', fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
                 {cfg.label}
               </span>
             </div>
@@ -120,7 +120,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
         <div style={{ borderTop: '1px solid var(--alpha-bg-08)', padding: '12px 15px' }}>
           {p.vulnerabilityFactors?.length > 0 && (
             <div style={{ marginBottom: 10 }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Vulnerability factors
               </p>
               {p.vulnerabilityFactors.slice(0, 3).map((f, i) => (
@@ -133,7 +133,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
           )}
           {p.protectionFactors?.length > 0 && (
             <div style={{ marginBottom: 10 }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Protection factors
               </p>
               {p.protectionFactors.slice(0, 3).map((f, i) => (
@@ -151,7 +151,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
               background: 'var(--alpha-bg-04)',
               border: '1px solid var(--alpha-bg-08)',
             }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
+              <p style={{ fontSize: '0.6875rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--alpha-text-35)', marginBottom: 5, fontFamily: 'var(--font-mono)' }}>
                 Recommended action
               </p>
               <p style={{ fontSize: '0.75rem', color: 'var(--alpha-text-70)', lineHeight: 1.45 }}>

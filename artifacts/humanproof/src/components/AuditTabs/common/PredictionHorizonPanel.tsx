@@ -62,7 +62,7 @@ const WeightMiniChart: React.FC<{ weights: HorizonRisk['weightsApplied'] }> = ({
               transition: 'height 0.4s ease',
             }}
           />
-          <span style={{ fontSize: '8px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>
             {key}
           </span>
         </div>
@@ -128,7 +128,7 @@ const HorizonColumn: React.FC<{
         {isWarnOverride && (
           <div className="flex items-center gap-1 mt-1">
             <AlertTriangle className="w-2.5 h-2.5" style={{ color: 'var(--color-red-text)' }} />
-            <span style={{ fontSize: '9px', color: 'var(--color-red-text)', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: '11px', color: 'var(--color-red-text)', fontFamily: 'var(--font-mono)', fontWeight: 800, letterSpacing: '0.06em' }}>
               WARN OVERRIDE
             </span>
           </div>
@@ -142,7 +142,7 @@ const HorizonColumn: React.FC<{
 
       {/* Dominant signal */}
       <div className="pl-2">
-        <div style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
           Dominant signal
         </div>
         <p style={{ fontSize: '10px', color: 'var(--alpha-text-55)', lineHeight: 1.4 }}>
@@ -161,10 +161,10 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
       {/* Header */}
       <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: '1px solid var(--alpha-bg-08)' }}>
         <Clock className="w-4 h-4" style={{ color: 'var(--cyan)' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan)' }}>
           Prediction Horizons
         </span>
-        <span style={{ fontSize: '9px', color: 'var(--alpha-text-30)', marginLeft: '4px' }}>
+        <span style={{ fontSize: '11px', color: 'var(--alpha-text-30)', marginLeft: '4px' }}>
           · signal weights adapt per horizon
         </span>
         {groundTruthOverride && (
@@ -183,7 +183,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
         <div className="flex items-center gap-2 mb-4 overflow-x-auto">
           {/* Current */}
           <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>Now</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>Now</span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: scoreColor(currentScore) }}>{currentScore}</span>
           </div>
           {[
@@ -199,7 +199,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
               <React.Fragment key={key}>
                 <span style={{ color: arrowColor, fontWeight: 900, fontSize: '1rem', flexShrink: 0 }}>{arrow}</span>
                 <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{key}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.10em' }}>{key}</span>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 900, color: scoreColor(h.score) }}>{h.score}</span>
                 </div>
               </React.Fragment>
@@ -212,7 +212,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           {WEIGHT_KEYS.map(key => (
             <div key={key} className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-sm" style={{ background: WEIGHT_COLORS[key] }} />
-              <span style={{ fontSize: '9px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>{key}: {WEIGHT_LABELS[key]}</span>
+              <span style={{ fontSize: '11px', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)' }}>{key}: {WEIGHT_LABELS[key]}</span>
             </div>
           ))}
         </div>
@@ -232,7 +232,7 @@ const PredictionHorizonPanel: React.FC<Props> = ({ predictionHorizon, currentSco
           className="rounded-lg px-4 py-3"
           style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
         >
-          <div style={{ fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+          <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
             Trajectory Narrative
           </div>
           <p style={{ fontSize: '11px', color: 'var(--alpha-text-70)', lineHeight: 1.55 }}>

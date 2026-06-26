@@ -48,7 +48,7 @@ interface Props {
 // ── Section header ────────────────────────────────────────────────────────
 const SectionLabel: React.FC<{ label: string }> = ({ label }) => (
   <div style={{
-    color: C.text3, fontSize: '0.65rem', letterSpacing: '2px',
+    color: C.text3, fontSize: '0.6875rem', letterSpacing: '2px',
     textTransform: 'uppercase', fontFamily: C.mono, marginBottom: '12px',
     paddingBottom: '8px', borderBottom: `1px solid ${C.border}`,
   }}>
@@ -171,7 +171,7 @@ const SkillMatrix: React.FC<{ skills: CareerIntelligence['skills'] }> = ({ skill
             <span style={{
               marginLeft: '6px', background: `${tab.color}22`,
               borderRadius: '10px', padding: '1px 6px',
-              fontSize: '0.65rem', fontWeight: 700,
+              fontSize: '0.6875rem', fontWeight: 700,
             }}>
               {tab.count}
             </span>
@@ -267,7 +267,7 @@ const CareerPathCards: React.FC<{ paths: CareerPath[] }> = ({ paths }) => (
               <span style={{ color: C.text, fontWeight: 700, fontSize: '0.92rem' }}>→ {p.role}</span>
               <span style={{
                 background: `${dc}15`, color: dc, borderRadius: '4px',
-                padding: '2px 7px', fontSize: '0.62rem', fontFamily: C.mono,
+                padding: '2px 7px', fontSize: '0.6875rem', fontFamily: C.mono,
               }}>
                 {p.transitionDifficulty}
               </span>
@@ -277,7 +277,7 @@ const CareerPathCards: React.FC<{ paths: CareerPath[] }> = ({ paths }) => (
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
               {p.industryMapping?.map(ind => (
-                <span key={ind} style={{ fontSize: '0.65rem', color: C.text3, background: C.bg3, borderRadius: '4px', padding: '2px 6px' }}>
+                <span key={ind} style={{ fontSize: '0.6875rem', color: C.text3, background: C.bg3, borderRadius: '4px', padding: '2px 6px' }}>
                   {ind}
                 </span>
               ))}
@@ -295,7 +295,7 @@ const CareerPathCards: React.FC<{ paths: CareerPath[] }> = ({ paths }) => (
             <div style={{ color: C.amber, fontSize: '0.7rem', fontFamily: C.mono, whiteSpace: 'nowrap' }}>
               {p.salaryDelta}
             </div>
-            <div style={{ color: C.text3, fontSize: '0.65rem', fontFamily: C.mono, whiteSpace: 'nowrap' }}>
+            <div style={{ color: C.text3, fontSize: '0.6875rem', fontFamily: C.mono, whiteSpace: 'nowrap' }}>
               ⏱ {p.timeToTransition}
             </div>
           </div>
@@ -330,7 +330,7 @@ const SeniorityTable: React.FC<{
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
               {isUser && (
-                <span style={{ fontSize: '0.62rem', background: `${C.cyan}20`, color: C.cyan, borderRadius: '4px', padding: '2px 6px', fontFamily: C.mono }}>
+                <span style={{ fontSize: '0.6875rem', background: `${C.cyan}20`, color: C.cyan, borderRadius: '4px', padding: '2px 6px', fontFamily: C.mono }}>
                   YOU
                 </span>
               )}
@@ -478,7 +478,7 @@ export const OracleInsightsPanel: React.FC<Props> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '4px', height: '36px', background: C.violet, borderRadius: '2px' }} />
           <div>
-            <div style={{ color: C.text3, fontSize: '0.62rem', letterSpacing: '2px', fontFamily: C.mono, marginBottom: '3px' }}>
+            <div style={{ color: C.text3, fontSize: '0.6875rem', letterSpacing: '2px', fontFamily: C.mono, marginBottom: '3px' }}>
               ORACLE ENGINE · DEEP ROLE INTELLIGENCE
             </div>
             <div style={{ color: C.text, fontSize: '1.1rem', fontWeight: 700 }}>
@@ -631,7 +631,7 @@ export const OracleInsightsPanel: React.FC<Props> = ({
       {/* Footnote */}
       <div style={{
         marginTop: '20px', paddingTop: '14px', borderTop: `1px solid ${C.border}`,
-        color: C.text3, fontSize: '0.68rem', fontFamily: C.mono, textAlign: 'center', lineHeight: 1.6,
+        color: C.text3, fontSize: '0.6875rem', fontFamily: C.mono, textAlign: 'center', lineHeight: 1.6,
       }}>
           Source: Risk Oracle Engine · MASTER_CAREER_INTELLIGENCE v4.0 · WEF Future of Jobs 2025
           {intelligence.evolutionHorizon && ` · Data valid until ${intelligence.evolutionHorizon}`}

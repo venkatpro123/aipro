@@ -194,7 +194,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
                 {cfg.label}
               </span>
               <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.65rem',
+                fontFamily: 'var(--font-mono)', fontSize: '0.6875rem',
                 color: cfg.text, opacity: 0.7,
               }}>
                 {pct}% live · {coverage?.liveWonKeys.length ?? 0} signals
@@ -274,7 +274,7 @@ export const LiveSignalStatusBanner: React.FC<Props> = ({ coverage, freshnessSco
                 borderRadius: '6px',
                 cursor: retrying ? 'wait' : 'pointer',
                 color: cfg.text,
-                fontSize: '0.65rem',
+                fontSize: '0.6875rem',
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 700,
                 letterSpacing: '0.04em',

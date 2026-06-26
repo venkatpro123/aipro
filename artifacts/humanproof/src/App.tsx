@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BrowserRouter as Router,
   Routes,
@@ -74,6 +74,32 @@ function PageLoader() {
     <div className="min-h-[50vh] flex items-center justify-center">
       <BrandedLoader message="Loading module…" size="lg" />
     </div>
+  );
+}
+
+// ─── Page Transition Wrapper ──────────────────────────────────────────────────
+const pageVariants = {
+  initial: { opacity: 0, y: 10, filter: "blur(2px)" },
+  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  exit:    { opacity: 0, y: -6, filter: "blur(1px)" },
+};
+const pageTransition = {
+  type: "tween" as const,
+  duration: 0.22,
+  ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+};
+function PageTransition({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={pageTransition}
+      style={{ willChange: "opacity, transform" }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
@@ -253,7 +279,7 @@ function AppNav({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                     fontWeight: 800,
                     color: "#000",
                     flexShrink: 0,
@@ -703,22 +729,24 @@ function AppContent() {
       <main id="main-content" style={{ position: "relative", zIndex: 1 }}>
         <GlobalErrorBoundary>
           <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/"                              element={<HomePage />} />
-              <Route path="/calculator"                    element={<AuditTerminalPage />} />
-              <Route path="/terminal"                      element={<ToolsPage />} />
-              <Route path="/risk-calculator"               element={<RiskCalculatorPage />} />
-              <Route path="/products"                      element={<ProductsPage />} />
-              <Route path="/pricing"                       element={<PricingPage />} />
-              <Route path="/settings"                      element={<SettingsPage />} />
-              <Route path="/team"                          element={<TeamDashboardPage />} />
-              <Route path="/predictions"                   element={<PredictionLedgerPage />} />
-              <Route path="/intelligence"                  element={<CommunityIntelligencePage />} />
-              <Route path="/intelligence/report"           element={<IntelligenceReportPage />} />
-              <Route path="/intelligence/report/:yearMonth"element={<IntelligenceReportPage />} />
-              <Route path="/certification"                 element={<CertificationPage />} />
-              <Route path="*"                              element={<NotFoundPage />} />
-            </Routes>
+            <AnimatePresence mode="wait" initial={false}>
+              <Routes location={location} key={location.pathname}>
+                <Route path="/"                              element={<PageTransition><HomePage /></PageTransition>} />
+                <Route path="/calculator"                    element={<PageTransition><AuditTerminalPage /></PageTransition>} />
+                <Route path="/terminal"                      element={<PageTransition><ToolsPage /></PageTransition>} />
+                <Route path="/risk-calculator"               element={<PageTransition><RiskCalculatorPage /></PageTransition>} />
+                <Route path="/products"                      element={<PageTransition><ProductsPage /></PageTransition>} />
+                <Route path="/pricing"                       element={<PageTransition><PricingPage /></PageTransition>} />
+                <Route path="/settings"                      element={<PageTransition><SettingsPage /></PageTransition>} />
+                <Route path="/team"                          element={<PageTransition><TeamDashboardPage /></PageTransition>} />
+                <Route path="/predictions"                   element={<PageTransition><PredictionLedgerPage /></PageTransition>} />
+                <Route path="/intelligence"                  element={<PageTransition><CommunityIntelligencePage /></PageTransition>} />
+                <Route path="/intelligence/report"           element={<PageTransition><IntelligenceReportPage /></PageTransition>} />
+                <Route path="/intelligence/report/:yearMonth"element={<PageTransition><IntelligenceReportPage /></PageTransition>} />
+                <Route path="/certification"                 element={<PageTransition><CertificationPage /></PageTransition>} />
+                <Route path="*"                              element={<PageTransition><NotFoundPage /></PageTransition>} />
+              </Routes>
+            </AnimatePresence>
           </Suspense>
         </GlobalErrorBoundary>
       </main>

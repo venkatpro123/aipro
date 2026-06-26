@@ -277,7 +277,7 @@ const YearGrid: React.FC<{
                 fontSize: '8px', color: 'var(--text)', fontWeight: 700,
               }}>!</div>
             )}
-            <div style={{ color: C.text3, fontSize: '0.68rem', fontFamily: C.mono, marginBottom: '6px', letterSpacing: '0.05em' }}>
+            <div style={{ color: C.text3, fontSize: '0.6875rem', fontFamily: C.mono, marginBottom: '6px', letterSpacing: '0.05em' }}>
               {pt.year}
             </div>
             <div style={{ color: col, fontSize: '1.25rem', fontWeight: 800, fontFamily: C.mono, lineHeight: 1 }}>
@@ -285,7 +285,7 @@ const YearGrid: React.FC<{
             </div>
             <div style={{
               color:     delta > 0 ? `${C.red}99` : C.green,
-              fontSize:  '0.65rem',
+              fontSize:  '0.6875rem',
               fontFamily: C.mono,
               marginTop: '4px',
             }}>
@@ -386,7 +386,7 @@ const ScenarioSlider: React.FC<{
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
         {labels.map((l, i) => (
           <span key={i} style={{
-            fontSize: '0.66rem', color: i === value ? colors[i] : C.text3,
+            fontSize: '0.6875rem', color: i === value ? colors[i] : C.text3,
             fontFamily: C.mono, letterSpacing: '0.02em',
             maxWidth: '31%', textAlign: i === 0 ? 'left' : i === 2 ? 'right' : 'center',
           }}>{l}</span>
@@ -513,7 +513,7 @@ export const DisplacementTrajectoryPanel: React.FC<Props> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '4px', height: '32px', background: color, borderRadius: '2px' }} />
           <div>
-            <div style={{ color: C.text3, fontSize: '0.65rem', letterSpacing: '2px', fontFamily: C.mono, marginBottom: '3px' }}>
+            <div style={{ color: C.text3, fontSize: '0.6875rem', letterSpacing: '2px', fontFamily: C.mono, marginBottom: '3px' }}>
               DISPLACEMENT TRAJECTORY /// ORACLE ENGINE
             </div>
             <div style={{ color: C.text, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.5px' }}>
@@ -531,7 +531,7 @@ export const DisplacementTrajectoryPanel: React.FC<Props> = ({
           }}>
             {finalScore}%
           </div>
-          <div style={{ color: C.text3, fontSize: '0.66rem', fontFamily: C.mono }}>
+          <div style={{ color: C.text3, fontSize: '0.6875rem', fontFamily: C.mono }}>
             by {finalYear}
           </div>
         </div>
@@ -572,7 +572,7 @@ export const DisplacementTrajectoryPanel: React.FC<Props> = ({
               display: 'flex', alignItems: 'center', gap: '6px',
               marginTop: '8px', padding: '4px 10px',
               background: 'rgba(0,245,255,0.06)', borderRadius: '4px',
-              color: C.cyan, fontSize: '0.68rem', fontFamily: C.mono,
+              color: C.cyan, fontSize: '0.6875rem', fontFamily: C.mono,
             }}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: C.cyan, animation: 'trajectoryPulse 2s infinite' }} />
               SERVER-CALIBRATED — DB-backed S-curve model active
@@ -615,7 +615,7 @@ export const DisplacementTrajectoryPanel: React.FC<Props> = ({
               background: C.bg2, border: `1px solid ${C.border}`,
               borderRadius: '8px', padding: '12px',
             }}>
-              <div style={{ color: C.text3, fontSize: '0.65rem', letterSpacing: '1px', textTransform: 'uppercase', fontFamily: C.mono, marginBottom: '6px' }}>
+              <div style={{ color: C.text3, fontSize: '0.6875rem', letterSpacing: '1px', textTransform: 'uppercase', fontFamily: C.mono, marginBottom: '6px' }}>
                 {stat.label}
               </div>
               <div style={{ color: stat.color, fontFamily: C.mono, fontWeight: 700, fontSize: '1rem' }}>

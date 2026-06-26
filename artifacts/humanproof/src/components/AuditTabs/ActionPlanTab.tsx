@@ -1129,7 +1129,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
             <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
               {item.riskReductionPct > 0 && (
                 <span style={{
-                  fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 900,
+                  fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900,
                   padding: '2px 6px', borderRadius: '4px',
                   background: 'rgba(16,185,129,0.12)', color: 'var(--color-emerald-text)',
                   border: '1px solid rgba(16,185,129,0.22)', letterSpacing: '0.08em',
@@ -1141,7 +1141,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                 <span
                   title={`Highest ROI in this phase: ${item.riskReductionPct}% risk reduction ÷ estimated hours`}
                   style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 900,
+                    fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900,
                     padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.06em',
                     background: 'rgba(245,158,11,0.14)', color: 'var(--color-amber500-text)',
                     border: '1px solid rgba(245,158,11,0.32)',
@@ -1194,10 +1194,10 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
 
           {/* Cost label — only when the engine extracted a cost and converted it */}
           {item.costDisplayLabel && (
-            <div className="flex items-center gap-1.5 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.60rem' }}>
+            <div className="flex items-center gap-1.5 mb-2" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>
               <DollarSign className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)', opacity: 0.75 }} />
               <span style={{ color: 'var(--color-emerald-text)', fontWeight: 700 }}>{item.costDisplayLabel}</span>
-              <span style={{ color: 'var(--alpha-text-25)', fontSize: '0.52rem', letterSpacing: '0.05em' }}>MODELED · 2024-Q2</span>
+              <span style={{ color: 'var(--alpha-text-25)', fontSize: '0.6875rem', letterSpacing: '0.05em' }}>MODELED · 2024-Q2</span>
             </div>
           )}
 
@@ -1207,7 +1207,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '3px 8px', borderRadius: '6px',
               background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
-              fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
+              fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-3)',
               letterSpacing: '0.06em',
             }}>
               <Target className="w-2.5 h-2.5" />
@@ -1218,7 +1218,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                 display: 'flex', alignItems: 'center', gap: '5px',
                 padding: '3px 8px', borderRadius: '6px',
                 background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)',
-                fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-3)',
+                fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-3)',
                 letterSpacing: '0.06em',
               }}>
                 <Clock className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
@@ -1232,7 +1232,7 @@ const ActionItem: React.FC<ActionItemProps> = ({ item, isCompleted, onToggle, in
                     })()
                   : item.deadline}
                 {item.originalDeadline && !item.learningWeeks && (
-                  <span style={{ opacity: 0.5, fontSize: '0.52rem' }}>
+                  <span style={{ opacity: 0.5, fontSize: '0.6875rem' }}>
                     (from {item.originalDeadline})
                   </span>
                 )}
@@ -1287,7 +1287,7 @@ const ProgressIndicator: React.FC<{ completed: number; total: number }> = ({ com
         </div>
         <div>
           <div className="data-label mb-1">ACTION PROGRESS</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-2)', fontWeight: 700 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-2)', fontWeight: 700 }}>
             {completed} of {total} complete
           </div>
         </div>
@@ -2097,13 +2097,13 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                           flexShrink: 0,
                           animation: priority === 'Critical' ? 'pulse-live 1.8s ease-in-out infinite' : 'none',
                         }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.1em', color: cfg.color }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900, letterSpacing: '0.1em', color: cfg.color }}>
                           {PHASE_LABEL[priority]}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: 'var(--text-3)', fontWeight: 600 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-3)', fontWeight: 600 }}>
                           {PHASE_SUBTITLE[priority]}
                         </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 700, color: cfg.color, opacity: 0.5 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, color: cfg.color, opacity: 0.5 }}>
                           · {sectionCompleted}/{priorityItems.length}
                         </span>
                       </div>

@@ -36,7 +36,7 @@ const CARD_STYLE: React.CSSProperties = {
 };
 
 const SECTION_LABEL: React.CSSProperties = {
-  fontSize: 9,
+  fontSize: 11,
   fontWeight: 800,
   letterSpacing: '0.16em',
   color: 'var(--alpha-text-30)',

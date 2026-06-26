@@ -92,7 +92,7 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
             Intelligence Signal Sources
           </div>
           {companyName && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
               {companyName} · scraped {ageMin !== null ? (ageMin < 1 ? 'just now' : `${ageMin}m ago`) : 'unknown'}
             </div>
           )}
@@ -148,14 +148,14 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{
-                  fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+                  fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 800,
                   letterSpacing: '0.06em', color: cfg.color,
                   padding: '1px 5px', borderRadius: '3px',
                   background: `${cfg.color}15`,
                 }}>
                   {cfg.label}
                 </span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.63rem', color: 'var(--text-secondary)' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
                   {row.sourceName}
                 </span>
               </div>
@@ -170,7 +170,7 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
         borderRadius: '8px', background: 'var(--alpha-bg-04)',
         border: '1px solid var(--border)',
       }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           <span style={{ color: 'var(--color-cyan-text)' }}>●</span> Live = scraped from external APIs this session
           {'  '}
           <span style={{ color: 'var(--color-indigo-text)' }}>●</span> Database = Supabase company_intelligence row
@@ -178,13 +178,13 @@ export const LiveDataCoveragePanel: React.FC<Props> = ({ coverage, freshnessScor
           <span style={{ color: 'var(--color-orange-text)' }}>●</span> Static = hardcoded baseline (pre-seeded)
         </div>
         {overallSource === 'heuristic' && (
-          <div style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--color-amber500-text)' }}>
+          <div style={{ marginTop: '6px', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--color-amber500-text)' }}>
             ⚠ Score calculated with fewer than 2 live API signals — treat as indicative.
             Live retry will run automatically.
           </div>
         )}
         {(coverage?.hardFailures?.length ?? 0) > 0 && (
-          <div style={{ marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--color-red-text)' }}>
+          <div style={{ marginTop: '4px', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--color-red-text)' }}>
             API failures: {coverage?.hardFailures?.join(', ')}
           </div>
         )}

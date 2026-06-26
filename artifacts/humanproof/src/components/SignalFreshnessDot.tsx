@@ -61,7 +61,7 @@ export function SignalFreshnessDot({
         }}
       />
       {showLabel && (
-        <span style={{ fontSize: '0.65rem', color, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span style={{ fontSize: '0.6875rem', color, opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {cls}
         </span>
       )}

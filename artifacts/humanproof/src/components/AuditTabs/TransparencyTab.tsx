@@ -1570,7 +1570,7 @@ const SourceRow: React.FC<{
       {icon}
       <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--alpha-text-85)' }}>{label}</span>
       {isDominant && impactLevel > 0 && (
-        <span style={{ fontSize: '0.59rem', padding: '0 5px', borderRadius: 3, fontWeight: 800, background: `${color}22`, color, border: `1px solid ${color}38`, lineHeight: '18px' }}>
+        <span style={{ fontSize: '0.6875rem', padding: '0 5px', borderRadius: 3, fontWeight: 800, background: `${color}22`, color, border: `1px solid ${color}38`, lineHeight: '18px' }}>
           DOMINANT
         </span>
       )}
@@ -1591,11 +1591,11 @@ const SourceRow: React.FC<{
     {subItems && subItems.length > 0 && (
       <div style={{ marginTop: 4 }}>
         {subItems.map((item, i) => (
-          <div key={i} style={{ fontSize: '0.67rem', color: `${color}99`, marginTop: 2 }}>· {item}</div>
+          <div key={i} style={{ fontSize: '0.6875rem', color: `${color}99`, marginTop: 2 }}>· {item}</div>
         ))}
       </div>
     )}
-    <div style={{ fontSize: '0.67rem', color: 'var(--alpha-text-25)', marginTop: 5, fontStyle: 'italic' }}>{note}</div>
+    <div style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-25)', marginTop: 5, fontStyle: 'italic' }}>{note}</div>
   </div>
 );
 
@@ -1630,11 +1630,11 @@ const CIWideningSourcesPanel: React.FC<{
     <div style={{ borderRadius: 12, padding: '14px 16px', background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <Layers style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--alpha-text-45)' }} />
-        <span style={{ fontSize: '0.67rem', fontWeight: 800, color: 'var(--alpha-text-55)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--alpha-text-55)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>
           CI Widening Sources — {ciRange}pt interval
         </span>
         {dominantKey && (
-          <span style={{ fontSize: '0.61rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)', border: '1px solid var(--alpha-bg-08)' }}>
+          <span style={{ fontSize: '0.6875rem', padding: '1px 7px', borderRadius: 4, fontWeight: 800, background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-45)', border: '1px solid var(--alpha-bg-08)' }}>
             {dominantLabel[dominantKey]}
           </span>
         )}
@@ -1676,7 +1676,7 @@ const CIWideningSourcesPanel: React.FC<{
         />
       </div>
 
-      <p style={{ fontSize: '0.67rem', color: 'var(--alpha-text-25)', marginTop: 12, lineHeight: 1.6, marginBottom: 0 }}>
+      <p style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-25)', marginTop: 12, lineHeight: 1.6, marginBottom: 0 }}>
         These three sources are independent — each can be resolved separately. The dominant source
         is the single largest contributor to the {ciRange}pt interval. Resolving it alone would
         narrow the CI; resolving all three would narrow it to its minimum achievable width given

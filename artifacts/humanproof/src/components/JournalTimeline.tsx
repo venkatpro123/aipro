@@ -97,7 +97,7 @@ export default function JournalTimeline({
               <span
                 style={{
                   fontFamily: "var(--mono)",
-                  fontSize: "0.65rem",
+                  fontSize: "0.6875rem",
                   color: "var(--text2)",
                 }}
               >
@@ -171,7 +171,7 @@ export default function JournalTimeline({
                       >
                         <span
                           style={{
-                            fontSize: "0.65rem",
+                            fontSize: "0.6875rem",
                             padding: "2px 8px",
                             borderRadius: 4,
                             background: `${dimColor}15`,
@@ -183,7 +183,7 @@ export default function JournalTimeline({
                         </span>
                         <span
                           style={{
-                            fontSize: "0.65rem",
+                            fontSize: "0.6875rem",
                             color: "var(--text2)",
                             fontFamily: "var(--mono)",
                           }}

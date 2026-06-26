@@ -694,7 +694,7 @@ export default function PredictionLedgerPage() {
         {/* Accuracy stats — forward-looking only */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 16 }}>
           <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 12, padding: '18px 22px' }}>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}>
               Forward-Looking Accuracy
             </div>
             <div style={{ fontWeight: 900, color: forwardAccuracy >= 75 ? 'var(--emerald)' : 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: '2rem', lineHeight: 1 }}>
@@ -734,7 +734,7 @@ export default function PredictionLedgerPage() {
             )}
           </div>
           <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 22px' }}>
-            <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}>
               Retroactive Calibration
             </div>
             <div style={{ fontWeight: 900, color: 'var(--cyan)', fontFamily: 'var(--font-mono)', fontSize: '2rem', lineHeight: 1 }}>
@@ -752,7 +752,7 @@ export default function PredictionLedgerPage() {
             { label: 'Employees Confirmed Affected', value: totalAffectedFormatted, color: 'var(--text-2)' },
           ].map(stat => (
             <div key={stat.label} style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px' }}>
-              <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{stat.label}</div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{stat.label}</div>
               <div style={{ fontWeight: 900, color: stat.color, fontFamily: 'var(--font-mono)', fontSize: '1.3rem' }}>{stat.value}</div>
             </div>
           ))}
@@ -760,7 +760,7 @@ export default function PredictionLedgerPage() {
 
         {/* Retroactive signal provenance summary — computed from live signal data */}
         <div style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', marginBottom: 28 }}>
-          <div style={{ fontSize: '0.65rem', color: 'var(--text-3)', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 700 }}>
             Retroactive Signal Provenance Audit ({provCounts.total} signals across {retroactive.length} entries)
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -798,8 +798,8 @@ export default function PredictionLedgerPage() {
                 <div style={{ fontSize: '1.5rem', fontWeight: 900, color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
                   {icon} {count}
                 </div>
-                <div style={{ fontSize: '0.68rem', color, fontWeight: 700, marginTop: 2 }}>{pct}%</div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', marginTop: 2, lineHeight: 1.4 }}>{label}</div>
+                <div style={{ fontSize: '0.6875rem', color, fontWeight: 700, marginTop: 2 }}>{pct}%</div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', marginTop: 2, lineHeight: 1.4 }}>{label}</div>
               </div>
             ))}
           </div>
@@ -899,19 +899,19 @@ export default function PredictionLedgerPage() {
                   <div style={{ flex: 1, minWidth: 180 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
                       <h3 style={{ margin: 0, fontWeight: 900, fontSize: '0.95rem' }}>{pred.companyName}</h3>
-                      <span style={{ fontSize: '0.68rem', padding: '1px 7px', borderRadius: 4, fontWeight: 700, background: `${stageColor}20`, color: stageColor }}>
+                      <span style={{ fontSize: '0.6875rem', padding: '1px 7px', borderRadius: 4, fontWeight: 700, background: `${stageColor}20`, color: stageColor }}>
                         {pred.predictedStage}
                       </span>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-3)' }}>{pred.region}</span>
+                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-3)' }}>{pred.region}</span>
                       {pred.isRetroactive && (
-                        <span style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(107,114,128,0.15)', color: 'var(--color-gray400-text)', border: '1px solid rgba(107,114,128,0.3)' }}>
+                        <span style={{ fontSize: '0.6875rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(107,114,128,0.15)', color: 'var(--color-gray400-text)', border: '1px solid rgba(107,114,128,0.3)' }}>
                           RETROACTIVE
                         </span>
                       )}
                       {isShortLead && (
                         <span
                           title={`Only ${leadDays} day${leadDays === 1 ? '' : 's'} lead time — prediction is near-simultaneous with the event, not a meaningful forecast`}
-                          style={{ fontSize: '0.65rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.3)', cursor: 'help' }}
+                          style={{ fontSize: '0.6875rem', padding: '1px 6px', borderRadius: 4, fontWeight: 800, background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber500-text)', border: '1px solid rgba(245,158,11,0.3)', cursor: 'help' }}
                         >
                           {leadDays}D LEAD ⚠
                         </span>
@@ -929,7 +929,7 @@ export default function PredictionLedgerPage() {
                 {/* Signals */}
                 <div style={{ padding: '12px 18px', borderBottom: pred.status === 'confirmed' ? '1px solid var(--border)' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
                       {pred.isRetroactive ? 'Signals Present at Time of Event' : 'Prediction Basis'}
                     </div>
                     {pred.isRetroactive && (
@@ -965,7 +965,7 @@ export default function PredictionLedgerPage() {
                             {cfg ? (
                               <span
                                 title={`${sig.provenance === 'pre_event' ? 'Publicly observable before the event' : sig.provenance === 'ambiguous' ? 'Directionally correct but source not independently verified' : 'Hindsight-only — should not appear in published ledger'}`}
-                                style={{ flexShrink: 0, marginTop: 1, fontSize: '0.65rem', fontWeight: 800, color: cfg.color, cursor: 'help', minWidth: 12 }}
+                                style={{ flexShrink: 0, marginTop: 1, fontSize: '0.6875rem', fontWeight: 800, color: cfg.color, cursor: 'help', minWidth: 12 }}
                               >
                                 {cfg.icon}
                               </span>
@@ -983,7 +983,7 @@ export default function PredictionLedgerPage() {
                           </div>
                           {/* Lead-time sentence — turns the timestamp into a human-readable trust signal */}
                           {leadTimeSentence && (
-                            <div style={{ marginLeft: 19, fontSize: '0.67rem', color: 'var(--color-emerald-text)', opacity: 0.85, fontStyle: 'italic' }}>
+                            <div style={{ marginLeft: 19, fontSize: '0.6875rem', color: 'var(--color-emerald-text)', opacity: 0.85, fontStyle: 'italic' }}>
                               {leadTimeSentence}
                               {sig.source && (
                                 <span style={{ color: 'var(--text-3)', marginLeft: 4 }}>Source: {sig.source}</span>
@@ -1004,7 +1004,7 @@ export default function PredictionLedgerPage() {
                 {/* Confirmed event */}
                 {pred.status === 'confirmed' && pred.confirmedEvent && (
                   <div style={{ padding: '12px 18px', background: pred.isRetroactive ? 'rgba(107,114,128,0.06)' : 'rgba(16,185,129,0.06)' }}>
-                    <div style={{ fontSize: '0.62rem', color: pred.isRetroactive ? '#9ca3af' : 'var(--color-emerald-text)', marginBottom: 4, letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <div style={{ fontSize: '0.6875rem', color: pred.isRetroactive ? '#9ca3af' : 'var(--color-emerald-text)', marginBottom: 4, letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 700 }}>
                       {pred.isRetroactive ? 'Historical Event' : 'Confirmed'} {formatDate(pred.confirmedDate!)}
                       {pred.affectedCount ? ` · ${pred.affectedCount.toLocaleString()} affected` : ''}
                     </div>

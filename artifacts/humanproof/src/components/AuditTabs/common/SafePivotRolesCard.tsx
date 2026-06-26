@@ -93,7 +93,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
           <p style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-emerald-text)', fontFamily: 'var(--font-mono)' }}>
             Safe Pivot Roles
           </p>
-          <p style={{ fontSize: '0.68rem', color: 'var(--alpha-text-45)', marginTop: 1 }}>
+          <p style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-45)', marginTop: 1 }}>
             Roles where you can significantly lower your risk
           </p>
         </div>
@@ -127,7 +127,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                       {role.targetRoleLabel}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.62rem', color: cfg.color, fontWeight: 600, letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: '0.6875rem', color: cfg.color, fontWeight: 600, letterSpacing: '0.06em' }}>
                     {cfg.label}
                   </span>
                 </div>
@@ -143,7 +143,7 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
                       {targetScore}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.62rem', color: 'var(--color-emerald-text)', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--color-emerald-text)', fontWeight: 700 }}>
                     −{delta} risk pts
                   </span>
                 </div>
@@ -153,11 +153,11 @@ export const SafePivotRolesCard: React.FC<SafePivotRolesCardProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Clock size={10} style={{ color: 'var(--alpha-text-35)' }} />
-                  <span style={{ fontSize: '0.68rem', color: 'var(--alpha-text-50)' }}>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-50)' }}>
                     {fmtWeeks(role.timeToQualifiedWeeks)} to pivot
                   </span>
                 </div>
-                <span style={{ fontSize: '0.68rem', color: 'var(--alpha-text-35)' }}>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-35)' }}>
                   {role.riskReductionPerWeek.toFixed(1)} pts/week ROI
                 </span>
               </div>

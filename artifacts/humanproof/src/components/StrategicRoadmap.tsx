@@ -133,7 +133,7 @@ const PivotCard = ({
         <div style={{
           position: 'absolute', top: 10, right: 12,
           background: `${scoreColor}20`, color: scoreColor,
-          borderRadius: 6, padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.05em',
+          borderRadius: 6, padding: '2px 8px', fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.05em',
         }}>BEST FIT</div>
       )}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
@@ -183,7 +183,7 @@ const PivotCard = ({
             <span style={{
               background: `${diffColor(path.transitionDifficulty)}15`,
               color: diffColor(path.transitionDifficulty),
-              borderRadius: 6, padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800,
+              borderRadius: 6, padding: '2px 8px', fontSize: '0.6875rem', fontWeight: 800,
               border: `1px solid ${diffColor(path.transitionDifficulty)}25`,
             }}>{path.transitionDifficulty?.toUpperCase()}</span>
           </div>
@@ -251,7 +251,7 @@ const PhaseCard = ({
         position: 'absolute', left: 0, top: 8,
         width: 22, height: 22, borderRadius: '50%',
         background: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '0.65rem', fontWeight: 900, color: '#fff',
+        fontSize: '0.6875rem', fontWeight: 900, color: '#fff',
         boxShadow: `0 0 12px ${color}50`,
       }}>{phaseNum}</div>
 
@@ -267,7 +267,7 @@ const PhaseCard = ({
             </span>
             <span style={{
               marginLeft: 10, background: `${color}15`, color,
-              borderRadius: 6, padding: '1px 8px', fontSize: '0.65rem', fontWeight: 700,
+              borderRadius: 6, padding: '1px 8px', fontSize: '0.6875rem', fontWeight: 700,
             }}>
               ⏱ {phase.timeline}
             </span>
@@ -306,7 +306,7 @@ const PhaseCard = ({
                     <div style={{ marginTop: 6 }}>
                       <span style={{
                         background: 'rgba(139,92,246,0.12)', color: 'var(--color-violet500-text)',
-                        borderRadius: 4, padding: '1px 7px', fontSize: '0.68rem', fontWeight: 700,
+                        borderRadius: 4, padding: '1px 7px', fontSize: '0.6875rem', fontWeight: 700,
                         fontFamily: 'var(--font-mono, monospace)',
                       }}>🔧 {action.tool}</span>
                     </div>
@@ -473,17 +473,17 @@ export const StrategicRoadmap = ({ intel, experience, scoreColor, score }: Props
               }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.3rem', fontWeight: 900, color: scoreColor }}>{careerPaths.length}</div>
-                  <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pivot Paths</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pivot Paths</div>
                 </div>
                 <div style={{ width: 1, background: 'var(--alpha-bg-06)' }} />
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-emerald-text)' }}>-{Math.max(...careerPaths.map(p => p.riskReduction))}%</div>
-                  <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Max Risk Drop</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Max Risk Drop</div>
                 </div>
                 <div style={{ width: 1, background: 'var(--alpha-bg-06)' }} />
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--color-amber500-text)' }}>{careerPaths[0]?.salaryDelta}</div>
-                  <div style={{ fontSize: '0.62rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Top Salary △</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Top Salary △</div>
                 </div>
               </div>
               {careerPaths.map((path, i) => (

@@ -150,7 +150,7 @@ export default function ShareableScoreCard() {
             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-cyan-text)', letterSpacing: '0.05em' }}>
               Human<span style={{ color: '#00FF9F' }}>Proof</span>
             </div>
-            <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-35)', marginTop: 2 }}>AI Displacement Intelligence</div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-35)', marginTop: 2 }}>AI Displacement Intelligence</div>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--alpha-text-35)' }}>{cardYear}</div>
         </div>
@@ -167,7 +167,7 @@ export default function ShareableScoreCard() {
         <div style={{ height: 1, background: 'rgba(0,245,255,0.15)', marginBottom: 20 }} />
 
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-45)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>{scoreType}</div>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-45)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>{scoreType}</div>
           <div className="score-num" style={{ fontSize: '4rem', fontWeight: 700, color: scoreColor, lineHeight: 1 }}>{displayScore}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--alpha-text-35)', marginTop: 4 }}>/ 100</div>
           <div className="safe-label" style={{ display: 'inline-block', marginTop: 8, fontSize: '0.7rem', padding: '3px 12px', borderRadius: 20, border: `1px solid ${scoreColor}60`, color: scoreColor }}>
@@ -196,8 +196,8 @@ export default function ShareableScoreCard() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: '1px solid rgba(0,245,255,0.1)' }}>
-          <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-35)' }}>humanproof.app</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--alpha-text-25)' }}>{cardYear}</div>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-35)' }}>humanproof.app</div>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--alpha-text-25)' }}>{cardYear}</div>
         </div>
       </div>
 

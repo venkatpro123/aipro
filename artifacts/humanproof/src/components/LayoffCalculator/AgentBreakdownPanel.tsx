@@ -138,7 +138,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
             <span
               key={key}
               style={{
-                fontSize: "0.65rem",
+                fontSize: "0.6875rem",
                 color: CATEGORY_COLORS[key],
                 background: `${CATEGORY_COLORS[key]}15`,
                 padding: "2px 6px",
@@ -268,7 +268,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
                 <span
                   style={{
                     color: CATEGORY_COLORS[agent.category],
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                   }}
                 >
                   {agent.agentId}

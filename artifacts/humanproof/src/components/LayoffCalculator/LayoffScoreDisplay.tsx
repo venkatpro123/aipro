@@ -107,7 +107,7 @@ const ClassificationBadge: React.FC<{
         <span
           style={{
             color: "var(--alpha-text-35)",
-            fontSize: "0.65rem",
+            fontSize: "0.6875rem",
             letterSpacing: "1px",
           }}
         >
@@ -120,7 +120,7 @@ const ClassificationBadge: React.FC<{
         <div
           style={{
             color: "var(--alpha-text-50)",
-            fontSize: "0.65rem",
+            fontSize: "0.6875rem",
             letterSpacing: "1px",
             marginBottom: "4px",
           }}
@@ -327,7 +327,7 @@ const SwarmBadge: React.FC<{
             <div
               style={{
                 color: "var(--text-3)",
-                fontSize: "0.68rem",
+                fontSize: "0.6875rem",
                 marginBottom: "2px",
               }}
             >
@@ -1332,7 +1332,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           <span
             style={{
               marginLeft: "auto",
-              fontSize: "0.68rem",
+              fontSize: "0.6875rem",
               color: "var(--text-3)",
               fontFamily: "monospace",
             }}
@@ -1472,7 +1472,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                   <div style={{ height: "4px", background: "var(--alpha-bg-06)", borderRadius: "2px" }}>
                     <div style={{ height: "100%", width: `${val}%`, background: c, borderRadius: "2px", transition: "width 1s ease-out" }} />
                   </div>
-                  <div style={{ fontSize: "0.68rem", color: "var(--alpha-text-30)", marginTop: "3px" }}>→ {action}</div>
+                  <div style={{ fontSize: "0.6875rem", color: "var(--alpha-text-30)", marginTop: "3px" }}>→ {action}</div>
                 </div>
               );
             })}

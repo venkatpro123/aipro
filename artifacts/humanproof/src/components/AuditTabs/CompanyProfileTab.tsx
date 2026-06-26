@@ -206,7 +206,7 @@ const CompanyIdentityCard: React.FC<{
           {/* Source badge */}
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+              fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 800,
               color: provenance.sourceLabel === "Canonical Live" ? 'var(--color-emerald-text)'
                 : provenance.sourceLabel === "Canonical DB" ? '#06b6d4'
                 : 'var(--color-amber500-text)',
@@ -218,7 +218,7 @@ const CompanyIdentityCard: React.FC<{
               {provenance.sourceLabel}
             </div>
             <div style={{
-              fontFamily: 'var(--font-mono)', fontSize: '0.55rem',
+              fontFamily: 'var(--font-mono)', fontSize: '0.6875rem',
               color: provenanceColor, marginTop: '4px',
             }}>
               {provenance.ageDays}d old {provenance.ageDays > 30 ? '⚠' : '✓'}
@@ -564,13 +564,13 @@ const FinancialHealthDossier: React.FC<{
                     {metric.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-red-text)' }} />}
                   </div>
                   {metric.description && (
-                    <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.65rem', color: 'var(--text-3)', lineHeight: 1.4, marginBottom: '4px' }}>
+                    <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.6875rem', color: 'var(--text-3)', lineHeight: 1.4, marginBottom: '4px' }}>
                       {metric.description}
                     </p>
                   )}
                   {metric.benchmark && (
                     <div style={{
-                      fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+                      fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 800,
                       color: metric.benchmarkDelta === 'above' ? 'var(--color-emerald-text)' : metric.benchmarkDelta === 'below' ? 'var(--color-red-text)' : 'var(--text-3)',
                       letterSpacing: '0.06em',
                     }}>
@@ -634,7 +634,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
         {patternLabel && events.length > 0 && (
           <span style={{
             marginLeft: 'auto',
-            fontFamily: 'var(--font-mono)', fontSize: '0.58rem', fontWeight: 800,
+            fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 800,
             padding: '2px 8px', borderRadius: '4px',
             background: 'rgba(239,68,68,0.12)', color: 'var(--color-red-text)', border: '1px solid rgba(239,68,68,0.22)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -699,7 +699,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                         border: `1px solid ${sColor}30`,
                         background: `${sColor}08`,
                       }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 800, color: sColor, marginBottom: '4px' }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 800, color: sColor, marginBottom: '4px' }}>
                           {formatDate(event.date)}
                         </div>
                         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.8rem', fontWeight: 900, letterSpacing: '-0.02em', color: 'var(--text)', lineHeight: 1.2, marginBottom: '4px' }}>
@@ -722,7 +722,7 @@ const LayoffTimeline: React.FC<{ events: LayoffEvent[]; companyName: string }> =
                         )}
                         <div style={{
                           marginTop: '6px',
-                          fontFamily: 'var(--font-mono)', fontSize: '0.55rem', fontWeight: 900,
+                          fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 900,
                           padding: '1px 6px', borderRadius: '3px',
                           background: `${sColor}15`, color: sColor,
                           display: 'inline-block', textTransform: 'uppercase', letterSpacing: '0.08em',

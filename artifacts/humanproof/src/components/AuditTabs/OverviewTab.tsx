@@ -690,7 +690,7 @@ const PrecisionBriefPanel: React.FC<{ result: HybridResult }> = ({ result }) => 
             {/* Narrative text */}
             <p style={{
               fontFamily: 'var(--font-sans)',
-              fontSize: '0.68rem',
+              fontSize: '0.6875rem',
               color: 'var(--text-3)',
               lineHeight: 1.55,
               flexGrow: 1,
@@ -2428,7 +2428,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     position: 'absolute', bottom: 6, right: 6,
                     background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.35)',
                     borderRadius: 6, padding: '2px 7px',
-                    fontSize: '0.65rem', fontWeight: 800, fontFamily: 'var(--font-mono)',
+                    fontSize: '0.6875rem', fontWeight: 800, fontFamily: 'var(--font-mono)',
                     color: 'var(--amber)', cursor: 'help', lineHeight: 1.4,
                   }}
                 >
@@ -2446,7 +2446,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '3px 8px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700,
+                    padding: '3px 8px', borderRadius: 6, fontSize: '0.6875rem', fontWeight: 700,
                     background: scoreVelocity.direction === 'accelerating'
                       ? 'rgba(239,68,68,0.12)' : scoreVelocity.direction === 'improving'
                         ? 'rgba(16,185,129,0.12)' : 'var(--alpha-bg-06)',
@@ -2466,7 +2466,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       : `${(scoreVelocity.delta90d ?? 0) > 0 ? '+' : ''}${scoreVelocity.delta90d ?? 0} in 90d`}
                   </span>
                   {scoreVelocity.direction === 'accelerating' && (
-                    <span style={{ fontSize: '0.62rem', color: 'var(--red)', opacity: 0.8 }}>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--red)', opacity: 0.8 }}>
                       Rising faster than typical — tighten timeline
                     </span>
                   )}
@@ -2503,7 +2503,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     ? `Inside ${result.companyName ?? 'your company'}'s typical re-cut window now`
                     : `Re-cut window opens ~${recutCalendarDate} — ${timingData.daysUntilWindow} days away`}
                 </div>
-                <div style={{ fontSize: '0.68rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
                   {timingData.verdict}{' '}
                   <span style={{ opacity: 0.6 }}>
                     This is the historical pattern, not a prediction. See Action Plan for timing-adjusted guidance.

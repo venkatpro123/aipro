@@ -251,7 +251,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             transition={{ delay: 0.9, duration: 0.3 }}
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: "0.58rem",
+              fontSize: "0.6875rem",
               fontWeight: 800,
               letterSpacing: "0.1em",
               color: scoreDelta > 0 ? 'var(--color-red-text)' : 'var(--color-emerald-text)',
@@ -275,7 +275,7 @@ export const ScoreRing: React.FC<ScoreRingProps> = ({
             title={`Risk score trending ${velocityPtsPerMonth > 0 ? 'up' : 'down'} at ${Math.abs(velocityPtsPerMonth).toFixed(1)} pts/month`}
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: "0.52rem",
+              fontSize: "0.6875rem",
               fontWeight: 700,
               letterSpacing: "0.08em",
               color: velocityPtsPerMonth > 0 ? 'var(--color-orange-text)' : "#34d399",

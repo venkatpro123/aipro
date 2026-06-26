@@ -112,7 +112,7 @@ export const MetricKPICard: React.FC<MetricKPICardProps> = ({
             <span
               style={{
                 fontFamily: "var(--font-mono)",
-                fontSize: "0.62rem",
+                fontSize: "0.6875rem",
                 fontWeight: 700,
                 color: trendColor,
                 letterSpacing: "0.05em",

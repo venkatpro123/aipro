@@ -64,7 +64,7 @@ const AIToolBadge = ({ tool }: { tool: string }) => (
 const ImpactBar = ({ score, color, label }: { score: number; color: string; label: string }) => (
   <div style={{ marginTop: 8 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-      <span style={{ fontSize: '0.68rem', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: '0.6875rem', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '0.75rem', color, fontWeight: 800 }}>{score}/100</span>
     </div>
     <div style={{ height: 5, background: 'var(--alpha-bg-06)', borderRadius: '99px', overflow: 'hidden' }}>
@@ -119,7 +119,7 @@ const ObsoleteSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => 
               {skill.aiReplacement === 'Full' && (
                 <span style={{
                   background: 'rgba(239,68,68,0.15)', color: 'var(--color-red-text)',
-                  borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
+                  borderRadius: 4, padding: '1px 6px', fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.06em',
                 }}>FULLY AUTOMATED</span>
               )}
             </div>
@@ -184,7 +184,7 @@ const AtRiskSkillRow = ({ skill, idx }: { skill: SkillRisk; idx: number }) => {
               <UrgencyClock horizon={skill.horizon} />
               <span style={{
                 background: 'rgba(245,158,11,0.15)', color: 'var(--color-amber500-text)',
-                borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.06em',
+                borderRadius: 4, padding: '1px 6px', fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.06em',
               }}>AI-ASSISTED</span>
             </div>
             <p style={{ color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 4, lineHeight: 1.5 }}>
@@ -251,7 +251,7 @@ const SafeSkillRow = ({ skill }: { skill: SafeSkill }) => {
                 background: `${difficultyColor(skill.difficulty)}20`,
                 color: difficultyColor(skill.difficulty),
                 border: `1px solid ${difficultyColor(skill.difficulty)}30`,
-                borderRadius: 4, padding: '1px 6px', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.04em',
+                borderRadius: 4, padding: '1px 6px', fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.04em',
               }}>{skill.difficulty?.toUpperCase()} DIFFICULTY</span>
             </div>
             <p style={{ color: 'var(--text-3)', fontSize: '0.78rem', marginTop: 4, lineHeight: 1.5 }}>

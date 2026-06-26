@@ -36,7 +36,7 @@ export const InactionCostCard: React.FC<InactionCostCardProps> = ({ consequence 
         <AlertTriangle size={13} style={{ color: 'var(--color-amber-text)', flexShrink: 0 }} />
         <span
           style={{
-            fontSize: '0.58rem',
+            fontSize: '0.6875rem',
             fontFamily: 'var(--font-mono)',
             fontWeight: 800,
             letterSpacing: '0.12em',

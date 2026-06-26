@@ -558,7 +558,7 @@ export default function SkillRiskCalculator({
         borderRadius: 4,
         padding: "2px 8px",
         fontFamily: "var(--mono)",
-        fontSize: "0.65rem",
+        fontSize: "0.6875rem",
         cursor: "pointer",
         transition: "all 0.12s",
       }}
@@ -818,7 +818,7 @@ export default function SkillRiskCalculator({
                         </span>
                         <span
                           style={{
-                            fontSize: "0.65rem",
+                            fontSize: "0.6875rem",
                             padding: "2px 8px",
                             borderRadius: 4,
                             border: `1px solid ${cssVar}`,
@@ -1002,7 +1002,7 @@ export default function SkillRiskCalculator({
                 <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                   <span
                     style={{
-                      fontSize: "0.65rem",
+                      fontSize: "0.6875rem",
                       color: "var(--text2)",
                       marginRight: 4,
                     }}
@@ -1148,7 +1148,7 @@ export default function SkillRiskCalculator({
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                     color: "var(--text2)",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
@@ -1175,7 +1175,7 @@ export default function SkillRiskCalculator({
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                     color: "var(--text2)",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
@@ -1209,7 +1209,7 @@ export default function SkillRiskCalculator({
               <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.6875rem",
                     color: "var(--text2)",
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
