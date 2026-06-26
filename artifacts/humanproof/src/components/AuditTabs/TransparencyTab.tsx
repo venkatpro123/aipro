@@ -1038,7 +1038,7 @@ const D8ValidationPanel: React.FC = () => {
           <p className="text-xs font-medium text-amber-300 mb-2">
             D8 validation pending — held-out gate not yet cleared
           </p>
-          <div className="bg-black/20 rounded px-2 py-1 space-y-0.5">
+          <div className="rounded px-2 py-1 space-y-0.5" style={{ background: 'var(--alpha-bg-06)' }}>
             {gateRow('n_heldout', String(n),    String(gate.N_HELDOUT_MIN),  nOk)}
             {gateRow('AUC-ROC',  auc  !== null ? auc.toFixed(3)  : null, String(gate.AUC_ROC_MIN),    aucOk)}
             {gateRow('precision', prec !== null ? prec.toFixed(3) : null, String(gate.PRECISION_MIN),  precOk)}
