@@ -128,7 +128,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {errorMsg && (
-          <div style={{ color: '#f43f5e', fontSize: '0.75rem', fontWeight: '700', marginBottom: '24px', padding: '12px 16px', background: 'rgba(244,63,94,0.05)', borderRadius: '12px', border: '1px solid rgba(244,63,94,0.1)' }}>
+          <div style={{ color: 'var(--color-red-text)', fontSize: '0.75rem', fontWeight: '700', marginBottom: '24px', padding: '12px 16px', background: 'rgba(244,63,94,0.05)', borderRadius: '12px', border: '1px solid rgba(244,63,94,0.1)' }}>
              CRITICAL ERROR: {errorMsg}
           </div>
         )}

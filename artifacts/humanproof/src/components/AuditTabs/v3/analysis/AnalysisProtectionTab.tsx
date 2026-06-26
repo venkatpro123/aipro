@@ -127,7 +127,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
               <p className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>
                 Viability score
               </p>
-              <span className="text-[14px] font-black" style={{ color: '#14b8a6' }}>
+              <span className="text-[14px] font-black" style={{ color: 'var(--color-cyan-text)' }}>
                 {internalMobility.viabilityScore}/100
               </span>
             </div>
@@ -145,7 +145,7 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
                     <span className="text-[11px] font-semibold flex-1" style={{ color: 'var(--alpha-text-85)' }}>
                       {t.department}
                     </span>
-                    <span className="text-[12px] font-black" style={{ color: '#14b8a6' }}>{t.fitScore}</span>
+                    <span className="text-[12px] font-black" style={{ color: 'var(--color-cyan-text)' }}>{t.fitScore}</span>
                   </div>
                 ))}
               </div>

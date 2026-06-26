@@ -178,12 +178,12 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
               color: "var(--alpha-text-30)",
             }}
           >
-            <strong style={{ color: "#6b7280" }}>Seeded role data:</strong>{" "}
+            <strong style={{ color: "var(--text-3)" }}>Seeded role data:</strong>{" "}
             {isSeeded ? "✓ Yes — high fidelity" : "✗ Estimated from industry averages"}
             {modelsUsed.length > 0 && (
               <>
                 <br />
-                <strong style={{ color: "#6b7280" }}>AI models:</strong>{" "}
+                <strong style={{ color: "var(--text-3)" }}>AI models:</strong>{" "}
                 {modelsUsed.length} model{modelsUsed.length !== 1 ? "s" : ""} reached
                 consensus
               </>

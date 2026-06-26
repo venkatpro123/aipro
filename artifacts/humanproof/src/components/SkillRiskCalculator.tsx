@@ -886,7 +886,7 @@ export default function SkillRiskCalculator({
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            color: "#4b5563",
+            color: "var(--alpha-text-30)",
             fontSize: "0.75rem",
           }}
         >
