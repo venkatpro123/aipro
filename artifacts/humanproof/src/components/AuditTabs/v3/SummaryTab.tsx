@@ -543,6 +543,7 @@ export const TopDriversStrip: React.FC<{ drivers: DriverItem[] }> = ({ drivers }
             data-tone={toneForScore(d.score)}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
             transition={{ delay: 0.1 + i * 0.07, duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

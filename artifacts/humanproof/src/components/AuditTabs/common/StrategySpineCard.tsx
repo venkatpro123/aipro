@@ -77,6 +77,7 @@ export const StrategySpineCard: React.FC<Props> = ({ strategy }) => {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.005, boxShadow: `0 4px 20px ${accent}15` }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
       style={{

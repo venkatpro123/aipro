@@ -89,8 +89,10 @@ const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
               key={item.id}
               initial={{ opacity: 0, x: -6 }}
               animate={{ opacity: 1, x: 0 }}
+              whileHover={{ scale: 1.01, boxShadow: `0 2px 12px ${config.color}18` }}
+              whileTap={{ scale: 0.99 }}
               transition={{ delay: idx * 0.03 }}
-              className="rounded-xl p-3"
+              className="rounded-xl p-3 cursor-default"
               style={{ background: config.bg, border: `1px solid ${config.color}25` }}
             >
               <div className="flex items-start gap-2.5">
