@@ -370,7 +370,7 @@ export default function ScoreDriftTracker() {
           }}
         >
           <span style={{ fontSize: "1rem" }}>⏰</span>
-          <div style={{ color: "#FCD34D", fontSize: "0.875rem", flex: 1 }}>
+          <div style={{ color: "var(--color-amber500-text)", fontSize: "0.875rem", flex: 1 }}>
             Your last assessment was{" "}
             <strong>{daysSinceLastScore} days ago</strong>. AI capabilities have
             likely shifted — retake your assessments for an accurate 2026
@@ -382,7 +382,7 @@ export default function ScoreDriftTracker() {
               style={{
                 background: "none",
                 border: "1px solid rgba(251,191,36,0.5)",
-                color: "#FCD34D",
+                color: "var(--color-amber500-text)",
                 borderRadius: 6,
                 padding: "4px 12px",
                 fontFamily: "var(--mono)",
@@ -820,7 +820,7 @@ export default function ScoreDriftTracker() {
                       style={{
                         marginTop: 8,
                         fontSize: "0.7rem",
-                        color: "#FCD34D",
+                        color: "var(--color-amber500-text)",
                       }}
                     >
                       ⚠ Low confidence — complete more assessments

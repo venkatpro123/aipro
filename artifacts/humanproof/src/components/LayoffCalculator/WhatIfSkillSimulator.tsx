@@ -93,7 +93,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
               fontWeight: 700,
               letterSpacing: "0.03em",
               textTransform: "uppercase",
-              color: "#00F5FF",
+              color: "var(--cyan)",
             }}
           >
             🔬 What-If Skill Simulator
@@ -101,7 +101,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
           <span
             style={{
               background: "rgba(0,245,255,0.12)",
-              color: "#00F5FF",
+              color: "var(--cyan)",
               borderRadius: 20,
               padding: "1px 8px",
               fontSize: "0.68rem",
@@ -112,7 +112,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
             NEW
           </span>
         </div>
-        <span style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+        <span style={{ color: "var(--text-3)", fontSize: "0.9rem" }}>
           {showPanel ? "▲" : "▼"}
         </span>
       </button>
@@ -122,7 +122,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
           <p
             style={{
               fontSize: "0.8rem",
-              color: "#9ba5b4",
+              color: "var(--text-2)",
               margin: "0 0 16px",
               lineHeight: 1.5,
             }}
@@ -139,7 +139,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
               style={{
                 display: "block",
                 fontSize: "0.75rem",
-                color: "#6b7280",
+                color: "var(--text-3)",
                 fontWeight: 600,
                 letterSpacing: "0.04em",
                 marginBottom: 6,
@@ -215,7 +215,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                   <div
                     style={{
                       fontSize: "0.68rem",
-                      color: "#6b7280",
+                      color: "var(--text-3)",
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
                       marginTop: 4,
@@ -265,7 +265,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                   <div
                     style={{
                       fontSize: "0.68rem",
-                      color: "#6b7280",
+                      color: "var(--text-3)",
                       textTransform: "uppercase",
                       letterSpacing: "0.05em",
                       marginTop: 4,
@@ -309,7 +309,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
                 <p
                   style={{
                     fontSize: "0.78rem",
-                    color: "#9ba5b4",
+                    color: "var(--text-2)",
                     margin: 0,
                     lineHeight: 1.6,
                   }}
@@ -322,7 +322,7 @@ export const WhatIfSkillSimulator: React.FC<Props> = ({
               <p
                 style={{
                   fontSize: "0.68rem",
-                  color: "#4b5563",
+                  color: "var(--alpha-text-30)",
                   textAlign: "center",
                   margin: "10px 0 0",
                   fontStyle: "italic",

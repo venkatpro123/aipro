@@ -176,7 +176,7 @@ const RoleResolutionBanner: React.FC<{ entry: OracleRoleEntry }> = ({ entry }) =
       style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.20)' }}
     >
       <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
-      <span className="text-xs font-semibold" style={{ color: '#6ee7b7' }}>
+      <span className="text-xs font-semibold" style={{ color: 'var(--color-emerald-text)' }}>
         Analyzing as: {intel?.displayRole ?? entry.displayTitle}
       </span>
       {intel && (
@@ -667,7 +667,7 @@ export const LayoffInputForm: React.FC<Props> = ({ onNext }) => {
                   >
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--color-emerald-text)' }} />
                     <div>
-                      <p className="text-sm font-bold" style={{ color: '#6ee7b7' }}>{selectedCompany.name}</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--color-emerald-text)' }}>{selectedCompany.name}</p>
                       <p className="text-xs" style={{ color: 'var(--alpha-text-45)' }}>{selectedCompany.industry} · Verified</p>
                     </div>
                   </motion.div>

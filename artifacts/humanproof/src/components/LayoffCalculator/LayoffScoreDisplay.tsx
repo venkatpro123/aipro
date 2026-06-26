@@ -58,7 +58,7 @@ const ClassificationBadge: React.FC<{
   return (
     <div
       style={{
-        background: "rgba(10, 15, 25, 0.95)",
+        background: "var(--bg-raised)",
         border: `1px solid ${classification.color}40`,
         borderRadius: "8px",
         padding: "16px 20px",
@@ -159,7 +159,7 @@ const ClassificationBadge: React.FC<{
         }}
       >
         <span>INTEL TIMESTAMP</span>
-        <span style={{ fontFamily: "monospace", color: "#00F5FF" }}>
+        <span style={{ fontFamily: "monospace", color: "var(--cyan)" }}>
           {timestamp}
         </span>
       </div>
@@ -206,15 +206,15 @@ const AccuracyBadge: React.FC<{
         <span style={{ color: c, fontWeight: 600, fontSize: "0.85rem" }}>
           {accuracyLabel.label}
         </span>
-        <span style={{ color: "#9ba5b4", fontSize: "0.8rem" }}>·</span>
-        <span style={{ color: "#9ba5b4", fontSize: "0.8rem" }}>
+        <span style={{ color: "var(--text-2)", fontSize: "0.8rem" }}>·</span>
+        <span style={{ color: "var(--text-2)", fontSize: "0.8rem" }}>
           {confidencePercent}% confidence
         </span>
       </div>
-      <p style={{ margin: 0, color: "#6b7280", fontSize: "0.8rem" }}>
+      <p style={{ margin: 0, color: "var(--text-3)", fontSize: "0.8rem" }}>
         {accuracyLabel.detail}
       </p>
-      <p style={{ margin: "4px 0 0", color: "#4b5563", fontSize: "0.75rem" }}>
+      <p style={{ margin: "4px 0 0", color: "var(--alpha-text-30)", fontSize: "0.75rem" }}>
         Models:{" "}
         {modelsUsed
           .map(
@@ -301,7 +301,7 @@ const SwarmBadge: React.FC<{
             Swarm Intelligence · {totalAgentsRun}/30 agents
           </span>
         </div>
-        <span style={{ color: "#9ba5b4", fontSize: "0.8rem" }}>
+        <span style={{ color: "var(--text-2)", fontSize: "0.8rem" }}>
           {isLive ? `⚡ ${liveAgentsUsed} live APIs` : "heuristic mode"}
         </span>
       </div>
@@ -326,7 +326,7 @@ const SwarmBadge: React.FC<{
           >
             <div
               style={{
-                color: "#6b7280",
+                color: "var(--text-3)",
                 fontSize: "0.68rem",
                 marginBottom: "2px",
               }}
@@ -351,7 +351,7 @@ const SwarmBadge: React.FC<{
           display: "flex",
           justifyContent: "space-between",
           fontSize: "0.78rem",
-          color: "#6b7280",
+          color: "var(--text-3)",
         }}
       >
         <span>
@@ -417,7 +417,7 @@ const ModelAgreementMeter: React.FC<{
           marginBottom: "10px",
         }}
       >
-        <span style={{ color: "#9ba5b4", fontSize: "0.85rem" }}>
+        <span style={{ color: "var(--text-2)", fontSize: "0.85rem" }}>
           AI model consensus
         </span>
         <span
@@ -467,7 +467,7 @@ const ModelAgreementMeter: React.FC<{
           >
             <span
               style={{
-                color: "#9ba5b4",
+                color: "var(--text-2)",
                 fontSize: "0.7rem",
                 marginBottom: "4px",
               }}
@@ -574,7 +574,7 @@ const AIInsightCards: React.FC<{
     <div style={{ marginBottom: "24px" }}>
       <h4
         style={{
-          color: "#9ba5b4",
+          color: "var(--text-2)",
           fontSize: "0.8rem",
           fontWeight: 600,
           letterSpacing: "0.5px",
@@ -603,7 +603,7 @@ const AIInsightCards: React.FC<{
           >
             <div
               style={{
-                color: "#6b7280",
+                color: "var(--text-3)",
                 fontSize: "0.72rem",
                 textTransform: "uppercase",
                 letterSpacing: "0.5px",
@@ -613,7 +613,7 @@ const AIInsightCards: React.FC<{
               {card.emoji} {card.label}
             </div>
             <div
-              style={{ color: "#e5e7eb", fontSize: "0.9rem", lineHeight: 1.4 }}
+              style={{ color: "var(--text)", fontSize: "0.9rem", lineHeight: 1.4 }}
             >
               {card.value}
             </div>
@@ -732,7 +732,7 @@ const AnimatedScore: React.FC<{
         <span
           style={{
             fontSize: "0.85rem",
-            color: "#9ba5b4",
+            color: "var(--text-2)",
             textTransform: "uppercase",
             letterSpacing: "1px",
             marginTop: "4px",
@@ -762,7 +762,7 @@ const AnimatedScore: React.FC<{
               borderRadius: 12,
               background: "var(--alpha-bg-08)",
               fontSize: "0.78rem",
-              color: "#cbd5e1",
+              color: "var(--text-2)",
               fontFamily: "var(--mono, ui-monospace, monospace)",
             }}
           >
@@ -808,15 +808,15 @@ const LayerBar: React.FC<{ label: string; value: number; weight: string }> = ({
         }}
       >
         <span
-          style={{ color: "#d1d5db", cursor: "help", userSelect: "none" }}
+          style={{ color: "var(--text-2)", cursor: "help", userSelect: "none" }}
           onMouseEnter={() => setShowTip(true)}
           onMouseLeave={() => setShowTip(false)}
         >
           {label}{" "}
-          <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>
+          <span style={{ color: "var(--text-3)", fontSize: "0.8rem" }}>
             ({weight})
           </span>
-          {" "}<span style={{ color: "#4b5563", fontSize: "0.72rem" }}>ⓘ</span>
+          {" "}<span style={{ color: "var(--alpha-text-30)", fontSize: "0.72rem" }}>ⓘ</span>
         </span>
         <span style={{ color: 'var(--text)', fontFamily: "monospace" }}>
           {percentage}/100
@@ -828,12 +828,12 @@ const LayerBar: React.FC<{ label: string; value: number; weight: string }> = ({
           top: "100%",
           left: 0,
           zIndex: 50,
-          background: "rgba(10,15,25,0.97)",
+          background: "var(--bg-deep)",
           border: "1px solid var(--alpha-bg-08)",
           borderRadius: "8px",
           padding: "10px 14px",
           fontSize: "0.78rem",
-          color: "#9ba5b4",
+          color: "var(--text-2)",
           maxWidth: "280px",
           lineHeight: 1.5,
           boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
@@ -886,7 +886,7 @@ const ProUpsellTrigger: React.FC<{ score: number }> = ({ score }) => {
           padding: 0,
           margin: "0 0 24px",
           textAlign: "left",
-          color: "#d1d5db",
+          color: "var(--text-2)",
           fontSize: "0.95rem",
         }}
       >
@@ -922,7 +922,7 @@ const ProUpsellTrigger: React.FC<{ score: number }> = ({ score }) => {
           marginTop: "12px",
           marginBottom: 0,
           fontSize: "0.8rem",
-          color: "#9ba5b4",
+          color: "var(--text-2)",
         }}
       >
         Cancel anytime. No commitments.
@@ -1070,7 +1070,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           <p style={{ color: 'var(--text)', margin: "0 0 8px", fontSize: "0.95rem" }}>
             {relevantNews.headline}
           </p>
-          <div style={{ fontSize: "0.8rem", color: "#9ba5b4" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-2)" }}>
             {new Date(relevantNews.date).toLocaleDateString()} ·{" "}
             {relevantNews.source}
           </div>
@@ -1134,7 +1134,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
         <p
           style={{
             margin: 0,
-            color: "#d1d5db",
+            color: "var(--text-2)",
             fontSize: "1.05rem",
             lineHeight: 1.5,
           }}
@@ -1243,7 +1243,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           alignItems: "center",
         }}
       >
-        <span style={{ color: "#9ba5b4", fontSize: "0.85rem" }}>
+        <span style={{ color: "var(--text-2)", fontSize: "0.85rem" }}>
           Data source:
         </span>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1251,7 +1251,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             <span
               style={{
                 background: "rgba(0,245,255,0.15)",
-                color: "#00F5FF",
+                color: "var(--cyan)",
                 padding: "2px 10px",
                 borderRadius: "4px",
                 fontSize: "0.75rem",
@@ -1277,7 +1277,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           <strong style={{ color: 'var(--text)' }}>{result.confidence}</strong>
           <span
             title="Based on AI ensemble analysis of public signals from 4 independent models."
-            style={{ cursor: "help", color: "#6b7280" }}
+            style={{ cursor: "help", color: "var(--text-3)" }}
           >
             ⓘ
           </span>
@@ -1326,14 +1326,14 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             gap: "8px",
           }}
         >
-          <span style={{ fontSize: "0.75rem", color: "#9ba5b4", letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "monospace" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-2)", letterSpacing: "1.5px", textTransform: "uppercase", fontFamily: "monospace" }}>
             Risk Attribution Analysis
           </span>
           <span
             style={{
               marginLeft: "auto",
               fontSize: "0.68rem",
-              color: "#6b7280",
+              color: "var(--text-3)",
               fontFamily: "monospace",
             }}
           >
@@ -1371,7 +1371,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             </div>
             <p
               style={{
-                color: "#6b7280",
+                color: "var(--text-3)",
                 fontSize: "0.72rem",
                 margin: "0 0 12px",
                 lineHeight: 1.5,
@@ -1395,7 +1395,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                       marginBottom: "3px",
                     }}
                   >
-                    <span style={{ color: "#9ba5b4" }}>{label} <span style={{ color: "#4b5563" }}>({wt})</span></span>
+                    <span style={{ color: "var(--text-2)" }}>{label} <span style={{ color: "var(--alpha-text-30)" }}>({wt})</span></span>
                     <span style={{ color: c, fontFamily: "monospace", fontWeight: 700 }}>{val}</span>
                   </div>
                   <div style={{ height: "4px", background: "var(--alpha-bg-06)", borderRadius: "2px" }}>
@@ -1411,7 +1411,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                 background: "rgba(239,68,68,0.06)",
                 borderRadius: "6px",
                 fontSize: "0.7rem",
-                color: "#9ba5b4",
+                color: "var(--text-2)",
                 lineHeight: 1.4,
               }}
             >
@@ -1443,7 +1443,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
             </div>
             <p
               style={{
-                color: "#6b7280",
+                color: "var(--text-3)",
                 fontSize: "0.72rem",
                 margin: "0 0 12px",
                 lineHeight: 1.5,
@@ -1466,13 +1466,13 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                       marginBottom: "3px",
                     }}
                   >
-                    <span style={{ color: "#9ba5b4" }}>{label} <span style={{ color: "#4b5563" }}>({wt})</span></span>
+                    <span style={{ color: "var(--text-2)" }}>{label} <span style={{ color: "var(--alpha-text-30)" }}>({wt})</span></span>
                     <span style={{ color: c, fontFamily: "monospace", fontWeight: 700 }}>{val}</span>
                   </div>
                   <div style={{ height: "4px", background: "var(--alpha-bg-06)", borderRadius: "2px" }}>
                     <div style={{ height: "100%", width: `${val}%`, background: c, borderRadius: "2px", transition: "width 1s ease-out" }} />
                   </div>
-                  <div style={{ fontSize: "0.68rem", color: "#4b5563", marginTop: "3px" }}>→ {action}</div>
+                  <div style={{ fontSize: "0.68rem", color: "var(--alpha-text-30)", marginTop: "3px" }}>→ {action}</div>
                 </div>
               );
             })}
@@ -1484,7 +1484,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
                 border: "1px solid rgba(16,185,129,0.15)",
                 borderRadius: "6px",
                 fontSize: "0.7rem",
-                color: "#9ba5b4",
+                color: "var(--text-2)",
                 lineHeight: 1.4,
               }}
             >
@@ -1498,7 +1498,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
       <p
         style={{
           fontSize: "0.8rem",
-          color: "#6b7280",
+          color: "var(--text-3)",
           fontStyle: "italic",
           textAlign: "center",
           padding: "16px",
@@ -1571,7 +1571,7 @@ export const LayoffScoreDisplay: React.FC<Props> = ({
           style={{
             background: "none",
             border: "none",
-            color: "#9ba5b4",
+            color: "var(--text-2)",
             textDecoration: "underline",
             cursor: "pointer",
             fontSize: "0.9rem",

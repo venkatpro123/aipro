@@ -476,7 +476,7 @@ function LiveResourcesStrip({
                 <span
                   style={{
                     background: "rgba(0,255,159,0.12)",
-                    color: "#00FF9F",
+                    color: "var(--color-emerald-text)",
                     fontSize: "0.6rem",
                     fontWeight: 700,
                     padding: "2px 6px",
@@ -775,7 +775,7 @@ export default function UpskillingRoadmap({
             border: "1px solid rgba(251,191,36,0.3)",
             borderRadius: 10,
             background: "rgba(251,191,36,0.08)",
-            color: "#FCD34D",
+            color: "var(--color-amber500-text)",
             fontSize: "0.875rem",
             marginBottom: 24,
             display: "flex",
@@ -793,7 +793,7 @@ export default function UpskillingRoadmap({
             style={{
               background: "none",
               border: "1px solid rgba(251,191,36,0.5)",
-              color: "#FCD34D",
+              color: "var(--color-amber500-text)",
               borderRadius: 6,
               padding: "4px 12px",
               fontFamily: "var(--mono)",

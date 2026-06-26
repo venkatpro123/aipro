@@ -916,7 +916,7 @@ export const NeuralAuditLoader: React.FC<Props> = ({
               <React.Fragment key={i}>
                 <span className="tsig">
                   <span className={`tsig-sig ${s.tone}`}>{s.name}</span>
-                  <span style={{ color: '#e9f3ff' }}>{s.v}%</span>
+                  <span style={{ color: 'var(--text)' }}>{s.v}%</span>
                 </span>
                 {i < ticker1.length * 2 - 1 && <span className="tsep">▸</span>}
               </React.Fragment>
@@ -929,7 +929,7 @@ export const NeuralAuditLoader: React.FC<Props> = ({
               <React.Fragment key={i}>
                 <span className="tsig">
                   <span className={`tsig-sig ${s.tone}`}>{s.name}</span>
-                  <span style={{ color: '#e9f3ff' }}>{s.v}%</span>
+                  <span style={{ color: 'var(--text)' }}>{s.v}%</span>
                 </span>
                 {i < ticker2.length * 2 - 1 && <span className="tsep">▸</span>}
               </React.Fragment>

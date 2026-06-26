@@ -49,6 +49,27 @@
   --color-red-text:    #f87171;   /* red-400: on dark           */
   --color-orange-text: #fb923c;   /* orange-400: on dark        */
   --color-amber500-text: #f59e0b; /* amber-500: on dark         */
+  /* Extended semantic color tokens — bright values on dark background */
+  --color-slate400-text:   #94a3b8; /* slate-400 */
+  --color-slate500-text:   #94a3b8; /* slate-400 proxy */
+  --color-slate600-text:   #94a3b8; /* slate-400 proxy */
+  --color-gray400-text:    #9ca3af; /* gray-400 */
+  --color-gray500-text:    #9ca3af; /* gray-400 proxy */
+  --color-gray300-text:    #d1d5db; /* gray-300 */
+  --color-gray-custom-text:#94a3b8; /* slate-400 proxy */
+  --color-blue400-text:    #60a5fa; /* blue-400: bright on dark */
+  --color-blue300-text:    #93c5fd; /* blue-300: bright on dark */
+  --color-blue500-text:    #60a5fa; /* blue-400 proxy */
+  --color-emerald500-text: #10b981; /* emerald-500: bright on dark */
+  --color-red600-text:     #f87171; /* red-400 proxy for dark */
+  --color-red400-text:     #f87171; /* red-400: bright on dark */
+  --color-red300-text:     #fca5a5; /* red-300: bright on dark */
+  --color-orange500-text:  #f97316; /* orange-500: bright on dark */
+  --color-violet500-text:  #a78bfa; /* violet-400 proxy */
+  --color-violet300-text:  #c4b5fd; /* violet-300: bright on dark */
+  --color-cyan500-text:    #22d3ee; /* cyan-300 proxy */
+  --color-pink500-text:    #f472b6; /* pink-400: bright on dark */
+  --color-rose300-text:    #fda4af; /* rose-300: bright on dark */
 
   /* ── Border hierarchy ───────────────────────────────────────────── */
   --border-2:   rgba(255, 255, 255, 0.12);

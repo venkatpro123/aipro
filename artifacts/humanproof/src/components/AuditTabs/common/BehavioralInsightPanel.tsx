@@ -22,9 +22,9 @@ interface BehavioralInsightPanelProps {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function trajectoryIcon(t: string) {
-  if (t === 'ascending')  return <TrendingUp  className="w-3.5 h-3.5" style={{ color: '#10b981' }} />;
-  if (t === 'declining')  return <TrendingDown className="w-3.5 h-3.5" style={{ color: '#ef4444' }} />;
-  return <Minus className="w-3.5 h-3.5" style={{ color: '#f59e0b' }} />;
+  if (t === 'ascending')  return <TrendingUp  className="w-3.5 h-3.5" style={{ color: 'var(--color-emerald-text)' }} />;
+  if (t === 'declining')  return <TrendingDown className="w-3.5 h-3.5" style={{ color: 'var(--color-red-text)' }} />;
+  return <Minus className="w-3.5 h-3.5" style={{ color: 'var(--color-amber500-text)' }} />;
 }
 
 function trajectoryColor(t: string) {

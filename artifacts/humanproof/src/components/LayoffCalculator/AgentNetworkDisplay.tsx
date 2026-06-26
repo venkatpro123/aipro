@@ -131,14 +131,14 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
               width: "10px",
               height: "10px",
               borderRadius: "50%",
-              background: "#00F5FF",
+              background: "var(--cyan)",
               boxShadow: "0 0 15px #00F5FF",
               animation: "pulse 1.5s ease-in-out infinite",
             }}
           />
           <span
             style={{
-              color: "#00F5FF",
+              color: "var(--cyan)",
               fontSize: "0.8rem",
               fontWeight: 700,
               letterSpacing: "1px",
@@ -157,8 +157,8 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 viewMode === "grid" ? "rgba(0, 245, 255, 0.2)" : "transparent",
               border: "1px solid",
               borderColor:
-                viewMode === "grid" ? "#00F5FF" : "var(--alpha-text-25)",
-              color: viewMode === "grid" ? "#00F5FF" : "var(--alpha-text-50)",
+                viewMode === "grid" ? "var(--cyan)" : "var(--alpha-text-25)",
+              color: viewMode === "grid" ? "var(--cyan)" : "var(--alpha-text-50)",
               borderRadius: "4px",
               cursor: "pointer",
               letterSpacing: "1px",
@@ -175,8 +175,8 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
                 viewMode === "list" ? "rgba(0, 245, 255, 0.2)" : "transparent",
               border: "1px solid",
               borderColor:
-                viewMode === "list" ? "#00F5FF" : "var(--alpha-text-25)",
-              color: viewMode === "list" ? "#00F5FF" : "var(--alpha-text-50)",
+                viewMode === "list" ? "var(--cyan)" : "var(--alpha-text-25)",
+              color: viewMode === "list" ? "var(--cyan)" : "var(--alpha-text-50)",
               borderRadius: "4px",
               cursor: "pointer",
               letterSpacing: "1px",
@@ -217,7 +217,7 @@ export const AgentNetworkDisplay: React.FC<Props> = ({
             DEPLOYED
           </div>
           <div
-            style={{ color: "#00F5FF", fontSize: "1.4rem", fontWeight: 700 }}
+            style={{ color: "var(--cyan)", fontSize: "1.4rem", fontWeight: 700 }}
           >
             {totalActive}/30
           </div>

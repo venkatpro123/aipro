@@ -40,7 +40,7 @@ const qualityMeta: Record<"live" | "partial" | "fallback", {
   },
   fallback: {
     label: "Estimated",
-    color: "#6b7280",
+    color: "var(--text-3)",
     detail:
       "Company data was unavailable and role may be un-seeded. Score is computed from industry and role-category averages — treat as directional.",
   },
@@ -103,7 +103,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
         <span
           style={{
             fontSize: "0.78rem",
-            color: "#6b7280",
+            color: "var(--text-3)",
           }}
         >
           confidence range
@@ -127,7 +127,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
         >
           {meta.label}
         </span>
-        <span style={{ fontSize: "0.7rem", color: "#4b5563" }}>ⓘ</span>
+        <span style={{ fontSize: "0.7rem", color: "var(--alpha-text-30)" }}>ⓘ</span>
       </div>
 
       {/* ── Tooltip ── */}
@@ -139,7 +139,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 200,
-            background: "rgba(10,15,25,0.97)",
+            background: "var(--bg-deep)",
             border: "1px solid var(--alpha-bg-08)",
             borderRadius: 10,
             padding: "14px 18px",
@@ -162,7 +162,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
           <p
             style={{
               fontSize: "0.78rem",
-              color: "#9ba5b4",
+              color: "var(--text-2)",
               lineHeight: 1.6,
               margin: 0,
             }}
@@ -175,7 +175,7 @@ export const ScoreConfidenceInterval: React.FC<Props> = ({
               paddingTop: 8,
               borderTop: "1px solid var(--alpha-bg-06)",
               fontSize: "0.72rem",
-              color: "#4b5563",
+              color: "var(--alpha-text-30)",
             }}
           >
             <strong style={{ color: "#6b7280" }}>Seeded role data:</strong>{" "}

@@ -92,7 +92,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
           <span style={{ fontSize: "1.2rem" }}>🔍</span>
           <span
             style={{
-              color: "#00F5FF",
+              color: "var(--cyan)",
               fontSize: "0.8rem",
               fontWeight: 700,
               letterSpacing: "1px",
@@ -117,7 +117,7 @@ export const AgentBreakdownPanel: React.FC<Props> = ({
           fontSize: "0.75rem",
         }}
       >
-        <div style={{ color: "#00F5FF", marginBottom: "8px", fontWeight: 600 }}>
+        <div style={{ color: "var(--cyan)", marginBottom: "8px", fontWeight: 600 }}>
           ⚠️ WHY HIGH SIGNALS DON'T ALWAYS MEAN HIGH RISK
         </div>
         <div style={{ color: "var(--alpha-text-70)", lineHeight: 1.5 }}>
