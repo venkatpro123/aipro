@@ -693,7 +693,7 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
 
         {/* ── Segment Calibration Panel (BUG-4 fix: surface multipliers so users can see calibration path) ── */}
         {(result as any).segmentCalibration && (
-          <div className="mb-4 px-4 py-3 rounded-xl border border-white/8 bg-white/3 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div className="mb-4 px-4 py-3 rounded-xl border-[var(--alpha-bg-08)] bg-[var(--alpha-bg-04)] flex flex-wrap items-center gap-x-5 gap-y-2" style={{ border: '1px solid var(--alpha-bg-08)' }}>
             <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest shrink-0">
               Profile Adjustment
             </div>

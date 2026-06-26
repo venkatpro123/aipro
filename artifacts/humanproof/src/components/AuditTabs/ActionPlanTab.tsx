@@ -972,7 +972,7 @@ const SeniorityBracketCallout: React.FC<SeniorityBracketCalloutProps> = ({
   const canGoDown = idx > 0;
 
   return (
-    <div className="rounded-xl border border-white/10 p-4 mb-4 bg-white/[0.03]">
+    <div className="rounded-xl border border-[var(--alpha-bg-10)] p-4 mb-4 bg-white/[0.03]">
       <div className="flex items-start gap-3">
         <Brain className="w-4 h-4 flex-shrink-0 mt-0.5 text-violet-400" />
         <div className="flex-1 min-w-0">
@@ -996,7 +996,7 @@ const SeniorityBracketCallout: React.FC<SeniorityBracketCalloutProps> = ({
             {isOverridden ? (
               <button
                 onClick={() => onOverride(null)}
-                className="text-[10px] px-2.5 py-1 rounded border border-white/15 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
+                className="text-[10px] px-2.5 py-1 rounded border border-[var(--alpha-bg-12)] bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono"
               >
                 Reset to derived ({BRACKET_LABELS[derivedBracket]})
               </button>
@@ -1006,7 +1006,7 @@ const SeniorityBracketCallout: React.FC<SeniorityBracketCalloutProps> = ({
             {canGoDown && (
               <button
                 onClick={() => onOverride(BRACKET_ORDER[idx - 1])}
-                className="text-[10px] px-2.5 py-1 rounded border border-white/15 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono flex items-center gap-1"
+                className="text-[10px] px-2.5 py-1 rounded border border-[var(--alpha-bg-12)] bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-[var(--text)] transition-colors font-mono flex items-center gap-1"
               >
                 ▼ More junior
               </button>
@@ -1412,7 +1412,7 @@ const CourseResourceCard: React.FC<{ rolePrefix: string; roleKey: string; financ
             href={c.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-white/5 hover:bg-white/10 hover:border-[var(--border-cyan)] transition-all group"
+            className="flex items-start gap-3 p-3 bg-white/5 rounded-lg border border-[var(--alpha-bg-05)] hover:bg-white/10 hover:border-[var(--border-cyan)] transition-all group"
           >
             <div className="p-1.5 rounded-lg bg-white/5 flex-shrink-0">
               <Star className={`w-3.5 h-3.5 ${c.reason ? 'text-cyan-400' : 'text-amber-400'}`} />
@@ -1787,7 +1787,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
         {true && (
             <div className="space-y-4 mb-6">
               {/* Career Insurance Kit */}
-              <div className="rounded-2xl border border-white/10 overflow-hidden">
+              <div className="rounded-2xl border border-[var(--alpha-bg-10)] overflow-hidden">
                 <button
                   className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
                   onClick={() => setShowInsurance(v => !v)}
@@ -1811,14 +1811,14 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                   <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${showInsurance ? 'rotate-90' : ''}`} />
                 </button>
                 {showInsurance && (
-                  <div className="px-5 py-5 border-t border-white/6">
+                  <div className="px-5 py-5 border-t border-[var(--alpha-bg-06)]">
                     <CareerInsuranceKit plan={insurancePlan} companyName={companyData.name ?? ''} />
                   </div>
                 )}
               </div>
 
               {/* Financial Impact Calculator */}
-              <div className="rounded-2xl border border-white/10 overflow-hidden">
+              <div className="rounded-2xl border border-[var(--alpha-bg-10)] overflow-hidden">
                 <button
                   className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
                   onClick={() => setShowFinancial(v => !v)}
@@ -1835,7 +1835,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                   <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${showFinancial ? 'rotate-90' : ''}`} />
                 </button>
                 {showFinancial && (
-                  <div className="px-5 py-5 border-t border-white/6">
+                  <div className="px-5 py-5 border-t border-[var(--alpha-bg-06)]">
                     <FinancialImpactCalculator result={result} />
                   </div>
                 )}
@@ -1877,7 +1877,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
                   <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                     {roleGroupLabel}
                   </span>
-                  <span className="text-[10px] font-black bg-white/8 border border-white/10 px-2 py-0.5 rounded capitalize">
+                  <span className="text-[10px] font-black bg-white/8 border border-[var(--alpha-bg-10)] px-2 py-0.5 rounded capitalize">
                     {derivedBracket}
                   </span>
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded capitalize ${
@@ -1956,7 +1956,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
             <input
               type="text" placeholder="Search action items…" value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 py-2 px-3 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
+              className="w-full pl-10 py-2 px-3 bg-white/5 border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none focus:border-[var(--cyan)]/50"
             />
           </div>
           <div className="flex gap-2 items-center">
@@ -1964,7 +1964,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
             <select
               value={filter}
               onChange={e => setFilter(e.target.value)}
-              className="py-2 px-3 bg-white/5 border border-white/10 rounded-lg text-sm focus:outline-none"
+              className="py-2 px-3 bg-white/5 border border-[var(--alpha-bg-10)] rounded-lg text-sm focus:outline-none"
             >
               <option value="all">All Priorities</option>
               <option value="critical">Critical</option>
@@ -1994,7 +1994,7 @@ export const ActionPlanTab: React.FC<TabProps> = ({ result, companyData }) => {
             )}
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-muted-foreground hover:text-[var(--text)]"
+              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-white/5 border border-[var(--alpha-bg-10)] hover:bg-white/10 transition-colors text-muted-foreground hover:text-[var(--text)]"
             >
               <Download className="w-3.5 h-3.5" /> Export
             </button>

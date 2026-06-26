@@ -243,7 +243,7 @@ const ConflictResolutionLog: React.FC<ConflictResolutionLogProps> = ({
             </div>
 
             {conflict.conflictingSources.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-white/5">
+              <div className="mt-4 pt-4 border-t border-[var(--alpha-bg-05)]">
                 <div className="label-xs text-muted-foreground mb-2">Divergent Vectors</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {conflict.conflictingSources.map((src) => (
@@ -305,7 +305,7 @@ const AuditTrail: React.FC<{ events: AuditEvent[] }> = ({ events }) => {
       <div className="overflow-x-auto -mx-0">
         <table className="w-full min-w-[480px]">
           <thead>
-            <tr className="bg-white/5 border-b border-white/10">
+            <tr className="bg-white/5 border-b border-[var(--alpha-bg-10)]">
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Event Marker</th>
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Operation</th>
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Result</th>
@@ -348,7 +348,7 @@ const getSeverityColorClass = (severity: string) => {
     case "critical": return "bg-rose-500/20 text-rose-500 border border-rose-500/30";
     case "high": return "bg-rose-500/10 text-rose-500 border border-rose-500/20";
     case "medium": return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
-    default: return "bg-white/10 text-muted-foreground border border-white/10";
+    default: return "bg-white/10 text-muted-foreground border border-[var(--alpha-bg-10)]";
   }
 };
 
@@ -395,7 +395,7 @@ const SourceProvenanceTable: React.FC<{
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--cyan)]/50 outline-none"
+            className="text-xs bg-white/5 border border-[var(--alpha-bg-10)] rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-[var(--cyan)]/50 outline-none"
           >
             {typeOptions.map((type) => (
               <option key={type} value={type} className="bg-[var(--bg)] text-[var(--text)]">
@@ -409,7 +409,7 @@ const SourceProvenanceTable: React.FC<{
       <div className="overflow-x-auto">
         <table className="w-full min-w-[480px]">
           <thead>
-            <tr className="border-b border-white/10">
+            <tr className="border-b border-[var(--alpha-bg-10)]">
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Origin Entity</th>
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Vector Class</th>
               <th className="text-left py-3 px-4 label-xs text-muted-foreground uppercase opacity-50">Domain Auth</th>
@@ -418,7 +418,7 @@ const SourceProvenanceTable: React.FC<{
           </thead>
           <tbody>
             {filteredSources.map((source, index) => (
-              <tr key={index} className="group hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
+              <tr key={index} className="group hover:bg-white/5 transition-colors border-b border-[var(--alpha-bg-05)] last:border-0">
                 <td className="py-4 px-4">
                   <div className="font-bold text-sm tracking-tight">{source.name}</div>
                   <div className="text-[10px] text-muted-foreground line-clamp-1 opacity-60 mt-0.5">{source.description}</div>
@@ -504,8 +504,8 @@ const CalibrationFreshnessPanel: React.FC<{
       )}
 
       {/* Calibration metrics panel */}
-      <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/8 flex items-center gap-2">
+      <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-white/[0.03] overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--alpha-bg-08)] flex items-center gap-2">
           <BarChart2 className="w-4 h-4 text-amber-400" />
           <span className="text-xs font-black uppercase tracking-widest text-amber-400">
             Model Accuracy Status
@@ -574,7 +574,7 @@ const CalibrationFreshnessPanel: React.FC<{
         </div>
 
         {/* AUC interpretation and honest calibration coverage */}
-        <div className="px-4 py-3 border-t border-white/8 bg-white/[0.015] space-y-2">
+        <div className="px-4 py-3 border-t border-[var(--alpha-bg-08)] bg-white/[0.015] space-y-2">
           <p className="text-[10px] text-muted-foreground leading-relaxed">
             AUC-ROC 0.81 was measured on {CALIBRATION_META.holdout_n ?? 40} held-out events (confidence interval ≈ ±0.10 at 95%).
             Training data is predominantly US public technology companies from layoffs.fyi — predictions for Indian IT, healthcare, manufacturing, and private companies have no empirical validation.
@@ -600,7 +600,7 @@ const CalibrationFreshnessPanel: React.FC<{
 
         {/* GAP-A01: Formula accuracy disclosure — live holdout AUC from v_formula_heldout_validation */}
         {holdoutValidation && (
-          <div className="border-t border-white/8">
+          <div className="border-t border-[var(--alpha-bg-08)]">
             {/* Recalibration alert — only when live AUC computed AND below threshold */}
             {holdoutValidation.recalibrationNeeded && (
               <div className="px-4 py-3 bg-red-500/8 border-b border-red-500/20 flex items-start gap-3">
@@ -812,7 +812,7 @@ const EffectiveWeightsPanel: React.FC<{
       <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-[11px]">
           <thead>
-            <tr className="bg-white/5 border-b border-white/10">
+            <tr className="bg-white/5 border-b border-[var(--alpha-bg-10)]">
               <th className="text-left py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Layer</th>
               <th className="text-right py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Formula&nbsp;Wt</th>
               <th className="text-right py-2.5 px-4 label-xs text-muted-foreground opacity-50 uppercase">Global Cal</th>
@@ -946,7 +946,7 @@ const EffectiveWeightsPanel: React.FC<{
           </tbody>
         </table>
       </div>
-      <div className="px-4 py-3 border-t border-white/5 text-[10px] text-muted-foreground leading-relaxed space-y-1">
+      <div className="px-4 py-3 border-t border-[var(--alpha-bg-05)] text-[10px] text-muted-foreground leading-relaxed space-y-1">
         <p>
           <span className="text-cyan-400/70 font-bold">Eff Share</span> = formula weight × global calibration × segment multiplier, normalized.
           Amber rows deviate &gt;3 pts from the raw formula weight — these are the layers where calibration has most changed the score composition.
@@ -1090,7 +1090,7 @@ const MethodologyExplainer: React.FC = () => {
   return (
     <div className="methodology-explainer space-y-[var(--space-4)]">
       {sections.map((section, index) => (
-        <div key={index} className="bg-white/5 border border-white/5 rounded-lg p-[var(--space-4)] hover:bg-white/10 transition-colors">
+        <div key={index} className="bg-white/5 border border-[var(--alpha-bg-05)] rounded-lg p-[var(--space-4)] hover:bg-white/10 transition-colors">
           <div className="flex gap-[var(--space-3)]">
             <div className="flex-shrink-0 mt-1">{section.icon}</div>
             <div className="w-full">
@@ -1211,8 +1211,8 @@ const DimensionCalibrationPanel: React.FC = () => {
       </div>
 
       {/* Per-dimension table */}
-      <div className="rounded-xl border border-white/8 overflow-hidden">
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground bg-white/[0.02] px-4 py-2 border-b border-white/8">
+      <div className="rounded-xl border border-[var(--alpha-bg-08)] overflow-hidden">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground bg-white/[0.02] px-4 py-2 border-b border-[var(--alpha-bg-08)]">
           <span className="pr-4">Dimension</span>
           <span>Signal Quality</span>
           <span className="px-3">Weight</span>
@@ -1221,7 +1221,7 @@ const DimensionCalibrationPanel: React.FC = () => {
         {report.dimensionResults.map((dim) => {
           const c = statusColor(dim);
           return (
-            <div key={dim.dimension} className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-0 px-4 py-3 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+            <div key={dim.dimension} className="grid grid-cols-[auto_1fr_auto_auto] items-start gap-0 px-4 py-3 border-b border-[var(--alpha-bg-05)] hover:bg-white/[0.02] transition-colors">
               <div className="pr-4 min-w-[160px]">
                 <p className="text-xs font-bold text-foreground/90">{dim.dimension.replace(/_/g, ' ')}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -2719,7 +2719,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                             ? 'bg-cyan-500/12 text-cyan-400 border-cyan-500/25'
                             : result.calibrationFallbackLevel === 'cohort_db'
                               ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                              : 'bg-white/10 text-gray-400 border-white/15',
+                              : 'bg-[var(--alpha-bg-10)] text-[var(--alpha-text-40)] border-[var(--alpha-bg-12)]',
                       ].join(' ')}
                     >
                       {result.calibrationFallbackLevel === 'segment_db'       ? 'DB-calibrated (≥80 outcomes)' :
@@ -3354,7 +3354,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
                   <span className="text-[10px] uppercase tracking-widest text-muted-foreground opacity-60 font-semibold">
                     Applied multiplier
                   </span>
-                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-white/5 border border-[var(--alpha-bg-10)]">
                     {srAdj.key}
                   </span>
                   <span
@@ -3709,9 +3709,9 @@ const ActionCoveragePanel: React.FC = () => {
       : '✗ Below threshold';
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+    <div className="rounded-xl border border-[var(--alpha-bg-10)] bg-white/[0.03] overflow-hidden">
       {/* Header row */}
-      <div className="px-4 py-3 border-b border-white/8 flex items-center gap-2">
+      <div className="px-4 py-3 border-b border-[var(--alpha-bg-08)] flex items-center gap-2">
         <BarChart className="w-4 h-4 text-cyan-400" />
         <span className="text-xs font-black uppercase tracking-widest text-cyan-400">
           Action Intelligence Coverage
