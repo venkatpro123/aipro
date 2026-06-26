@@ -1297,7 +1297,7 @@ const ParentPropagationPanel: React.FC<{ propagation: ParentPropagationResult }>
         </span>
         {p.functionRefinedFromRole && (
           <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-            style={{ background: 'rgba(99,179,237,0.10)', color: '#93c5fd', border: '1px solid rgba(99,179,237,0.20)' }}>
+            style={{ background: 'rgba(99,179,237,0.10)', color: 'var(--color-blue300-text)', border: '1px solid rgba(99,179,237,0.20)' }}>
             function inferred from role
           </span>
         )}
