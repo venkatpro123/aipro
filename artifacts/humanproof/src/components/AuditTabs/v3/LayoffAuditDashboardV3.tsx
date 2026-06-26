@@ -65,6 +65,8 @@ import { useSwipeGesture } from '../../../hooks/useSwipeGesture';
 import { ReturnVisitPanel } from '../common/ReturnVisitPanel';
 import { RiskUpdateBanner } from '../../RiskUpdateBanner';
 import { OutcomeFeedbackPrompt } from '../../OutcomeFeedbackPrompt';
+import { LiveSignalStatusBar } from '../../LiveSignalStatusBar';
+import { computeLiveSignalStatus } from '../../../services/liveSignalBanner';
 import { onNewLayoffEvent } from '../../../data/layoffNewsCache';
 import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 import { checkAndUnlockAchievements } from '../../../services/achievementService';
@@ -374,6 +376,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
   // 'beast'     → full 6-tab intelligence command center for power users
   const { viewMode, setViewMode } = useViewMode();
   const isEmergency = result.total >= 80 || (result as any).warnSignal?.hasActiveWARN === true;
+  const liveSignalStatus = useMemo(() => computeLiveSignalStatus(result), [result]);
 
   const [activeTab, setActiveTab] = useState<TabValue>(adaptation.defaultTab as TabValue);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
@@ -681,6 +684,9 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
             />
           </div>
         )}
+
+        {/* ── Phase 12: Live signal status — data source transparency bar ── */}
+        <LiveSignalStatusBar status={liveSignalStatus} />
 
         {/* ── Wave 7.1: Intelligence update banner — new signals since last audit ── */}
         {intelligenceUpdate && !bannerDismissed && (
