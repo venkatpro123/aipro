@@ -52,24 +52,24 @@ function GapPathRow({ path, index }: { path: SkillGapPath; index: number }) {
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className="flex items-center gap-1.5">
           <BookOpen className="w-3 h-3 text-blue-400/50" />
-          <span className="text-xs font-medium text-white/75">{path.skill}</span>
+          <span className="text-xs font-medium text-[var(--alpha-text-70)]">{path.skill}</span>
         </div>
         <div className="flex items-center gap-2">
           {path.costUSD != null && (
             <div className="flex items-center gap-0.5">
-              <DollarSign className="w-2.5 h-2.5 text-white/25" />
-              <span className="text-[10px] text-white/40">{path.costUSD === 0 ? 'Free' : `$${path.costUSD}`}</span>
+              <DollarSign className="w-2.5 h-2.5 text-[var(--alpha-text-20)]" />
+              <span className="text-[10px] text-[var(--alpha-text-40)]">{path.costUSD === 0 ? 'Free' : `$${path.costUSD}`}</span>
             </div>
           )}
           <div className="flex items-center gap-0.5">
-            <Clock className="w-2.5 h-2.5 text-white/25" />
-            <span className="text-[10px] text-white/40">{path.estimatedWeeks}w</span>
+            <Clock className="w-2.5 h-2.5 text-[var(--alpha-text-20)]" />
+            <span className="text-[10px] text-[var(--alpha-text-40)]">{path.estimatedWeeks}w</span>
           </div>
         </div>
       </div>
       {path.specificResource && (
-        <div className="text-[11px] text-white/55">
-          <span className="text-white/35">Top resource: </span>{path.specificResource}
+        <div className="text-[11px] text-[var(--alpha-text-55)]">
+          <span className="text-[var(--alpha-text-35)]">Top resource: </span>{path.specificResource}
         </div>
       )}
       {path.alternativeFree && (
@@ -108,7 +108,7 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
                 {highlightLabel}
               </div>
             )}
-            <div className="text-sm font-semibold text-white/90 leading-snug">{combo.label}</div>
+            <div className="text-sm font-semibold text-[var(--alpha-text-85)] leading-snug">{combo.label}</div>
             <div className="flex flex-wrap gap-1 mt-1.5">
               {combo.skills.map(skill => (
                 <span key={skill} className="text-[10px] px-1.5 py-0.5 rounded-full"
@@ -120,13 +120,13 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
           </div>
           <div className="flex-shrink-0 text-center px-2 py-1.5 rounded-lg" style={{ background: `${premiumColor}15` }}>
             <div className="text-base font-bold" style={{ color: premiumColor }}>+{premiumPct}%</div>
-            <div className="text-[10px] text-white/35 whitespace-nowrap">premium</div>
+            <div className="text-[10px] text-[var(--alpha-text-35)] whitespace-nowrap">premium</div>
           </div>
         </div>
 
-        <p className="text-xs text-white/60 leading-relaxed mb-2.5">{combo.description}</p>
+        <p className="text-xs text-[var(--alpha-text-60)] leading-relaxed mb-2.5">{combo.description}</p>
         {combo.marketContext && (
-          <p className="text-xs text-white/45 leading-relaxed mb-2.5 italic">{combo.marketContext}</p>
+          <p className="text-xs text-[var(--alpha-text-45)] leading-relaxed mb-2.5 italic">{combo.marketContext}</p>
         )}
 
         <div className="flex items-center gap-3 flex-wrap">
@@ -134,25 +134,25 @@ function ComboCard({ combo, index, isHighlighted, highlightLabel }: {
           <TrendBadge trend={combo.demandTrend} />
         </div>
 
-        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-white/[0.05]">
+        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-[var(--alpha-bg-05)]">
           <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3 text-white/25" />
-            <span className="text-[11px] text-white/45">{combo.gapClosureWeeks}w to close gap</span>
+            <Clock className="w-3 h-3 text-[var(--alpha-text-20)]" />
+            <span className="text-[11px] text-[var(--alpha-text-45)]">{combo.gapClosureWeeks}w to close gap</span>
           </div>
           <div className="flex items-center gap-1">
-            <TrendingUp className="w-3 h-3 text-white/25" />
-            <span className="text-[11px] text-white/45">Match: {combo.matchPercentage}%</span>
+            <TrendingUp className="w-3 h-3 text-[var(--alpha-text-20)]" />
+            <span className="text-[11px] text-[var(--alpha-text-45)]">Match: {combo.matchPercentage}%</span>
           </div>
           <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-white/25" />
-            <span className="text-[11px] text-white/45">ROI: {combo.roiScore}</span>
+            <Zap className="w-3 h-3 text-[var(--alpha-text-20)]" />
+            <span className="text-[11px] text-[var(--alpha-text-45)]">ROI: {combo.roiScore}</span>
           </div>
         </div>
 
         {combo.gapClosurePath && combo.gapClosurePath.length > 0 && (
           <>
             <button onClick={() => setShowPaths(!showPaths)}
-              className="flex items-center gap-1 mt-2.5 text-xs text-white/35 hover:text-white/60 transition-colors">
+              className="flex items-center gap-1 mt-2.5 text-xs text-[var(--alpha-text-35)] hover:text-[var(--alpha-text-60)] transition-colors">
               {showPaths ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               {showPaths ? 'Hide gap paths' : `How to build this combo (${combo.gapClosurePath.length} resources)`}
             </button>
@@ -191,16 +191,16 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
             <Layers className="w-4 h-4 text-violet-400" />
           </div>
           <div>
-            <div className="text-sm font-semibold text-white/90">Skill Fusion Analysis</div>
-            <div className="text-xs text-white/40">Skill combinations that command compound premiums</div>
+            <div className="text-sm font-semibold text-[var(--alpha-text-85)]">Skill Fusion Analysis</div>
+            <div className="text-xs text-[var(--alpha-text-40)]">Skill combinations that command compound premiums</div>
           </div>
         </div>
-        <p className="text-xs text-white/55 leading-relaxed">
+        <p className="text-xs text-[var(--alpha-text-55)] leading-relaxed">
           Individual skills are commoditized. The right <span className="text-violet-300/80 font-medium">skill combination</span> signals
           a rare profile that commands 25–55% premium over single-skill candidates.
         </p>
         {fusion.marketInsight && (
-          <p className="mt-2 text-xs text-white/40 italic leading-relaxed">{fusion.marketInsight}</p>
+          <p className="mt-2 text-xs text-[var(--alpha-text-40)] italic leading-relaxed">{fusion.marketInsight}</p>
         )}
       </motion.div>
 
@@ -210,8 +210,8 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
         <Zap className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-400" />
         <div>
           <div className="text-xs font-semibold text-emerald-400/90 mb-0.5">Quickest win</div>
-          <div className="text-sm font-medium text-white/85">{fusion.quickestWin.label}</div>
-          <div className="text-xs text-white/50 mt-0.5">
+          <div className="text-sm font-medium text-[var(--alpha-text-78)]">{fusion.quickestWin.label}</div>
+          <div className="text-xs text-[var(--alpha-text-50)] mt-0.5">
             +{Math.round(fusion.quickestWin.salaryPremiumPct)}% premium · {fusion.quickestWin.gapClosureWeeks} weeks to achieve
           </div>
         </div>
@@ -224,8 +224,8 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
           <TrendingUp className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-400" />
           <div>
             <div className="text-xs font-semibold text-blue-400/90 mb-0.5">Highest ROI combo</div>
-            <div className="text-sm font-medium text-white/85">{fusion.highestROI.label}</div>
-            <div className="text-xs text-white/50 mt-0.5">
+            <div className="text-sm font-medium text-[var(--alpha-text-78)]">{fusion.highestROI.label}</div>
+            <div className="text-xs text-[var(--alpha-text-50)] mt-0.5">
               +{Math.round(fusion.highestROI.salaryPremiumPct)}% premium · ROI score: {fusion.highestROI.roiScore}
             </div>
           </div>
@@ -234,7 +234,7 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
 
       {/* Top combos */}
       <div className="space-y-2.5">
-        <div className="text-xs font-medium text-white/40 uppercase tracking-wide">Top Skill Combinations</div>
+        <div className="text-xs font-medium text-[var(--alpha-text-40)] uppercase tracking-wide">Top Skill Combinations</div>
         {fusion.topCombos.map((combo, i) => (
           <ComboCard key={combo.id} combo={combo} index={i}
             isHighlighted={i === 0} highlightLabel={i === 0 ? '★ Recommended first' : undefined} />
@@ -249,11 +249,11 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
             style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-amber-400/70" />
-              <span className="text-sm font-medium text-white/70">
+              <span className="text-sm font-medium text-[var(--alpha-text-70)]">
                 {fusion.emergingCombos.length} emerging combos to watch
               </span>
             </div>
-            {showEmerging ? <ChevronUp className="w-4 h-4 text-white/30" /> : <ChevronDown className="w-4 h-4 text-white/30" />}
+            {showEmerging ? <ChevronUp className="w-4 h-4 text-[var(--alpha-text-25)]" /> : <ChevronDown className="w-4 h-4 text-[var(--alpha-text-25)]" />}
           </button>
           <AnimatePresence>
             {showEmerging && (
@@ -263,7 +263,7 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
                   {fusion.emergingCombos.map((name, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Flame className="w-3 h-3 text-amber-400/50 flex-shrink-0" />
-                      <span className="text-xs text-white/60">{name}</span>
+                      <span className="text-xs text-[var(--alpha-text-60)]">{name}</span>
                     </div>
                   ))}
                 </div>
@@ -281,24 +281,24 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
             style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.13)' }}>
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-400/60" />
-              <span className="text-sm font-medium text-white/60">
+              <span className="text-sm font-medium text-[var(--alpha-text-60)]">
                 {fusion.skillSaturationWarnings.length} skills with oversupply warning
               </span>
             </div>
-            {showSaturation ? <ChevronUp className="w-4 h-4 text-white/30" /> : <ChevronDown className="w-4 h-4 text-white/30" />}
+            {showSaturation ? <ChevronUp className="w-4 h-4 text-[var(--alpha-text-25)]" /> : <ChevronDown className="w-4 h-4 text-[var(--alpha-text-25)]" />}
           </button>
           <AnimatePresence>
             {showSaturation && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                 <div className="px-4 pt-2 pb-3 space-y-1.5">
-                  <p className="text-xs text-white/40 leading-relaxed mb-2">
+                  <p className="text-xs text-[var(--alpha-text-40)] leading-relaxed mb-2">
                     These skills have more candidates than open roles. Pair them with a scarce skill to stand out.
                   </p>
                   {fusion.skillSaturationWarnings.map((warning, i) => (
                     <div key={i} className="flex items-start gap-2">
                       <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-red-400/50" />
-                      <span className="text-xs text-white/55">{warning}</span>
+                      <span className="text-xs text-[var(--alpha-text-55)]">{warning}</span>
                     </div>
                   ))}
                 </div>

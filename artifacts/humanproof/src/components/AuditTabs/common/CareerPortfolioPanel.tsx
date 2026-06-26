@@ -127,11 +127,12 @@ export function CareerPortfolioPanel({ result }: Props) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-white/8 bg-gray-900/40 p-4 mb-4"
+      className="rounded-xl border border-[var(--alpha-bg-08)] p-4 mb-4"
+      style={{ background: 'var(--alpha-bg-04)' }}
     >
       <div className="flex items-center gap-2 mb-3">
         <PieChart size={14} className="text-purple-400" />
-        <span className="text-sm font-semibold text-white">Risk Portfolio</span>
+        <span className="text-sm font-semibold text-[var(--text)]">Risk Portfolio</span>
         <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
           diversificationScore >= 65 ? 'bg-emerald-500/15 text-emerald-300' :
           diversificationScore >= 45 ? 'bg-amber-500/15 text-amber-300' :
