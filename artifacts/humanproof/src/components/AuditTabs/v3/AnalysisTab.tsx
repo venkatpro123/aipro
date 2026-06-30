@@ -28,9 +28,7 @@ import type { PreparednessResult } from '../../../services/preparednessScoreEngi
 import { RiskBreakdownTab } from '../RiskBreakdownTab';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import { ScoreSensitivityPanel } from '../common/ScoreSensitivityPanel';
-import { AIReasoningPanel, buildDimensionsFromResult } from '../common/AIReasoningPanel';
 import { ScenarioExplorer } from '../common/ScenarioExplorer';
-import { SignalCorrelationInsight } from '../common/SignalCorrelationInsight';
 import { DisplacementTrajectoryPanel } from '../../LayoffCalculator/DisplacementTrajectoryPanel';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -546,9 +544,6 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
     return `${co} currently reads as ${tierLabel.toLowerCase()} layoff risk (${score}/100).${driverClause}${factClause}`;
   }, [brief, freshnessierTier, result, companyData, companyNameForBrief, r]);
 
-  // AI reasoning dimensions — built from breakdown layers L1/L2/L3
-  const aiReasoningDimensions = useMemo(() => buildDimensionsFromResult(result), [result]);
-
   // Wave 2.6 — Displacement trajectory props derived from result
   const displacementRoleKey: string  = result.workTypeKey ?? 'sw_backend';
   const displacementRoleTitle: string = (displacementRoleKey).replace(/_/g, ' ');
@@ -656,47 +651,6 @@ export const AnalysisTab: React.FC<TabProps> = ({ result, companyData, auditStag
             }
           />
         </motion.div>
-      )}
-
-      {/* ── P2: AI Reasoning — chain of thought for the score */}
-      {aiReasoningDimensions.length > 0 && (
-        <AdaptiveBlock
-          title="How we reached your score"
-          subtitle="The top risk factors and reasoning chains that drive your result"
-          icon={Brain}
-          tier={2}
-          accentColor="#22d3ee"
-          defaultOpen={result.total >= 55}
-        >
-          <AIReasoningPanel
-            dimensions={aiReasoningDimensions}
-            finalScore={result.total}
-            confidencePercent={confPct}
-            primaryDataSources={
-              r._liveDataCoverage?.overallSource === 'live'
-                ? ['Yahoo Finance', 'Google News', 'Bing RSS']
-                : r._liveDataCoverage?.overallSource === 'mixed'
-                ? ['Google News', 'Bing RSS']
-                : []
-            }
-          />
-        </AdaptiveBlock>
-      )}
-
-      {/* ── P2: Signal Tensions — contradiction disclosure */}
-      {r.signalContradictions && (r.signalContradictions.contradictions?.length ?? 0) > 0 && r.signalContradictions.overallTrustLevel !== 'HIGH' && (
-        <AdaptiveBlock
-          title="Signal tensions"
-          subtitle="Competing signals detected — how the AI resolved them"
-          icon={Zap}
-          tier={2}
-          accentColor='#f59e0b'
-          defaultOpen={r.signalContradictions.overallTrustLevel === 'VERY_LOW' || r.signalContradictions.overallTrustLevel === 'LOW'}
-          badge={r.signalContradictions.hasMaterialUncertainty ? `±${r.signalContradictions.netUncertaintyPoints} pts` : undefined}
-          badgeColor={r.signalContradictions.overallTrustLevel === 'VERY_LOW' ? '#dc2626' : '#f97316'}
-        >
-          <SignalCorrelationInsight report={r.signalContradictions} />
-        </AdaptiveBlock>
       )}
 
       {/* ── P2: Score sensitivity — what moves your score the most? */}
