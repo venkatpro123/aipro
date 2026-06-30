@@ -69,7 +69,6 @@ import { injectLayoffEvent } from "../../data/layoffNewsCache";
 import { recordScore, buildL4SnapshotFields } from "../../services/scoreDeltaService";
 import { detectCollapseStage, getCollapseStagePrecision } from "../../services/collapsePredictor";
 import { PipelineTimer } from "../../services/pipelineTimer";
-import { CachedResultBanner } from "./CachedResultBanner";
 import { BreakingNewsBanner } from "./BreakingNewsBanner";
 import { useBreakingNewsPoller } from "../../hooks/useBreakingNewsPoller";
 import { getApiQuotaStatus, ApiQuotaStatus, CircuitApiName, CIRCUIT_API_LABELS, resetAllOpenCircuits } from "../../services/apiCircuitBreaker";
@@ -1889,20 +1888,6 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
       {state.isCalculating && !scraperGateActive && quorumState.financial !== 'pending' && (
         <ProgressiveQuorumPanel quorum={quorumState} />
       )}
-
-      {/* Cache-hit banner — shown when result is from 1h localStorage cache */}
-      {state.hasCompletedAssessment &&
-        state.scoreResult &&
-        !state.isCalculating &&
-        (state.scoreResult as any).fromCache && (
-          <div className="max-w-4xl mx-auto px-4 mb-2">
-            <CachedResultBanner
-              cachedAt={(state.scoreResult as any).cachedAt}
-              onForceRefresh={handleForceRefresh}
-              isRefreshing={isForceRefreshing}
-            />
-          </div>
-        )}
 
       {/* Breaking news banner — appears mid-session when injectLayoffEvent fires */}
       {state.hasCompletedAssessment && !state.isCalculating && (

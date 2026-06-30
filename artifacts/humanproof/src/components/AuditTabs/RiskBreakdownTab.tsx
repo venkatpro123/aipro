@@ -15,7 +15,6 @@ import { KeyRiskDriversPanel } from "@/components/LayoffCalculator/KeyRiskDriver
 import { StatCard } from "./common/StatCard";
 import { SectionHeader } from "./common/SectionHeader";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
-import { ProvenancePopover } from "@/components/ProvenancePopover";
 import { buildDimensionProvenance } from "../../services/dimensionProvenance";
 import { formatLayerNarrativeOrFallback } from "../../utils/layerNarrativeFormatter";
 import { SignalFreshnessDot } from "../SignalFreshnessDot";
@@ -275,7 +274,6 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
             >
               {verdictLabel}
             </span>
-            <ProvenancePopover provenance={provenance} fullLabel={meta?.fullLabel ?? dim.label} />
             {/* v15.0 — Per-layer freshness dot summarising signal age. */}
             {provenance && provenance.subSignals.length > 0 && (() => {
               const stale = provenance.subSignals.some((s) =>

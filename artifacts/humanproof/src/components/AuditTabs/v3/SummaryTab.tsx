@@ -44,7 +44,6 @@ import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
 import { InactionCostCard } from '../common/InactionCostCard';
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
-import { computeCanonicalConfidence } from '../../../services/canonicalConfidence';
 import { explainDriver } from './driverEvidence';
 import { isActionableRecommendation } from '../../../services/orchestration/signalOrchestrator';
 import Tilt3D from '../../ui/Tilt3D';
@@ -95,27 +94,16 @@ interface DensityStat { value: number; suffix?: string; label: string }
 
 const ScoreRingHero: React.FC<{
   score: number;
-  confidence: number;
-  calibrationMode?: string;
-  // Wave 6.3 upgrades:
-  ciLow?: number;          // CI lower bound — renders translucent shadow arc
-  ciHigh?: number;         // CI upper bound
   trendDirection?: string; // 'accelerating_risk' | 'deteriorating' | 'stable' | 'improving'
   // Layer 1 — Living Intelligence Instrument:
   signalNodes?: SignalNode[];   // real-time signal attribution orbit
   densityStats?: DensityStat[]; // "54 layers · 7 dimensions · N live signals"
   // Layer 4 — Intelligence Memory: cross-audit evolution vs the last check.
   evolution?: { from: number; to: number; direction: 'increased' | 'decreased'; daysSince: number } | null;
-}> = ({ score, confidence, calibrationMode, ciLow, ciHigh, trendDirection, signalNodes, densityStats, evolution }) => {
+}> = ({ score, trendDirection, signalNodes, densityStats, evolution }) => {
   const color = riskColor(score);
   const label = riskLabel(score);
   const trend = trendDirection ? TREND_ARROW[trendDirection] : undefined;
-
-  // CI shadow arc: render the confidence interval as a faint amber band
-  // behind the main arc. Clamps to [0, 100] so it never exceeds the ring.
-  const hasCIShadow = ciLow != null && ciHigh != null && (ciHigh - ciLow) < 80;
-  const ciShadowOffset  = hasCIShadow ? RING_CIRC - ((ciHigh! / 100) * RING_CIRC) : RING_CIRC;
-  const ciShadowLength  = hasCIShadow ? ((ciHigh! - ciLow!) / 100) * RING_CIRC    : 0;
 
   return (
     <div className="flex flex-col items-center">
@@ -163,18 +151,6 @@ const ScoreRingHero: React.FC<{
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
             fill="none" stroke="var(--alpha-bg-06)" strokeWidth={10}
           />
-          {/* Wave 6.3: CI confidence shadow arc — renders the uncertainty band */}
-          {hasCIShadow && (
-            <circle
-              cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
-              fill="none"
-              stroke="rgba(245,158,11,0.18)"
-              strokeWidth={14}
-              strokeLinecap="round"
-              strokeDasharray={`${ciShadowLength} ${RING_CIRC - ciShadowLength}`}
-              strokeDashoffset={ciShadowOffset}
-            />
-          )}
           {/* Main score arc — gradient stroke from green (safe) → amber → risk colour */}
           <motion.circle
             cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
@@ -583,11 +559,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const brief                                              = r.intelligenceBrief;
   const preparedness: PreparednessResult | undefined       = r.preparednessScore;
   const urgency  = brief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
-  // Wave 1.2: Canonical confidence — single source of truth for all confidence UI
-  // Replaces scattered reads of confidencePercent / bayesianCI / freshnessUnifier
-  const canonicalConf = useMemo(() => computeCanonicalConfidence(result), [result]);
-  const confPct  = canonicalConf.score;
-  const calibrationMode: string = (r.modelCalibration as any)?.calibrationMode ?? '';
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
   const scoreSensitivity = r.scoreSensitivity;
@@ -918,10 +889,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           {scoreSufficiency.sufficient
             ? <ScoreRingHero
                 score={score}
-                confidence={confPct}
-                calibrationMode={calibrationMode}
-                ciLow={scoreSufficiency.ciLow}
-                ciHigh={scoreSufficiency.ciHigh}
                 trendDirection={r.scoreTrajectory?.trajectoryDirection}
                 signalNodes={signalNodes}
               />

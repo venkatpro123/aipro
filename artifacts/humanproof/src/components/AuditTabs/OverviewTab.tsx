@@ -18,7 +18,6 @@ import type { EscapePathReport } from "@/services/escapePathOptimizer";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { ScoreRing } from "@/components/ScoreRing";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { DataQualityBanner } from "../../../components/DataQualityBanner";
 import { ConflictDisclosurePanel } from "../../../components/ConflictDisclosurePanel";
 import { ScoreDeltaExplainer } from "../../components/ScoreDeltaExplainer";
 import { SalaryAtRiskPanel, getTrajParams } from "../../components/SalaryAtRiskPanel";
@@ -2330,27 +2329,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               </div>
             </div>
           </div>
-        )}
-
-        {/* Data Quality Banner */}
-        {result && (
-          <DataQualityBanner
-            freshnessReport={{ avgSignalAge: result.dataFreshness.ageInDays, oldestSignalAge: result.dataFreshness.ageInDays,
-              // Denominator: total = live + heuristic (actual sum, not a hardcoded 17)
-              percentLive: (result.signalQuality.liveSignals + result.signalQuality.heuristicSignals) > 0
-                ? result.signalQuality.liveSignals / (result.signalQuality.liveSignals + result.signalQuality.heuristicSignals)
-                : 0,
-              percentHeuristic: (result.signalQuality.liveSignals + result.signalQuality.heuristicSignals) > 0
-                ? result.signalQuality.heuristicSignals / (result.signalQuality.liveSignals + result.signalQuality.heuristicSignals)
-                : 1,
-            }}
-            confidencePercent={result.confidencePercent}
-            confidenceInterval={{ low: result.confidenceInterval.low, high: result.confidenceInterval.high }}
-            hasConflicts={result.signalQuality.hasConflicts}
-            conflictCount={result.signalQuality.conflictingSignals.length}
-            primarySource={(result.consensusSnapshot?.primarySource as 'live' | 'db' | 'hybrid') || 'db'}
-            overridesApplied={result.consensusSnapshot?.overridesApplied || []}
-          />
         )}
 
         {/* Score Delta Explainer — only shown for returning users */}

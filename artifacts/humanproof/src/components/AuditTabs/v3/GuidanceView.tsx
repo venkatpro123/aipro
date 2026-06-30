@@ -392,9 +392,6 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           <div style={{ transform: 'scale(0.75)', transformOrigin: 'top center', marginBottom: '-38px' }}>
             <ScoreRingHero
               score={score}
-              confidence={confidence}
-              ciLow={ciLow}
-              ciHigh={ciHigh}
               trendDirection={trendDirection}
             />
           </div>

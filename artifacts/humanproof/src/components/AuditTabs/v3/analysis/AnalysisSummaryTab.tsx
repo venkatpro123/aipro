@@ -11,9 +11,7 @@ import type { CompanyData } from '../../../../data/companyDatabase';
 import { ScoreRingHero, type DriverItem } from '../SummaryTab';
 import { ThreatLevelGauge } from '../../common/ThreatLevelGauge';
 import { VisualRiskDriversMap } from '../../common/VisualRiskDriversMap';
-import { ScoreTrendStrip } from '../../common/ScoreTrendStrip';
 import { riskColor, riskGradient } from '../../../../lib/riskTokens';
-import { computeCanonicalConfidence } from '../../../../services/canonicalConfidence';
 import { explainDriver } from '../driverEvidence';
 
 interface Props {
@@ -26,15 +24,8 @@ interface Props {
 export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emergencyMode }) => {
   const r = result as any;
   const score = result.total;
-  const canonicalConf = useMemo(() => computeCanonicalConfidence(result), [result]);
-  const confPct = canonicalConf.score;
-  const calibrationMode: string = r.modelCalibration?.calibrationMode ?? '';
   const urgency = r.intelligenceBrief?.urgencyLevel
     ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
-
-  const ciLow  = result.confidenceInterval?.low  ?? undefined;
-  const ciHigh = result.confidenceInterval?.high ?? undefined;
-  const trendDirection = r.scoreTrajectory?.trajectoryDirection ?? undefined;
 
   const scoreDeltaDir: string = r.scoreDelta?.direction ?? '';
   const scoreDelta30d: number = Math.abs(r.scoreDelta?.delta30d ?? 0);
@@ -132,11 +123,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
       >
         <ScoreRingHero
           score={score}
-          confidence={confPct}
-          calibrationMode={calibrationMode}
-          ciLow={ciLow}
-          ciHigh={ciHigh}
-          trendDirection={trendDirection}
         />
         <p className="score-hero-verdict mt-3">{verdictLine(score)}</p>
         {scoreDelta30d >= 1 && (
@@ -152,11 +138,6 @@ export const AnalysisSummaryTab: React.FC<Props> = ({ result, companyData, emerg
 
       {/* 4 — What's driving the risk: visual stacked bar + expandable driver nodes */}
       <VisualRiskDriversMap drivers={topDrivers} />
-
-      {/* 5 — Where risk is heading */}
-      {r.scoreTrajectory && (
-        <ScoreTrendStrip scoreTrajectory={r.scoreTrajectory} currentScore={score} />
-      )}
 
 
 </div>
