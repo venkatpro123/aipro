@@ -60,14 +60,13 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
   const dominantFactor = (survival as any).dominantRiskFactor as string | undefined;
   const percentile     = (survival as any).workforceRiskPercentile as number | undefined;
 
-  // Risk tier color
   const tierColor: Record<string, string> = {
-    CRITICAL: '#dc2626',
-    HIGH:     'var(--color-orange-text)',
-    ELEVATED: 'var(--color-amber500-text)',
-    MODERATE: '#22d3ee',
-    LOW:      'var(--color-emerald-text)',
-    MINIMAL:  'var(--color-emerald-text)',
+    CRITICAL: '#dc2626', HIGH: 'var(--color-orange-text)', ELEVATED: 'var(--color-amber500-text)',
+    MODERATE: '#22d3ee', LOW: 'var(--color-emerald-text)', MINIMAL: 'var(--color-emerald-text)',
+  };
+  const tierLabel: Record<string, string> = {
+    CRITICAL: 'Critical Risk', HIGH: 'High Risk', ELEVATED: 'Elevated Risk',
+    MODERATE: 'Moderate Risk', LOW: 'Low Risk', MINIMAL: 'Low Risk',
   };
   const color = tierColor[survival.riskTier] ?? 'var(--color-amber500-text)';
 
@@ -93,7 +92,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           className="text-[10px] font-black px-2 py-0.5 rounded flex-shrink-0"
           style={{ background: `${color}15`, color, border: `1px solid ${color}28` }}
         >
-          {survival.riskTier}
+          {tierLabel[survival.riskTier] ?? survival.riskTier}
         </span>
       </div>
 
@@ -129,7 +128,7 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
           style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.22)' }}
         >
           <p className="text-[10px] font-bold mb-1" style={{ color: 'rgba(16,185,129,0.60)' }}>
-            WITH PHASE 1
+            IF YOU ACT NOW
           </p>
           <p className="text-[26px] font-black leading-none mb-0.5" style={{ color: 'var(--color-emerald-text)' }}>
             {fmtPct(withPhase1)}
@@ -158,11 +157,11 @@ export const RecoveryProbabilityCard: React.FC<Props> = ({ survival, criticalAct
             Taking the {criticalActionCount > 0 ? `${criticalActionCount} critical action${criticalActionCount !== 1 ? 's' : ''}` : 'Phase 1 actions'} below cuts your risk by {reductionPct}%
           </p>
           <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
-            {fmtPct(withoutAction)} if risk keeps drifting up → {fmtPct(withPhase1)} with Phase 1 mitigation
+            {fmtPct(withoutAction)} if nothing changes → {fmtPct(withPhase1)} if you take the top actions
           </p>
           {dominantFactor && (
             <p className="text-[10px] mt-1 leading-snug" style={{ color: 'var(--alpha-text-45)' }}>
-              Your biggest driver right now: <span style={{ color: 'rgba(16,185,129,0.85)', fontWeight: 600 }}>{dominantFactor}</span>. The Phase 1 actions are sequenced to address it first.
+              Your biggest driver right now: <span style={{ color: 'rgba(16,185,129,0.85)', fontWeight: 600 }}>{dominantFactor}</span>. The top actions are ordered to tackle this first.
             </p>
           )}
         </div>

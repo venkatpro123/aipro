@@ -157,7 +157,7 @@ export const ScoreTrendStrip: React.FC<ScoreTrendStripProps> = ({
                 letterSpacing: '0.06em',
               }}
             >
-              SIGNAL-MODELED
+              PROJECTED
             </span>
           )}
         </div>

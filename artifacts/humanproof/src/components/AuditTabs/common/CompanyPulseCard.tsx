@@ -27,7 +27,6 @@ import {
   type CompressedSignal,
   type VerdictLabel,
 } from '../../../services/signalCompressionService';
-import TierBadge from './TierBadge';
 import { useIntelligencePulse } from '../../ui/useIntelligencePulse';
 
 interface Props {
@@ -292,7 +291,6 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
               Company Situation
             </span>
-            <TierBadge tier={1} />
             <span
               className="ml-auto text-[10px] font-black px-2 py-0.5 rounded-full flex-shrink-0"
               style={{ background: tone + '22', color: tone, border: `1px solid ${tone}35` }}

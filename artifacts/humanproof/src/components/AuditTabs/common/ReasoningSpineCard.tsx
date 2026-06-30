@@ -70,7 +70,7 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
           className="text-[10px] font-black tracking-wider uppercase"
           style={{ color: ACCENT, letterSpacing: '0.12em' }}
         >
-          AI Read
+          AI Analysis
         </span>
       </div>
 
@@ -125,8 +125,8 @@ export const ReasoningSpineCard: React.FC<Props> = ({ feed }) => {
       {/* Trace — full chain-of-thought behind progressive disclosure */}
       <div className="mt-3">
         <AdaptiveBlock
-          title="How the AI reasoned"
-          subtitle="Step-by-step trace"
+          title="How we reached this"
+          subtitle="What we looked at and why"
           icon={Sparkles}
           tier={2}
           accentColor={ACCENT}

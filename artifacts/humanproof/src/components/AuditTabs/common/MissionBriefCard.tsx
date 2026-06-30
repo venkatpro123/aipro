@@ -7,7 +7,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, ChevronRight, Zap, Archive, RefreshCw } from 'lucide-react';
-import { riskLabel, riskColor } from '../../../lib/riskTokens';
+import { riskColor } from '../../../lib/riskTokens';
 import {
   activateMission,
   getMissionState,
@@ -28,10 +28,6 @@ interface MissionBriefCardProps {
   onRequestNextMission?: () => void;
 }
 
-const URGENCY_PROSE: Record<string, string> = {
-  CRITICAL: 'critical', HIGH: 'elevated', MODERATE: 'moderate', LOW: 'low',
-};
-
 export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
   missionId,
   companyName,
@@ -46,8 +42,6 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
   onRequestNextMission,
 }) => {
   const accentColor = riskColor(score);
-  const tierLabel   = riskLabel(score);
-  const prose       = URGENCY_PROSE[urgency] ?? 'moderate';
   const activated   = useRef(false);
 
   const missionState: MissionState = useMemo(() => getMissionState(missionId), [missionId]);
@@ -79,10 +73,6 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
     return () => clearTimeout(timer);
   }, [allActionsDone, onRequestNextMission]);
 
-  const situationText = spine
-    ?? `${companyName} is showing ${prose} risk signals. Your displacement probability index is ${score}/100.`;
-  const riskText  = singleBiggestRisk
-    ?? `${tierLabel} risk indicators are present — monitor workforce and financial signals closely.`;
   const actionText = topAction
     ?? 'Begin external market positioning and update your professional profile.';
 
@@ -166,37 +156,34 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="mono-section-label mission-header-accent">AI MISSION BRIEF</span>
+            <span className="mono-section-label mission-header-accent">YOUR PLAN</span>
             {missionState === 'new'    && <span className="mission-state-badge mission-state-badge--new">NEW</span>}
-            {missionState === 'active' && <span className="mission-state-badge mission-state-badge--active">ACTIVE</span>}
+            {missionState === 'active' && <span className="mission-state-badge mission-state-badge--active">IN PROGRESS</span>}
           </div>
           <div className="flex items-center gap-2">
             {actionsTotal > 0 && (
               <span className="mono-section-label">{actionsDone}/{actionsTotal} done</span>
             )}
-            <span className="mono-section-label">{confidencePercent}% confidence</span>
+            <span className="mono-section-label">{confidencePercent}% confident</span>
           </div>
         </div>
 
-        {/* Situation */}
+        {/* Priority Action — the one thing to do now */}
         <div className="mission-brief-row">
-          <span className="mission-brief-key">SITUATION</span>
-          <p className="mission-text-primary">{situationText}</p>
-        </div>
-        <div className="mission-brief-divider" />
-
-        {/* Biggest Risk */}
-        <div className="mission-brief-row">
-          <span className="mission-brief-key">BIGGEST RISK</span>
-          <p className="mission-text-secondary">{riskText}</p>
-        </div>
-        <div className="mission-brief-divider" />
-
-        {/* Priority Action */}
-        <div className="mission-brief-row">
-          <span className="mission-brief-key">PRIORITY</span>
+          <span className="mission-brief-key">DO NOW</span>
           <p className="mission-priority-text">{actionText}</p>
         </div>
+
+        {/* Biggest Risk — only shown when a real value is provided (not fallback) */}
+        {singleBiggestRisk && (
+          <>
+            <div className="mission-brief-divider" />
+            <div className="mission-brief-row">
+              <span className="mission-brief-key">WATCH OUT FOR</span>
+              <p className="mission-text-secondary">{singleBiggestRisk}</p>
+            </div>
+          </>
+        )}
 
         {/* Progress bar — shown once some actions are done */}
         {actionsTotal > 0 && actionsDone > 0 && (

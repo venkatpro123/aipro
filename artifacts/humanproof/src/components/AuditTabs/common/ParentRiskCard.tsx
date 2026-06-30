@@ -107,7 +107,7 @@ export const ParentRiskCard: React.FC<ParentRiskCardProps> = ({ parentPropagatio
             </span>
           </div>
           <span style={{ fontSize: '0.7rem', color: 'var(--alpha-text-45)' }}>
-            {factorPct}% propagation factor
+            {factorPct}% risk inherited from parent
           </span>
           <span style={{ fontSize: '0.7rem', color: 'var(--alpha-text-45)' }}>
             {p.officeFunctionLabel}

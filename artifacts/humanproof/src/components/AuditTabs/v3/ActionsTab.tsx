@@ -4,28 +4,20 @@
 //   0. Layoff notice (only when officially announced)
 //   1. Low savings warning (only when score is high + savings are low)
 //   2. Stock vesting alert (only when relevant)
-//   3. Emergency Anchor Card (only in emergency mode)
-//   4. Recommended Plan
-//   5. Phase Progress System — 3-phase action unlock with checkboxes
-//   6. More Options (collapsed) — full plan, negotiation help, job offer help
+//   3. Strategy spine — recommended direction
+//   4. Phase Progress System — 3-phase action unlock with checkboxes
+//   5. Executive Intelligence (only for C-suite / VP / Director)
+//   6. Negotiation & strategy (collapsed)
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { riskLabel } from '../../../lib/riskTokens';
-import {
-  ListChecks, Zap, Clock, TrendingDown, AlertTriangle, ShieldAlert,
-  Activity, Key, Siren, Timer,
-} from 'lucide-react';
-import { ProfileQuickCapture } from '../../ProfileQuickCapture';
-import { CareerTwinCard } from '../../CareerTwinCard';
+import { AlertTriangle, Activity, Key, Siren, Timer } from 'lucide-react';
 import type { TabProps } from '../common/types';
 import type { ActionPlanItem } from '../../../types/hybridResult';
 import { StrategySpineCard } from '../common/StrategySpineCard';
 import type { StrategySynthesisResult } from '../../../services/strategySynthesisEngine';
 import AdaptiveBlock from '../common/AdaptiveBlock';
 import StrategyTab from '../StrategyTab';
-import TierBadge from '../common/TierBadge';
-import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isActionableRecommendation } from '../../../services/orchestration/signalOrchestrator';
 import { PhaseProgressSystem } from '../common/PhaseProgressSystem';
 import { ExecutiveIntelligencePanel } from '../common/ExecutiveIntelligencePanel';
@@ -35,304 +27,21 @@ import {
 } from '../../../services/executiveIntelligenceEngine';
 import type { UserProfile } from '../../../services/userProfileService';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
-import { BehavioralIntelligencePanel } from '../common/BehavioralIntelligencePanel';
-import { NegotiationIntelligencePanel } from '../common/NegotiationIntelligencePanel';
-import EmergencyProtocolPanel from '../common/EmergencyProtocolPanel';
-import JobTargetPanel from '../common/JobTargetPanel';
-import MonthlyActionPlan from '../common/MonthlyActionPlan';
-import { SocialProofStrip } from '../common/SocialProofStrip';
-
-// ── Action Matrix ─────────────────────────────────────────────────────────────
-
-const PRIORITY_CONFIG: Record<string, { color: string; bg: string; icon: React.ElementType }> = {
-  Critical: { color: 'var(--color-red600-text)', bg: 'rgba(220,38,38,0.12)', icon: AlertTriangle },
-  High:     { color: 'var(--color-orange500-text)', bg: 'rgba(249,115,22,0.10)', icon: Zap },
-  Medium:   { color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', icon: Clock },
-  Low:      { color: 'var(--color-emerald500-text)', bg: 'rgba(16,185,129,0.08)', icon: TrendingDown },
-};
-
-const ActionMatrix: React.FC<{ items: ActionPlanItem[] }> = ({ items }) => {
-  const [showAll, setShowAll] = useState(false);
-
-  const prioritised = useMemo(() => {
-    const order: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-    return [...items].sort((a, b) => (order[a.priority] ?? 4) - (order[b.priority] ?? 4));
-  }, [items]);
-
-  const visible = showAll ? prioritised : prioritised.slice(0, 5);
-  const criticalCount = prioritised.filter(i => i.priority === 'Critical').length;
-
-  return (
-    <div className="rounded-2xl p-4"
-      style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <ListChecks className="w-4 h-4" style={{ color: 'rgba(0,212,224,0.7)' }} />
-          <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-45)' }}>
-            ACTION PRIORITY MATRIX
-          </p>
-          <TierBadge tier={1} />
-        </div>
-        {criticalCount > 0 && (
-          <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(220,38,38,0.20)', color: 'var(--color-red600-text)' }}>
-            {criticalCount} CRITICAL
-          </span>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        {visible.map((item, idx) => {
-          const config = PRIORITY_CONFIG[item.priority] ?? PRIORITY_CONFIG.Low;
-          const PIcon = config.icon;
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              whileHover={{ scale: 1.01, boxShadow: `0 2px 12px ${config.color}18` }}
-              whileTap={{ scale: 0.99 }}
-              transition={{ delay: idx * 0.03 }}
-              className="rounded-xl p-3 cursor-default"
-              style={{ background: config.bg, border: `1px solid ${config.color}25` }}
-            >
-              <div className="flex items-start gap-2.5">
-                <PIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: config.color }} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-0.5">
-                    <p className="text-[12px] font-semibold leading-tight" style={{ color: 'var(--alpha-text-85)' }}>
-                      {item.title}
-                    </p>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: config.color + '20', color: config.color }}>
-                      {item.priority}
-                    </span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
-                    {item.description}
-                  </p>
-                  <div className="flex items-center flex-wrap gap-2 mt-1.5">
-                    {/* Sequence phase label */}
-                    {item.sequencePhase && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: 'var(--alpha-bg-06)', color: 'var(--alpha-text-35)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-                        {{ day1: 'Day 1', week1: 'Week 1', month1: 'Month 1', quarter1: 'Quarter 1' }[item.sequencePhase]}
-                      </span>
-                    )}
-                    {item.deadline && (
-                      <span className="text-[10px]" style={{ color: 'var(--alpha-text-35)' }}>
-                        <Clock className="w-2.5 h-2.5 inline mr-1" />
-                        {item.deadline}
-                      </span>
-                    )}
-                    {/* Effort badge */}
-                    {item.effortBadge && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                        style={{ background: 'rgba(0,212,224,0.10)', color: 'rgba(0,212,224,0.65)', border: '1px solid rgba(0,212,224,0.20)' }}>
-                        {item.effortBadge}
-                      </span>
-                    )}
-                    {item.riskReductionPct > 0 && (
-                      <span className="text-[10px]" style={{ color: '#10b98180' }}>
-                        <TrendingDown className="w-2.5 h-2.5 inline mr-1" />
-                        −{item.riskReductionPct}% risk
-                      </span>
-                    )}
-                  </div>
-                  {/* Evidence stat — collapsed "Why this works" one-liner */}
-                  {item.evidenceStats && (
-                    <p className="text-[10px] italic mt-1" style={{ color: 'var(--alpha-text-35)' }}>
-                      {item.evidenceStats}
-                    </p>
-                  )}
-                  {/* Social proof — "X users completed this" */}
-                  {idx < 3 && (
-                    <SocialProofStrip
-                      actionPriority={item.priority}
-                      actionCategory={item.layerFocus}
-                      riskTier={item.priority}
-                    />
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {prioritised.length > 5 && (
-        <button
-          type="button"
-          onClick={() => setShowAll(s => !s)}
-          aria-expanded={showAll}
-          className="w-full mt-3 py-2 text-[11px] font-semibold rounded-xl transition-colors"
-          style={{ color: 'rgba(0,212,224,0.85)', background: 'rgba(0,212,224,0.06)', border: '1px solid rgba(0,212,224,0.15)' }}
-        >
-          {showAll ? 'Show less' : `Show all ${prioritised.length} actions`}
-        </button>
-      )}
-    </div>
-  );
-};
-
-// ── Emergency Anchor Card — Wave 3.2 empathetic rewrite ──────────────────────
-//
-// Replaces the old terse "EMERGENCY MODE · SCORE {score}" banner.
-// Design principles:
-//   1. Statistical grounding first — user is AHEAD of most people, not behind
-//   2. Single action focus — one thing this week, not a list
-//   3. Escape hatch — "if this feels overwhelming" reduces panic-freeze
-//   4. Calm tone — no ALL-CAPS alarm language except the score badge
-//
-// Props:
-//   score         — the user's current risk score (for the badge)
-//   topAction     — the #1 most critical action title (from recommendations[0])
-//   topActionTime — effort estimate for that action (e.g. "45 min")
-
-const EmergencyCallout: React.FC<{
-  score: number;
-  topAction?: string;
-  topActionTime?: string;
-}> = ({ score, topAction, topActionTime }) => {
-  // Percentile grounding: score 75–100 puts user in ~top 20% of risk.
-  // Most people discover layoff risk 2 weeks before it happens. This user
-  // is discovering it months ahead — that's a significant advantage.
-  const percentileAhead = score >= 85 ? 96 : score >= 78 ? 94 : 90;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: 'easeOut' }}
-      className="rounded-2xl p-4"
-      style={{
-        background: 'linear-gradient(135deg, rgba(220,38,38,0.10), rgba(249,115,22,0.06))',
-        border: '1px solid rgba(220,38,38,0.32)',
-      }}
-    >
-      {/* Header row: shield icon + score badge */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.30)' }}
-        >
-          <ShieldAlert className="w-4 h-4" style={{ color: 'var(--color-red300-text)' }} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded"
-              style={{ background: 'rgba(220,38,38,0.18)', color: 'var(--color-red300-text)' }}
-            >
-              {riskLabel(score)} RISK · {score}/100
-            </span>
-          </div>
-          <p className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--alpha-text-70)' }}>
-            {score >= 55
-              ? `Your situation is serious — and you're ahead of ${percentileAhead}% of people who face it.`
-              : `A critical company signal warrants acting now — and you're ahead of ${percentileAhead}% who catch it this early.`}
-          </p>
-        </div>
-      </div>
-
-      {/* Statistical grounding paragraph */}
-      <div
-        className="rounded-xl px-3 py-2.5 mb-3"
-        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
-      >
-        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
-          Most people discover layoff risk <span style={{ color: 'var(--alpha-text-92)', fontWeight: 600 }}>2 weeks before it happens</span>.
-          {' '}You're discovering it months ahead. That gap is your most valuable asset right now.
-        </p>
-      </div>
-
-      {/* Single action focus */}
-      <div className="mb-2">
-        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--alpha-text-35)' }}>
-          THIS WEEK · ONE THING
-        </p>
-        {topAction ? (
-          <div
-            className="rounded-xl px-3 py-2.5 flex items-center gap-2.5"
-            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
-          >
-            <div
-              className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(220,38,38,0.20)' }}
-            >
-              <Zap className="w-3 h-3" style={{ color: 'var(--color-red300-text)' }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-bold leading-tight" style={{ color: 'var(--alpha-text-92)' }}>
-                {topAction}
-              </p>
-              {topActionTime && (
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--alpha-text-35)' }}>
-                  <Clock className="w-2.5 h-2.5 inline mr-1" />
-                  Est. {topActionTime}
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div
-            className="rounded-xl px-3 py-2.5"
-            style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.22)' }}
-          >
-            <p className="text-[11px]" style={{ color: 'var(--alpha-text-70)' }}>
-              Start with your top Phase 1 action below. One thing at a time.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Escape hatch */}
-      <p className="text-[10px] italic" style={{ color: 'var(--alpha-text-30)' }}>
-        If this feels overwhelming, start only with the action above. Everything else can wait until next week.
-      </p>
-    </motion.div>
-  );
-};
 
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 export const ActionsTab: React.FC<TabProps> = (props) => {
   const { result, companyData } = props;
   const r = result as any;
-  // Persist quick-capture completion to localStorage with a 24h TTL so the
-  // form doesn't re-appear across tab switches OR new browser tabs within the
-  // same day. sessionStorage is tab-scoped; localStorage persists across tabs.
-  const QC_KEY = 'hp.quickCapture.done';
-  const QC_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-  const [quickCaptureCompleted, setQuickCaptureCompleted] = useState<boolean>(() => {
-    try {
-      const raw = localStorage.getItem(QC_KEY);
-      if (!raw) return false;
-      const { ts } = JSON.parse(raw) as { ts: number };
-      return Date.now() - ts < QC_TTL_MS;
-    } catch { return false; }
-  });
-  const markQuickCaptureComplete = () => {
-    try { localStorage.setItem(QC_KEY, JSON.stringify({ ts: Date.now() })); } catch { /* swallow */ }
-    setQuickCaptureCompleted(true);
-  };
   const score = result.total;
   const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
-  // System/meta transparency notices (e.g. "System Override Applied") carry
-  // priority 'Critical' but are not user actions — filter them out here so
-  // they can never become the top action or an action-roadmap card. Mirrors
-  // the same filter already applied in SummaryTab.tsx for result.recommendations.
   const recommendations: ActionPlanItem[] = (result.recommendations ?? []).filter(isActionableRecommendation);
 
-  // Wave 8.3: equity awareness — show alert when vest cliff is near + risk elevated
   const hasEquityVesting: boolean   = r.userFactors?.hasEquityVesting === true || r.userFactors?.equityVestMonths != null;
   const equityVestMonths: number    = r.userFactors?.equityVestMonths ?? 0;
-  const showEquityAlert: boolean    = hasEquityVesting && equityVestMonths > 0 && equityVestMonths < 12 && result.total > 50;
+  const showEquityAlert: boolean    = hasEquityVesting && equityVestMonths > 0 && equityVestMonths < 12 && score > 50;
   const equityUrgency: 'CRITICAL' | 'HIGH' = equityVestMonths <= 3 ? 'CRITICAL' : 'HIGH';
 
-  // Wave 5.3 / State-Priority Override A — WARN Act 60-day legal protocol
-  // When hasActiveWARN = true, a legal WARN Act notice has been filed.
-  // This is verified ground truth — override mode, surface before everything.
   const warnSignal = r.warnSignal as
     | { hasActiveWARN: boolean; daysUntilLayoff: number | null; totalAffectedCount: number; affectedLocations: string[]; warnRiskLabel: string }
     | undefined;
@@ -341,13 +50,9 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
   const warnAffected: number = warnSignal?.totalAffectedCount ?? 0;
   const warnLocations: string[] = warnSignal?.affectedLocations ?? [];
 
-  // Wave 5.3 / State-Priority Override B — Short runway escalation
-  // When score ≥ 70 AND runway ≤ 3 months, job search duration may exceed runway.
-  // Escalate to urgent search positioning immediately.
   const financialRunwayMonths: number = (r.userFinancialRunway?.monthsOfRunway ?? r.userFactors?.financialRunwayMonths ?? 0);
-  const showRunwayEscalation: boolean = result.total >= 70 && financialRunwayMonths > 0 && financialRunwayMonths <= 3;
+  const showRunwayEscalation: boolean = score >= 70 && financialRunwayMonths > 0 && financialRunwayMonths <= 3;
 
-  // Wave 8.1: executive intelligence — only for C-suite / VP / Director / Founder / Staff+
   const userProfile: UserProfile | null = (props as any).userProfile ?? r.userProfile ?? null;
   const { isExecutive } = detectExecutiveTier(
     userProfile?.jobTitle ?? r.userFactors?.jobTitle,
@@ -360,29 +65,11 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
     } catch { return null; }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExecutive, result.total, userProfile?.jobTitle, userProfile?.salaryBand]);
-  const adaptation = useDashboardAdaptation(result, companyData);
-  // v39.0 B6: surface honest "generic guidance" notice when the user's role
-  // isn't in our 412-specialised database. Also surface the profile context
-  // note so the action plan opens with profile-specific framing.
-  const personalizedSet = r.personalizedActionSet as
-    | { isGenericFallback?: boolean; isDbOverride?: boolean; profileContextNote?: string; roleGroup?: string }
-    | undefined;
-
-  // Show quick capture when the user has no personalized data AND hasn't
-  // completed it in this session. Detects missing profile via generic fallback.
-  const hasNoProfile = !personalizedSet?.profileContextNote && !personalizedSet?.isDbOverride;
-  const showQuickCapture = hasNoProfile && !quickCaptureCompleted;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4, 16px)' }}>
 
-      {/* ── STATE PRIORITY OVERRIDES (rendered before everything else) ──────────── */}
-
-      {/* Override A: WARN Act 60-day legal protocol
-           Ground-truth signal: a legally-filed WARN notice is confirmed.
-           This is the highest-certainty data point in the entire engine.
-           Show first, always, in red — this is not a probabilistic risk,
-           it is a filed legal document with a countdown. */}
+      {/* WARN Act legal override — highest certainty signal */}
       {showWarnProtocol && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -416,7 +103,6 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             </div>
           </div>
 
-          {/* Key facts row — stacks to 1-col on mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
             {warnAffected > 0 && (
               <div
@@ -453,7 +139,6 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
             </p>
           )}
 
-          {/* What this means + what to do */}
           <div
             className="rounded-xl px-3 py-2.5"
             style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
@@ -469,10 +154,7 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
-      {/* Override B: Short runway escalation
-           When financial runway ≤ 3 months AND risk score ≥ 70, the user's
-           job search duration window may exceed their savings buffer.
-           This is an existential compounding risk — surface it prominently. */}
+      {/* Short runway escalation */}
       {showRunwayEscalation && (
         <motion.div
           initial={{ opacity: 0, y: -6 }}
@@ -526,29 +208,10 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
-      {/* ── END STATE PRIORITY OVERRIDES ────────────────────────────────────────── */}
-
-      {/* Recommended plan — one voice that states what to do, what's working
-          against you, and what's working for you. */}
+      {/* Strategy direction */}
       <StrategySpineCard strategy={strategySynthesis} />
 
-      {/* T1: Emergency Anchor Card — directly after strategy spine for crisis users */}
-      {adaptation.mode === 'emergency' && (
-        <EmergencyCallout
-          score={result.total}
-          topAction={recommendations.find(r => r.priority === 'Critical')?.title ?? recommendations[0]?.title}
-          topActionTime={recommendations.find(r => r.priority === 'Critical')?.effortBadge ?? recommendations[0]?.effortBadge}
-        />
-      )}
-
-      {/* Emergency Protocol Panel — 72-hour crisis checklist (only in emergency mode) */}
-      {adaptation.mode === 'emergency' && r.emergencyResponse && (
-        <ScrollReveal>
-          <EmergencyProtocolPanel emergency={r.emergencyResponse} />
-        </ScrollReveal>
-      )}
-
-      {/* Equity Alert (P2 — important but below primary action flow) */}
+      {/* Equity Alert */}
       {showEquityAlert && (
         <motion.div
           initial={{ opacity: 0, y: -5 }}
@@ -606,12 +269,12 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         </motion.div>
       )}
 
-      {/* Phase Progress System — 3-phase unlock with localStorage persistence */}
+      {/* Phase Progress System — 3-phase action unlock */}
       {recommendations.length > 0 && (
         <PhaseProgressSystem
           actions={recommendations}
           companyName={companyData?.name}
-          currentScore={result.total}
+          currentScore={score}
           onActionComplete={(actionId, completedCount) => {
             window.dispatchEvent(new CustomEvent('hp.action.milestone', {
               detail: { count: completedCount, actionId }
@@ -620,110 +283,22 @@ export const ActionsTab: React.FC<TabProps> = (props) => {
         />
       )}
 
-      {/* Executive Intelligence Panel (P2) */}
+      {/* Executive Intelligence Panel */}
       {executiveIntelligence && executiveIntelligence.isExecutive && (
         <ScrollReveal><ExecutiveIntelligencePanel intelligence={executiveIntelligence} /></ScrollReveal>
       )}
 
-      {/* Behavioral Intelligence Panel — interview prep, negotiation, transitions */}
-      {r.behavioralPersonalization && (
-        <ScrollReveal>
-          <BehavioralIntelligencePanel data={r.behavioralPersonalization} />
-        </ScrollReveal>
-      )}
-
-      {/* Negotiation Intelligence Panel — leverage rating, email scripts, clauses */}
-      {r.negotiationIntelligence && (
-        <ScrollReveal>
-          <NegotiationIntelligencePanel negotiation={r.negotiationIntelligence} />
-        </ScrollReveal>
-      )}
-
-      {/* Job Target Panel — specific company targets from jobTargetingEngine */}
-      {r.jobTargeting && (
-        <ScrollReveal>
-          <JobTargetPanel targeting={r.jobTargeting} />
-        </ScrollReveal>
-      )}
-
-      {/* Monthly Action Plan — month-by-month calendar from monthlyActionPlanEngine */}
-      {r.monthlyActionPlan && (
-        <ScrollReveal>
-          <MonthlyActionPlan plan={r.monthlyActionPlan} />
-        </ScrollReveal>
-      )}
-
-      {/* Profile context note (P2) */}
-      {personalizedSet?.profileContextNote && (
-        <ScrollReveal>
-          <div
-            className="rounded-2xl p-4"
-            style={{
-              background: 'rgba(34, 211, 238, 0.06)',
-              border: '1px solid rgba(34, 211, 238, 0.20)',
-            }}
-          >
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-cyan-text)' }}>
-              Tailored to your situation
-            </div>
-            <p className="text-[12px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
-              {personalizedSet.profileContextNote}
-            </p>
-          </div>
-        </ScrollReveal>
-      )}
-      {personalizedSet?.isGenericFallback && (
-        <ScrollReveal>
-          <div
-            className="rounded-xl px-3 py-2 flex items-start gap-2"
-            style={{
-              background: 'rgba(245, 158, 11, 0.07)',
-              border: '1px solid rgba(245, 158, 11, 0.25)',
-            }}
-          >
-            <ShieldAlert className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: 'var(--color-amber500-text)' }} />
-            <div className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-78)' }}>
-              <span style={{ color: 'var(--color-amber500-text)', fontWeight: 600 }}>General advice.</span>{' '}
-              We don't have specific info for your exact role yet, so the actions below are general advice
-              for tech and professional roles. They're still matched to your experience level and risk score,
-              but specific certifications, pay, and companies to target may differ for your role.
-            </div>
-          </div>
-        </ScrollReveal>
-      )}
-
-      {/* Inline quick profile capture (P2 — after primary action flow) */}
-      {showQuickCapture && (
-        <ScrollReveal>
-          <ProfileQuickCapture onComplete={() => {
-            markQuickCaptureComplete();
-            window.dispatchEvent(new CustomEvent('hp.quickCapture.completed'));
-          }} />
-        </ScrollReveal>
-      )}
-
-      {/* PhaseProgressSystem above covers all actions — ActionPlanTab removed (exact duplicate) */}
-
-      {/* More options — collapsed */}
+      {/* Negotiation & strategy deep-dive (collapsed) */}
       <ScrollReveal>
         <AdaptiveBlock
-          title="More Options"
-          subtitle="When to leave, job offer help, what to say, and your full plan"
+          title="Negotiation & career strategy"
+          subtitle="Exit timing, offer evaluation, compensation scripts, full action plan"
           icon={Activity}
           tier={3}
           accentColor='#f59e0b'
           defaultOpen={false}
         >
-          <div className="flex flex-col gap-4">
-            <CareerTwinCard
-              userRole={result.workTypeKey}
-              userExperience={result.tenureYears ?? 5}
-              userRiskScore={result.total}
-              userCountry={result.countryKey ?? 'global'}
-              topN={3}
-            />
-            <StrategyTab {...props} />
-          </div>
+          <StrategyTab {...props} />
         </AdaptiveBlock>
       </ScrollReveal>
 

@@ -18,6 +18,19 @@ const TIER_COLORS: Record<string, { text: string; bg: string; border: string }> 
   VULNERABLE:  { text: 'var(--color-red-text)', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.22)' },
 };
 
+const TIER_LABEL: Record<string, string> = {
+  ELITE: 'Excellent', STRONG: 'Strong', ADEQUATE: 'Solid', WEAK: 'Needs Work', VULNERABLE: 'At Risk',
+};
+
+const DECAY_LABEL: Record<string, string> = {
+  HIGH: 'Going Stale', MEDIUM: 'Somewhat Dated', LOW: 'Up to Date',
+};
+
+const TREND_LABEL: Record<string, string> = {
+  SURGING: 'In high demand', GROWING: 'Growing', STABLE: 'Stable',
+  DECLINING: 'Going out of date', OBSOLETE: 'Outdated',
+};
+
 const TREND_ICON = {
   SURGING:  <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-emerald-text)' }} />,
   GROWING:  <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-blue500-text)' }} />,
@@ -46,7 +59,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
           className="text-[10px] font-black tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
           style={{ background: `${colors.text}18`, color: colors.text, border: `1px solid ${colors.text}30` }}
         >
-          {portfolio.portfolioStrengthTier}
+          {TIER_LABEL[portfolio.portfolioStrengthTier] ?? portfolio.portfolioStrengthTier}
         </span>
       </div>
 
@@ -58,9 +71,9 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
         </div>
         <div className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
           <div className="text-[10px] font-bold" style={{ color: portfolio.skillDecayRisk === 'HIGH' ? 'var(--color-red-text)' : portfolio.skillDecayRisk === 'MEDIUM' ? 'var(--color-amber500-text)' : 'var(--color-emerald-text)' }}>
-            {portfolio.skillDecayRisk}
+            {DECAY_LABEL[portfolio.skillDecayRisk] ?? portfolio.skillDecayRisk}
           </div>
-          <div className="text-[10px] opacity-45 mt-0.5">Going Out of Date</div>
+          <div className="text-[10px] opacity-45 mt-0.5">Skill Freshness</div>
         </div>
       </div>
 
@@ -108,7 +121,7 @@ const SkillPortfolioPanel: React.FC<SkillPortfolioPanelProps> = ({ portfolio }) 
                   <span className="text-[10px] font-semibold" style={{ color: 'var(--color-red-text)' }}>{s.skill}</span>
                   <span className="text-[9px] px-1 rounded"
                     style={{ background: 'rgba(239,68,68,0.12)', color: 'rgba(239,68,68,0.70)' }}>
-                    {s.trend}
+                    {TREND_LABEL[s.trend] ?? s.trend}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-[9px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--alpha-text-45)' }}>

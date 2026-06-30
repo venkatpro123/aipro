@@ -10121,3 +10121,1029 @@ html.light kbd { background: #f1f3f6; border-color: rgba(17,19,26,0.10); box-sha
     background: #fff !important; box-shadow: none !important; border: 1px solid #ddd !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PHASE 1 — VISUAL CONTENT EXPERIENCE TRANSFORMATION
+   New component CSS: ThreatLevelGauge · VisualRiskDriversMap ·
+   ActionRoadmapVisual · AIReasoningPanel flow · SignalHeatGrid
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── ThreatLevelGauge ────────────────────────────────────────────────────── */
+.threat-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px 16px;
+  border-radius: 20px;
+  background: var(--alpha-bg-04);
+  border: 1px solid var(--alpha-bg-08);
+}
+.threat-gauge-svg-wrap { width: 100%; max-width: 280px; }
+.threat-gauge-svg { width: 100%; height: auto; display: block; }
+
+.threat-gauge-urgency {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--urg-bg);
+  border: 1px solid var(--urg-border);
+}
+.threat-urgency-icon  { color: var(--urg-color); }
+.threat-urgency-label { font-size: 10px; font-weight: 800; color: var(--urg-color); font-family: var(--font-mono); letter-spacing: 0.10em; text-transform: uppercase; }
+.threat-urgency-sep   { font-size: 9px; color: var(--alpha-text-25); }
+.threat-urgency-clock { color: var(--alpha-text-35); }
+.threat-urgency-window{ font-size: 10px; color: var(--alpha-text-55); font-family: var(--font-mono); }
+.threat-urgency-company{ font-size: 10px; font-weight: 700; color: var(--alpha-text-70); }
+
+.threat-intel-chips { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.threat-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  width: 100%;
+}
+.threat-chip--risk   { background: rgba(220,38,38,0.06);   border: 1px solid rgba(220,38,38,0.18); }
+.threat-chip--shield { background: rgba(16,185,129,0.06);  border: 1px solid rgba(16,185,129,0.18); }
+.threat-chip-label { font-size: 8px; font-weight: 800; font-family: var(--font-mono); letter-spacing: 0.10em; text-transform: uppercase; color: var(--alpha-text-35); margin-bottom: 2px; }
+.threat-chip-text  { font-size: 11px; color: var(--alpha-text-72); line-height: 1.4; }
+
+.threat-primary-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--alpha-bg-04);
+  border: 1px solid var(--alpha-bg-08);
+  color: var(--alpha-text-50);
+}
+.threat-action-label { font-size: 8px; font-weight: 800; font-family: var(--font-mono); letter-spacing: 0.10em; text-transform: uppercase; color: var(--alpha-text-35); flex-shrink: 0; }
+.threat-action-text  { font-size: 11px; color: var(--alpha-text-70); line-height: 1.3; }
+
+html.light .threat-gauge-wrap { background: rgba(17,19,26,0.03); border-color: rgba(17,19,26,0.08); }
+html.light .threat-chip--risk   { background: rgba(220,38,38,0.04);  border-color: rgba(220,38,38,0.12); }
+html.light .threat-chip--shield { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.12); }
+
+/* ── VisualRiskDriversMap ────────────────────────────────────────────────── */
+.vrd-wrap { display: flex; flex-direction: column; gap: 8px; }
+.vrd-section-label {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--alpha-text-30); font-family: var(--font-mono);
+}
+.vrd-stack-bar {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  background: var(--alpha-bg-06);
+}
+.vrd-stack-segment {
+  height: 100%;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+.vrd-stack-segment:hover { opacity: 1 !important; }
+
+.vrd-nodes { display: flex; flex-direction: column; gap: 4px; }
+.vrd-node {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+.vrd-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-align: left;
+}
+.vrd-score-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.vrd-node-label { flex: 1; font-size: 11px; font-weight: 600; color: var(--alpha-text-78); line-height: 1.2; }
+.vrd-mini-bar-wrap {
+  width: 48px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--alpha-bg-06);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.vrd-mini-bar-fill { height: 100%; border-radius: 2px; }
+.vrd-chevron { color: var(--alpha-text-25); transition: transform 0.18s; }
+.vrd-chevron--open { transform: rotate(180deg); }
+.vrd-node-reason { padding: 0 10px 8px 10px; }
+.vrd-reason-text { font-size: 10px; color: var(--alpha-text-50); line-height: 1.6; }
+
+/* ── ActionRoadmapVisual ─────────────────────────────────────────────────── */
+.arm-wrap { display: flex; flex-direction: column; gap: 10px; }
+.arm-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.arm-header-label {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--alpha-text-30); font-family: var(--font-mono); flex: 1;
+}
+.arm-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+.arm-column { display: flex; flex-direction: column; gap: 6px; }
+.arm-column-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.arm-col-icon { color: var(--col-accent); flex-shrink: 0; }
+.arm-col-label { font-size: 11px; font-weight: 800; color: var(--alpha-text-85); }
+.arm-col-sub   { font-size: 9px; color: var(--alpha-text-40); font-family: var(--font-mono); margin-top: 1px; }
+.arm-col-count {
+  flex-shrink: 0;
+  font-size: 10px; font-weight: 900; font-family: var(--font-mono);
+  padding: 2px 6px; border-radius: 999px;
+  background: var(--alpha-bg-06); color: var(--alpha-text-50);
+}
+.arm-column-cards { display: flex; flex-direction: column; gap: 5px; }
+
+.arm-card {
+  position: relative;
+  display: flex;
+  border-radius: 10px;
+  border: 1px solid var(--arm-border);
+  overflow: hidden;
+  background: var(--alpha-bg-03);
+}
+.arm-card-bar { width: 3px; flex-shrink: 0; background: var(--arm-bar); opacity: 0.85; }
+.arm-card-body { flex: 1; padding: 9px 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.arm-card-title-row { display: flex; align-items: flex-start; gap: 6px; }
+.arm-card-title { flex: 1; font-size: 11px; font-weight: 700; color: var(--alpha-text-82); line-height: 1.3; }
+.arm-live-badge {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 3px;
+  font-size: 8px; font-weight: 800; letter-spacing: 0.08em; font-family: var(--font-mono);
+  padding: 1px 5px; border-radius: 4px;
+  background: rgba(16,185,129,0.10); color: var(--color-emerald-text);
+  border: 1px solid rgba(16,185,129,0.20);
+}
+.arm-card-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.arm-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; font-weight: 700; font-family: var(--font-mono);
+  padding: 2px 6px; border-radius: 5px;
+}
+.arm-badge--risk     { background: rgba(16,185,129,0.09); color: var(--color-emerald-text);   border: 1px solid rgba(16,185,129,0.18); }
+.arm-badge--effort   { background: var(--alpha-bg-06);    color: var(--alpha-text-45);          border: 1px solid var(--alpha-bg-08); }
+.arm-badge--deadline { background: rgba(34,211,238,0.07); color: var(--color-cyan-text);        border: 1px solid rgba(34,211,238,0.18); }
+.arm-expand-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; font-weight: 600; color: var(--alpha-text-30);
+  background: none; border: none; cursor: pointer; padding: 0;
+  align-self: flex-start;
+  transition: color 0.15s;
+}
+.arm-expand-btn:hover { color: var(--alpha-text-60); }
+.arm-detail-text { font-size: 10px; color: var(--alpha-text-50); line-height: 1.6; padding-top: 4px; }
+
+html.light .arm-card { background: rgba(17,19,26,0.02); }
+html.light .arm-col-count { background: rgba(17,19,26,0.05); }
+
+/* ── AIReasoningPanel — visual flow viz (.rfv-*) ─────────────────────────── */
+.rfv-wrap {
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--alpha-bg-04);
+  border: 1px solid var(--alpha-bg-08);
+}
+.rfv-nodes { display: flex; flex-direction: column; gap: 8px; }
+.rfv-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rfv-score-ring {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rfv-ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rfv-ring-score {
+  position: relative;
+  z-index: 1;
+  font-size: 11px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.rfv-node-info { flex: 1; min-width: 0; }
+.rfv-node-label { font-size: 11px; font-weight: 700; color: var(--alpha-text-80); line-height: 1.2; margin-bottom: 4px; }
+.rfv-node-meta { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+.rfv-ev-badge {
+  font-size: 8px; font-weight: 700; font-family: var(--font-mono);
+  padding: 1px 5px; border-radius: 4px; border: 1px solid transparent;
+}
+.rfv-wt-badge {
+  font-size: 9px; font-weight: 600; font-family: var(--font-mono);
+  color: var(--alpha-text-30);
+}
+.rfv-wt-bar-track { height: 3px; background: var(--alpha-bg-06); border-radius: 2px; overflow: hidden; }
+.rfv-wt-bar-fill  { height: 100%; border-radius: 2px; }
+
+.rfv-final {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--alpha-bg-06);
+}
+.rfv-arrow { flex: 0 0 auto; }
+.rfv-final-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.rfv-final-num   { font-size: 26px; font-weight: 900; font-family: var(--font-mono); line-height: 1; }
+.rfv-final-label { font-size: 8px; font-weight: 800; letter-spacing: 0.12em; color: var(--alpha-text-30); font-family: var(--font-mono); }
+.rfv-conf-label  { font-size: 9px; color: var(--alpha-text-35); font-family: var(--font-mono); }
+
+html.light .rfv-wrap { background: rgba(17,19,26,0.03); border-color: rgba(17,19,26,0.07); }
+
+/* ── SignalHeatGrid ──────────────────────────────────────────────────────── */
+.shg-wrap { display: flex; flex-direction: column; gap: 10px; }
+.shg-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.shg-header-icon  { color: var(--alpha-text-35); }
+.shg-header-label {
+  flex: 1;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--alpha-text-30); font-family: var(--font-mono);
+}
+.shg-header-summary { display: flex; align-items: center; gap: 5px; }
+.shg-avg-label { font-size: 8px; font-weight: 700; color: var(--alpha-text-25); font-family: var(--font-mono); text-transform: uppercase; }
+.shg-avg-num   { font-size: 13px; font-weight: 900; font-family: var(--font-mono); }
+.shg-hot-badge {
+  font-size: 8px; font-weight: 800; font-family: var(--font-mono); letter-spacing: 0.06em;
+  padding: 2px 6px; border-radius: 5px;
+  background: rgba(220,38,38,0.10); color: #f87171; border: 1px solid rgba(220,38,38,0.20);
+}
+
+.shg-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+.shg-legend-item { display: flex; align-items: center; gap: 4px; }
+.shg-legend-dot  { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+.shg-legend-label{ font-size: 9px; color: var(--alpha-text-35); font-family: var(--font-mono); }
+
+.shg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.shg-cell {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.shg-cell-bar { height: 3px; background: var(--alpha-bg-06); }
+.shg-cell-bar-fill { height: 100%; border-radius: 0; }
+.shg-cell-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.shg-cell-cat { display: flex; align-items: center; gap: 4px; }
+.shg-cat-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.shg-cat-label { font-size: 8px; font-weight: 700; font-family: var(--font-mono); color: var(--alpha-text-30); text-transform: uppercase; letter-spacing: 0.08em; }
+.shg-signal-label { font-size: 11px; font-weight: 700; color: var(--alpha-text-80); line-height: 1.3; }
+.shg-cell-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
+.shg-value-chip {
+  font-size: 9px; font-weight: 700; font-family: var(--font-mono);
+  padding: 1px 5px; border-radius: 5px; border: 1px solid transparent;
+}
+.shg-strength-num { font-size: 16px; font-weight: 900; font-family: var(--font-mono); line-height: 1; }
+.shg-expand-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--alpha-text-25); padding: 0; align-self: flex-end;
+  transition: color 0.15s;
+}
+.shg-expand-btn:hover { color: var(--alpha-text-55); }
+.shg-detail-text { font-size: 9px; color: var(--alpha-text-45); line-height: 1.6; overflow: hidden; }
+.shg-category-section { display: flex; flex-direction: column; gap: 6px; }
+.shg-category-label {
+  font-size: 8px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+html.light .shg-hot-badge { background: rgba(220,38,38,0.06); color: #dc2626; border-color: rgba(220,38,38,0.14); }
+
+/* ── alpha-bg-03 token (used by arm-card) ────────────────────────────────── */
+:root { --alpha-bg-03: rgba(255,255,255,0.03); }
+
+/* ============================================================================
+   PHASE UX-VISUAL-01 — PREMIUM DARK THEME
+   Near-black backgrounds · genuine glass morphism · ambient orb depth
+   ============================================================================ */
+
+/* ── 1. Deeper token values — override :root at cascade end ─────────────── */
+:root {
+  /* Page background: near-pure black, minimal blue hue */
+  --bg-deep:     oklch(0.06 0.007 265);
+  --bg:          oklch(0.09 0.009 265);
+  --bg-raised:   oklch(0.13 0.011 265);
+  --bg-card:     oklch(0.14 0.012 265);
+  --bg-surface:  oklch(0.12 0.010 265);
+  --bg-elevated: oklch(0.19 0.015 265);
+
+  /* ShadCN surface tokens — same depth upgrade */
+  --background:  oklch(0.09 0.009 265);
+  --surface-1:   oklch(0.14 0.012 265);
+  --surface-2:   oklch(0.19 0.015 265);
+  --surface-3:   oklch(0.24 0.018 265);
+  --card:        oklch(0.14 0.012 265);
+  --popover:     oklch(0.14 0.012 265);
+
+  /* Elevation system — 4 layers, deeper base */
+  --elevation-0: oklch(0.06 0.007 265);
+  --elevation-1: oklch(0.11 0.010 265);
+  --elevation-2: oklch(0.15 0.013 265);
+  --elevation-3: oklch(0.20 0.016 265);
+  --elevation-4: oklch(0.26 0.019 265);
+
+  /* Premium gold accent — reserved for top-tier highlights */
+  --gold:        #C9A84C;
+  --gold-bright: #E8C46A;
+  --gold-dim:    rgba(201,168,76,0.08);
+  --gold-glow:   rgba(201,168,76,0.18);
+
+  /* Enhanced ambient gradients — larger, deeper orbs */
+  --mesh-hero:
+    radial-gradient(ellipse 100% 80% at 10% 30%,  rgba(0,212,224,0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 80%  100% at 90% 10%,  rgba(124,58,237,0.12) 0%, transparent 62%),
+    radial-gradient(ellipse 90%  70% at 50%  95%,  rgba(16,185,129,0.07) 0%, transparent 58%);
+  --mesh-subtle:
+    radial-gradient(ellipse 140% 90% at 2%  -5%,   rgba(0,212,224,0.09) 0%, transparent 58%),
+    radial-gradient(ellipse 110% 80% at 98% 8%,   rgba(124,58,237,0.07) 0%, transparent 52%),
+    radial-gradient(ellipse 90%  120% at 48% 108%, rgba(16,185,129,0.05) 0%, transparent 58%);
+
+  /* Premium shadows — deeper blacks, more saturated */
+  --shadow-sm:         0 1px 5px rgba(0,0,0,0.55),  0 0 0 1px rgba(255,255,255,0.050) inset;
+  --shadow-md:         0 4px 22px rgba(0,0,0,0.60), 0 0 0 1px rgba(255,255,255,0.055) inset;
+  --shadow-lg:         0 8px 40px rgba(0,0,0,0.68), 0 0 0 1px rgba(255,255,255,0.060) inset;
+  --shadow-xl:         0 16px 60px rgba(0,0,0,0.78), 0 0 0 1px rgba(255,255,255,0.065) inset;
+  --shadow-card:       0 2px 14px rgba(0,0,0,0.50), 0 0 0 1px rgba(255,255,255,0.055) inset;
+  --shadow-card-hover: 0 10px 40px rgba(0,0,0,0.68), 0 0 0 1px rgba(255,255,255,0.090) inset, 0 0 28px rgba(0,212,224,0.07);
+  --shadow-score:      0 0 120px rgba(0,212,224,0.28), 0 28px 80px rgba(0,0,0,0.80);
+  --shadow-glow-cyan:  0 0 48px rgba(0,212,224,0.32), 0 0 96px rgba(0,212,224,0.14);
+  --shadow-glow:       0 0 56px rgba(0,212,224,0.24);
+  --shadow-depth:      0 20px 60px -24px rgba(0,0,0,0.85), 0 1px 0 0 rgba(255,255,255,0.07) inset;
+
+  /* Elevation shadows */
+  --shadow-elev-1: 0 1px 5px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.048) inset;
+  --shadow-elev-2: 0 4px 22px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.058) inset;
+  --shadow-elev-3: 0 8px 36px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.068) inset;
+  --shadow-elev-4: 0 16px 60px rgba(0,0,0,0.80), 0 0 0 1px rgba(255,255,255,0.078) inset;
+
+  /* Premium nav tokens */
+  --nav-bg:         rgba(5,7,12,0.93);
+  --nav-bg-heavy:   rgba(3,4,8,0.98);
+  --nav-border:     rgba(255,255,255,0.068);
+  --nav-border-top: rgba(255,255,255,0.080);
+
+  /* Premium border */
+  --border: oklch(1 0 0 / 7.5%);
+}
+
+/* ── 2. Page background — true near-black with ambient orbs (fixed) ─────── */
+body {
+  background-color: oklch(0.06 0.007 265);
+  background-image:
+    radial-gradient(ellipse 160% 100% at 5%  -12%, rgba(0,212,224,0.10) 0%, transparent 58%),
+    radial-gradient(ellipse 120% 130% at 98% 108%, rgba(124,58,237,0.09) 0%, transparent 58%),
+    radial-gradient(ellipse 90%  70%  at 50%  55%, rgba(0,0,0,0.35)     0%, transparent 70%);
+  background-attachment: fixed;
+}
+
+/* ── 3. Glass card — genuine backdrop-blur morphism ─────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,0.033);
+  border: 1px solid rgba(255,255,255,0.077);
+  border-radius: var(--radius-xl);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  backdrop-filter: blur(18px) saturate(165%);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.48), 0 0 0 1px rgba(255,255,255,0.052) inset;
+}
+.glass-card:hover {
+  border-color: rgba(255,255,255,0.105);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.62), 0 0 0 1px rgba(255,255,255,0.085) inset, 0 0 24px rgba(0,212,224,0.06);
+}
+.glass-card-md {
+  background: rgba(255,255,255,0.020);
+  border: 1px solid rgba(255,255,255,0.068);
+  border-radius: var(--radius-xl);
+  -webkit-backdrop-filter: blur(14px) saturate(155%);
+  backdrop-filter: blur(14px) saturate(155%);
+}
+
+/* ── 4. Score hero — premium glow + gradient surface ────────────────────── */
+.score-hero {
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.042) 0%,
+    rgba(255,255,255,0.018) 100%);
+  border: 1px solid rgba(255,255,255,0.088);
+  box-shadow: var(--shadow-elev-2), 0 0 48px rgba(0,212,224,0.07);
+}
+
+/* ── 5. Stat chip — glass morphism ──────────────────────────────────────── */
+.stat-chip {
+  background: rgba(255,255,255,0.030);
+  border: 1px solid rgba(255,255,255,0.074);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 1px 5px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.048) inset;
+}
+
+/* ── 6. Metric card — premium surface ───────────────────────────────────── */
+.metric-card {
+  background: rgba(255,255,255,0.024);
+  border: 1px solid rgba(255,255,255,0.074);
+  -webkit-backdrop-filter: blur(16px) saturate(155%);
+  backdrop-filter: blur(16px) saturate(155%);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.048) inset;
+}
+
+/* ── 7. Chart container — deep glass ────────────────────────────────────── */
+.chart-container {
+  background: rgba(3,5,9,0.72);
+  border: 1px solid rgba(255,255,255,0.077);
+  box-shadow: 0 4px 28px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.048) inset;
+}
+
+/* ── 8. Nav pill — rich premium glass ───────────────────────────────────── */
+.nav-inner {
+  background: rgba(5,7,12,0.87);
+  border: 1px solid rgba(255,255,255,0.092);
+  box-shadow:
+    0 4px 44px rgba(0,0,0,0.60),
+    0 1px 0 rgba(255,255,255,0.075) inset,
+    0 -1px 0 rgba(0,0,0,0.28) inset;
+}
+.nav-inner.scrolled {
+  background: rgba(3,4,8,0.97);
+  border-color: rgba(255,255,255,0.072);
+  box-shadow:
+    0 8px 56px rgba(0,0,0,0.75),
+    0 1px 0 rgba(255,255,255,0.058) inset;
+}
+
+/* ── 9. Mobile bottom nav — deeper black ────────────────────────────────── */
+.mobile-bottom-nav {
+  background: rgba(3,4,8,0.97);
+  border-top: 1px solid rgba(255,255,255,0.085);
+  box-shadow:
+    0 -4px 40px rgba(0,0,0,0.65),
+    0 -1px 0 rgba(255,255,255,0.055) inset;
+}
+
+/* ── 10. More sheet — premium bottom drawer ──────────────────────────────── */
+.more-sheet {
+  background: oklch(0.11 0.010 265);
+  border: 1px solid rgba(255,255,255,0.105);
+  box-shadow:
+    0 -18px 90px rgba(0,0,0,0.80),
+    0 -1px 0 rgba(255,255,255,0.070) inset;
+}
+
+/* ── 11. Glass panel variants ────────────────────────────────────────────── */
+.glass-panel {
+  background: rgba(8,11,18,0.75);
+  border: 1px solid rgba(255,255,255,0.085);
+  box-shadow:
+    0 12px 48px -12px rgba(0,0,0,0.65),
+    0 1px 0 rgba(255,255,255,0.040) inset;
+}
+.glass-panel-heavy {
+  background: rgba(4,5,10,0.94);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.75);
+}
+.glass-enhanced {
+  background: rgba(8,11,18,0.78);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 14px 48px -14px rgba(0,0,0,0.65),
+    0 1px 0 rgba(255,255,255,0.045) inset;
+}
+
+/* ── 12. Alert cards — richer premium variants ───────────────────────────── */
+.alert-card--warn {
+  background: linear-gradient(135deg, rgba(220,38,38,0.15), rgba(153,27,27,0.09));
+  border: 2px solid rgba(220,38,38,0.50);
+  box-shadow: 0 4px 20px rgba(220,38,38,0.08);
+}
+.alert-card--runway {
+  background: rgba(245,158,11,0.09);
+  border: 1px solid rgba(245,158,11,0.42);
+  box-shadow: 0 4px 20px rgba(245,158,11,0.06);
+}
+.alert-card--equity-critical {
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.32);
+}
+.alert-card--equity-high {
+  background: rgba(249,115,22,0.08);
+  border: 1px solid rgba(249,115,22,0.32);
+}
+
+/* ── 13. Adaptive block — premium surface ────────────────────────────────── */
+.glass-panel, [class*="adaptive-block"] {
+  -webkit-backdrop-filter: blur(14px) saturate(155%);
+  backdrop-filter: blur(14px) saturate(155%);
+}
+
+/* ── 14. Tab button active — premium indicator ───────────────────────────── */
+.tab-btn--active {
+  background: rgba(0,212,224,0.13);
+  border-color: rgba(0,212,224,0.32);
+  box-shadow: 0 0 0 1px rgba(0,212,224,0.10) inset, 0 0 16px rgba(0,212,224,0.07);
+}
+
+/* ── 15. CTA breathe — composited glow via filter (avoids paint re-trigger) */
+@keyframes breathe {
+  0%, 100% { filter: drop-shadow(0 0 14px rgba(0,212,224,0.28)); }
+  50%       { filter: drop-shadow(0 0 24px rgba(0,212,224,0.50)); }
+}
+
+/* ── 16. Primary button — premium cyan on hover ──────────────────────────── */
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--cyan-bright) 0%, #00c4d0 100%);
+  color: #000;
+  box-shadow: 0 0 36px rgba(0,212,224,0.50), 0 6px 24px rgba(0,0,0,0.40), 0 1px 0 rgba(255,255,255,0.30) inset;
+}
+
+/* ── 17. Score ring glow enhancement ─────────────────────────────────────── */
+.score-massive {
+  text-shadow: none; /* no text-shadow — let the SVG ring do the glow work */
+}
+
+/* ── 18. Surface glass tokens override ───────────────────────────────────── */
+:root {
+  --surface-glass:    rgba(255,255,255,0.033);
+  --surface-glass-md: rgba(255,255,255,0.020);
+  --border-glass:     rgba(255,255,255,0.077);
+  --surface-chip:     rgba(255,255,255,0.030);
+  --border-chip:      rgba(255,255,255,0.080);
+  --glass-light:      rgba(255,255,255,0.026);
+  --glass-mid:        rgba(255,255,255,0.052);
+  --glass-strong:     rgba(255,255,255,0.085);
+}
+html.light { --alpha-bg-03: rgba(17,19,26,0.025); }
+
+/* ============================================================================
+   PHASE PREMIUM-UX-02 — Premium Polish & User-Friendly Interactions
+   Applied at cascade-end. Dark-mode focused; no html.light overrides.
+   ============================================================================ */
+
+/* ── 1. Font rendering — crisp on all platforms ───────────────────────── */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── 2. Premium scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10);
+  border-radius: 10px;
+  transition: background 0.20s;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
+
+/* ── 3. Branded text selection ────────────────────────────────────────── */
+::selection {
+  background: rgba(0,212,224,0.22);
+  color: #ffffff;
+}
+
+/* ── 4. Focus ring — accessible + premium cyan ───────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(0,212,224,0.55);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* ── 5. Score hero — top-lit shimmer + depth ──────────────────────────── */
+.score-hero {
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.30s ease;
+}
+.score-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.22) 35%,
+    rgba(0,212,224,0.32) 65%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ── 6. Score number — gradient text for premium look ────────────────── */
+.score-massive {
+  background: linear-gradient(155deg, #ffffff 20%, rgba(0,212,224,0.88) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: none;
+  letter-spacing: -0.02em;
+}
+
+/* ── 7. Verdict and velocity refinement ───────────────────────────────── */
+.score-hero-verdict {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.score-hero-velocity {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--velocity-color, rgba(255,255,255,0.42));
+}
+
+/* ── 8. Glass card — hover lift + smooth transitions ─────────────────── */
+.glass-card {
+  will-change: transform;
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.20s ease;
+}
+.glass-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 44px rgba(0,0,0,0.68),
+              0 0 0 1px rgba(255,255,255,0.095) inset,
+              0 0 30px rgba(0,212,224,0.065);
+}
+
+/* ── 9. Alert cards — backdrop blur + semantic glow ─────────────────── */
+.alert-card {
+  border-radius: 16px;
+  padding: 16px;
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+}
+.alert-card--warn {
+  animation: warn-glow 4s ease-in-out infinite;
+}
+@keyframes warn-glow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(220,38,38,0.14)); }
+  50%       { filter: drop-shadow(0 0 22px rgba(220,38,38,0.28)); }
+}
+.alert-card--runway {
+  box-shadow: 0 0 28px rgba(245,158,11,0.07), 0 4px 18px rgba(0,0,0,0.38);
+}
+
+/* ── 10. Emergency card — backdrop blur ───────────────────────────────── */
+.emergency-card {
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* ── 11. Tab nav — active glowing underline ───────────────────────────── */
+.tab-btn {
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+  position: relative;
+}
+.tab-btn--active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 15%; right: 15%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0,212,224,0.85),
+    transparent
+  );
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ── 12. Primary button — lift + glow on hover ────────────────────────── */
+.btn-primary {
+  transition: all 0.20s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 36px rgba(0,212,224,0.52),
+    0 8px 24px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(255,255,255,0.20) inset;
+}
+.btn-primary:active { transform: translateY(0); transition-duration: 0.08s; }
+
+/* ── 13. Section labels — consistent premium mono ─────────────────────── */
+.mono-section-label {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+/* ── 14. Loading spinner — premium cyan ring ──────────────────────────── */
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid rgba(255,255,255,0.08);
+  border-top-color: #22d3ee;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 15. Skeleton shimmer — for loading states ────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.035) 0%,
+    rgba(255,255,255,0.070) 50%,
+    rgba(255,255,255,0.035) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-lg);
+}
+
+/* ── 16. Gradient section divider ─────────────────────────────────────── */
+.gradient-hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,212,224,0.18) 30%,
+    rgba(124,58,237,0.16) 70%,
+    transparent 100%
+  );
+  margin: 8px 0;
+}
+
+/* ── 17. Form inputs — premium dark glass ─────────────────────────────── */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+select,
+textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.90);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.20s ease, box-shadow 0.20s ease;
+  outline: none;
+  -webkit-appearance: none;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(0,212,224,0.40);
+  box-shadow: 0 0 0 3px rgba(0,212,224,0.10);
+}
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255,255,255,0.28);
+}
+
+/* ── 18. Premium checkbox ─────────────────────────────────────────────── */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  border-radius: 5px;
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+input[type="checkbox"]:hover {
+  border-color: rgba(0,212,224,0.50);
+  background: rgba(0,212,224,0.06);
+}
+input[type="checkbox"]:checked {
+  background: #00c4d0;
+  border-color: #22d3ee;
+  box-shadow: 0 0 8px rgba(0,212,224,0.38);
+}
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 1.5px; left: 4.5px;
+  width: 4px; height: 7px;
+  border: 2px solid #000;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* ── 19. Threat level gauge — enhance ring glow ───────────────────────── */
+.threat-gauge-ring {
+  filter: drop-shadow(0 0 10px rgba(0,212,224,0.25));
+  transition: filter 0.30s ease;
+}
+
+/* ── 20. Visual risk driver bars — animated growth ────────────────────── */
+.vrd-bar {
+  transition: width 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── 21. Action roadmap — step card lift on hover ─────────────────────── */
+.arm-step-card {
+  transition: box-shadow 0.22s ease, transform 0.18s ease;
+}
+.arm-step-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.55), 0 0 16px rgba(0,212,224,0.06);
+}
+
+/* ── 22. AdaptiveBlock header — smooth expand ─────────────────────────── */
+.adaptive-block-header {
+  transition: background 0.18s ease;
+}
+.adaptive-block-header:hover {
+  background: rgba(255,255,255,0.025);
+}
+
+/* ── 23. Score ring hero — card-level glow on high risk ──────────────── */
+.score-hero[data-risk="critical"] {
+  box-shadow: var(--shadow-elev-2), 0 0 56px rgba(220,38,38,0.10);
+}
+.score-hero[data-risk="high"] {
+  box-shadow: var(--shadow-elev-2), 0 0 48px rgba(249,115,22,0.10);
+}
+.score-hero[data-risk="moderate"] {
+  box-shadow: var(--shadow-elev-2), 0 0 40px rgba(245,158,11,0.08);
+}
+.score-hero[data-risk="low"] {
+  box-shadow: var(--shadow-elev-2), 0 0 40px rgba(16,185,129,0.08);
+}
+
+/* ── 24. Mobile nav icons — active glow ───────────────────────────────── */
+.mobile-nav-item--active svg,
+[data-active="true"] svg {
+  filter: drop-shadow(0 0 6px rgba(0,212,224,0.60));
+  color: #22d3ee;
+}
+
+/* ── 25. CTA breathe upgrade — richer glow range ─────────────────────── */
+@keyframes breathe {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(0,212,224,0.30)); }
+  50%       { filter: drop-shadow(0 0 22px rgba(0,212,224,0.58)); }
+}
+
+/* ── 26. Top-lit card variant — premium highlight ─────────────────────── */
+.card-premium {
+  position: relative;
+  overflow: hidden;
+}
+.card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,0.18) 40%,
+    rgba(255,255,255,0.06) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── 27. Gradient text utility ────────────────────────────────────────── */
+.text-gradient-cyan {
+  background: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── 28. Live signal badge — animated dot ─────────────────────────────── */
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 6px rgba(0,212,224,0.60);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.55; transform: scale(0.82); }
+}
+
+/* ── 29. Score improvement highlight ─────────────────────────────────── */
+@keyframes score-improve {
+  0%   { box-shadow: 0 0 0 rgba(16,185,129,0); }
+  40%  { box-shadow: 0 0 36px rgba(16,185,129,0.28); }
+  100% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+}
+.score-improved {
+  animation: score-improve 1.8s ease-out forwards;
+}
+
+/* ── 30. Collapsible content — smooth height transition ───────────────── */
+[data-state="open"]  { animation: slide-down 0.22s ease; }
+[data-state="closed"]{ animation: slide-up   0.18s ease; }
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ── 31. Safe pivot role cards — lift + glow ─────────────────────────── */
+.safe-pivot-card {
+  transition: box-shadow 0.22s ease, transform 0.18s ease, border-color 0.22s ease;
+}
+.safe-pivot-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0,212,224,0.22);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.55), 0 0 18px rgba(0,212,224,0.07);
+}
+
+/* ── 32. Phase item complete ─────────────────────────────────────────── */
+.phase-item--complete {
+  opacity: 0.65;
+  text-decoration-line: line-through;
+  text-decoration-color: rgba(0,212,224,0.35);
+  transition: opacity 0.25s ease;
+}
+.phase-item--complete:hover { opacity: 0.80; }
+

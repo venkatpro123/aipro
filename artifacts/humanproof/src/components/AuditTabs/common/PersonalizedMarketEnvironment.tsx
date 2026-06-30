@@ -186,7 +186,7 @@ function aiDisplacementCopy(
   if (aiRisk >= 0.65) {
     return {
       headline: `${pct}% of ${roleDisplay} tasks automatable by 2027`,
-      body: `AI tools are actively replacing core ${roleDisplay} workflows. Your current risk score of ${currentScore}/100 reflects this. Job openings in this role are declining ${Math.abs(yoyChange)}% YoY. Pivot to adjacent AI-augmented roles now — the window is 12–18 months.`,
+      body: `AI tools are actively replacing core ${roleDisplay} workflows. Your current risk score of ${currentScore}/100 reflects this. Job openings in this role are down ${Math.abs(yoyChange)}% vs. last year. Pivot to adjacent AI-augmented roles now — the window is 12–18 months.`,
       urgency: 'high',
     };
   }
@@ -218,9 +218,9 @@ function contagionRoleCopy(
     return `An emerging layoff wave in ${industry} is reaching ${roleDisplay} headcount. Early-stage waves give you 2–3 months before pressure reaches ${companyName}. Use this window to build external pipeline.`;
   }
   if (waveIntensity === 'EARLY') {
-    return `Early signals of sector contagion in ${industry}. ${roleDisplay} headcount cuts at peers are starting but not yet widespread. Monitor the next earnings cycle closely.`;
+    return `Early signs of layoffs spreading in ${industry}. ${roleDisplay} headcount cuts at peer companies are starting but not yet widespread. Watch the next earnings cycle closely.`;
   }
-  return `No active contagion wave detected for ${roleDisplay}s in ${industry}. The absence of peer cuts is a mild positive signal for near-term ${companyName} stability.`;
+  return `No active layoff wave detected for ${roleDisplay}s in ${industry}. The absence of peer cuts is a mild positive signal for near-term ${companyName} stability.`;
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -491,7 +491,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1.5">
               <span className="text-[10px] font-semibold" style={{ color: 'var(--alpha-text-45)' }}>
-                DEMAND INDEX — {roleDisplay.toUpperCase()}
+                MARKET DEMAND — {roleDisplay.toUpperCase()}
               </span>
               <div className="flex items-center gap-1" style={{ color: dColor }}>
                 {trendIcon(trend, 11)}
@@ -527,17 +527,11 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             )}
             {yoyChange !== 0 && (
               <StatRow
-                label="YoY job openings change"
+                label="Job openings vs. last year"
                 value={`${yoyChange > 0 ? '+' : ''}${yoyChange}%`}
                 valueColor={yoyChange > 10 ? EMERALD : yoyChange < -10 ? RED : AMBER}
               />
             )}
-            <StatRow
-              label="AI substitution risk"
-              value={`${Math.round(aiRisk * 100)}%`}
-              valueColor={aiRisk >= 0.65 ? RED : aiRisk >= 0.35 ? AMBER : EMERALD}
-              sub="of your tasks automatable by 2027"
-            />
           </div>
 
           {/* Salary insight */}
@@ -561,7 +555,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           </div>
 
           <p className="text-[10px] mt-2.5" style={{ color: 'var(--alpha-text-25)' }}>
-            Data: {dataQuarter} · {snapshot?.calibrationNote ?? 'Market intelligence snapshot'}
+            Source: {dataQuarter} market data
           </p>
         </CollapsibleSection>
       )}
@@ -658,7 +652,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
               sub="posting to accepted offer"
             />
             <StatRow
-              label="Job openings YoY"
+              label="Job openings vs. last year"
               value={`${yoyChange > 0 ? '+' : ''}${yoyChange}%`}
               valueColor={yoyChange > 10 ? EMERALD : yoyChange < -10 ? RED : AMBER}
               sub="vs same quarter last year"
@@ -765,13 +759,17 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
           header={
             <SectionHeader
               icon={<Activity style={{ width: 14, height: 14 }} />}
-              title="Sector Contagion Wave"
-              badge={{ text: peerContagion.waveIntensity, color:
+              title="Industry Layoff Wave"
+              badge={{ text:
+                peerContagion.waveIntensity === 'PEAK'      ? 'SEVERE'    :
+                peerContagion.waveIntensity === 'ACTIVE'    ? 'SPREADING' :
+                peerContagion.waveIntensity === 'SPREADING' ? 'BUILDING'  : 'EARLY',
+                color:
                 peerContagion.waveIntensity === 'PEAK'     ? RED    :
                 peerContagion.waveIntensity === 'ACTIVE'   ? ORANGE :
                 peerContagion.waveIntensity === 'SPREADING'? AMBER  : EMERALD,
               }}
-              subtitle={`${peerContagion.totalPeersMonitored} peers monitored in ${industry}`}
+              subtitle={`Watching ${peerContagion.totalPeersMonitored} companies in ${industry}`}
             />
           }
         >
@@ -786,7 +784,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
               {[
                 { label: 'Direct cuts', value: peerContagion.directCompetitorCuts, warnIf: v => v > 0 },
                 { label: 'Adjacent cuts', value: peerContagion.adjacentPeerCuts, warnIf: v => v > 2 },
-                { label: 'Contagion score', value: peerContagion.contagionScore, warnIf: v => v > 30 },
+                { label: 'Spread severity', value: peerContagion.contagionScore, warnIf: v => v > 30 },
               ].map(({ label, value, warnIf }) => (
                 <div key={label} className="rounded-lg p-2 text-center" style={{ background: 'var(--alpha-bg-04)' }}>
                   <div className="text-sm font-black" style={{ color: warnIf(value) ? ORANGE : 'var(--alpha-text-70)' }}>
@@ -838,7 +836,7 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
               style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.22)' }}>
               <Clock style={{ width: 11, height: 11, color: ORANGE, flexShrink: 0 }} />
               <p className="text-[11px]" style={{ color: ORANGE }}>
-                Wave propagation estimated ~{peerContagion.estimatedPropagationDays} days to reach laggard companies
+                Expected to reach more companies in ~{peerContagion.estimatedPropagationDays} days
               </p>
             </div>
           )}

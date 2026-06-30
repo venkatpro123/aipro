@@ -6,7 +6,6 @@
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Shield } from 'lucide-react';
 import type { HybridResult } from '../../../../types/hybridResult';
 import type { CompanyData } from '../../../../data/companyDatabase';
 import type { PreparednessResult } from '../../../../services/preparednessScoreEngine';
@@ -14,7 +13,6 @@ import PreparednessScorePanel from '../../common/PreparednessScorePanel';
 import SkillGapIntelligencePanel from '../../common/SkillGapIntelligencePanel';
 import { JobMarketLiquidityCard } from '../../common/JobMarketLiquidityCard';
 import { SafePivotRolesCard } from '../../common/SafePivotRolesCard';
-import { CareerInsuranceStatus } from '../../common/CareerInsuranceStatus';
 import AdaptiveBlock from '../../common/AdaptiveBlock';
 import { useDashboardAdaptation } from '../../../../hooks/useDashboardAdaptation';
 import { GraduationCap, ArrowUpRight } from 'lucide-react';
@@ -34,12 +32,9 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
   const skillGap       = r.skillGapIntelligence;
   const jobLiquidity   = r.jobMarketLiquidity;
   const roleAdjacency  = r.roleAdjacency;
-  const careerResilience = r.careerResilience;
-  const internalMobility = r.internalMobility;
 
   const hasSkills   = Boolean(skillGap);
   const hasMarket   = Boolean(jobLiquidity);
-  const hasMobility = Boolean(internalMobility && (internalMobility.viabilityScore ?? 0) > 20);
 
   const currentRoleLabel = useMemo(() => (
     r.roleTitle ?? r.userProfile?.roleTitle ?? r.userProfile?.currentRole ??
@@ -102,64 +97,6 @@ export const AnalysisProtectionTab: React.FC<Props> = ({ result, companyData, em
         </motion.div>
       )}
 
-      {/* Internal Mobility — simplified. Auto-opens when the transfer window is
-          closing — too urgent to leave behind a collapsed accordion. */}
-      {hasMobility && (
-        <AdaptiveBlock
-          title="Internal transfer opportunities"
-          subtitle="Move within your company before market conditions shift"
-          icon={Shield}
-          tier={3}
-          accentColor="#14b8a6"
-          defaultOpen={Boolean(internalMobility?.isGoldenWindow)}
-        >
-          <div className="flex flex-col gap-2">
-            {internalMobility.isGoldenWindow && (
-              <div className="rounded-lg px-3 py-2 flex items-center gap-2"
-                style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.28)' }}>
-                <span className="text-[11px]">⚡</span>
-                <p className="text-[10px] font-black" style={{ color: 'var(--color-amber500-text)' }}>
-                  TRANSFER WINDOW CLOSING — Act before restructuring is announced.
-                </p>
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-bold" style={{ color: 'var(--alpha-text-85)' }}>
-                Viability score
-              </p>
-              <span className="text-[14px] font-black" style={{ color: 'var(--color-cyan-text)' }}>
-                {internalMobility.viabilityScore}/100
-              </span>
-            </div>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>
-              {internalMobility.viabilityRationale}
-            </p>
-            {(internalMobility.targetDepartments?.length ?? 0) > 0 && (
-              <div className="flex flex-col gap-1.5 mt-1">
-                <p className="text-[10px] font-bold tracking-wider" style={{ color: 'rgba(20,184,166,0.50)' }}>
-                  TOP INTERNAL TARGETS
-                </p>
-                {internalMobility.targetDepartments.slice(0, 2).map((t: any, i: number) => (
-                  <div key={i} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-                    style={{ background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.12)' }}>
-                    <span className="text-[11px] font-semibold flex-1" style={{ color: 'var(--alpha-text-85)' }}>
-                      {t.department}
-                    </span>
-                    <span className="text-[12px] font-black" style={{ color: 'var(--color-cyan-text)' }}>{t.fitScore}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </AdaptiveBlock>
-      )}
-
-      {/* Career Insurance Status */}
-      {careerResilience && (careerResilience.pillars?.length ?? 0) > 0 && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.10 }}>
-          <CareerInsuranceStatus resilience={careerResilience} />
-        </motion.div>
-      )}
 
 
     </div>

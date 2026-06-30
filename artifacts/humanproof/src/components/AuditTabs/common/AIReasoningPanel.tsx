@@ -1,21 +1,12 @@
-// AIReasoningPanel.tsx — Wave 6.4 AI Cognition Simulation
+// AIReasoningPanel.tsx — Phase 1 enhanced with visual reasoning flow
 //
-// PROBLEM: Platform shows conclusions (score = 67) but NEVER explains AI
-// reasoning. Users see "67/100" with no chain of thought. Zero trust basis.
-//
-// SOLUTION: "How we reached your score" — a chain-of-thought display showing
-// the top 3 dimensions that drive the score, with specific reasoning chains.
-// NOT the generic intelligence brief — this is structured, mechanical reasoning.
-//
-// Shows:
-//   1. Top 3 risk dimensions with their individual scores
-//   2. The reasoning behind each (specific data points, not generic text)
-//   3. How they combine into the final score
-//   4. Confidence level with data sources
+// Now leads with a visual "dimension flow scorecard" — users see at a glance
+// which 3 dimensions drive the score and their relative weight. The existing
+// text accordion remains as an optional "deep dive" layer.
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Brain, ChevronDown, ChevronUp, Info, GitMerge } from 'lucide-react';
 
 interface DimensionReasoning {
   label: string;           // "Company Financial Health"
@@ -38,10 +29,10 @@ interface Props {
 }
 
 const EVIDENCE_CONFIG = {
-  live:       { color: 'var(--color-emerald-text)', label: 'Live data'   },
-  regulatory: { color: 'var(--color-cyan-text)', label: 'Filed data'  },
-  heuristic:  { color: 'var(--color-amber500-text)', label: 'Estimated'   },
-  derived:    { color: 'var(--color-violet-text)', label: 'Derived'      },
+  live:       { color: 'var(--color-emerald-text)', label: 'Live data'       },
+  regulatory: { color: 'var(--color-cyan-text)', label: 'Official filings' },
+  heuristic:  { color: 'var(--color-amber500-text)', label: 'Estimated'     },
+  derived:    { color: 'var(--color-violet-text)', label: 'Calculated'      },
 };
 
 function scoreColor(score: number): string {
@@ -141,12 +132,113 @@ const DimensionRow: React.FC<{ dim: DimensionReasoning; rank: number; isFirst: b
   );
 };
 
+// ── Visual Reasoning Flow ─────────────────────────────────────────────────────
+// Shows dimensions as nodes → weighted arrows → final score node.
+// Replaces the visual gap that previously forced users to read 3 text blocks
+// just to understand which factors matter.
+
+const ReasoningFlowViz: React.FC<{
+  dims: DimensionReasoning[];
+  finalScore: number;
+  confidencePercent: number;
+}> = ({ dims, finalScore, confidencePercent }) => {
+  const finalColor = scoreColor(finalScore);
+  // Calculate weight percentages for bar widths
+  const totalWeight = dims.reduce((s, d) => s + d.weight, 0) || 1;
+
+  return (
+    <motion.div
+      className="rfv-wrap"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
+      {/* Dimension nodes */}
+      <div className="rfv-nodes">
+        {dims.map((dim, i) => {
+          const color  = scoreColor(dim.score);
+          const wtPct  = Math.round((dim.weight / totalWeight) * 100);
+          const evCfg  = EVIDENCE_CONFIG[dim.evidenceType] ?? EVIDENCE_CONFIG.heuristic;
+
+          return (
+            <motion.div
+              key={dim.shortKey}
+              className="rfv-node"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.08, duration: 0.28 }}
+            >
+              {/* Score circle */}
+              <div className="rfv-score-ring" style={{ '--rfv-color': color } as React.CSSProperties}>
+                <svg viewBox="0 0 40 40" className="rfv-ring-svg">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="var(--alpha-bg-06)" strokeWidth="3" />
+                  <motion.circle
+                    cx="20" cy="20" r="16"
+                    fill="none" stroke={color} strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 16}`}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 16 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 16 * (1 - dim.score / 100) }}
+                    transition={{ delay: 0.20 + i * 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: '20px 20px' }}
+                  />
+                </svg>
+                <span className="rfv-ring-score" style={{ color }}>{dim.score}</span>
+              </div>
+
+              {/* Label + meta */}
+              <div className="rfv-node-info">
+                <p className="rfv-node-label">{dim.label}</p>
+                <div className="rfv-node-meta">
+                  <span className="rfv-ev-badge" style={{ color: evCfg.color, background: `${evCfg.color}14`, borderColor: `${evCfg.color}25` }}>
+                    {evCfg.label}
+                  </span>
+                  <span className="rfv-wt-badge">{wtPct}% wt</span>
+                </div>
+
+                {/* Weight bar */}
+                <div className="rfv-wt-bar-track">
+                  <motion.div
+                    className="rfv-wt-bar-fill"
+                    style={{ background: color }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${wtPct}%` }}
+                    transition={{ delay: 0.30 + i * 0.06, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Arrow + final score */}
+      <motion.div
+        className="rfv-final"
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.40, duration: 0.35 }}
+      >
+        <div className="rfv-arrow">
+          <GitMerge className="w-5 h-5" style={{ color: 'var(--alpha-text-25)' }} />
+        </div>
+        <div className="rfv-final-score" style={{ '--rfv-final-color': finalColor } as React.CSSProperties}>
+          <span className="rfv-final-num" style={{ color: finalColor }}>{finalScore}</span>
+          <span className="rfv-final-label">COMBINED</span>
+          <span className="rfv-conf-label">{confidencePercent}% conf</span>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 export const AIReasoningPanel: React.FC<Props> = ({
   dimensions, finalScore, confidencePercent, primaryDataSources = [], topInsight,
 }) => {
   if (dimensions.length === 0) return null;
 
   const top3 = dimensions.slice(0, 3);
+  const [showDetail, setShowDetail] = useState(false);
 
   return (
     <motion.div
@@ -158,7 +250,7 @@ export const AIReasoningPanel: React.FC<Props> = ({
       <div className="flex items-center gap-2">
         <Brain className="w-4 h-4" style={{ color: 'rgba(34,211,238,0.60)' }} />
         <p className="text-[10px] font-black tracking-[0.14em]" style={{ color: 'var(--alpha-text-35)' }}>
-          HOW WE REACHED YOUR SCORE
+          WHY THIS SCORE
         </p>
       </div>
 
@@ -169,36 +261,51 @@ export const AIReasoningPanel: React.FC<Props> = ({
         </p>
       )}
 
-      {/* Dimension reasoning chain */}
-      <div className="space-y-1.5">
-        {top3.map((dim, i) => (
-          <DimensionRow key={dim.shortKey} dim={dim} rank={i} isFirst={i === 0} />
-        ))}
-      </div>
+      {/* ── VISUAL FLOW DIAGRAM ─────────────────────────────────────────────── */}
+      <ReasoningFlowViz dims={top3} finalScore={finalScore} confidencePercent={confidencePercent} />
+
+      {/* Collapsible detailed reasoning */}
+      <button
+        type="button"
+        className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left"
+        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
+        onClick={() => setShowDetail(v => !v)}
+      >
+        <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--alpha-text-30)' }}>
+          DETAILED REASONING
+        </p>
+        {showDetail
+          ? <ChevronUp className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-25)' }} />
+          : <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-25)' }} />
+        }
+      </button>
+
+      {showDetail && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.20 }}
+          className="space-y-1.5 overflow-hidden"
+        >
+          {top3.map((dim, i) => (
+            <DimensionRow key={dim.shortKey} dim={dim} rank={i} isFirst={i === 0} />
+          ))}
+        </motion.div>
+      )}
 
       {/* Score combination footer */}
-      <div
-        className="rounded-xl px-3 py-2.5 flex items-center justify-between"
-        style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
-      >
-        <div>
-          <p className="text-[10px] font-bold tracking-widest mb-0.5" style={{ color: 'var(--alpha-text-25)' }}>
-            COMBINED RISK
-          </p>
-          {primaryDataSources.length > 0 && (
-            <p className="text-[10px] flex items-center gap-1" style={{ color: 'var(--alpha-text-25)' }}>
-              <Info className="w-2.5 h-2.5" />
-              {primaryDataSources.join(' + ')}
-            </p>
-          )}
-        </div>
-        <div className="text-right">
-          <p className="text-[22px] font-black" style={{ color: scoreColor(finalScore) }}>{finalScore}</p>
-          <p className="text-[10px]" style={{ color: 'var(--alpha-text-30)' }}>
-            {confidencePercent}% confidence
+      {primaryDataSources.length > 0 && (
+        <div
+          className="rounded-xl px-3 py-2 flex items-center gap-2"
+          style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
+        >
+          <Info className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--alpha-text-25)' }} />
+          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
+            Sources: {primaryDataSources.join(' + ')}
           </p>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 };
@@ -231,7 +338,7 @@ export function buildDimensionsFromResult(result: any): DimensionReasoning[] {
         ? 'Financial signals show moderate stress — monitoring recommended.'
         : 'Financial health appears stable — not a primary risk driver.',
       evidenceType: result._liveDataCoverage?.overallSource === 'live' ? 'live' : 'heuristic',
-      dataPoint: revGrowth != null ? `Revenue: ${revGrowth > 0 ? '+' : ''}${(revGrowth * 100).toFixed(1)}% YoY` : undefined,
+      dataPoint: revGrowth != null ? `Revenue: ${revGrowth > 0 ? '+' : ''}${(revGrowth * 100).toFixed(1)}% vs. last year` : undefined,
     });
   }
 
