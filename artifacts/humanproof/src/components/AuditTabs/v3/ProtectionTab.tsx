@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import { GraduationCap, ArrowUpRight, LifeBuoy } from 'lucide-react';
 import type { TabProps } from '../common/types';
+import AdaptiveBlock from '../common/AdaptiveBlock';
 import SkillGapIntelligencePanel from '../common/SkillGapIntelligencePanel';
 import SkillPortfolioPanel from '../common/SkillPortfolioPanel';
 import AIRiskSkillMatrix from '@/components/AIRiskSkillMatrix';
@@ -52,7 +54,7 @@ function buildFallbackIntel(roleKey: string, score: number): CareerIntelligence 
   };
 }
 
-export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
+export const ProtectionTab: React.FC<TabProps> = ({ result, emergencyMode }) => {
   const r = result as any;
   const skillGap      = r.skillGapIntelligence;
   const skillPortfolio = r.skillPortfolioFit;
@@ -107,6 +109,29 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
   const currentRoleLabel = r.roleTitle ?? r.userProfile?.roleTitle ?? intel?.displayRole ?? (roleKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Current Role');
   const hasContent = Boolean(skillGap || skillPortfolio || intel);
 
+  // Cluster gates — used to auto-open a cluster when it's the only place
+  // with a strong signal, and to show the AdaptiveBlock "empty" state when
+  // a whole cluster has nothing to show (mirrors AnalysisProtectionTab's
+  // approach, just grouping the full Beast Mode depth instead of trimming it).
+  const hasSkillsCluster = Boolean(
+    radarDimensions.length >= 3 || r.careerConfidence || skillGap || skillPortfolio
+    || r.skillFusion || r.techStackObsolescence || intel,
+  );
+  const hasMarketCluster = Boolean(
+    r.roleMarketDemand || careerPaths.length > 0
+    || (r.roleAdjacency?.adjacentRoles?.length ?? 0) > 0 || (r.roleAdjacency?.twoHopPaths?.length ?? 0) > 0,
+  );
+  const hasSafetyNetCluster = Boolean(r.userFinancialRunway || r.visaRisk);
+
+  // Auto-open gates — Skills opens by default (primary content for this tab).
+  // Market and Safety Net stay collapsed unless something urgent is inside,
+  // so a typical audit doesn't reproduce the old wall-of-cards on first paint.
+  const runwayMonths: number | undefined = r.userFinancialRunway?.monthsOfRunway;
+  const marketAutoOpen = hasMarketCluster && Boolean(emergencyMode);
+  const safetyNetAutoOpen = hasSafetyNetCluster && Boolean(
+    emergencyMode || (typeof runwayMonths === 'number' && runwayMonths <= 3) || r.visaRisk?.overallVisaRisk === 'CRITICAL',
+  );
+
   // Build skill dependency graph nodes/edges from intel (extracted from inline IIFE)
   const skillDepGraph = useMemo(() => {
     if (!intel) return null;
@@ -152,72 +177,65 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
         />
       </ScrollReveal>
 
-      {radarDimensions.length >= 3 && (
-        <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
-      )}
-      {/* Career confidence — 5-pillar readiness before skills breakdown */}
-      {r.careerConfidence && (
-        <ScrollReveal>
-          <CareerConfidencePanel confidence={r.careerConfidence} />
-        </ScrollReveal>
-      )}
+      {/* Skills & Risk Profile — everything about what you know and how exposed it is */}
+      <AdaptiveBlock
+        title="Skills & risk profile"
+        subtitle="Radar, gaps, portfolio fit, and AI exposure by skill"
+        icon={GraduationCap}
+        accentColor="var(--color-emerald-text)"
+        defaultOpen={hasSkillsCluster}
+        empty={!hasSkillsCluster}
+      >
+        {radarDimensions.length >= 3 && (
+          <SkillRadarChart dimensions={radarDimensions} title="SKILL RESILIENCE RADAR" />
+        )}
+        {r.careerConfidence && <CareerConfidencePanel confidence={r.careerConfidence} />}
+        {skillGap && <SkillGapIntelligencePanel skillGapIntelligence={skillGap} />}
+        {skillPortfolio && <SkillPortfolioPanel portfolio={skillPortfolio} />}
+        {r.skillFusion && <SkillFusionPanel fusion={r.skillFusion} />}
+        {r.techStackObsolescence && <TechObsolescencePanel techStackObsolescence={r.techStackObsolescence} />}
+        {intel && <AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} />}
+        {skillDepGraph}
+      </AdaptiveBlock>
 
-      {skillGap      && <ScrollReveal><SkillGapIntelligencePanel skillGapIntelligence={skillGap} /></ScrollReveal>}
-      {skillPortfolio && <ScrollReveal><SkillPortfolioPanel portfolio={skillPortfolio} /></ScrollReveal>}
-
-      {/* Skill Fusion — AI+human skill combination analysis */}
-      {r.skillFusion && (
-        <ScrollReveal><SkillFusionPanel fusion={r.skillFusion} /></ScrollReveal>
-      )}
-
-      {/* Tech Stack Obsolescence — risk assessment for declared tech skills */}
-      {r.techStackObsolescence && (
-        <ScrollReveal><TechObsolescencePanel techStackObsolescence={r.techStackObsolescence} /></ScrollReveal>
-      )}
-
-      {/* Role Market Demand — supply/demand analysis for user's role */}
-      <ScrollReveal><RoleMarketDemandPanel roleMarketDemand={r.roleMarketDemand} /></ScrollReveal>
-      {intel && <ScrollReveal><AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} /></ScrollReveal>}
-      {skillDepGraph}
-
-      {careerPaths.length > 0 && (
-        <ScrollReveal>
-          <CareerPathMap
-            currentRole={currentRoleLabel}
-            currentScore={result.total}
-            paths={careerPaths}
-          />
-        </ScrollReveal>
-      )}
-
-      {/* Financial runway assessment — above career evolution timeline */}
-      {r.userFinancialRunway && (
-        <ScrollReveal>
-          <UserFinancialRunwayPanel userFinancialRunway={r.userFinancialRunway} />
-        </ScrollReveal>
-      )}
-
-      {/* Visa risk — only displayed when shouldDisplay is true (handled inside panel) */}
-      {r.visaRisk && (
-        <ScrollReveal>
-          <VisaRiskPanel
-            visaRisk={r.visaRisk}
-            countryCode={result.countryKey}
-            tenureYears={result.tenureYears}
-          />
-        </ScrollReveal>
-      )}
-
-      {(r.roleAdjacency?.adjacentRoles?.length > 0 || r.roleAdjacency?.twoHopPaths?.length > 0) && (
-        <ScrollReveal>
+      {/* Market Position & Pivot Paths — where you stand and where you could move */}
+      <AdaptiveBlock
+        title="Market position & pivot paths"
+        subtitle="Demand for your role and safer adjacent roles"
+        icon={ArrowUpRight}
+        accentColor="#06b6d4"
+        defaultOpen={marketAutoOpen}
+        empty={!hasMarketCluster}
+      >
+        <RoleMarketDemandPanel roleMarketDemand={r.roleMarketDemand} />
+        {careerPaths.length > 0 && (
+          <CareerPathMap currentRole={currentRoleLabel} currentScore={result.total} paths={careerPaths} />
+        )}
+        {(r.roleAdjacency?.adjacentRoles?.length > 0 || r.roleAdjacency?.twoHopPaths?.length > 0) && (
           <CareerEvolutionTimeline
             currentRole={currentRoleLabel}
             currentScore={result.total}
             adjacentRoles={r.roleAdjacency?.adjacentRoles ?? []}
             twoHopPaths={r.roleAdjacency?.twoHopPaths}
           />
-        </ScrollReveal>
-      )}
+        )}
+      </AdaptiveBlock>
+
+      {/* Safety Net — financial runway and work-authorization exposure */}
+      <AdaptiveBlock
+        title="Safety net"
+        subtitle="Financial runway and visa/work-authorization exposure"
+        icon={LifeBuoy}
+        accentColor="var(--color-amber500-text)"
+        defaultOpen={safetyNetAutoOpen}
+        empty={!hasSafetyNetCluster}
+      >
+        {r.userFinancialRunway && <UserFinancialRunwayPanel userFinancialRunway={r.userFinancialRunway} />}
+        {r.visaRisk && (
+          <VisaRiskPanel visaRisk={r.visaRisk} countryCode={result.countryKey} tenureYears={result.tenureYears} />
+        )}
+      </AdaptiveBlock>
+
       {!hasContent && (
         <div className="rounded-xl px-4 py-8 text-center flex flex-col items-center gap-3" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <SkillEvolutionIllustration size={80} />

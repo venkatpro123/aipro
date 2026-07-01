@@ -87,18 +87,10 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
     });
   }
 
-  if (runwayMonths != null) {
-    const rColor = runwayMonths >= 9 ? '#10b981' : runwayMonths >= 4 ? '#f59e0b' : '#dc2626';
-    const rSub   = runwayMonths >= 9 ? 'Comfortable buffer' : runwayMonths >= 4 ? 'Adequate — build more' : 'Critical — act now';
-    stats.push({
-      icon: TrendingUp,
-      label: 'Financial Buffer',
-      value: `${runwayMonths} months`,
-      sub: rSub,
-      color: rColor,
-    });
-  }
-
+  // Note: financial runway is shown as its own headline dimension in
+  // CareerHealthDashboard (the card immediately above this one) — not
+  // repeated here as a stat tile, only used below to drive the urgency
+  // sentence so the two cards don't show the identical number twice.
   if (bestPivot) {
     const pivotRole = bestPivot.targetRoleLabel ?? bestPivot.title ?? bestPivot.role ?? bestPivot.label
       ?? (bestPivot.targetRoleKey ? String(bestPivot.targetRoleKey).replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : null)

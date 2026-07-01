@@ -159,17 +159,17 @@ function buildL1(score: number, cd: CompanyData, r: HybridResult, now: number): 
   const sigs: SubSignalEntry[] = [
     {
       id: 'stock90d', displayName: 'Stock 90-Day Change',
-      value: cd.stock90DayChange !== null
+      value: cd.stock90DayChange != null
         ? `${cd.stock90DayChange >= 0 ? '+' : ''}${cd.stock90DayChange}%`
         : 'N/A',
-      ...stockSrc, isMissing: cd.stock90DayChange === null,
+      ...stockSrc, isMissing: cd.stock90DayChange == null,
     },
     {
       id: 'revenueGrowth', displayName: 'Revenue Growth YoY',
-      value: cd.revenueGrowthYoY !== null
+      value: cd.revenueGrowthYoY != null
         ? `${cd.revenueGrowthYoY >= 0 ? '+' : ''}${cd.revenueGrowthYoY}%`
         : 'N/A',
-      ...revSrc, isMissing: cd.revenueGrowthYoY === null,
+      ...revSrc, isMissing: cd.revenueGrowthYoY == null,
     },
     {
       id: 'revenuePerEmp', displayName: 'Revenue per Employee',
@@ -197,18 +197,18 @@ function buildL1(score: number, cd: CompanyData, r: HybridResult, now: number): 
 
 function buildL2(score: number, cd: CompanyData, r: HybridResult, now: number): DimensionProvenanceData {
   const src = detectSource('layoff', cd, r, now);
-  const recent = cd.layoffsLast24Months[0] ?? null;
+  const recent = cd.layoffsLast24Months?.[0] ?? null;
 
   const sigs: SubSignalEntry[] = [
     {
       id: 'layoffRounds', displayName: 'Layoff Rounds (24 mo)',
-      value: `${cd.layoffRounds} round${cd.layoffRounds !== 1 ? 's' : ''}`,
-      ...src, isMissing: false,
+      value: cd.layoffRounds != null ? `${cd.layoffRounds} round${cd.layoffRounds !== 1 ? 's' : ''}` : 'No data',
+      ...src, isMissing: cd.layoffRounds == null,
     },
     {
       id: 'lastSeverity', displayName: 'Last Layoff Severity',
-      value: cd.lastLayoffPercent !== null ? `${cd.lastLayoffPercent}% headcount cut` : 'No data',
-      ...src, isMissing: cd.lastLayoffPercent === null,
+      value: cd.lastLayoffPercent != null ? `${cd.lastLayoffPercent}% headcount cut` : 'No data',
+      ...src, isMissing: cd.lastLayoffPercent == null,
     },
     {
       id: 'mostRecentEvent', displayName: 'Most Recent Event',

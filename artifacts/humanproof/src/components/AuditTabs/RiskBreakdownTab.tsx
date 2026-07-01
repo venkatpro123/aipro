@@ -8,12 +8,13 @@ import { motion } from "framer-motion";
 import {
   AlertTriangle, BarChart, Clock, Activity, CheckSquare,
   TrendingUp, TrendingDown, DollarSign, Shield, Cpu,
-  Globe, Briefcase, Users, Zap, Info,
+  Globe, Briefcase, Users, Zap, Info, Layers,
 } from "lucide-react";
 import { DimensionRadar } from "@/components/DimensionRadar";
 import { KeyRiskDriversPanel } from "@/components/LayoffCalculator/KeyRiskDriversPanel";
 import { StatCard } from "./common/StatCard";
 import { SectionHeader } from "./common/SectionHeader";
+import AdaptiveBlock from "./common/AdaptiveBlock";
 import { useAdaptiveSystem } from "@/hooks/useAdaptiveSystem";
 import { buildDimensionProvenance } from "../../services/dimensionProvenance";
 import { formatLayerNarrativeOrFallback } from "../../utils/layerNarrativeFormatter";
@@ -708,29 +709,40 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
           </div>
         </div>
 
-        {/* ── Key Risk Drivers — open by default ── */}
-        <div className="mb-6">
-          <SectionHeader
-            title="Key Risk Drivers Analysis"
-            description="The top signals contributing most to your score, classified as verified Facts, analytical Inferences, or forward-looking Predictions."
-          />
-          <KeyRiskDriversPanel
-            breakdown={result.breakdown}
-            roleTitle={result.workTypeKey}
-            companyName={result.companyName ?? ""}
-            dataQuality={dataQualityLabel}
-          />
-        </div>
+        {/* ── Deeper signal analysis — collapsed by default. The dimension cards,
+             radar, and confidence range above already answer "what's driving my
+             risk"; these three sections are evidence-level depth for users who
+             want to trace individual signals, not first-look content. ── */}
+        <AdaptiveBlock
+          title="Deeper signal analysis"
+          subtitle="Signal-level drivers, concentration risk, and score attribution"
+          icon={Layers}
+          accentColor="#22d3ee"
+          defaultOpen={false}
+        >
+          <div className="mb-6">
+            <SectionHeader
+              title="Key Risk Drivers Analysis"
+              description="The top signals contributing most to your score, classified as verified Facts, analytical Inferences, or forward-looking Predictions."
+            />
+            <KeyRiskDriversPanel
+              breakdown={result.breakdown}
+              roleTitle={result.workTypeKey}
+              companyName={result.companyName ?? ""}
+              dataQuality={dataQualityLabel}
+            />
+          </div>
 
-        {/* v12.0: Career Portfolio — risk concentration visualization */}
-        <div className="mt-6">
-          <CareerPortfolioPanel result={result} />
-        </div>
+          {/* v12.0: Career Portfolio — risk concentration visualization */}
+          <div className="mt-6">
+            <CareerPortfolioPanel result={result} />
+          </div>
 
-        {/* v17.0: Signal Attribution Waterfall — which signals drove the final score */}
-        <div className="mt-6">
-          <SignalAttributionWaterfall result={result} />
-        </div>
+          {/* v17.0: Signal Attribution Waterfall — which signals drove the final score */}
+          <div className="mt-6">
+            <SignalAttributionWaterfall result={result} />
+          </div>
+        </AdaptiveBlock>
 
       </motion.div>
     </section>

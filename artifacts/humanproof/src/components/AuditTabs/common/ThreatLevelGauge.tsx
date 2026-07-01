@@ -142,11 +142,13 @@ export const ThreatLevelGauge: React.FC<Props> = ({
             );
           })}
 
-          {/* Zone labels */}
+          {/* Zone labels — radius kept within W/2 (CX) minus text half-width so
+              "CRITICAL"/"SAFE" never clip past the viewBox edge (R + 26 put the
+              Critical label's right edge ~11px past the 240-wide viewBox). */}
           {ZONES.map(z => {
             const mid = (z.from + z.to) / 2;
             const a = scoreToAngle(mid);
-            const [lx, ly] = polar(a, R + 26);
+            const [lx, ly] = polar(a, R + 12);
             return (
               <text key={z.label} x={lx} y={ly}
                 textAnchor="middle" dominantBaseline="middle"

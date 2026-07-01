@@ -22,9 +22,11 @@ import {
   Minus,
   Zap,
   Building,
+  FileText,
 } from "lucide-react";
 import { SectionHeader } from "./common/SectionHeader";
 import { CollapsibleSection } from "./common/CollapsibleSection";
+import AdaptiveBlock from "./common/AdaptiveBlock";
 import type { TabProps } from "./common/types";
 import type { SignalQuality, ConsensusSnapshot } from "../../types/hybridResult";
 // v12.0
@@ -2028,12 +2030,13 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="mb-6">
-          <SectionHeader
-            title="Data Quality Dashboard"
-            description="Overview of the quality, freshness, and completeness of data used in your risk assessment."
-          />
-
+        <AdaptiveBlock
+          title="Data quality dashboard"
+          subtitle="Freshness, completeness, and edge-case warnings behind your risk assessment"
+          icon={Database}
+          accentColor="#22d3ee"
+          defaultOpen={false}
+        >
           {evaluationSnapshot && (
             <div className="mb-6 rounded-xl border border-cyan-500/25 bg-cyan-500/8 p-4">
               <h4 className="text-sm font-semibold text-cyan-300 mb-3">
@@ -3248,13 +3251,15 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             dataFreshness={result.dataFreshness}
             signalQuality={result.signalQuality}
           />
-        </div>
+        </AdaptiveBlock>
 
-        <div className="mb-6">
-          <SectionHeader
-            title="Model Calibration"
-            description="When the scoring formula was last calibrated against real outcomes, and how accurate it is."
-          />
+        <AdaptiveBlock
+          title="Model calibration & scoring internals"
+          subtitle="Formula weights, effective layer contributions, and regional calibration adjustments"
+          icon={BarChart}
+          accentColor="#f59e0b"
+          defaultOpen={false}
+        >
           <CalibrationFreshnessPanel
             calibrationCoverage={(result as any).calibrationCoverage}
             holdoutValidation={holdoutValidation}
@@ -3306,7 +3311,6 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
               </div>
             </div>
           )}
-        </div>
 
         {/* v8.0: Per-dimension calibration status with backtester */}
         <div className="mb-6">
@@ -3414,7 +3418,15 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             <ParentPropagationPanel propagation={(result as any).parentPropagation} />
           </div>
         )}
+        </AdaptiveBlock>
 
+        <AdaptiveBlock
+          title="Source, precedent & methodology"
+          subtitle="Data sources, conflict resolution, historical pattern match, and how the score was assessed"
+          icon={FileText}
+          accentColor="#a78bfa"
+          defaultOpen={false}
+        >
         {/* v7.0 Intelligence Upgrade 3: Action pool coverage audit */}
         <div className="mb-6">
           <SectionHeader
@@ -3479,7 +3491,15 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             />
           </div>
         </CollapsibleSection>
+        </AdaptiveBlock>
 
+        <AdaptiveBlock
+          title="Score confidence & uncertainty detail"
+          subtitle="Signal decay, credible intervals, and every factor that widens or narrows your score's range"
+          icon={Shield}
+          accentColor="#22d3ee"
+          defaultOpen={false}
+        >
         {/* v40.0: Per-signal decay weights — shows how each signal's age reduces its scoring weight */}
         {result.signalDecayWeights && (
           <div className="mt-6 rounded-xl border border-[var(--alpha-bg-08)] bg-[var(--alpha-bg-08)] p-5">
@@ -3681,6 +3701,7 @@ export const TransparencyTab: React.FC<TabProps> = ({ result, companyData }) => 
             </div>
           </div>
         )}
+        </AdaptiveBlock>
 
       </motion.div>
     </section>

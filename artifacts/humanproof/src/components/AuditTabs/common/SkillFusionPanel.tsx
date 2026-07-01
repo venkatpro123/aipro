@@ -205,20 +205,22 @@ const SkillFusionPanel: React.FC<SkillFusionPanelProps> = ({ fusion, className =
       </motion.div>
 
       {/* Quick win */}
-      <div className="rounded-xl p-3 flex items-start gap-2.5"
-        style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)' }}>
-        <Zap className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-400" />
-        <div>
-          <div className="text-xs font-semibold text-emerald-400/90 mb-0.5">Quickest win</div>
-          <div className="text-sm font-medium text-[var(--alpha-text-78)]">{fusion.quickestWin.label}</div>
-          <div className="text-xs text-[var(--alpha-text-50)] mt-0.5">
-            +{Math.round(fusion.quickestWin.salaryPremiumPct)}% premium · {fusion.quickestWin.gapClosureWeeks} weeks to achieve
+      {fusion.quickestWin && (
+        <div className="rounded-xl p-3 flex items-start gap-2.5"
+          style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)' }}>
+          <Zap className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-400" />
+          <div>
+            <div className="text-xs font-semibold text-emerald-400/90 mb-0.5">Quickest win</div>
+            <div className="text-sm font-medium text-[var(--alpha-text-78)]">{fusion.quickestWin.label}</div>
+            <div className="text-xs text-[var(--alpha-text-50)] mt-0.5">
+              +{Math.round(fusion.quickestWin.salaryPremiumPct)}% premium · {fusion.quickestWin.gapClosureWeeks} weeks to achieve
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Highest ROI */}
-      {fusion.highestROI.label !== fusion.quickestWin.label && (
+      {fusion.highestROI && fusion.highestROI.label !== fusion.quickestWin?.label && (
         <div className="rounded-xl p-3 flex items-start gap-2.5"
           style={{ background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.18)' }}>
           <TrendingUp className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-400" />
