@@ -129,9 +129,8 @@ const HeuristicBlock: React.FC<{ companyName?: string }> = ({ companyName }) => 
 // ── Gate 2: Soft degraded state — low confidence ──────────────────────────────
 
 const LowConfidenceBrief: React.FC<{
-  confidencePct: number;
   brief: IntelligenceBriefResult;
-}> = ({ confidencePct, brief }) => {
+}> = ({ brief }) => {
   const urgency = URGENCY_CONFIG[brief.urgencyLevel];
   return (
     <div
@@ -160,10 +159,9 @@ const LowConfidenceBrief: React.FC<{
       >
         <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-400" />
         <p className="text-[11px] leading-snug" style={{ color: 'var(--alpha-text-70)' }}>
-          <span className="font-semibold text-amber-400">Low data confidence ({confidencePct}%). </span>
-          This brief was generated from partial signals. Statements below are directionally
-          correct but may not reflect conditions specific to this company. Add profile data
-          or wait for live signals to resolve to improve accuracy.
+          <span className="font-semibold text-amber-400">Limited data available. </span>
+          This brief was generated from partial signals. Statements are directionally
+          correct but may not reflect conditions specific to this company.
         </p>
       </div>
       {/* Brief content at reduced opacity to signal degraded state */}
@@ -207,7 +205,7 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
   // Gate 2 (soft): confidence below evidence floor — show degraded state.
   const confidencePct = confidence ?? 100;
   if (confidencePct < EVIDENCE_FLOOR_PCT) {
-    return <LowConfidenceBrief confidencePct={confidencePct} brief={intelligenceBrief} />;
+    return <LowConfidenceBrief brief={intelligenceBrief} />;
   }
 
   // Gate 3: suppress generic placeholder content emitted when the LLM returned null.

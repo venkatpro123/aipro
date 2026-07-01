@@ -643,10 +643,6 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                       <p className="text-[10px] font-black" style={{ color: 'var(--color-cyan-text)' }}>
                         YOUR MARKET — {cityMarketIntelligence.cityName.toUpperCase()}
                       </p>
-                      <span className="text-[9px] px-1 rounded"
-                        style={{ background: 'rgba(148,163,184,0.14)', color: 'var(--color-slate400-text)' }}>
-                        ESTIMATED
-                      </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       {[
@@ -761,10 +757,6 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
                         />
                       ))}
                     </div>
-                    <p className="text-[9px] mt-2" style={{ color: 'var(--alpha-text-25)' }}>
-                      Opportunity score = placement speed + employer depth + salary premium + volume.
-                      ESTIMATED — LinkedIn Workforce Report 2024, Indeed US Hiring Lab 2025.
-                    </p>
                   </>
                 )}
 
