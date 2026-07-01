@@ -220,11 +220,6 @@ const PillarRow: React.FC<PillarRowProps> = ({ pillar, isExpanded, onToggle }) =
                       </span>
                     </span>
                   </p>
-                  {pillar.benchmark.formulaNote && (
-                    <p className="text-[10px] mt-1 leading-snug" style={{ color: 'var(--alpha-text-25)' }}>
-                      Formula: {pillar.benchmark.formulaNote}
-                    </p>
-                  )}
                 </div>
               )}
             </div>

@@ -180,7 +180,6 @@ export const MissingDataCard: React.FC<Props> = ({ result, companyData, personal
         <EyeOff className="w-3 h-3 flex-shrink-0" style={{ color: `${headerColor}70` }} />
         <div className="flex-1 min-w-0">
           <p className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-35)' }}>
-            CONFIDENCE: {result?.confidencePercent ?? '?'}% —{' '}
             <span style={{ color: headerColor }}>
               {items.length} data gap{items.length !== 1 ? 's' : ''} affecting this score
             </span>

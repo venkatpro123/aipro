@@ -225,7 +225,6 @@ const ReasoningFlowViz: React.FC<{
         <div className="rfv-final-score" style={{ '--rfv-final-color': finalColor } as React.CSSProperties}>
           <span className="rfv-final-num" style={{ color: finalColor }}>{finalScore}</span>
           <span className="rfv-final-label">COMBINED</span>
-          <span className="rfv-conf-label">{confidencePercent}% conf</span>
         </div>
       </motion.div>
     </motion.div>

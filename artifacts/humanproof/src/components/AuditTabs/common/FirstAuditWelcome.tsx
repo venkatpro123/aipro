@@ -54,14 +54,10 @@ export const FirstAuditWelcome: React.FC<Props> = ({
         : `Only ${profileFieldsFilled}/15 profile fields filled — score is still directional. Update your profile for sharper analysis.`
     : 'We mixed your profile with company-specific risk signals.';
 
-  const confidenceLabel = confidencePercent != null
-    ? confidencePercent >= 75
-      ? `${confidencePercent}% confidence · ${criticalActionCount > 0 ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'}` : 'No critical actions'}`
-      : confidencePercent >= 50
-        ? `${confidencePercent}% confidence · ${criticalActionCount > 0 ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'} (treat as directional)` : 'Directional read'}`
-        : `${confidencePercent}% confidence · LOW — open Methodology tab for caveats`
-    : criticalActionCount > 0
-      ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'} this week`
+  const confidenceLabel = criticalActionCount > 0
+    ? `${criticalActionCount} priority action${criticalActionCount === 1 ? '' : 's'} identified`
+    : confidencePercent != null && confidencePercent < 50
+      ? 'Limited data — results are directional'
       : 'Actionable, not just analytical';
 
   const steps: Array<{ icon: React.ElementType; label: string; sub: string; color: string }> = [

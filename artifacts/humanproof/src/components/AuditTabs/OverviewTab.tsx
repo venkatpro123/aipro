@@ -2225,8 +2225,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   const inactionCostINR = inactionCostData?.cost ?? null;
 
   const quickStats = useMemo(() => [
-    { label: 'Confidence', value: `${result.confidencePercent}%`, icon: ShieldCheck, hint: `Score reliable within ±${Math.round((result.confidenceInterval.high - result.confidenceInterval.low) / 2)} pts` },
-    { label: 'Live Signals', value: result.signalQuality.liveSignals, icon: Activity, hint: `${result.signalQuality.heuristicSignals} heuristic signals also used` },
+    { label: 'Live Signals', value: result.signalQuality.liveSignals, icon: Activity, hint: `${result.signalQuality.heuristicSignals} estimated signals also used` },
     { label: 'Data Age', value: `${result.dataFreshness.ageInDays}d`, icon: Clock, hint: result.dataFreshness.stalenessWarning ?? 'Data freshness within acceptable range' },
     { label: 'Overrides', value: result.consensusSnapshot?.overridesApplied.length || 0, icon: AlertTriangle, hint: 'Kill-switch safety overrides applied during scoring' },
   ], [result]);
@@ -2352,14 +2351,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             <div className="text-sm font-bold mb-2">Insufficient data for a reliable score</div>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-md mx-auto">
               The confidence interval for this audit is ±{Math.round(ciRange / 2)} points
-              ({result.confidencePercent}% confidence). A score in this range could span from
-              {' '}<strong>Very Low Risk</strong> to <strong>High Risk</strong> — showing a
+              A score in this range could span from{' '}
+              <strong>Very Low Risk</strong> to <strong>High Risk</strong> — showing a
               specific number would be misleading. Add company financial data or try again
               when live signals are available.
             </p>
-            <div className="mt-4 text-[10px] font-mono text-muted-foreground opacity-50">
-              CI: [{result.confidenceInterval.low}, {result.confidenceInterval.high}] · {result.confidencePercent}% confidence
-            </div>
           </div>
         ) : (
           <>

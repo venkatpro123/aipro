@@ -187,9 +187,6 @@ const PersonalRiskModifierPanel: React.FC<Props> = ({ modifier }) => {
             </div>
           )}
 
-          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
-            Calibration: developer estimate — pending regression on outcome data
-          </p>
         </div>
       </AdaptiveBlock>
     </motion.div>

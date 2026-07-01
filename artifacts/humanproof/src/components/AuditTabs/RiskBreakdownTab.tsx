@@ -324,43 +324,6 @@ const LayerScoreCard: React.FC<LayerScoreCardProps> = ({ dim, weights, result, c
         <span style={{ color: "var(--text-3)", textTransform: "uppercase" }}>
           Weight <span style={{ color: "var(--text-2)", fontWeight: 800, marginLeft: "4px" }}>{weightPct}%</span>
           {/* Calibration status badge — shows provenance of the weight value */}
-          {dim.weightCalibrationStatus === 'uncalibrated_estimate' ? (
-            <span
-              title="This weight is a developer estimate not yet validated through logistic regression on outcome data."
-              style={{
-                marginLeft: '6px',
-                fontSize: '0.6875rem',
-                fontWeight: 700,
-                padding: '1px 5px',
-                borderRadius: '3px',
-                background: 'rgba(245,158,11,0.12)',
-                color: 'var(--color-amber500-text)',
-                border: '1px solid rgba(245,158,11,0.30)',
-                letterSpacing: '0.06em',
-                cursor: 'help',
-              }}
-            >
-              weight: estimated
-            </span>
-          ) : dim.weightCalibrationStatus === 'regression_derived' && dim.weightCalibratedAt ? (
-            <span
-              title={`Weight derived from logistic regression on confirmed layoff outcomes. Calibrated: ${dim.weightCalibratedAt}.`}
-              style={{
-                marginLeft: '6px',
-                fontSize: '0.6875rem',
-                fontWeight: 700,
-                padding: '1px 5px',
-                borderRadius: '3px',
-                background: 'rgba(16,185,129,0.08)',
-                color: 'var(--color-emerald-text)',
-                border: '1px solid rgba(16,185,129,0.22)',
-                letterSpacing: '0.06em',
-                cursor: 'help',
-              }}
-            >
-              regression ✓
-            </span>
-          ) : null}
         </span>
         <span style={{ color: "var(--text-3)", textTransform: "uppercase" }}>
           Contributes <span style={{ color: dimColor, fontWeight: 900, marginLeft: "4px" }}>+{contribution} pts</span>
@@ -515,28 +478,22 @@ const ScoreConfidenceInterval: React.FC<{
             <Info size={12} />
           </button>
         </div>
-        <div className="px-[var(--space-2)] py-1 bg-[var(--alpha-bg-05)] rounded text-[10px] font-mono text-muted-foreground">
-          {confidencePercent}% CONFIDENCE
-        </div>
       </div>
 
       {/* Epistemic uncertainty explanation — toggles on info click */}
       {showEpistemicNote && (
         <div style={{ marginBottom: 20, padding: '12px 14px', borderRadius: 10, background: 'rgba(0,245,255,0.04)', border: '1px solid rgba(0,245,255,0.15)' }}>
           <div style={{ fontSize: '0.6875rem', fontWeight: 800, color: 'var(--cyan)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-            Epistemic uncertainty — not a statistical error bar
+            What does this range mean?
           </div>
           <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--alpha-text-78)' }}>
-            This range represents <strong style={{ color: 'var(--alpha-text-92)' }}>genuine uncertainty</strong> in your score based on signal quality, data freshness, and source conflicts. It reflects what we do not know — not measurement noise around a known value.
+            This range shows <strong style={{ color: 'var(--alpha-text-92)' }}>how much uncertainty</strong> exists in your score based on how complete and fresh the available data is.
           </p>
-          <p style={{ margin: '0 0 8px', fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--alpha-text-78)' }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--alpha-text-78)' }}>
             A ±{halfRange}pt interval means your true risk could be anywhere from{' '}
             <strong style={{ color: 'var(--alpha-text-92)', fontFamily: 'var(--font-mono)' }}>{low}</strong> to{' '}
             <strong style={{ color: 'var(--alpha-text-92)', fontFamily: 'var(--font-mono)' }}>{high}</strong>.
-            The central mark (<span style={{ fontFamily: 'var(--font-mono)', color }}>{score}</span>) is the model's best estimate given available signals.
-          </p>
-          <p style={{ margin: 0, fontSize: '0.71rem', lineHeight: 1.6, color: 'var(--alpha-text-50)' }}>
-            With better data — more live sources, more recent signals, fewer source conflicts — this range would narrow. Three independent factors widen it: data staleness, cross-source conflict penalties, and missing critical signals (null-data guard). All three are broken down in the Transparency tab.
+            The central number (<span style={{ fontFamily: 'var(--font-mono)', color }}>{score}</span>) is the best estimate given available signals. More data narrows this range.
           </p>
         </div>
       )}
@@ -574,14 +531,14 @@ const ScoreConfidenceInterval: React.FC<{
         <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg flex items-start gap-3">
           <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed text-amber-200/70">
-            <strong>Ambiguity Warning:</strong> Dimensional signal variance exceeds 30pts ({low}–{high}). Human-in-the-loop validation of the highest-scoring dimensions is recommended before acting.
+            <strong>Wide range:</strong> Incomplete data means this score could shift significantly. Review the highest-scoring dimensions below before acting on this result.
           </p>
         </div>
       ) : (
         <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg flex items-start gap-3">
           <CheckSquare className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed text-emerald-200/70">
-            <strong>Signal Convergence:</strong> Tight confidence interval ({low}–{high}) indicates high internal consistency across all risk vectors. Score is stable at {confidencePercent}% confidence.
+            <strong>Consistent signals:</strong> The range ({low}–{high}) is narrow — multiple independent signals agree, so this score is reliable.
           </p>
         </div>
       )}
@@ -665,7 +622,7 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
         {/* ── Primary / Protective driver summary ── */}
         <ScoreSummaryBanner result={result} />
 
-        {/* ── Scoring Archetype Badge (BUG-1 fix: engine archetype now flows through HybridResult) ── */}
+        {/* ── Scoring Archetype Badge ── */}
         {result.engineArchetype && result.engineArchetype !== 'low_risk_maintain' && (
           <div className="flex items-center gap-2 mb-2">
             <div className="px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wide border"
@@ -675,59 +632,17 @@ export const RiskBreakdownTab: React.FC<TabProps> = ({ result, companyData }) =>
                 color: 'var(--amber)',
               }}
             >
-              {result.engineArchetype === 'india_it_bench_risk'       && 'PATTERN: India IT Bench Risk'}
-              {result.engineArchetype === 'financial_distress_layoff' && 'PATTERN: Financial Distress Layoff'}
-              {result.engineArchetype === 'ai_efficiency_restructuring' && 'PATTERN: AI Efficiency Restructuring'}
-              {result.engineArchetype === 'rapid_growth_hiring_reversal' && 'PATTERN: Hiring Reversal'}
-              {result.engineArchetype === 'sector_contagion_spread'   && 'PATTERN: Sector Contagion'}
+              {result.engineArchetype === 'india_it_bench_risk'         && 'Bench Risk Pattern'}
+              {result.engineArchetype === 'financial_distress_layoff'   && 'Financial Distress Pattern'}
+              {result.engineArchetype === 'ai_efficiency_restructuring' && 'AI Restructuring Pattern'}
+              {result.engineArchetype === 'rapid_growth_hiring_reversal' && 'Hiring Reversal Pattern'}
+              {result.engineArchetype === 'sector_contagion_spread'     && 'Sector Contagion Pattern'}
               {!['india_it_bench_risk','financial_distress_layoff','ai_efficiency_restructuring','rapid_growth_hiring_reversal','sector_contagion_spread'].includes(result.engineArchetype)
-                && `PATTERN: ${result.engineArchetype.replace(/_/g, ' ').toUpperCase()}`}
+                && `${result.engineArchetype.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} Pattern`}
             </div>
-            <span className="text-[10px] text-muted-foreground">
-              Adaptive weight blending active for this pattern
-            </span>
           </div>
         )}
 
-        {/* ── Segment Calibration Panel (BUG-4 fix: surface multipliers so users can see calibration path) ── */}
-        {(result as any).segmentCalibration && (
-          <div className="mb-4 px-4 py-3 rounded-xl border-[var(--alpha-bg-08)] bg-[var(--alpha-bg-04)] flex flex-wrap items-center gap-x-5 gap-y-2" style={{ border: '1px solid var(--alpha-bg-08)' }}>
-            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest shrink-0">
-              Profile Adjustment
-            </div>
-            <div className="text-[11px] text-foreground/80 font-medium">
-              {(result as any).segmentCalibration.segmentLabel}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* l4 omitted: D5_countryContext = 0.00, L4 multiplier has no formula effect. */}
-              {(['l1','l2','l3','l5'] as const).map(key => {
-                const val: number = (result as any).segmentCalibration[`${key}Multiplier`] ?? 1;
-                const labelMap: Record<string,string> = {
-                  l1: 'Financials',
-                  l2: 'Layoff History',
-                  l3: 'AI Risk',
-                  l5: 'Regional',
-                };
-                const isAmplified = val > 1.05;
-                const isSuppressed = val < 0.95;
-                if (Math.abs(val - 1) < 0.05) return null;
-                return (
-                  <span key={key} className="text-[10px] px-1.5 py-0.5 rounded"
-                    style={{
-                      background: isAmplified ? 'var(--red)/10' : 'var(--emerald)/10',
-                      color: isAmplified ? 'var(--red)' : 'var(--emerald)',
-                    }}
-                  >
-                    {labelMap[key]} {isAmplified ? '↑' : '↓'}{Math.abs((val - 1) * 100).toFixed(0)}%
-                  </span>
-                );
-              })}
-            </div>
-            {(result as any).segmentCalibration.calibrationStatus === 'developer_estimate' && (
-              <span className="text-[10px] text-amber-400/70 ml-auto">ESTIMATED</span>
-            )}
-          </div>
-        )}
 
         {/* ── Dimension Score Cards ── */}
         <div className="mb-6">
