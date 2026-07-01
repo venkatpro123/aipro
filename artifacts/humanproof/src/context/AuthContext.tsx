@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
+import { flushPendingOps } from '../services/auditSyncService';
 
 interface AuthContextType {
   session: Session | null;
@@ -87,7 +88,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
 
       if (typeof window === 'undefined') return;
-      if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_IN') {
+        // Flush pending offline audit ops queued while the user was unauthenticated,
+        // then signal HumanProofContext to re-hydrate from cloud.
+        try { void flushPendingOps(); } catch { /* ignore */ }
+        try { window.dispatchEvent(new Event('hp.session.signed_in')); } catch { /* ignore */ }
+      } else if (event === 'SIGNED_OUT') {
         // Cross-tab sign-out: clear state without re-calling supabase.auth.signOut.
         try { void clearClientSessionState(); } catch { /* ignore */ }
         try { window.dispatchEvent(new Event('hp.session.signed_out')); } catch { /* ignore */ }

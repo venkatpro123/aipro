@@ -1,8 +1,10 @@
 // scoreStorageService.ts
-// Layoff-specific score persistence with typed history and drift detection
+// Layoff-specific score persistence with typed history and drift detection.
+// localStorage is the primary local store; Supabase is the source of truth.
 
 import { ScoreResult, ScoreBreakdown } from './layoffScoreEngine';
 import type { HybridResult } from '../types/hybridResult';
+import { syncSingleScoreEntry } from './auditSyncService';
 
 const STORAGE_KEY = 'hp_layoff_score_history';
 
@@ -57,6 +59,17 @@ export const saveLayoffScore = (
   // Keep last 50 entries
   while (history.length > 50) history.shift();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+
+  // Background sync to Supabase score_history (non-blocking, queued if offline)
+  void syncSingleScoreEntry({
+    score:       scoreValue,
+    plotScore:   100 - scoreValue, // layoff score: plotScore = inverted risk
+    source:      'job',
+    timestamp:   new Date(entry.timestamp).getTime(),
+    dataVersion: '2026-Q2',
+    appVersion:  '3.0',
+  });
+
   return entry;
 };
 
@@ -80,6 +93,29 @@ export const getLayoffScoreHistory = (): ScoreHistoryEntry[] => {
 
 export const clearLayoffScoreHistory = (): void => {
   localStorage.removeItem(STORAGE_KEY);
+};
+
+/**
+ * Merge cloud audit session entries into hp_layoff_score_history.
+ * Deduplication key: companyName + roleTitle + score (same audit = same values).
+ * Cloud entries are authoritative; local entries fill any gaps not in the cloud.
+ */
+export const mergeLayoffHistoryFromCloud = (cloudEntries: ScoreHistoryEntry[]): void => {
+  const local = getLayoffScoreHistory();
+
+  // Build a map keyed by dedup signature; cloud wins on collision
+  const seen = new Map<string, ScoreHistoryEntry>();
+  const sig = (e: ScoreHistoryEntry) =>
+    `${e.companyName.toLowerCase()}|${e.roleTitle.toLowerCase()}|${e.score}`;
+
+  for (const e of local) seen.set(sig(e), e);
+  for (const e of cloudEntries) seen.set(sig(e), e); // cloud overwrites local
+
+  const merged = Array.from(seen.values())
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 50);
+
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch { /* quota */ }
 };
 
 // BUG-08 FIX: accept companyName + roleTitle so we only compare same job/company

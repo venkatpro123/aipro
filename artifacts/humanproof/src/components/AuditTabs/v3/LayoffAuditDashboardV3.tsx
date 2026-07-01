@@ -654,18 +654,13 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           )}
         </div>
 
-        {/* ── Scroll-triggered sticky header (hidden — replaced by permanent top bar above) */}
-        {/* Kept for future reference; set visible={false} so it never renders. */}
-        <div className="hidden">
-          <StickyCompanyHeader
-            companyName={companyData?.name ?? result.companyName ?? 'Company'}
-            score={result.total}
-            visible={false}
-          />
-        </div>
-
-        {/* ── Wave 1.4: Risk update banner — fires when breaking news injects a new event ── */}
-        {riskUpdateBanner && (
+        {/* ── Banner priority system: only one alert banner at a time ──────────
+            Priority (highest → lowest):
+              1. Risk update (breaking news about this company)
+              2. Intelligence update (new signals since last audit)
+              3. Re-engagement nudge (day-7/30/90)
+            Emergency state is rendered inline inside each view mode, not here. */}
+        {riskUpdateBanner ? (
           <div className="px-4 pt-3 sm:px-0">
             <RiskUpdateBanner
               companyName={riskUpdateBanner.company}
@@ -673,7 +668,6 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               isReanalyzing={isRiskReanalyzing}
               onReanalyze={() => {
                 setIsRiskReanalyzing(true);
-                // Trigger re-analysis, then clear banner when done
                 setTimeout(() => {
                   props.onRecalculate?.();
                   setIsRiskReanalyzing(false);
@@ -683,13 +677,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               onDismiss={() => setRiskUpdateBanner(null)}
             />
           </div>
-        )}
-
-        {/* ── Phase 12: Live signal status — data source transparency bar ── */}
-        <LiveSignalStatusBar status={liveSignalStatus} />
-
-        {/* ── Wave 7.1: Intelligence update banner — new signals since last audit ── */}
-        {intelligenceUpdate && !bannerDismissed && (
+        ) : intelligenceUpdate && !bannerDismissed ? (
           <IntelligenceUpdateBanner
             update={intelligenceUpdate}
             companyName={companyData?.name ?? result.companyName ?? 'your company'}
@@ -699,17 +687,14 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
               try { sessionStorage.setItem('hp.iu.dismissed', '1'); } catch { /* swallow */ }
             }}
           />
-        )}
-
-        {/* ── Wave 4.3: Re-engagement nudge (day-7/30/90) ─────────────────── */}
-        {reEngagementTrigger && !reEngagementDismissed && !intelligenceUpdate?.shouldPromptReaudit && (
+        ) : reEngagementTrigger && !reEngagementDismissed ? (
           <div className="px-4 pt-3 sm:px-0">
-            <div className="reengagement-nudge flex items-start gap-3 px-3 py-2.5">
+            <div className="reengagement-nudge flex items-start gap-3 px-3 py-2.5 rounded-xl">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-cyan">
+                <p className="text-[12px] font-bold text-cyan">
                   {reEngagementTrigger.headline}
                 </p>
-                <p className="text-[10px] mt-0.5 text-token-2">
+                <p className="text-[11px] mt-0.5 text-token-2">
                   {reEngagementTrigger.subtext}
                 </p>
               </div>
@@ -721,7 +706,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                     clearReEngagementState();
                     props.onRecalculate?.();
                   }}
-                  className="reengagement-nudge-cta"
+                  className="reengagement-nudge-cta flex-shrink-0"
                 >
                   {reEngagementTrigger.ctaLabel}
                 </button>
@@ -732,58 +717,25 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
                 className="flex-shrink-0 opacity-35 hover:opacity-70 transition-opacity px-1 text-token-1"
                 aria-label="Dismiss"
               >
-                <X size={12} strokeWidth={2} />
+                <X size={13} strokeWidth={2} />
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
-        {/* ── Emergency banner — only shown in Beast Mode.
-            Guidance and Analysis modes render their own inline emergency state.
-            Showing both would double-stack two separate red emergency panels. */}
+        {/* ── Phase 12: Live signal status — data source transparency bar ── */}
+        <LiveSignalStatusBar status={liveSignalStatus} />
+
+        {/* ── Emergency banner — Beast Mode only.
+            Guidance/Analysis modes render inline emergency state. */}
         {adaptation.showEmergencyBanner && viewMode === 'beast' && (
           <div className="px-4 pt-3 sm:px-0">
             <EmergencyModeBanner
               result={result}
-              onJumpToActions={() => {
-                handleTabChange('actions');
-              }}
+              onJumpToActions={() => handleTabChange('actions')}
             />
           </div>
         )}
-
-        {/* ── Return Visit Panel — shows "Welcome Back" for returning users ── */}
-        {(() => {
-          try {
-            const history = getLayoffScoreHistory();
-            const compName = companyData?.name ?? (result as any).companyName ?? '';
-            const matching = history.filter(e => compName && e.companyName?.toLowerCase() === compName.toLowerCase());
-            const last = matching.at(-1);
-            if (last) {
-              const daysSince = Math.max(1, Math.round((Date.now() - new Date(last.timestamp).getTime()) / 86400000));
-              if (daysSince >= 1) {
-                return (
-                  <div className="px-4 pt-3 sm:px-0">
-                    <ReturnVisitPanel
-                      daysSince={daysSince}
-                      scoreBefore={last.score}
-                      scoreNow={result.total}
-                      newSignals={intelligenceUpdate?.signalCount ?? 0}
-                      companyName={compName || undefined}
-                      completedActions={loadCompletionsLocal().size}
-                      marketChanges={intelligenceUpdate?.topHeadline ? [{
-                        label: 'Breaking news',
-                        direction: 'up',
-                        detail: intelligenceUpdate.topHeadline,
-                      }] : undefined}
-                    />
-                  </div>
-                );
-              }
-            }
-          } catch {}
-          return null;
-        })()}
 
         {/* ── Content area — Guidance / Analysis / Beast ── */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
@@ -909,8 +861,7 @@ export const LayoffAuditDashboardV3: React.FC<Props> = (props) => {
           />
         )}
 
-        {/* ── Phase 12: Outcome feedback — calibration data collection ── */}
-        <OutcomeFeedbackPrompt />
+        {/* OutcomeFeedbackPrompt removed — interrupts the post-audit flow */}
 
         {/* ── Phase 18 Delight: score improvement confetti ─────────────── */}
         {scoreCelebration && (

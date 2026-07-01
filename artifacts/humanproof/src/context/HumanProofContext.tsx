@@ -7,6 +7,14 @@ import {
   upsertUserProfile,
   type UserProfile,
 } from '../services/userProfileService';
+import {
+  loadScoreHistory,
+  loadAuditSessions,
+  loadUserAuditData,
+  saveUserAuditData,
+  flushPendingOps,
+} from '../services/auditSyncService';
+import { mergeLayoffHistoryFromCloud } from '../services/scoreStorageService';
 
 interface SkillEntry {
   id: number;
@@ -98,6 +106,8 @@ function reducer(state: HumanProofState, action: Action): HumanProofState {
     case 'SET_SKILL_RISK':
       saveScore(action.score, 'skill');
       localStorage.setItem(KEY_REGISTRY.SKILL_BREAKDOWN, JSON.stringify(action.breakdown ?? []));
+      // Sync skills to Supabase (background, non-blocking)
+      void saveUserAuditData({ skillSelections: action.skills, skillBreakdown: action.breakdown ?? [] });
       return {
         ...state,
         skillRiskScore: action.score,
@@ -124,6 +134,7 @@ function reducer(state: HumanProofState, action: Action): HumanProofState {
       return { ...state, jobId: action.payload };
     case 'SET_ROADMAP_STARTED':
       localStorage.setItem(KEY_REGISTRY.ROADMAP_START_DATE, action.startDate);
+      void saveUserAuditData({ roadmapStartDate: action.startDate });
       return { ...state, roadmapStarted: true, roadmapStartDate: action.startDate };
     case 'SET_SKILL_INTENTS':
       return { ...state, skillIntents: action.intents };
@@ -299,42 +310,77 @@ export function HumanProofProvider({ children }: { children: ReactNode }) {
 
     const hydrateCloud = async () => {
       try {
-        const cloudAssessments = await assessmentAPI.getAssessments();
-        if (cloudAssessments && cloudAssessments.length > 0) {
-          const mergedHistory = cloudAssessments.map((a: any) => ({
-             source: "job",
-             roleKey: a.work_type,
-             industryKey: a.industry,
-             countryKey: a.country || 'usa',
-             experience: a.experience || '5-10',
-             score: a.score,
-             timestamp: new Date(a.created_at).getTime(),
-             isGrounded: true
-          }));
+        // Flush any pending offline operations first (e.g. audits run while signed out)
+        await flushPendingOps();
 
+        // ── Score history: merge Supabase + localStorage, dedupe by timestamp ──
+        const [cloudHistory, cloudAuditSessions, cloudUserData] = await Promise.all([
+          loadScoreHistory(),
+          loadAuditSessions(50),
+          loadUserAuditData(),
+        ]);
+
+        if (cloudHistory.length > 0) {
           const localStr = localStorage.getItem(KEY_REGISTRY.SCORE_HISTORY) || '[]';
-          let local = [];
+          let local: any[] = [];
           try { local = JSON.parse(localStr); } catch {}
-          
-          const combined = [...mergedHistory, ...local];
-          
-          const uniqueMap = new Map();
-          for (const item of combined) {
-             uniqueMap.set(item.timestamp, item);
-          }
-          const finalHistory = Array.from(uniqueMap.values()).sort((a,b) => b.timestamp - a.timestamp).slice(0, 50);
 
+          const merged = new Map<number, any>();
+          // Cloud entries are authoritative; local entries fill gaps
+          for (const e of [...local, ...cloudHistory]) {
+            merged.set(e.timestamp, e);
+          }
+          const finalHistory = Array.from(merged.values())
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 200);
           localStorage.setItem(KEY_REGISTRY.SCORE_HISTORY, JSON.stringify(finalHistory));
-          hydrateLocal(); // Re-hydrate with synced data
+          hydrateLocal(); // re-hydrate context with merged data
+        }
+
+        // ── Audit session history → hp_layoff_score_history ──
+        if (cloudAuditSessions.length > 0) {
+          mergeLayoffHistoryFromCloud(cloudAuditSessions);
+          // Signal LayoffScoreHistory and SummaryTab to re-read localStorage
+          try { window.dispatchEvent(new Event('hp.audit.history.hydrated')); } catch { /* ignore */ }
+        }
+
+        // ── User audit data: skills, roadmap, quiz from Supabase ──
+        if (cloudUserData) {
+          if (cloudUserData.skillSelections.length > 0) {
+            localStorage.setItem(KEY_REGISTRY.SKILL_SELECTIONS, JSON.stringify(cloudUserData.skillSelections));
+          }
+          if (cloudUserData.skillBreakdown.length > 0) {
+            localStorage.setItem(KEY_REGISTRY.SKILL_BREAKDOWN, JSON.stringify(cloudUserData.skillBreakdown));
+          }
+          if (cloudUserData.roadmapStartDate) {
+            localStorage.setItem(KEY_REGISTRY.ROADMAP_START_DATE, cloudUserData.roadmapStartDate);
+          }
+          dispatch({
+            type: 'HYDRATE',
+            payload: {
+              selectedSkills:   cloudUserData.skillSelections as any,
+              skillBreakdown:   cloudUserData.skillBreakdown  as any,
+              skillIntents:     cloudUserData.skillIntents,
+              quizAnswers:      cloudUserData.quizAnswers,
+              roadmapStartDate: cloudUserData.roadmapStartDate,
+              roadmapStarted:   !!cloudUserData.roadmapStartDate,
+            },
+          });
         }
       } catch (err) {
-        console.warn("Cloud Drift Hydration bypassed (Network or Auth failure)", err);
+        console.warn('[HumanProof] Cloud hydration failed, falling back to local:', err);
       }
     };
 
     hydrateLocal();
     hydrateCloud();
     refreshUserProfile();
+
+    // Re-run cloud hydration when the user signs in mid-session (e.g. hits
+    // the sign-in modal from an unauthenticated state and then continues).
+    const onSignedIn = () => { void hydrateCloud(); void refreshUserProfile(); };
+    window.addEventListener('hp.session.signed_in', onSignedIn);
+    return () => window.removeEventListener('hp.session.signed_in', onSignedIn);
   }, [refreshUserProfile]);
 
   // BUG-C1 FIX: saveAssessment method — was called in CalculatorPage but missing from context

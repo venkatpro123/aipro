@@ -17,7 +17,7 @@
 import React, { useState } from 'react';
 import { useStaggeredReveal } from '../../../hooks/useStaggeredReveal';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, ChevronDown, Users, LineChart, AlertTriangle, Clock, Briefcase, Hash } from 'lucide-react';
+import { Building2, ChevronDown, Users, LineChart, Briefcase, Hash } from 'lucide-react';
 import type { HybridResult } from '../../../types/hybridResult';
 import type { CompanyData } from '../../../data/companyDatabase';
 import {
@@ -110,9 +110,11 @@ const SubVerdictChip: React.FC<{
     <p className="text-[11px] font-black leading-tight" style={{ color: signal.tone }}>
       {VERDICT_LABEL[signal.verdict]}
     </p>
-    <p className="text-[10px] leading-snug truncate mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>
-      {signal.rationale}
-    </p>
+    {signal.verdict !== 'unknown' && signal.verdict !== 'data-unavailable' && (
+      <p className="text-[10px] leading-snug truncate mt-0.5" style={{ color: 'var(--alpha-text-50)' }}>
+        {signal.rationale}
+      </p>
+    )}
   </div>
 );
 
@@ -199,12 +201,14 @@ function resolveIdentity(result: HybridResult, companyData?: CompanyData): Compa
 }
 
 export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, defaultOpen = false }) => {
-  const [open, setOpen] = useState(defaultOpen);
+  // Only auto-open when there's real data to show; unknown/awaiting verdicts add no value when expanded
+  const hasRealData = (sig: CompressedSignal) => sig.verdict !== 'unknown' && sig.verdict !== 'data-unavailable';
   const scanning = useIntelligencePulse();
   const identity  = React.useMemo(() => resolveIdentity(result, companyData), [result, companyData]);
   const workforce = React.useMemo(() => compressWorkforceSignal(result, companyData), [result, companyData]);
   const financial = React.useMemo(() => compressFinancialSignal(result, companyData), [result, companyData]);
   const headline  = pickHeadline(workforce, financial);
+  const [open, setOpen] = useState(() => defaultOpen && (hasRealData(workforce) || hasRealData(financial)));
 
   // ring percentage = max severity of the two
   const ringPct = Math.max(workforce.severity, financial.severity);
@@ -240,17 +244,6 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
       ? 'We tried to get current information but couldn\'t right now. We\'ll keep trying.'
       : 'We don\'t have information on this company yet.';
 
-  // v40.0 audit fix: surface heuristic/stale freshness so users know when
-  // the analysis is based on historical baselines rather than live data.
-  const freshnessTier = result.unifiedFreshness?.tier;
-  const freshnessDisclosure = freshnessTier === 'heuristic'
-    ? { icon: AlertTriangle, color: 'var(--color-amber500-text)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)',
-        text: 'We don\'t have current data for this company yet — this is based on general industry trends.' }
-    : freshnessTier === 'stale'
-    ? { icon: Clock, color: 'var(--color-slate400-text)', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.20)',
-        text: 'We have some current data, but not all of it.' }
-    : null;
-
   return (
     <div
       className={`rounded-2xl overflow-hidden intel-scan${scanning ? ' is-scanning' : ''}`}
@@ -260,25 +253,6 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
         transition: 'border-color 0.18s ease',
       }}
     >
-      {/* v40.0: Heuristic / stale freshness disclosure banner */}
-      {freshnessDisclosure && (() => {
-        const { icon: Icon, color, bg, border, text } = freshnessDisclosure;
-        return (
-          <div
-            className="px-3 pt-3 pb-0"
-          >
-            <div
-              className="signal-card flex items-start gap-2 px-3 py-2 rounded-xl mb-2"
-              data-tone={freshnessTier === 'heuristic' ? 'amber' : 'slate'}
-            >
-              <Icon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color }} />
-              <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
-                {text}
-              </p>
-            </div>
-          </div>
-        );
-      })()}
       {/* Headline row */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -413,31 +387,35 @@ export const CompanyPulseCard: React.FC<Props> = ({ result, companyData, default
             style={{ borderTop: `1px solid ${tone}20` }}
           >
             <div className="p-3 space-y-3">
-              <div className="signal-card rounded-xl p-3" data-tone={hexToTone(workforce.tone)}>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Users className="w-3.5 h-3.5" style={{ color: workforce.tone }} />
-                  <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
-                    Staffing details
-                  </span>
+              {hasRealData(workforce) && (
+                <div className="signal-card rounded-xl p-3" data-tone={hexToTone(workforce.tone)}>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Users className="w-3.5 h-3.5" style={{ color: workforce.tone }} />
+                    <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
+                      Staffing details
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
+                    {workforce.rationale}
+                  </p>
+                  <ChipRow signal={workforce} />
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
-                  {workforce.rationale}
-                </p>
-                <ChipRow signal={workforce} />
-              </div>
+              )}
 
-              <div className="signal-card rounded-xl p-3" data-tone={hexToTone(financial.tone)}>
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <LineChart className="w-3.5 h-3.5" style={{ color: financial.tone }} />
-                  <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
-                    Money details
-                  </span>
+              {hasRealData(financial) && (
+                <div className="signal-card rounded-xl p-3" data-tone={hexToTone(financial.tone)}>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <LineChart className="w-3.5 h-3.5" style={{ color: financial.tone }} />
+                    <span className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'var(--alpha-text-50)' }}>
+                      Money details
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
+                    {financial.rationale}
+                  </p>
+                  <ChipRow signal={financial} />
                 </div>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-70)' }}>
-                  {financial.rationale}
-                </p>
-                <ChipRow signal={financial} />
-              </div>
+              )}
             </div>
           </motion.div>
         )}

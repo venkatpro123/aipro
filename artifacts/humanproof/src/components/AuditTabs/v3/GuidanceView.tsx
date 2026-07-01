@@ -56,9 +56,13 @@ const URGENCY_LABEL: Record<string, string> = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const GENERIC_BRIEF_PHRASES = ['see breakdown', 'risk analysis complete', 'multiple risk factors identified', 'review score breakdown'];
+const isGenericBriefText = (s: string) => GENERIC_BRIEF_PHRASES.some(p => s.toLowerCase().includes(p));
+
 function getVerdictSentence(result: HybridResult, feedSpine?: string): string {
   const brief = (result as any).intelligenceBrief;
-  if (brief?.paragraphs?.[0]) return brief.paragraphs[0] as string;
+  const p0 = brief?.paragraphs?.[0] as string | undefined;
+  if (p0 && !isGenericBriefText(p0)) return p0;
   if (feedSpine) return feedSpine;
   const company = result.companyName ?? 'Your company';
   const score = result.total;
@@ -351,16 +355,12 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
           </Section>
         )}
 
-        {/* Section 5 — Confidence (trust anchor, always shown) */}
-        <Section delay={0.18} card>
-          <SectionLabel text="Confidence & Trust" />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <ConfidenceBadge text={`${confidenceSummary.confidencePercent}% confident`} color="var(--alpha-text-55)" />
-            {confidenceSummary.lowDataWarning && (
-              <ConfidenceBadge text="⚠ Limited data" color='#f59e0b' />
-            )}
-          </div>
-        </Section>
+        {/* Limited data notice — only shown when signal coverage is low */}
+        {confidenceSummary.lowDataWarning && (
+          <Section delay={0.18}>
+            <ConfidenceBadge text="⚠ Limited data — analysis based on industry estimates for this company" color='#f59e0b' />
+          </Section>
+        )}
 
         {/* Depth invite */}
         <button
@@ -570,19 +570,12 @@ export const GuidanceView: React.FC<GuidanceViewProps> = ({
         </Section>
       )}
 
-      {/* Section 5 — Confidence & Trust */}
-      <Section delay={0.32} card>
-        <SectionLabel text="Confidence & Trust" />
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          <ConfidenceBadge
-            text={`${confidenceSummary.confidencePercent}% confident`}
-            color="var(--alpha-text-55)"
-          />
-          {confidenceSummary.lowDataWarning && (
-            <ConfidenceBadge text="⚠ Limited data" color='#f59e0b' />
-          )}
-        </div>
-      </Section>
+      {/* Limited data notice — only shown when signal coverage is low */}
+      {confidenceSummary.lowDataWarning && (
+        <Section delay={0.32}>
+          <ConfidenceBadge text="⚠ Limited data — analysis based on industry estimates for this company" color='#f59e0b' />
+        </Section>
+      )}
 
       {/* Depth invite — one subtle line, not a button */}
       <motion.button

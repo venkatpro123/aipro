@@ -841,9 +841,6 @@ export const PersonalizedMarketEnvironment: React.FC<Props> = ({ result, company
             </div>
           )}
 
-          <p className="text-[10px]" style={{ color: 'var(--alpha-text-25)' }}>
-            Static peer graph · Curated layoff cache · Treat as directional, not precise
-          </p>
         </CollapsibleSection>
       )}
 

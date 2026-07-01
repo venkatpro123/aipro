@@ -1,79 +1,49 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Network, Database, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Database, AlertTriangle, ShieldAlert } from 'lucide-react';
 import type { LiveSignalStatus } from '../services/liveSignalBanner';
 
 interface Props {
   status: LiveSignalStatus;
 }
 
+const COLOR_MAP: Record<string, { dot: string; text: string; bg: string; border: string }> = {
+  green: { dot: '#10b981', text: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.18)' },
+  amber: { dot: '#f59e0b', text: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.18)' },
+  red:   { dot: '#ef4444', text: '#ef4444', bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.18)'  },
+  gray:  { dot: 'var(--alpha-text-25)', text: 'var(--alpha-text-35)', bg: 'var(--alpha-bg-04)', border: 'var(--alpha-bg-08)' },
+};
+
 export const LiveSignalStatusBar: React.FC<Props> = ({ status }) => {
-  const getBannerStyles = () => {
-    switch (status.statusColor) {
-      case 'green':
-        return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-      case 'amber':
-        return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
-      case 'red':
-        return 'bg-red-500/10 border-red-500/20 text-red-400';
-      case 'gray':
-      default:
-        return 'bg-[var(--alpha-bg-06)] border-[var(--alpha-bg-10)] text-[var(--alpha-text-40)]';
-    }
-  };
+  // Only show when data quality is limited — no value in showing "Live data active"
+  if (status.overallStatus === 'live') return null;
 
-  const getIcon = () => {
-    if (status.overallStatus === 'unknown-company') return <ShieldAlert className="w-4 h-4" />;
-    if (status.statusColor === 'red') return <Database className="w-4 h-4" />;
-    if (status.statusColor === 'amber') return <AlertTriangle className="w-4 h-4" />;
-    return <Network className="w-4 h-4" />;
-  };
+  const c = COLOR_MAP[status.statusColor] ?? COLOR_MAP.gray;
 
-  // Extract the first part of the message to highlight it
-  const [primaryMsg, ...restMsgArr] = status.statusMessage.split('—');
-  const secondaryMsg = restMsgArr.join('—');
+  const StatusIcon =
+    status.overallStatus === 'unknown-company' ? ShieldAlert :
+    status.statusColor === 'red'               ? Database : AlertTriangle;
+
+  const shortLabel =
+    status.overallStatus === 'partial'         ? 'Using partial data — some signals may be estimated' :
+    status.overallStatus === 'heuristic'       ? 'Analysis based on industry estimates for this company' :
+    status.overallStatus === 'unknown-company' ? 'Company not in our database — using role & industry averages' :
+    'Analysis based on available signals';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`w-full border-b backdrop-blur-sm px-4 py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${getBannerStyles()}`}
+    <div
+      className="w-full"
+      style={{ borderBottom: `1px solid ${c.border}`, background: c.bg }}
     >
-      <div className="flex items-center space-x-3">
-        <div className="relative">
-          {getIcon()}
-          {status.statusColor === 'green' && (
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          )}
-        </div>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-          <span className="text-sm font-medium tracking-wide">
-            {primaryMsg.trim()}
-          </span>
-          {secondaryMsg && (
-            <>
-              <span className="hidden sm:inline opacity-40">•</span>
-              <span className="text-xs opacity-80 mt-0.5 sm:mt-0">
-                {secondaryMsg.trim()}
-              </span>
-            </>
-          )}
-        </div>
+      <div className="w-full flex items-center gap-2.5 px-4 py-1.5">
+        <span
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ background: c.dot }}
+        />
+        <StatusIcon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: c.text }} />
+        <span className="text-[11px] font-semibold flex-1 truncate" style={{ color: c.text }}>
+          {shortLabel}
+        </span>
       </div>
-
-      <div className="flex items-center space-x-4 pl-7 sm:pl-0">
-        {status.stalenessWarning && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
-            Stale Data ({status.dataAge} days)
-          </div>
-        )}
-        
-        <div className="flex items-center rounded-md px-2.5 py-1 whitespace-nowrap" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}>
-          <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: `var(--color-${status.statusColor}-500, currentColor)` }} />
-          <span className="text-xs font-semibold">{status.confidenceNote}</span>
-        </div>
-      </div>
-    </motion.div>
+    </div>
   );
 };

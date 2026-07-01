@@ -166,7 +166,7 @@ export const PersonalImpactSimulator: React.FC<PersonalImpactSimulatorProps> = (
               <div className="pb-0.5">
                 {sc.projectedScore !== currentScore && (
                   <span className="text-[10px] font-bold" style={{ color: 'var(--alpha-text-45)' }}>
-                    {sc.projectedScore > currentScore ? `+${sc.projectedScore - currentScore}` : `−${currentScore - sc.projectedScore}`} pts
+                    {sc.projectedScore > currentScore ? `+${Math.round((sc.projectedScore - currentScore) * 10) / 10}` : `−${Math.round((currentScore - sc.projectedScore) * 10) / 10}`} pts
                   </span>
                 )}
                 <p className="text-[9px]" style={{ color: tierColor(sc.projectedScore) + 'aa' }}>

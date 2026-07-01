@@ -10,16 +10,6 @@ import {
   AlertTriangle, Clock, CheckCircle2, XCircle, Zap, AlertCircle,
 } from 'lucide-react';
 import type { CareerContingencyPlan, ContingencyPath, ContingencyPathId, ContingencyPathFinancialProjection } from '../../../services/careerContingencyPlanEngine';
-import ProvenanceLabel from './ProvenanceLabel';
-
-// Path-to-field mapping for provenance lookup. STAY/NEGOTIATE are always
-// ESTIMATED (no empirical outcome data). TRANSITION may be MODELED when
-// the score is anchored to careerPathMarket successRate12mPct (market research).
-const PATH_PROVENANCE_FIELD: Record<ContingencyPathId, string> = {
-  STAY:       'contingency_stay_feasibility',
-  NEGOTIATE:  'contingency_negotiate_feasibility',
-  TRANSITION: 'contingency_transition_feasibility',
-};
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -86,7 +76,7 @@ interface FeasibilityBarProps {
  * The bar width always reflects the midpoint (feasibilityScore) regardless of source.
  */
 const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) => {
-  const { feasibilityScore: score, feasibilitySource, feasibilityRangeLow, feasibilityRangeHigh, feasibilitySourceNote } = path;
+  const { feasibilityScore: score, feasibilitySource, feasibilityRangeLow, feasibilityRangeHigh } = path;
   const isEstimated = feasibilitySource === 'estimated' || !feasibilitySource;
 
   const displayValue = isEstimated && feasibilityRangeLow != null && feasibilityRangeHigh != null
@@ -100,39 +90,6 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
           <span className="text-[10px] font-semibold tracking-wider" style={{ color: 'var(--alpha-text-45)' }}>
             FEASIBILITY
           </span>
-          {/* Global MEASURED/MODELED/ESTIMATED provenance label.
-              Source key 'market_successRate' upgrades the path to MODELED in the registry. */}
-          <ProvenanceLabel
-            field={PATH_PROVENANCE_FIELD[path.pathId]}
-            sourceKey={feasibilitySource ?? 'estimated'}
-            size="xs"
-          />
-          {/* Source-specific detail badge */}
-          {isEstimated ? (
-            <span
-              title="Feasibility is model-estimated — not validated against outcome data. Displayed as a range to reflect uncertainty."
-              className="text-[10px] font-bold px-1 py-0.5 rounded cursor-help"
-              style={{ background: 'rgba(245,158,11,0.15)', color: 'rgba(245,158,11,0.75)', border: '1px solid rgba(245,158,11,0.25)' }}
-            >
-              estimated
-            </span>
-          ) : feasibilitySource === 'market_successRate' ? (
-            <span
-              title={feasibilitySourceNote ?? 'Sourced from career path market research (12-month transition success rate).'}
-              className="text-[10px] font-bold px-1 py-0.5 rounded cursor-help"
-              style={{ background: 'rgba(16,185,129,0.15)', color: 'rgba(16,185,129,0.85)', border: '1px solid rgba(16,185,129,0.30)' }}
-            >
-              market data ✓
-            </span>
-          ) : feasibilitySource === 'portability_matrix' ? (
-            <span
-              title={feasibilitySourceNote ?? 'Sourced from role portability matrix (empirical transition data).'}
-              className="text-[10px] font-bold px-1 py-0.5 rounded cursor-help"
-              style={{ background: 'rgba(59,130,246,0.15)', color: 'rgba(96,165,250,0.85)', border: '1px solid rgba(59,130,246,0.30)' }}
-            >
-              portability matrix ✓
-            </span>
-          ) : null}
         </div>
         {/* Range for estimated; point for sourced */}
         <span className="text-[11px] font-black" style={{ color: accentColor }}>{displayValue}</span>
@@ -146,12 +103,6 @@ const FeasibilityBar: React.FC<FeasibilityBarProps> = ({ path, accentColor }) =>
           style={{ background: accentColor }}
         />
       </div>
-      {/* Source note for non-estimated paths */}
-      {!isEstimated && feasibilitySourceNote && (
-        <p className="text-[10px] mt-1 leading-snug" style={{ color: 'var(--alpha-text-25)' }}>
-          {feasibilitySourceNote}
-        </p>
-      )}
     </div>
   );
 };
@@ -501,7 +452,7 @@ const CareerContingencyPanel: React.FC<CareerContingencyPanelProps> = ({ conting
           style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}
         >
           <p className="text-[11px] font-semibold mb-1" style={{ color: 'var(--alpha-text-55)' }}>
-            Why {contingencyPlan.recommendedPath} is recommended ({Math.round(contingencyPlan.pathConfidence * 100)}% confidence)
+            Why {contingencyPlan.recommendedPath} is recommended
           </p>
           <p className="text-[11px] leading-relaxed" style={{ color: 'var(--alpha-text-50)' }}>
             {contingencyPlan.decisionFramework}

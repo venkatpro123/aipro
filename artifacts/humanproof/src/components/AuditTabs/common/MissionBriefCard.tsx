@@ -22,7 +22,6 @@ interface MissionBriefCardProps {
   spine?: string;
   singleBiggestRisk?: string;
   topAction?: string;
-  confidencePercent: number;
   missionActionIds?: string[];
   completedActionIds?: Set<string>;
   onRequestNextMission?: () => void;
@@ -36,7 +35,6 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
   spine,
   singleBiggestRisk,
   topAction,
-  confidencePercent,
   missionActionIds = [],
   completedActionIds = new Set(),
   onRequestNextMission,
@@ -122,7 +120,6 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
                 <CheckCircle className="w-2.5 h-2.5" />
                 MISSION COMPLETE
               </span>
-              <span className="mono-section-label">{confidencePercent}% confidence</span>
             </div>
             <p className="mission-completed-title">All mission actions completed.</p>
             <p className="mission-completed-desc">
@@ -164,7 +161,6 @@ export const MissionBriefCard: React.FC<MissionBriefCardProps> = ({
             {actionsTotal > 0 && (
               <span className="mono-section-label">{actionsDone}/{actionsTotal} done</span>
             )}
-            <span className="mono-section-label">{confidencePercent}% confident</span>
           </div>
         </div>
 

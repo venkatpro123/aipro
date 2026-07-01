@@ -29,16 +29,18 @@ const R  = 98;
 const scoreToAngle = (s: number) => Math.PI - (Math.max(0, Math.min(100, s)) / 100) * Math.PI;
 
 // Angle + optional radius → SVG x,y
+// Y is negated because the visible arc opens upward (SVG y-axis is inverted).
 const polar = (angle: number, r = R): [number, number] =>
-  [CX + r * Math.cos(angle), CY + r * Math.sin(angle)];
+  [CX + r * Math.cos(angle), CY - r * Math.sin(angle)];
 
 // Build an SVG arc-path string
+// sweep=0 draws the upper (visible) semicircle after the y-axis flip in polar().
 function arcPath(startScore: number, endScore: number, r: number): string {
   const a1 = scoreToAngle(startScore);
   const a2 = scoreToAngle(endScore);
   const [x1, y1] = polar(a1, r);
   const [x2, y2] = polar(a2, r);
-  return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`;
+  return `M ${x1} ${y1} A ${r} ${r} 0 0 0 ${x2} ${y2}`;
 }
 
 const ZONES = [
@@ -170,7 +172,7 @@ export const ThreatLevelGauge: React.FC<Props> = ({
           <circle cx={CX} cy={CY} r={6} fill="var(--alpha-bg-10)" stroke={scoreColor} strokeWidth={1.5} />
           <circle cx={CX} cy={CY} r={2.5} fill={scoreColor} />
 
-          {/* Score number */}
+          {/* Score number — animate opacity only; y is a fixed SVG attribute */}
           <motion.text
             x={CX} y={CY - 28}
             textAnchor="middle"
@@ -179,8 +181,8 @@ export const ThreatLevelGauge: React.FC<Props> = ({
             fontSize="28"
             fontFamily="var(--font-mono)"
             fontWeight="900"
-            initial={{ opacity: 0, y: CY - 22 }}
-            animate={{ opacity: 1, y: CY - 28 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.50, duration: 0.4 }}
             style={{ filter: `drop-shadow(0 0 8px ${scoreColor}55)` }}
           >

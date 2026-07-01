@@ -4,7 +4,7 @@
 // then the flat badge grid below. The title panel is the primary focus — it
 // gives users a sense of progression and a clear "next level" goal.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import {
@@ -157,10 +157,16 @@ const CareerTitlePanel: React.FC<{ completedActionCount: number }> = ({
 
 // ── Main gallery ─────────────────────────────────────────────────────────────
 
+const COLLAPSED_LIMIT = 6;
+
 export const AchievementGallery: React.FC<{ className?: string }> = ({ className }) => {
   const unlocked = getUnlockedAchievements();
   const progress = getAchievementProgress();
   const unlockedIds = new Set(unlocked.map(a => a.id));
+  // Collapse when no achievements are unlocked — show a preview row only
+  const allLocked = unlockedIds.size === 0;
+  const [showAll, setShowAll] = useState(!allLocked);
+  const visibleDefs = showAll ? ACHIEVEMENT_DEFINITIONS : ACHIEVEMENT_DEFINITIONS.slice(0, COLLAPSED_LIMIT);
 
   // Derive completed action count from localStorage for title calculation
   const completedActionCount = loadCompletionsLocal().size;
@@ -199,7 +205,7 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
 
       {/* Badge grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-        {ACHIEVEMENT_DEFINITIONS.map((def, i) => {
+        {visibleDefs.map((def, i) => {
           const isUnlocked = unlockedIds.has(def.id);
           const border = TIER_BORDER[def.tier] ?? TIER_BORDER.bronze;
           const bg = TIER_BG[def.tier] ?? TIER_BG.bronze;
@@ -235,7 +241,7 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
                   className="text-[9px] leading-snug mt-0.5"
                   style={{ color: isUnlocked ? 'var(--alpha-text-45)' : 'var(--alpha-text-25)' }}
                 >
-                  {isUnlocked ? def.description : '???'}
+                  {isUnlocked ? def.description : 'Keep going to unlock'}
                 </p>
                 {isUnlocked && (
                   <p
@@ -250,6 +256,20 @@ export const AchievementGallery: React.FC<{ className?: string }> = ({ className
           );
         })}
       </div>
+
+      {/* Show/hide remaining locked achievements */}
+      {ACHIEVEMENT_DEFINITIONS.length > COLLAPSED_LIMIT && (
+        <button
+          type="button"
+          onClick={() => setShowAll(v => !v)}
+          className="mt-3 w-full text-center text-[10px] font-bold py-1.5 rounded-lg transition-opacity hover:opacity-80"
+          style={{ color: 'var(--alpha-text-35)', background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-06)' }}
+        >
+          {showAll
+            ? 'Show fewer achievements'
+            : `Show all ${ACHIEVEMENT_DEFINITIONS.length} achievements (${ACHIEVEMENT_DEFINITIONS.length - COLLAPSED_LIMIT} more)`}
+        </button>
+      )}
     </div>
   );
 };

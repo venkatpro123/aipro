@@ -689,8 +689,9 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         </div>
       </div>
 
-      {/* Career confidence summary */}
-      {confidence && (
+      {/* Career confidence summary — intentionally removed from this collapsed block;
+          full readiness breakdown is in the Skills tab (CareerJobReadinessPanel). */}
+      {false && confidence && (
         <div className="rounded-2xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -754,27 +755,8 @@ const StrategyTab: React.FC<StrategyTabProps> = ({ result, companyData }) => {
         </div>
       )}
 
-      {/* Competitive position + risk/opportunity — the 2-col grid previously had
-          an empty second column (only BIGGEST RISK rendered), which read as a
-          layout bug. Now pairs the biggest risk with the biggest opportunity. */}
-      <div className="rounded-xl p-4" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
-        <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'var(--alpha-text-30)' }}>WHERE YOU STAND</p>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.competitivePositionStatement}</p>
-        <div className="mt-3 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" style={{ borderTop: '1px solid var(--alpha-bg-06)' }}>
-          <div className="rounded-lg p-2.5" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
-            <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'rgba(239,68,68,0.85)' }}>
-              <AlertTriangle className="w-3 h-3" /> MAIN CONCERN
-            </p>
-            <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.singleBiggestRisk}</p>
-          </div>
-          <div className="rounded-lg p-2.5" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}>
-            <p className="text-[10px] font-bold tracking-wider mb-1 flex items-center gap-1" style={{ color: 'var(--color-emerald-text)' }}>
-              <TrendingUp className="w-3 h-3" /> BEST OPPORTUNITY
-            </p>
-            <p className="text-xs leading-snug" style={{ color: 'var(--alpha-text-55)' }}>{synthesis.singleBiggestOpportunity}</p>
-          </div>
-        </div>
-      </div>
+      {/* WHERE YOU STAND / MAIN CONCERN / BEST OPPORTUNITY removed — duplicates
+          SummaryTab score hero and StrategySpineCard which the user already passed. */}
 
             </div>
           </motion.div>

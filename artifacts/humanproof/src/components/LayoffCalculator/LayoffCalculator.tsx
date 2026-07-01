@@ -99,6 +99,7 @@ import {
   buildLimitedDataBanner,
 } from "./ProgressiveQuorumPanel";
 import { hydrateSwarmCache } from "../../services/swarm/swarmCache";
+import { useAuditAutoSync } from "../../hooks/useAuditAutoSync";
 
 interface Props {
   /** Optional: passed from ToolsPage so action plan links can switch tabs */
@@ -205,6 +206,8 @@ function resolveUserMarketRegion(
 export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   const { state, dispatch } = useLayoff();
   const { userProfile, profileVersion } = useHumanProof();
+  // Auto-save every completed audit to Supabase (fire-and-forget, offline-queued)
+  useAuditAutoSync();
   // Wave 9.4: detect slow connections / low-end devices to reduce animation cost
   const perf = useAdaptivePerformance();
   // v39.0 A4 — track the profileVersion observed at the time of the latest
@@ -1826,7 +1829,7 @@ export const LayoffCalculator: React.FC<Props> = ({ onSwitchTab }) => {
   };
 
   return (
-    <div className="layoff-calculator-wrapper" style={{ padding: "24px 0" }}>
+    <div className="layoff-calculator-wrapper" style={{ padding: state.hasCompletedAssessment ? "0" : "24px 0" }}>
       {!state.hasCompletedAssessment && !state.isCalculating && (
         <>
           <LayoffAlertBanner />

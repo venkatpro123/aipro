@@ -24,13 +24,19 @@ export const LayoffScoreHistory: React.FC<Props> = ({ refreshKey = 0 }) => {
   const [confirmClear, setConfirmClear] = useState(false);
   const [outcomes, setOutcomes] = useState<OutcomeMap>({});
 
-  useEffect(() => {
+  const readHistory = () => {
     const data = getLayoffScoreHistory().sort(
       (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
     setHistory(data);
     setOutcomes(getOutcomes());
-  }, [refreshKey]);
+  };
+
+  useEffect(() => {
+    readHistory();
+    window.addEventListener('hp.audit.history.hydrated', readHistory);
+    return () => window.removeEventListener('hp.audit.history.hydrated', readHistory);
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (history.length === 0) return null;
 

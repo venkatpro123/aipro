@@ -157,8 +157,11 @@ const IntelligenceBriefBlock: React.FC<{
   const confidencePct = confidence ?? 100;
   const showLowConfWarning = confidencePct < EVIDENCE_FLOOR_PCT;
 
-  const first = brief.paragraphs[0] ?? '';
-  const rest  = brief.paragraphs.slice(1);
+  const GENERIC_PHRASES = ['see breakdown', 'risk analysis complete', 'multiple risk factors identified', 'review score breakdown'];
+  const isGeneric = (s: string) => GENERIC_PHRASES.some(p => s.toLowerCase().includes(p));
+  const realParas = brief.paragraphs.filter(p => !isGeneric(p));
+  const first = realParas[0] ?? '';
+  const rest  = realParas.slice(1);
 
   return (
     <motion.div

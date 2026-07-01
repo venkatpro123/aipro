@@ -104,8 +104,28 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
     }));
   }, [r.roleAdjacency]);
 
-  const currentRoleLabel = r.roleTitle ?? r.userProfile?.roleTitle ?? (roleKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Current Role');
+  const currentRoleLabel = r.roleTitle ?? r.userProfile?.roleTitle ?? intel?.displayRole ?? (roleKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Current Role');
   const hasContent = Boolean(skillGap || skillPortfolio || intel);
+
+  // Build skill dependency graph nodes/edges from intel (extracted from inline IIFE)
+  const skillDepGraph = useMemo(() => {
+    if (!intel) return null;
+    const safe = intel.skills?.safe ?? [];
+    const atRisk = intel.skills?.at_risk ?? [];
+    const nodes: SkillNode[] = [];
+    const edges: SkillEdge[] = [];
+    safe.slice(0, 3).forEach((s: any, i: number) => {
+      nodes.push({ id: `safe-${i}`, label: s.skill, tier: i === 0 ? 'advanced' : 'intermediate', status: 'safe', value: s.longTermValue });
+    });
+    atRisk.slice(0, 3).forEach((s: any, i: number) => {
+      nodes.push({ id: `risk-${i}`, label: s.skill, tier: 'foundation', status: 'at_risk', value: s.riskScore });
+    });
+    if (nodes.length >= 2) {
+      for (let i = 0; i < Math.min(atRisk.length, 2); i++) edges.push({ from: `risk-${i}`, to: 'safe-0' });
+      if (safe.length >= 2) edges.push({ from: 'safe-1', to: 'safe-0' });
+    }
+    return nodes.length >= 3 ? <ScrollReveal><SkillDependencyGraph nodes={nodes} edges={edges} /></ScrollReveal> : null;
+  }, [intel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col gap-3">
@@ -158,27 +178,7 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
       {/* Role Market Demand — supply/demand analysis for user's role */}
       <ScrollReveal><RoleMarketDemandPanel roleMarketDemand={r.roleMarketDemand} /></ScrollReveal>
       {intel && <ScrollReveal><AIRiskSkillMatrix intel={intel} scoreColor={scoreColor} roleKey={roleKey} /></ScrollReveal>}
-      {/* Skill dependency graph — derived from safe/at-risk skills */}
-      {(() => {
-        if (!intel) return null;
-        const safe = intel.skills?.safe ?? [];
-        const atRisk = intel.skills?.at_risk ?? [];
-        const nodes: SkillNode[] = [];
-        const edges: SkillEdge[] = [];
-        safe.slice(0, 3).forEach((s: any, i: number) => {
-          nodes.push({ id: `safe-${i}`, label: s.skill, tier: i === 0 ? 'advanced' : 'intermediate', status: 'safe', value: s.longTermValue });
-        });
-        atRisk.slice(0, 3).forEach((s: any, i: number) => {
-          nodes.push({ id: `risk-${i}`, label: s.skill, tier: 'foundation', status: 'at_risk', value: s.riskScore });
-        });
-        if (nodes.length >= 2) {
-          for (let i = 0; i < Math.min(atRisk.length, 2); i++) {
-            edges.push({ from: `risk-${i}`, to: `safe-0` });
-          }
-          if (safe.length >= 2) edges.push({ from: `safe-1`, to: `safe-0` });
-        }
-        return nodes.length >= 3 ? <ScrollReveal><SkillDependencyGraph nodes={nodes} edges={edges} /></ScrollReveal> : null;
-      })()}
+      {skillDepGraph}
 
       {careerPaths.length > 0 && (
         <ScrollReveal>
@@ -208,14 +208,16 @@ export const ProtectionTab: React.FC<TabProps> = ({ result }) => {
         </ScrollReveal>
       )}
 
-      <ScrollReveal>
-        <CareerEvolutionTimeline
-          currentRole={currentRoleLabel}
-          currentScore={result.total}
-          adjacentRoles={r.roleAdjacency?.adjacentRoles ?? []}
-          twoHopPaths={r.roleAdjacency?.twoHopPaths}
-        />
-      </ScrollReveal>
+      {(r.roleAdjacency?.adjacentRoles?.length > 0 || r.roleAdjacency?.twoHopPaths?.length > 0) && (
+        <ScrollReveal>
+          <CareerEvolutionTimeline
+            currentRole={currentRoleLabel}
+            currentScore={result.total}
+            adjacentRoles={r.roleAdjacency?.adjacentRoles ?? []}
+            twoHopPaths={r.roleAdjacency?.twoHopPaths}
+          />
+        </ScrollReveal>
+      )}
       {!hasContent && (
         <div className="rounded-xl px-4 py-8 text-center flex flex-col items-center gap-3" style={{ background: 'var(--alpha-bg-04)', border: '1px solid var(--alpha-bg-08)' }}>
           <SkillEvolutionIllustration size={80} />

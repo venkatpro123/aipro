@@ -100,13 +100,16 @@ export const CareerResilienceSimulator: React.FC<CareerResilienceSimulatorProps>
   }
 
   if (bestPivot) {
-    const pivotRole = bestPivot.title ?? bestPivot.role ?? bestPivot.label ?? 'Adjacent role';
+    const pivotRole = bestPivot.targetRoleLabel ?? bestPivot.title ?? bestPivot.role ?? bestPivot.label
+      ?? (bestPivot.targetRoleKey ? String(bestPivot.targetRoleKey).replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : null)
+      ?? 'Adjacent role';
     const matchPct  = bestPivot.matchScore ?? bestPivot.score ?? null;
+    const riskDelta = bestPivot.estimatedRiskDelta ?? null;
     stats.push({
       icon: Compass,
       label: 'Best Escape Path',
       value: pivotRole.length > 22 ? pivotRole.slice(0, 20) + '…' : pivotRole,
-      sub: matchPct != null ? `${Math.round(matchPct)}% role fit` : 'Strongest adjacent role',
+      sub: matchPct != null ? `${Math.round(matchPct)}% role fit` : riskDelta != null ? `${riskDelta > 0 ? '+' : ''}${riskDelta} pts risk` : 'Top adjacent role',
       color: 'var(--color-cyan-text)',
     });
   }

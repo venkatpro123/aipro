@@ -482,9 +482,6 @@ export const JobMarketLiquidityCard: React.FC<Props> = ({ jobMarketLiquidity, ro
               <p className="text-[10px] font-black" style={{ color: 'var(--color-emerald-text)' }}>
                 REMOTE-FIRST ADVANTAGE
               </p>
-              <span className="text-[9px] px-1 rounded" style={{ background: 'rgba(148,163,184,0.14)', color: 'var(--color-slate400-text)' }}>
-                ESTIMATED
-              </span>
             </div>
             <p className="text-[10px] leading-snug" style={{ color: 'var(--alpha-text-55)' }}>
               {remoteFirstAdvantage.narrative}

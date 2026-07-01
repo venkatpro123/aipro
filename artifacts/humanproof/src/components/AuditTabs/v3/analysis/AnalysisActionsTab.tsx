@@ -10,10 +10,8 @@ import type { CompanyData } from '../../../../data/companyDatabase';
 import type { ActionPlanItem } from '../../../../types/hybridResult';
 import type { CareerContingencyPlan } from '../../../../services/careerContingencyPlanEngine';
 import type { StrategySynthesisResult } from '../../../../services/strategySynthesisEngine';
-import type { SurvivalProbabilityResult } from '../../../../services/layoffSurvivalPredictor';
 import { StrategySpineCard } from '../../common/StrategySpineCard';
 import { ActionRoadmapVisual, type ActionItem as ARMItem } from '../../common/ActionRoadmapVisual';
-import { RecoveryProbabilityCard } from '../../common/RecoveryProbabilityCard';
 import CareerContingencyPanel from '../../common/CareerContingencyPanel';
 import AdaptiveBlock from '../../common/AdaptiveBlock';
 import StrategyTab from '../../StrategyTab';
@@ -49,7 +47,6 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
   const strategySynthesis: StrategySynthesisResult | undefined = r.strategySynthesis;
   const contingencyPlan: CareerContingencyPlan | undefined = r.careerContingencyPlan;
   const contingencyStatus: string = r.contingencyPlanStatus ?? (contingencyPlan ? 'ready' : 'unavailable');
-  const survivalProbability: SurvivalProbabilityResult | undefined = r.survivalProbability;
 
   const primaryDriver: string =
     r.dimensions?.reduce((top: any, d: any) => (!top || (d.score ?? 0) > (top.score ?? 0)) ? d : top, null)?.key
@@ -120,7 +117,6 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
         spine={spine}
         singleBiggestRisk={r.precisionBrief?.topRiskFactor?.naturalLanguage ?? r.keyRiskDriver ?? undefined}
         topAction={recommendations[0]?.title ?? undefined}
-        confidencePercent={confidencePct}
         missionActionIds={missionActionIds}
       />
 
@@ -197,14 +193,6 @@ export const AnalysisActionsTab: React.FC<Props> = ({ result, companyData }) => 
 
       {/* Strategy direction */}
       <StrategySpineCard strategy={strategySynthesis} />
-
-      {/* Survival odds — visual before/after comparison */}
-      {survivalProbability && (
-        <RecoveryProbabilityCard
-          survival={survivalProbability}
-          criticalActionCount={recommendations.filter(r => r.priority === 'Critical').length}
-        />
-      )}
 
       {/* Career paths — contingency planning */}
       {contingencyStatus === 'ready' && contingencyPlan
