@@ -210,6 +210,17 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
     return <LowConfidenceBrief confidencePct={confidencePct} brief={intelligenceBrief} />;
   }
 
+  // Gate 3: suppress generic placeholder content emitted when the LLM returned null.
+  const GENERIC_PHRASES = ['see breakdown', 'review score breakdown', 'risk analysis complete', 'multiple risk factors identified'];
+  const isGeneric = (s: string) => GENERIC_PHRASES.some(p => s.toLowerCase().includes(p));
+  // Preserve original index so icon/label mapping stays correct.
+  const realParagraphs = intelligenceBrief.paragraphs
+    .map((p, origIdx) => ({ p, origIdx }))
+    .filter(({ p }) => !isGeneric(p));
+  const hasRealKeyRisk = !isGeneric(intelligenceBrief.keyRiskDriver ?? '');
+  // If there's nothing real to show, hide the whole panel.
+  if (realParagraphs.length === 0 && !hasRealKeyRisk) return null;
+
   const urgency = URGENCY_CONFIG[intelligenceBrief.urgencyLevel];
   // v40.0 i18n: respect user's browser locale (German users see "Jan.", not "January")
   const userLocale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
@@ -257,33 +268,35 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
       </div>
 
       <div className="p-5">
-        {/* Key risk driver highlight */}
-        <div
-          className="flex items-start gap-3 rounded-xl px-4 py-3 mb-5"
-          style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${urgency.border}` }}
-        >
-          <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: urgency.color }} />
-          <div>
-            <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
-              Primary Risk Driver
+        {/* Key risk driver highlight — only when non-generic */}
+        {hasRealKeyRisk && (
+          <div
+            className="flex items-start gap-3 rounded-xl px-4 py-3 mb-5"
+            style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${urgency.border}` }}
+          >
+            <Zap className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: urgency.color }} />
+            <div>
+              <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: urgency.color, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '3px' }}>
+                Primary Risk Driver
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--alpha-text-85)', lineHeight: 1.5, fontWeight: 600 }}>
+                {intelligenceBrief.keyRiskDriver}
+              </p>
             </div>
-            <p style={{ fontSize: '11px', color: 'var(--alpha-text-85)', lineHeight: 1.5, fontWeight: 600 }}>
-              {intelligenceBrief.keyRiskDriver}
-            </p>
           </div>
-        </div>
+        )}
 
-        {/* 3-paragraph sections */}
+        {/* Paragraph sections — skip generic placeholders */}
         <div className="space-y-4">
-          {intelligenceBrief.paragraphs.map((para, i) => {
-            const Icon = PARAGRAPH_ICONS[i];
-            const label = PARAGRAPH_LABELS[i];
+          {realParagraphs.map(({ p: para, origIdx }) => {
+            const Icon = PARAGRAPH_ICONS[Math.min(origIdx, PARAGRAPH_ICONS.length - 1)];
+            const label = PARAGRAPH_LABELS[Math.min(origIdx, PARAGRAPH_LABELS.length - 1)];
             return (
               <motion.div
-                key={i}
+                key={origIdx}
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: origIdx * 0.1 }}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="w-3.5 h-3.5" style={{ color: 'var(--alpha-text-45)' }} />
@@ -348,15 +361,6 @@ const IntelligenceBriefPanel: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Model footnote */}
-        <div className="mt-4 flex items-center justify-between">
-          <span style={{ fontSize: '11px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
-            Model: {intelligenceBrief.modelUsed}
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--alpha-text-25)', fontFamily: 'var(--font-mono)' }}>
-            Refreshes when score shifts &gt;5pts or after 24h
-          </span>
-        </div>
       </div>
     </motion.div>
   );

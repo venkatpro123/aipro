@@ -19,7 +19,7 @@
 // All blocks carry an explicit Tier badge so users (and future maintainers)
 // understand the disclosure hierarchy.
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import NumberFlow from '@number-flow/react';
 import {
@@ -33,17 +33,14 @@ import { FirstAuditTour } from '../common/FirstAuditTour';
 import PersonalRiskModifierPanel from '../common/PersonalRiskModifierPanel';
 import { ProgressNarrativeCard } from '../common/ProgressNarrativeCard';
 import { SharpenScorePrompt } from '../common/SharpenScorePrompt';
-import PredictionHorizonPanel from '../common/PredictionHorizonPanel';
-import { TimeToSafetyStrip } from '../common/TimeToSafetyStrip';
 import { CareerRiskTimeline } from '../common/CareerRiskTimeline';
-import { PersonalImpactSimulator } from '../common/PersonalImpactSimulator';
-import { CareerPortfolioPanel } from '../common/CareerPortfolioPanel';
 import { useDashboardAdaptation } from '../../../hooks/useDashboardAdaptation';
 import { isCalibrationLimitedForCompany } from '../../../services/segmentedCalibrationEngine';
 import { riskColor, riskLabel, riskGradient } from '../../../lib/riskTokens';
 import { InactionCostCard } from '../common/InactionCostCard';
 import { OpportunityIntelligenceCard } from '../common/OpportunityIntelligenceCard';
 import { getStreakInfo } from '../../../services/streakService';
+import { getCareerIntelligence } from '@/data/intelligence';
 import { explainDriver } from './driverEvidence';
 import { isActionableRecommendation } from '../../../services/orchestration/signalOrchestrator';
 import Tilt3D from '../../ui/Tilt3D';
@@ -54,7 +51,6 @@ import { getLayoffScoreHistory } from '../../../services/scoreStorageService';
 // Beast Mode V3 — new AI OS components
 import { AIMemoryCard } from '../common/AIMemoryCard';
 import { RiskTrendChart } from '../common/RiskTrendChart';
-import { AchievementGallery } from '../../../components/AchievementGallery';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 // ── Experience band helper (mirrors AnalysisTab) ──────────────────────────────
@@ -561,8 +557,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
   const urgency  = brief?.urgencyLevel ?? (score >= 75 ? 'CRITICAL' : score >= 55 ? 'HIGH' : score >= 35 ? 'MODERATE' : 'LOW');
   const liveCount = result.signalQuality?.liveSignals ?? 0;
   const dataAge   = result.dataFreshness?.ageInDays ?? 0;
-  const scoreSensitivity = r.scoreSensitivity;
-  const financialRunwayMonths: number | undefined = result.financialRunwayMonths ?? r.userFinancialRunway?.runwayMonths;
   const conflictCount = result.signalQuality?.conflictingSignals?.length ?? 0;
   const hardFailures  = [...(result.signalQuality?.hardFailures ?? [])];
   const lowDataWarning = result.signalQuality?.lowDataWarning as any;
@@ -596,26 +590,32 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
 
   // Beast Mode V3 — AI Memory + Timeline data
   const companyNameForV3 = (companyData as any)?.name ?? r.companyName ?? '';
-  const scoreHistoryForTimeline = useMemo(() => {
+
+  const readHistoryForCompany = (name: string) => {
     try {
       const history = getLayoffScoreHistory();
-      // Filter to matching company+role and take last 3
-      return history
-        .filter(e => companyNameForV3 && e.companyName?.toLowerCase() === companyNameForV3.toLowerCase())
-        .slice(-3);
+      return history.filter(e => name && e.companyName?.toLowerCase() === name.toLowerCase());
     } catch { return []; }
+  };
+
+  const [companyHistory, setCompanyHistory] = useState<ReturnType<typeof readHistoryForCompany>>(
+    () => readHistoryForCompany(companyNameForV3)
+  );
+
+  useEffect(() => {
+    const refresh = () => setCompanyHistory(readHistoryForCompany(companyNameForV3));
+    refresh();
+    window.addEventListener('hp.audit.history.hydrated', refresh);
+    return () => window.removeEventListener('hp.audit.history.hydrated', refresh);
   }, [companyNameForV3]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Days since last audit (from scoreStorageService last entry)
+  const scoreHistoryForTimeline = companyHistory.slice(-3);
   const daysSinceLastAudit = useMemo(() => {
-    try {
-      const history = getLayoffScoreHistory();
-      const last = history.filter(e => companyNameForV3 && e.companyName?.toLowerCase() === companyNameForV3.toLowerCase()).at(-1);
-      if (!last) return undefined;
-      const ms = Date.now() - new Date(last.timestamp).getTime();
-      return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
-    } catch { return undefined; }
-  }, [companyNameForV3]); // eslint-disable-line react-hooks/exhaustive-deps
+    const last = companyHistory.at(-1);
+    if (!last) return undefined;
+    const ms = Date.now() - new Date(last.timestamp).getTime();
+    return Math.max(1, Math.round(ms / (1000 * 60 * 60 * 24)));
+  }, [companyHistory]);
 
   // Completed action count from PhaseProgressSystem localStorage
   const completedActionCount = useMemo(() => {
@@ -800,6 +800,7 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
           r.roleTitle ??
           r.userProfile?.roleTitle ??
           r.userProfile?.currentRole ??
+          getCareerIntelligence(result.workTypeKey)?.displayRole ??
           (String(result.workTypeKey ?? '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || undefined)
         }
       />
@@ -876,11 +877,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-5 pt-4">
           <span className="text-[10px] font-black tracking-[0.14em] uppercase" style={{ color: riskColor(score) }}>
-            {r.roleTitle
-              ? `${r.roleTitle} · Risk Position`
-              : r.workTypeKey
-              ? `${String(r.workTypeKey).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} · Risk Position`
-              : 'Where You Stand Today'}
+            {(() => {
+              const label = r.roleTitle ?? r.userProfile?.roleTitle
+                ?? getCareerIntelligence(r.workTypeKey)?.displayRole
+                ?? null;
+              return label ? `${label} · Risk Position` : 'Where You Stand Today';
+            })()}
           </span>
         </div>
 
@@ -955,13 +957,6 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         </div>
       </motion.div>
 
-      {/* ── Wave 5.1: Time-to-Safety — compact strip showing path to MODERATE risk */}
-      <TimeToSafetyStrip
-        currentScore={score}
-        scoreSensitivity={scoreSensitivity}
-        financialRunwayMonths={financialRunwayMonths}
-      />
-
       {/* ── V3: AI Memory — score drift + streak + completed actions since last check */}
       <ScrollReveal>
         <AIMemoryCard
@@ -972,28 +967,12 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
         />
       </ScrollReveal>
 
-      {/* ── Phase 18/Retention: Progress narrative — "since last visit" emotional beat */}
-      <ProgressNarrativeCard scoreDelta={r.scoreDelta} streakInfo={streakInfo} />
-
-      {/* ── Phase 5/Conversion: Sharpen score prompt — inline profile capture upsell */}
-      <SharpenScorePrompt />
-
-      {/* ── Phase 11: Prediction Horizon — 30d/90d/180d risk trajectory */}
-      {r.predictionHorizon && (
-        <ScrollReveal delay={0.02}>
-          <PredictionHorizonPanel predictionHorizon={r.predictionHorizon} currentScore={result.total} />
-        </ScrollReveal>
-      )}
-
       {/* ── Phase 12: Trust System — personal modifier transparency card */}
       {personalModifierPresent && r.personalRiskModifier && (
         <ScrollReveal delay={0.03}>
           <PersonalRiskModifierPanel modifier={r.personalRiskModifier} />
         </ScrollReveal>
       )}
-
-      {/* ── Phase 9/18: Achievement Gallery — Career Title ladder + badges */}
-      <ScrollReveal delay={0.04}><AchievementGallery /></ScrollReveal>
 
       {/* ── Risk Trend Chart — visual score evolution over audit history */}
       {scoreHistoryForTimeline.length >= 1 && (
@@ -1014,31 +993,16 @@ export const SummaryTab: React.FC<TabProps> = ({ result, companyData }) => {
       {/* ── Tier-1: Top risk drivers ───────────────────────────────────────── */}
       <ScrollReveal delay={0.08}><TopDriversStrip drivers={topDrivers} /></ScrollReveal>
 
-      {/* ── Risk concentration donut — where risk is concentrated vs diversified */}
-      <ScrollReveal delay={0.09}>
-        <CareerPortfolioPanel result={result} />
-      </ScrollReveal>
-
       {/* ── Good News (inline when available) ────────────────────────────── */}
       {opportunityNode && <ScrollReveal delay={0.10}>{opportunityNode}</ScrollReveal>}
 
-      {/* ── Personal Impact Simulator — 3-scenario "do nothing / partial / full" */}
-      <ScrollReveal delay={0.11}>
-        <PersonalImpactSimulator
-          currentScore={score}
-          survivalProbability={r.survivalProbability}
-          scoreTrajectory={r.scoreTrajectory}
-          scoreSensitivity={scoreSensitivity}
-          financialRunwayMonths={financialRunwayMonths}
-        />
-      </ScrollReveal>
-
-      {/* ── Phase 12: Inaction Cost — "what happens if I do nothing" (final card) */}
+      {/* ── Phase 12: Inaction Cost — "what happens if I do nothing" */}
       {hasInactionConsequence && (
         <ScrollReveal delay={0.12}>
           <InactionCostCard consequence={inactionConsequenceRaw} />
         </ScrollReveal>
       )}
+
     </div>
   );
 };
